@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: gaseous diffusion process", fill: "#f0e68c"},
+{source: "3: gaseous diffusion process", target: "3: significant amounts", fill: "#f0e68c"},
+{source: "3: significant amounts", target: "3: enrich uranium", fill: "#f0e68c"},
+{source: "3: enrich uranium", target: "3: production costs at", fill: "#f0e68c"},
+{source: "3: gaseous diffusion process", target: "6: Capacity ", fill: "#4f666a"},
+{source: "6: Capacity ", target: "6: the Tennessee Valley Authority ", fill: "#4f666a"},
+{source: "6: the Tennessee Valley Authority ", target: "6: yet contracted", fill: "#4f666a"},
+{source: "6: yet contracted", target: "6: periods beyond", fill: "#4f666a"},
+{source: "6: Capacity ", target: "12: Accordingly ", fill: "#f88379"},
+{source: "12: Accordingly ", target: "12: as power prices rise", fill: "#f88379"},
+{source: "12: as power prices rise", target: "12: production at", fill: "#f88379"},
+{source: "12: production at", target: "12: plant will become increasingly", fill: "#f88379"},
+{source: "12: plant will become increasingly", target: "12: longterm viability", fill: "#f88379"},
+{source: "12: longterm viability", target: "12: operations", fill: "#f88379"},
+{source: "12: Accordingly ", target: "26: modification", fill: "#002147"},
+{source: "26: modification", target: "26: Russian SA ", fill: "#002147"},
+{source: "26: Russian SA ", target: "26: significant increase", fill: "#002147"},
+{source: "26: significant increase", target: "26: would depress prices", fill: "#002147"},
+{source: "26: would depress prices", target: "26: Russian Contract ", fill: "#002147"},
+{source: "26: Russian Contract ", target: "26: which could adversely affect", fill: "#002147"},
+{source: "26: modification", target: "39: risks associated with", fill: "#cf0"},
+{source: "39: risks associated with", target: "39: demonstration", fill: "#cf0"},
+{source: "39: demonstration", target: "39: deployment", fill: "#cf0"},
+{source: "39: deployment", target: "39: American Centrifuge ", fill: "#cf0"},
+{source: "39: American Centrifuge ", target: "39: technology", fill: "#cf0"},
+{source: "39: risks associated with", target: "START_HERE", fill: "#cf0"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Demonstrate</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Portsmouth_Gaseous_Diffusion_Plant">Portsmouth Gaseous Diffusion Plant</a></td>
+      <td>The Portsmouth Gaseous Diffusion Plant is a facility located in Scioto Township, Pike County, Ohio, just south of Piketon, Ohio that previously produced enriched uranium, including highly enriched weapons-grade uranium, for the United States Atomic Energy Commission (AEC), US nuclear weapons program, and Navy nuclear propulsion; in later years it produced low enriched uranium for fuel for commercial nuclear power reactors. The site never hosted an operating nuclear reactor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Enriched_uranium">Enriched uranium</a></td>
+      <td>Enriched uranium is a type of uranium in which the percent composition of uranium-235 (written 235U) has been increased through the process of isotope separation. Naturally occurring uranium is composed of three major isotopes:  uranium-238 (238U with 99.2739–99.2752% natural abundance), uranium-235 (235U, 0.7198–0.7202%), and uranium-234 (234U, 0.0050–0.0059%).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uranium">Uranium</a></td>
+      <td>Uranium is a chemical element with the symbol U and atomic number 92. It is a silvery-grey metal in the actinide series of the periodic table.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zippe-type_centrifuge">Zippe-type centrifuge</a></td>
+      <td>The Zippe-type centrifuge is a gas centrifuge designed to enrich the rare fissile isotope uranium-235 (235U) from the mixture of isotopes found in naturally occurring uranium compounds. The isotopic separation is based on the slight difference in mass of the isotopes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tivoization">Tivoization</a></td>
+      <td>Tivoization  is the practice of designing hardware that incorporates software under the terms of a copyleft software license like the GNU General Public License (GNU GPL), but uses hardware restrictions or digital rights management (DRM) to prevent users from running modified versions of the software on that hardware. Richard Stallman coined the term in reference to TiVo's use of GNU GPL licensed software on the TiVo brand digital video recorders (DVR), which actively blocks users from running modified software on its hardware by design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_deployment">Software deployment</a></td>
+      <td>Software deployment is all of the activities that make a software system available for use.The general deployment process consists of several interrelated activities with possible transitions between them. These activities can occur at the producer side or at the consumer side or both.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/System_deployment">System deployment</a></td>
+      <td>The deployment of a mechanical device, electrical system, computer program, etc., is its assembly or transformation from a packaged form to an operational working state.\nDeployment implies moving a product from a temporary or development state to a permanent or desired state.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nuclear_power_in_the_United_States">Nuclear power in the United States</a></td>
+      <td>Nuclear power in the United States is provided by 92 commercial reactors with a net capacity of 94.7 gigawatts (GW), with 61 pressurized water reactors and 31 boiling water reactors. In 2019, they produced a total of 809.41 terawatt-hours of electricity, which accounted for 20% of the nation's total electric energy generation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Centrus_Energy">Centrus Energy</a></td>
+      <td>Centrus Energy Corp. (formerly USEC Inc.) is an American company that supplies nuclear fuel for use in nuclear power plants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_technology">Financial technology</a></td>
+      <td>Financial technology (abbreviated fintech or FinTech) is the technology and innovation that aims to compete with traditional financial methods in the delivery of financial services. Artificial intelligence, Blockchain, Cloud computing, and big Data are regarded as the "ABCD" (four key areas) of FinTech.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>USEC INC      Item 1A Risk Factors          You <font color="blue">should carefully</font> consider the <font color="blue">following risk factors</font>, in addition     to the other information in this <font color="blue">Annual Report </font>on Form 10-K, before deciding     to purchase our securities</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">significant</font> increase</font> in the cost of the <font color="blue"><font color="blue">electric power</font> supplied</font> to     our Paducah <font color="blue"><font color="blue">plant could</font> <font color="blue">significant</font>ly increase</font> our <font color="blue">production costs</font> to a     level above the prices we charge our customers</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">gaseous diffusion process</font> requires <font color="blue"><font color="blue">significant</font> amounts</font> of electric     power to <font color="blue">enrich uranium</font>, making the cost of <font color="blue">electric power</font> about 60prca of the     <font color="blue">production costs</font> at the Paducah plant in 2005</td>
+    </tr>
+    <tr>
+      <td>In 2005, we purchased 87prca of     the <font color="blue">electric power</font> <font color="blue">for the Paducah </font>plant at fixed, below market, prices from     the <font color="blue">Tennessee Valley Authority </font>under a <font color="blue">multiyear <font color="blue">power contract</font> signed</font> in     2000</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">purchased almost</font> the <font color="blue">entire remaining</font> portion of the <font color="blue">electric power</font>     <font color="blue">for the Paducah </font>plant at higher- cost fixed-price contracts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Capacity </font>and     <font color="blue">prices under</font> the <font color="blue">Tennessee Valley Authority </font>contract are only fixed through     May 2006 and we have not <font color="blue">yet contracted</font> for power for <font color="blue">periods beyond</font> that     time</td>
+    </tr>
+    <tr>
+      <td>While we expect to reach an <font color="blue">agreement</font> with TVA for power beyond     May 2006  in  the  near future we may be unable to reach an acceptable     <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td>We  currently  anticipate  an  increase  in  <font color="blue">power cost</font> of     <font color="blue">approximately</font> 50 percent compared to the 2000 TVA <font color="blue">power contract</font>, subject to     the amount of <font color="blue">power purchased during summer months</font> and <font color="blue">future adjustments</font>     relative to TVA’s fuel and purchased <font color="blue">power cost</font>s</td>
+    </tr>
+    <tr>
+      <td>However, our <font color="blue">actual power</font>     <font color="blue">costs could</font> be <font color="blue">greater than</font> we anticipate</td>
+    </tr>
+    <tr>
+      <td>In addition, we expect that the     duration of a <font color="blue">new power supply <font color="blue">arrangement</font> will</font> be <font color="blue">shorter than</font> the original     2000 TVA contract, which will leave us at risk for <font color="blue"><font color="blue">additional</font> power price</font>     increases in the future</td>
+    </tr>
+    <tr>
+      <td>Our SWU <font color="blue">sales contracts</font> do not include provisions     that <font color="blue">permit us</font> to <font color="blue">pass through increases</font> in <font color="blue">power prices</font> to customers</td>
+    </tr>
+    <tr>
+      <td>Accordingly, as <font color="blue">power prices</font> rise, and mitigating steps are unavailable or     insufficient, <font color="blue">production at</font> the Paducah <font color="blue">plant will become increasingly</font>     uneconomic at existing contract prices, which will <font color="blue">adversely</font> affect the     long-term viability of our business and <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Deliveries of LEU </font>under the <font color="blue"><font color="blue">Russian Contract</font> </font>account for <font color="blue">approximately</font>     50prca of our <font color="blue">supply mix</font> and a <font color="blue"><font color="blue">significant</font> delay</font> or stoppage of <font color="blue">deliveries</font>     could  affect  our  ability  to  <font color="blue">meet customer orders</font> and <font color="blue">could pose</font> a     <font color="blue"><font color="blue">significant</font> risk</font> to our continued <font color="blue">operations</font> and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">significant</font> delay</font> in, or stoppage or <font color="blue">termination</font>, of, <font color="blue">deliveries</font> of     LEU from Russia under the <font color="blue"><font color="blue">Russian Contract</font> </font>or a failure of the LEU to meet     the <font color="blue">Russian Contract</font>’s <font color="blue">quality specifications <font color="blue">could <font color="blue">adversely</font> affect</font></font> our     ability  to  make  <font color="blue">deliveries</font>  to  our customers</td>
+    </tr>
+    <tr>
+      <td>A delay, stoppage or     <font color="blue">termination</font> could occur due to a number of factors, including, but not     limited to, logistical or technical problems with shipments, commercial or     <font color="blue">political disputes between</font> the parties or their <font color="blue"><font color="blue">government</font>s</font>, or our failure     or <font color="blue">inability</font> to meet the terms of the <font color="blue">Russian Contract</font></td>
+    </tr>
+    <tr>
+      <td>Further, because our     annual LEU <font color="blue">production capacity</font> is less than our total <font color="blue">delivery <font color="blue">commitments</font></font>     to customers, an <font color="blue">interruption</font> of <font color="blue">deliveries</font> under the <font color="blue"><font color="blue">Russian Contract</font> </font>    could, depending on the length of such an <font color="blue">interruption</font>, threaten our ability     to fulfill these <font color="blue">delivery <font color="blue">commitments</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>upon the reasons for the     <font color="blue">interruption</font>  and  subject to <font color="blue">limitations</font> of <font color="blue"><font color="blue">liability</font> under</font> our sales     contracts, we could be required to <font color="blue">compensate customers</font> for a failure or     delay in delivery</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">significant</font> increase</font> in the cost to us of the <font color="blue">Russian LEU </font>due to the     <font color="blue">impact under</font> the <font color="blue">Russian Contract</font>’s market-based pricing formula of the     <font color="blue">upward trend</font> in <font color="blue"><font color="blue">market price</font>s could <font color="blue">significant</font>ly increase</font> our costs of     sales  and <font color="blue">inventories</font>, which, if not <font color="blue">offset by increases</font> in our sales     prices, would <font color="blue">adversely</font> affect our <font color="blue">cash flows</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">appointment</font> of a substitute or <font color="blue"><font color="blue">additional</font> executive agent</font> pursuant     to the US <font color="blue">government</font>’s compliance with the terms of the Executive Agent     MOA would require that all or part of the fixed quantity of LEU available     each  year under the <font color="blue"><font color="blue">Russian Contract</font> </font>be provided to the substitute or     <font color="blue"><font color="blue">additional</font> executive agent</font></td>
+    </tr>
+    <tr>
+      <td>This would not only reduce our access to LEU     under  the  Russian  Contract, <font color="blue">but would also</font> create a <font color="blue"><font color="blue">significant</font> new</font>     competitor, <font color="blue">which could</font> impair our ability to meet our <font color="blue">existing delivery</font>     <font color="blue"><font color="blue">commitments</font> while reducing</font> our ability to bid for new sales</td>
+    </tr>
+    <tr>
+      <td>Reduced access     to LEU under the <font color="blue"><font color="blue">Russian Contract</font> </font><font color="blue">would also increase</font> our costs and reduce     our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>20       _________________________________________________________________                <font color="blue">Changes  </font>in,  or <font color="blue">termination</font> of, the Russian Suspension Agreement     (“Russian  SA”) could lead to <font color="blue"><font color="blue">significant</font>ly increased competition from</font>     <font color="blue">Russian LEU </font>or, if <font color="blue">replaced with</font> tariffs, could increase our costs under the     <font color="blue">Russian Contract</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">Russian SA </font></font>is a 1992 <font color="blue">agreement</font> between the <font color="blue"><font color="blue">United States </font>and Russia     </font>that precludes <font color="blue">Russian LEU </font>from being sold for <font color="blue">consumption</font> in the United     States <font color="blue">except under</font> the <font color="blue">Russian Contract</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreement</font> could be terminated     (1) unilaterally by the Russian <font color="blue">government</font> upon 60 days notice or (2) as a     result of <font color="blue">periodic administrative procedures under</font> US <font color="blue">international trade</font>     <font color="blue">regulations</font> (such a proceeding is <font color="blue">currently pending</font>)</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreement</font> can also     be <font color="blue">modified by negotiation between</font> the <font color="blue">US and Russian </font><font color="blue"><font color="blue">government</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Unless accompanied by equivalent <font color="blue">limitations</font> on imports, <font color="blue">termination</font> or     <font color="blue">modification</font> of the <font color="blue">Russian SA </font>could result in a <font color="blue"><font color="blue">significant</font> increase</font> in     sales of Russian-produced LEU that <font color="blue">would depress prices</font> and undermine our     ability to sell the large quantity of LEU that we are committed to purchase     under the <font color="blue">Russian Contract</font>, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our revenues and     increase our costs</td>
+    </tr>
+    <tr>
+      <td>Alternatively, if the <font color="blue">Russian SA </font>were <font color="blue"><font color="blue">replaced with</font> duties on imports</font>,     these <font color="blue">duties would <font color="blue">significant</font>ly increase</font> our costs of importing the Russian     LEU          We <font color="blue">depend on</font> a <font color="blue">single production <font color="blue">facility</font></font> in Paducah, Kentucky for the     remainder  of  our  supply  and  <font color="blue">significant</font>  or  <font color="blue">extended unscheduled</font>     <font color="blue">interruption</font>s in <font color="blue">production <font color="blue">could affect</font></font> our ability to <font color="blue">meet customer orders</font>     and pose a <font color="blue"><font color="blue">significant</font> risk</font> to, or could <font color="blue">significant</font>ly limit, our continued     <font color="blue">operations</font> and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">annual imports</font> of <font color="blue">Russian LEU </font>account for only <font color="blue">approximately</font>     one-half  of the total amount of LEU that we need to meet our delivery     <font color="blue">obligations</font> to customers</td>
+    </tr>
+    <tr>
+      <td>In addition, some customers do not <font color="blue">permit us</font> to     deliver <font color="blue">Russian LEU </font>to them under their contracts with us</td>
+    </tr>
+    <tr>
+      <td>Accordingly, our     production  at the Paducah plant is needed to meet our <font color="blue">annual delivery</font>     <font color="blue">commitments</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">interruption</font> of <font color="blue">production at</font> the Paducah <font color="blue">plant would</font> result     in a drawdown of our <font color="blue">inventories</font> of LEU, and, depending on the length and     severity of the production <font color="blue">interruption</font>, we could be unable to meet our     annual <font color="blue">delivery <font color="blue">commitments</font></font>, with adverse effects on our costs, results of     <font color="blue">operations</font>, <font color="blue">cash flows</font> and long-term viability</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>upon the reasons     for the <font color="blue">interruption</font> and subject to <font color="blue">limitations</font> on our <font color="blue"><font color="blue">liability</font> under</font> our     <font color="blue">sales contracts</font>, we also could be required to <font color="blue">compensate customers</font> for our     failure to deliver on time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Production </font><font color="blue">interruption</font>s at the Paducah <font color="blue">plant could</font> be caused by a     variety of factors, such as:       •   <font color="blue">equipment breakdowns</font>,         •   <font color="blue">interruption</font>s of <font color="blue">electric power</font>, or an <font color="blue">inability</font> to <font color="blue">purchase electric</font>     power at an acceptable price,         •   <font color="blue">regulatory enforcement actions</font>,         •   <font color="blue">labor <font color="blue">disruption</font>s</font>,         •   <font color="blue">un<font color="blue">availability</font></font> or inadequate supply of <font color="blue">uranium feedstock</font> or coolant,         •   natural or other <font color="blue">disasters</font>, including <font color="blue">seismic activity</font> in the vicinity     of the Paducah plant, which is located near the New Madrid <font color="blue">fault line</font>, or         •   <font color="blue"><font color="blue">accident</font>s</font> or other <font color="blue">incidents</font></td>
+    </tr>
+    <tr>
+      <td>21       _________________________________________________________________                <font color="blue">The Paducah </font>plant is owned by the US <font color="blue">government</font></td>
+    </tr>
+    <tr>
+      <td>Our rights to the     plant are <font color="blue">defined under</font> a lease <font color="blue">agreement</font> with DOE and the law that the     lease <font color="blue">agreement</font> implements</td>
+    </tr>
+    <tr>
+      <td>Under the DOE-USEC Agreement, we could lose our     right to extend the lease of the Paducah plant and could be required to     waive our exclusive right to lease the <font color="blue">facility</font> if we fail on more than one     <font color="blue">occasion within specified periods</font> to <font color="blue">meet certain production thresholds</font> and     fail to cure the <font color="blue">deficiency</font></td>
+    </tr>
+    <tr>
+      <td>In addition, DOE could assume <font color="blue">responsibility</font>     for operation of the Paducah plant if we cease <font color="blue">production at</font> the <font color="blue">Paducah     </font>plant and fail to <font color="blue">recommence production within</font> time <font color="blue">periods specified</font> in the     DOE-USEC Agreement</td>
+    </tr>
+    <tr>
+      <td>Without a lease to the Paducah plant and <font color="blue">absent access</font>     to other sources of LEU, we would be unable to meet our <font color="blue">annual delivery</font>     <font color="blue">commitments</font> to <font color="blue">customers once</font> our available <font color="blue">inventories</font> were exhausted</td>
+    </tr>
+    <tr>
+      <td>We  face  a number of <font color="blue">risks associated with</font> the <font color="blue">demonstration</font> and     <font color="blue">deployment</font> of the <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Centrifuge </font><font color="blue">technology</font> is a more advanced and lower operating cost     <font color="blue">technology</font> than the <font color="blue">gaseous diffusion process</font> we <font color="blue">currently use</font></td>
+    </tr>
+    <tr>
+      <td>Several of     our <font color="blue">competitors</font> use centrifuge <font color="blue">technology</font> to produce LEU At current SWU     prices and given expected future <font color="blue">electric power</font> prices, we must develop or     otherwise acquire a lower operating cost <font color="blue">technology</font> in order to remain     <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Delays  </font>or <font color="blue">uncertainty</font> relating to the <font color="blue">demonstration</font> and     <font color="blue">deployment</font> of our <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font> could have a material     adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">successful <font color="blue">construction</font></font> and operation of the <font color="blue">American <font color="blue">Centrifuge </font></font>    Plant  is  <font color="blue">dependent</font>  upon a number of factors including, satisfactory     performance of the <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font> at various stages of     <font color="blue">demonstration</font>, NRC licensing, financing, the cost and <font color="blue">timely delivery</font> of raw     materials and components, <font color="blue">availability</font> of <font color="blue">personnel with</font> required security     clearances, overall cost estimates, <font color="blue">installation</font> and operation of centrifuge     machines and equipment, and the <font color="blue">achievement</font> of <font color="blue">milestones under</font> the DOE-USEC     Agreement</td>
+    </tr>
+    <tr>
+      <td>We  have experienced delays in the past year in <font color="blue">demonstrating</font> the     <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font> relating to quality of material, performance     issues of <font color="blue">certain centrifuge components</font>, and <font color="blue">compliance with new regulatory</font>     <font color="blue">requirements</font> and we could experience <font color="blue"><font color="blue">additional</font> delays</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Our     next  milestone under the DOE-USEC Agreement is to obtain satisfactory     <font color="blue">re<font color="blue">liability</font></font> and <font color="blue">performance data from</font> the <font color="blue">lead cascade by</font> October 2006 and a     failure or delay in meeting this milestone and in <font color="blue">confirming</font> an acceptable     <font color="blue">deployment</font>  schedule  <font color="blue">could <font color="blue">adversely</font> affect</font> our ability to deploy the     <font color="blue">American <font color="blue">Centrifuge </font></font>and have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>Under the DOE-USEC Agreement, if, for <font color="blue">reasons within</font> our control, we fail to     meet a milestone and the resulting <font color="blue">delay will materially impact</font> our ability     to begin commercial <font color="blue">operations</font> on schedule, DOE could take a number of     actions that <font color="blue">could <font color="blue">adversely</font> affect</font> our business, <font color="blue">financial condition</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>These include <font color="blue">terminating</font> the DOE-USEC Agreement,     reducing or <font color="blue">terminating</font> our access to <font color="blue">Russian LEU </font>or the Paducah plant,     revoking our access to DOE’s US centrifuge <font color="blue">technology</font> that we require for     the success of the <font color="blue">American <font color="blue">Centrifuge </font></font>project, or <font color="blue">supporting competing</font>     projects for production of LEU          Our cost estimates for the <font color="blue">American <font color="blue">Centrifuge </font></font>Plant are <font color="blue">based on</font> many     <font color="blue">assumptions</font> that are subject to change as new information <font color="blue">becomes available</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly,  there can be no assurance that <font color="blue">costs associated with</font> the     <font color="blue">American <font color="blue">Centrifuge </font></font>Plant will not be <font color="blue">higher than</font> anticipated</td>
+    </tr>
+    <tr>
+      <td>An increase     in the expected cost of the <font color="blue">American <font color="blue">Centrifuge </font></font>Plant <font color="blue">could <font color="blue">adversely</font> affect</font>     our ability to finance and deploy the <font color="blue">American Centrifuge</font></td>
+    </tr>
+    <tr>
+      <td>In addition, certain actions by DOE are required for the <font color="blue">deployment</font> of     <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font> to proceed, including <font color="blue">USEC and DOE </font>entering     into a long-term lease <font color="blue">agreement</font> for the <font color="blue">facilities</font>, removal of machines,     wastes and other <font color="blue">materials from</font> the <font color="blue">buildings by</font> DOE, and <font color="blue">USEC and DOE </font>    <font color="blue">agreeing on terms</font> for our license of the <font color="blue">centrifuge intellectual property</font></td>
+    </tr>
+    <tr>
+      <td>If  DOE fails to take <font color="blue">appropriate</font> and <font color="blue">timely action</font>, it <font color="blue">could delay</font> or     disrupt our ability to <font color="blue">meet certain milestones</font> in the DOE-USEC Agreement,     which <font color="blue">could delay</font> or prevent successful <font color="blue">demonstration</font> or <font color="blue">deployment</font> of the     <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">technology</font> or affect our ability to obtain <font color="blue">necessary</font>     financing</td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________                Delays in the <font color="blue">demonstration</font> or <font color="blue">deployment</font> of the <font color="blue">American <font color="blue">Centrifuge </font></font>    <font color="blue">technology</font> could harm our position in the market and <font color="blue"><font color="blue">substantially</font> reduce</font>     our revenues, which would <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We     could experience <font color="blue"><font color="blue">difficult</font>ies</font> in attracting and retaining customers and     <font color="blue"><font color="blue">could incur</font> <font color="blue">additional</font> costs</font></td>
+    </tr>
+    <tr>
+      <td>We have contractual <font color="blue">commitments</font> to continue to     operate the Paducah <font color="blue">plant until</font> it is <font color="blue">replaced with</font> the <font color="blue">American <font color="blue">Centrifuge </font></font>    Plant</td>
+    </tr>
+    <tr>
+      <td>Accordingly, delays in <font color="blue">construction</font> of the <font color="blue">American <font color="blue">Centrifuge </font></font>Plant     will require us to continue to produce LEU using the <font color="blue">higher cost gaseous</font>     diffusion process, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our <font color="blue">cash flows</font> and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that we will be able to obtain financing for     <font color="blue">deployment</font>  of  the  <font color="blue">American <font color="blue">Centrifuge </font></font>Plant and other <font color="blue">operations</font> on     acceptable terms</td>
+    </tr>
+    <tr>
+      <td>We will require <font color="blue">significant</font> financing in order to achieve commercial     <font color="blue">deployment</font> of the <font color="blue">American <font color="blue">Centrifuge </font></font>Plant</td>
+    </tr>
+    <tr>
+      <td>In addition, unless we complete     a debt or <font color="blue">equity offering</font> of at least dlra150 million prior to July 19, 2006,     the <font color="blue"><font color="blue">availability</font> under</font> our dlra400 million revolving credit <font color="blue">facility</font> will,     until we complete such an offering, be <font color="blue">reduced by up</font> to dlra150 million</td>
+    </tr>
+    <tr>
+      <td><font color="blue">There     </font>can  be no assurance that <font color="blue">financing beyond amounts available under</font> the     existing credit <font color="blue">facility</font> will be available when required, and we cannot     predict the cost of or the <font color="blue">terms on which such financing will</font> be available</td>
+    </tr>
+    <tr>
+      <td>Factors that <font color="blue">could affect</font> our ability to obtain financing and the cost     of the <font color="blue">financing could</font> include:       •   our ability to secure long-term SWU purchase <font color="blue">commitments</font> from     <font color="blue">customers at adequate prices</font>,         •   downgrades in our credit rating,         •   <font color="blue">market price</font> and <font color="blue">volatility</font> of our <font color="blue">common stock</font>,         •   <font color="blue">general economic</font> and <font color="blue">capital market <font color="blue">conditions</font></font>,         •   <font color="blue">conditions</font> in <font color="blue">energy markets</font>,         •   <font color="blue">regulatory <font color="blue">developments</font></font>,         •   <font color="blue">investor confidence</font> in the industry and in us,         •   our perceived <font color="blue">competitive</font> position,         •   the expected success of our <font color="blue">deployment</font> of the <font color="blue">American <font color="blue">Centrifuge </font></font>and     its expected costs and timing,         •   the continued success of our current <font color="blue">operations</font>, and          •     <font color="blue">restrictive</font>  covenants that limit our operating and financial     <font color="blue">flexibility</font></td>
+    </tr>
+    <tr>
+      <td>The  rights  of  our  <font color="blue">creditors under</font> the <font color="blue">documents governing</font> our     <font color="blue"><font color="blue">indebtedness</font> may limit</font> our operating and financial <font color="blue">flexibility</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">entered into</font> a five-year, revolving credit <font color="blue">facility</font> providing     for an <font color="blue">aggregate commitment</font> of dlra400 million, including up to dlra300 million in     letters of credit, <font color="blue">secured by</font> our assets and the assets of our <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>The revolving credit <font color="blue">facility</font> includes various operating and financial     covenants that restrict our ability, and the ability of our <font color="blue">subsidiaries</font> to,     among other things, incur or prepay other <font color="blue">indebtedness</font>, grant liens, sell     assets,  make  <font color="blue">investments</font>  and  declare  or  pay  dividends  or other     <font color="blue">distributions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Complying </font>with these <font color="blue">covenants may</font> make it more <font color="blue">difficult</font> for     us  to  <font color="blue">successfully</font> execute our business strategy</td>
+    </tr>
+    <tr>
+      <td>For example, these     <font color="blue">covenants could limit</font> the amount of cash we can use to finance the American     <font color="blue">Centrifuge </font>Plant</td>
+    </tr>
+    <tr>
+      <td>The revolving credit <font color="blue">agreement</font> also requires that we     maintain a <font color="blue">minimum amount</font> of inventory</td>
+    </tr>
+    <tr>
+      <td>The revolving credit <font color="blue">facility</font> also     contains  various  reserve  provisions  that may reduce the <font color="blue">facility</font>’s     <font color="blue"><font color="blue">availability</font> periodically</font></td>
+    </tr>
+    <tr>
+      <td>23       _________________________________________________________________                Our failure to comply with <font color="blue">obligations</font> under the revolving credit     <font color="blue">facility</font> could result in an event of <font color="blue">default under</font> the credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>A     default,  if  not  cured  or  waived, could permit acceleration of our     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">indebtedness</font> is <font color="blue">accelerated</font>, we cannot be certain that we     will have <font color="blue">funds available</font> to pay the <font color="blue">accelerated</font> <font color="blue">indebtedness</font> or that we     will have the ability to refinance the <font color="blue">accelerated</font> <font color="blue">indebtedness</font> on terms     favorable to us or at all</td>
+    </tr>
+    <tr>
+      <td>A decrease in prices for SWU and uranium <font color="blue">could <font color="blue">adversely</font> affect</font> our     <font color="blue">profitability</font> in current and future periods</td>
+    </tr>
+    <tr>
+      <td>Changes in the prices of SWU and uranium are influenced by numerous     factors, such as:       •   SWU and uranium production levels and costs in the industry,         •   supply and demand shifts,         •   actions taken by <font color="blue"><font color="blue">government</font>s</font> to regulate, protect or <font color="blue">promote trade</font> in     nuclear material, including but not limited to the <font color="blue">continuation</font> of existing     <font color="blue"><font color="blue">restrictions</font> on <font color="blue">unfairly priced</font> imports</font>,         •   actions of <font color="blue">competitors</font>,         •   <font color="blue">exchange rates</font>,         •   <font color="blue">availability</font> of <font color="blue">alternate fuels</font>, and         •   inflation</td>
+    </tr>
+    <tr>
+      <td>The long-term nature of our <font color="blue">contracts with customers may prolong</font> the     <font color="blue">adverse impact</font> of low <font color="blue">market price</font>s on our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>For example, even     as  prices  increase and we secure new higher-priced contracts, we are     <font color="blue">contractually obligated</font> to deliver SWU <font color="blue">at lower <font color="blue">prices under</font> contracts</font>     <font color="blue">signed prior</font> to the increase</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">inability</font> to increase <font color="blue">prices under</font> long-term contracts could     <font color="blue">adversely</font> affect our results of <font color="blue">operations</font> in current and <font color="blue">future years</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">sell nearly</font> all of our SWU under long-term contracts</td>
+    </tr>
+    <tr>
+      <td>Further, while the multi-year index used to determine     the price of <font color="blue">Russian SWU </font>under the <font color="blue"><font color="blue">Russian Contract</font> </font>increases as market     prices  increase,  the <font color="blue">prices under</font> our long-term <font color="blue">sales contracts</font> with     customers do not</td>
+    </tr>
+    <tr>
+      <td>This, over time, <font color="blue">could <font color="blue">adversely</font> affect</font> our ability to     cover our costs of <font color="blue">sales with revenues earned under customer contracts</font>,     thereby <font color="blue">adversely</font> affecting our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We face <font color="blue">significant</font> competition from three major producers who may be     <font color="blue">less cost sensitive</font> or may be <font color="blue">favored due</font> to <font color="blue">national loyalties</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with three major producers</font>, all of which are wholly or     <font color="blue">substantially</font> owned by <font color="blue"><font color="blue">government</font>s</font>: Eurodif (France), TENEX (Russia), and     Urenco (Germany, Netherlands, UK)</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also compete with</font> Louisiana Energy     Services, a group controlled by Urenco, which plans to construct a uranium     <font color="blue">enrichment plant</font> in New Mexico</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font> may have <font color="blue">greater financial</font>     resources, including access to below-market financing terms and <font color="blue">support from</font>     their  <font color="blue">government</font>  owners,  which  <font color="blue">may enable them</font> to be less cost- or     profit-sensitive</td>
+    </tr>
+    <tr>
+      <td>In  addition,  <font color="blue">decisions</font>  by our <font color="blue">competitors</font> may be     <font color="blue">influenced by political</font> and <font color="blue">economic policy considerations rather than</font>     <font color="blue">commercial considerations</font></td>
+    </tr>
+    <tr>
+      <td>For example, despite the <font color="blue"><font color="blue">relatively</font> flat demand</font>     for  LEU in the markets in which we sell, our <font color="blue">competitors</font> may elect to     increase their production or exports of LEU <font color="blue">thereby depressing prices</font> and     <font color="blue">reducing demand</font> for our LEU, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our revenues, cash     flows and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Similarly, the <font color="blue">elimination</font> or weakening of     existing <font color="blue">restrictions</font> on imports from our <font color="blue">competitors</font> <font color="blue">could <font color="blue">adversely</font> affect</font>     our revenue, <font color="blue">cash flows</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>24       _________________________________________________________________                The release of excess <font color="blue">government</font> stockpiles of <font color="blue"><font color="blue">enriched uranium</font> into</font>     the market could depress <font color="blue">market price</font>s and <font color="blue">reduce demand</font> for LEU from USEC          The US and foreign <font color="blue"><font color="blue">government</font>s</font> have stockpiles of LEU that they could     sell  in  the market</td>
+    </tr>
+    <tr>
+      <td>In addition, LEU may be produced by <font color="blue">downblending</font>     stockpiles  of  highly  <font color="blue">enriched uranium</font> owned by the US and foreign     <font color="blue"><font color="blue">government</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Given the <font color="blue"><font color="blue">relatively</font> flat demand</font> for LEU in the markets in     which we sell, the release of these <font color="blue">stockpiles into</font> the market can depress     prices and <font color="blue">reduce demand</font> for LEU from USEC, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our     revenues, <font color="blue">cash flows</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">dependence on</font> our <font color="blue">largest customers</font> <font color="blue">could <font color="blue">adversely</font> affect</font> us</td>
+    </tr>
+    <tr>
+      <td>Our 10 <font color="blue">largest customers</font> (other than the US <font color="blue">government</font>) represented     52prca of our revenue in 2005, and our three <font color="blue">largest customers</font> represented 21prca     of our revenue in 2005</td>
+    </tr>
+    <tr>
+      <td>A reduction in <font color="blue">purchases from</font> these customers,     <font color="blue">whether due</font> to their decision to increase <font color="blue">purchases from</font> our <font color="blue">competitors</font> or     for other reasons, including a <font color="blue">disruption</font> in their <font color="blue">operations</font> that reduces     their  need for LEU from USEC, <font color="blue">could <font color="blue">adversely</font> affect</font> our business and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Further, because these customers purchase under     long-term contracts, as these <font color="blue">contracts come up</font> for renewal, a <font color="blue">decision by</font>     one or more of these customers to <font color="blue">purchase less</font> SWU from USEC and more SWU     from one or more of our <font color="blue">competitors</font> could negatively affect our business and     results of <font color="blue">operations</font> for <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>Because price is the most <font color="blue">significant</font> factor in a customer’s choice of     an enricher, customers may reduce their <font color="blue">purchases from</font> us if we attempt to     increase our prices in order to <font color="blue">offset increases</font> in our costs</td>
+    </tr>
+    <tr>
+      <td>Moreover,     once lost, customers are <font color="blue">difficult</font> to regain because <font color="blue">customers typically</font>     purchase under long-term contracts</td>
+    </tr>
+    <tr>
+      <td>Therefore, given the need to maintain     existing customer relationships, particularly with our <font color="blue">largest customers</font>,     our ability to <font color="blue">raise prices</font> in order to respond to increases in costs or     other <font color="blue">developments</font> is limited</td>
+    </tr>
+    <tr>
+      <td>Our ability to compete in <font color="blue">certain foreign markets may</font> be limited for     political, legal and <font color="blue">economic reasons</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Agreements </font>for <font color="blue">cooperation</font> between the US <font color="blue">government</font> and various     foreign <font color="blue"><font color="blue">government</font>s</font> control the export of nuclear <font color="blue">materials from</font> the United     States</td>
+    </tr>
+    <tr>
+      <td>If any of the <font color="blue">agreement</font>s with countries in which our customers are     located were to lapse, terminate or be amended, it is possible we would not     be able to make sales or deliver LEU to customers in those countries</td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font><font color="blue">could <font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Purchases of SWU </font><font color="blue">by customers</font> in the European Union (EU) is subject to     a policy of the <font color="blue">Euratom Supply Agency </font>that seeks to <font color="blue">limit foreign enriched</font>     uranium to no more than 20prca of EU <font color="blue">consumption</font> per year</td>
+    </tr>
+    <tr>
+      <td>Further, we are     precluded  <font color="blue">from selling</font> in the Russian Federation by the absence of an     <font color="blue">agreement</font> for <font color="blue">cooperation</font> that <font color="blue">permits exports</font> to Russia</td>
+    </tr>
+    <tr>
+      <td>Recent court <font color="blue">decisions</font> may reduce our ability to <font color="blue">protect ourselves from</font>     unfairly  priced  imports, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Recent <font color="blue">decisions</font> of the US Court of International Trade and the US     Court of Appeals for the Federal Circuit <font color="blue">could preclude</font> the US Commerce     Department <font color="blue">from imposing antidumping</font> and <font color="blue">countervailing duties</font> to offset     <font color="blue">unfairly priced</font> LEU <font color="blue">imported from foreign countries</font></td>
+    </tr>
+    <tr>
+      <td>Under these rulings, we     would be unable to use certain US <font color="blue">trade laws</font> to <font color="blue">protect us from unfairly</font>     priced  LEU in the future, thereby increasing the <font color="blue">possibility</font> that our     <font color="blue">competitors</font> will seek to <font color="blue">increase market</font> share <font color="blue">by reducing prices</font> to unfair     levels</td>
+    </tr>
+    <tr>
+      <td>An increase in our <font color="blue">competitors</font>’ market share and the <font color="blue">accompanying</font>     reduction in <font color="blue">market price</font>s <font color="blue">could <font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>25       _________________________________________________________________                Our <font color="blue">future prospects</font> are <font color="blue">tied directly</font> to the <font color="blue">nuclear energy industry</font>     worldwide</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Potential  </font>events that <font color="blue">could affect</font> either nuclear reactors under     <font color="blue">contract with us</font> or the <font color="blue">nuclear industry as</font> a whole, include:       •   <font color="blue"><font color="blue">accident</font>s</font>, terrorism or other <font color="blue">incidents</font>, at nuclear <font color="blue">facilities</font> or     <font color="blue">involving shipments</font> of <font color="blue">nuclear materials</font>,         •   <font color="blue">regulatory actions</font> or changes in <font color="blue"><font color="blue">regulations</font> by nuclear regulatory</font>     bodies,         •   <font color="blue">disruption</font>s in other areas of the nuclear fuel cycle, such as uranium     supplies or <font color="blue">conversion</font>,         •   <font color="blue">civic opposition</font> to, or changes in <font color="blue">government</font> policies regarding,     nuclear <font color="blue">operations</font>,         •   business <font color="blue">decisions</font> concerning reactors or reactor <font color="blue">operations</font>,         •   the need for <font color="blue">generating capacity</font>, or         •   <font color="blue">consolidation within</font> the <font color="blue">electric power</font> industry</td>
+    </tr>
+    <tr>
+      <td>These events <font color="blue">could <font color="blue">adversely</font> affect</font> us to the extent they result in a     reduction or <font color="blue">elimination</font> of contractual <font color="blue">requirements</font>, the suspension or     reduction of nuclear reactor <font color="blue">operations</font>, the reduction of supplies of raw     materials, lower demand, burdensome regulation, <font color="blue">disruption</font>s of shipments or     production,  increased  <font color="blue">operational costs</font> or <font color="blue"><font color="blue">difficult</font>ies</font> or increased     <font color="blue">liability</font> for actual or <font color="blue">threatened property damage</font> or <font color="blue">personal injury</font></td>
+    </tr>
+    <tr>
+      <td>Changes to, or <font color="blue">termination</font> of, any of our <font color="blue">agreement</font>s with the US     <font color="blue">government</font>, or <font color="blue">deterioration</font> in our <font color="blue">relationship with</font> the US <font color="blue">government</font>,     <font color="blue">could <font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>USEC, or our <font color="blue">subsidiaries</font>, are a party to a number of <font color="blue">agreement</font>s and     <font color="blue">arrangement</font>s with the US <font color="blue">government</font> that are important to our business,     including:       •   leases for the <font color="blue">gaseous diffusion plants</font> and <font color="blue">American <font color="blue">Centrifuge </font></font>    Demonstration <font color="blue">facilities</font>,          •    the <font color="blue">Executive Agent MOA </font>under which we are designated the US     Executive Agent and purchase the SWU component of LEU under the Russian     Contract,          •   the DOE-USEC Agreement and other <font color="blue">agreement</font>s that <font color="blue">address issues</font>     relating  to  the  <font color="blue">domestic uranium enrichment industry</font> and centrifuge     <font color="blue">technology</font>,         •   <font color="blue">electric power</font> purchase <font color="blue">agreement</font>s with the <font color="blue">Tennessee Valley Authority </font>    and DOE,          •   <font color="blue">agreement</font>s under which DOE takes <font color="blue">certain quantities</font> of depleted     uranium we generate,          •   contract work for <font color="blue">DOE and DOE </font><font color="blue">contractors at</font> the <font color="blue">Portsmouth </font>and     Paducah plants, including contracts for maintenance of the <font color="blue">Portsmouth </font>plant     in “<font color="blue">cold standby</font>” or “<font color="blue">cold shutdown</font>” states,         •   an <font color="blue">agreement</font> with DOE for the transfer and <font color="blue">downblending</font> of highly     <font color="blue">enriched uranium</font>, and         •   an <font color="blue">agreement</font> with DOE <font color="blue">transferring uranium</font> to us as a payment-in-kind     for contract work to process and clean up out-of-specification uranium for     DOE          Termination or expiration of one or more these <font color="blue">agreement</font>s, without     <font color="blue">replacement</font> with an equivalent <font color="blue">agreement</font> or <font color="blue">arrangement</font> that accomplishes     the same <font color="blue">objectives</font> as the terminated or expired <font color="blue">agreement</font>(s) could reduce     our <font color="blue">profitability</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">deterioration</font> in     our <font color="blue">relationship with</font> the US agencies that are parties to these <font color="blue">agreement</font>s     could  impair  or  impede  our ability to <font color="blue">successfully</font> implement these     <font color="blue">agreement</font>s, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>26       _________________________________________________________________                Our  existing  US <font color="blue">government</font> contracts are subject to continued     <font color="blue"><font color="blue">appropriations</font> by</font> <font color="blue">Congress </font>and may be terminated if future funding is not     made available</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>13prca of our revenues are from US <font color="blue">government</font> contracts</td>
+    </tr>
+    <tr>
+      <td>All  contract  work  for  DOE,  including  cold  standby,  cleanup  of     out-of-specification uranium and certain NAC consulting and <font color="blue">transportation</font>     <font color="blue">activities</font>, is subject to the <font color="blue">availability</font> of DOE funding and <font color="blue">congressional</font>     <font color="blue">appropriations</font></td>
+    </tr>
+    <tr>
+      <td>If  funds were not available, we could be required to     terminate these <font color="blue">operations</font> and incur related <font color="blue">termination</font> costs</td>
+    </tr>
+    <tr>
+      <td>Revenue from US <font color="blue">government</font> contract work is <font color="blue">based on</font> cost accounting     standards and <font color="blue">allowable costs</font> that are subject to audit by the Defense     Contract Audit Agency</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Allowable </font>costs include <font color="blue">direct costs as well as</font>     <font color="blue">allocations</font>  of  indirect  plant  and  <font color="blue">corporate overhead costs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Audit     </font>adjustments could reduce the amounts we are allowed to bill for DOE contract     work or require us to refund to DOE a portion of amounts already billed</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are highly regulated by the NRC and DOE          Our  <font color="blue">operations</font>, including the Paducah and <font color="blue">Portsmouth </font>plants, the     <font color="blue">American <font color="blue">Centrifuge </font></font>Demonstration Facility, and NAC, are regulated by the     NRC In addition, the <font color="blue">construction</font> and operation of the <font color="blue">American <font color="blue">Centrifuge </font></font>    Plant must be <font color="blue">licensed by</font> the NRC, <font color="blue">which would regulate</font> our <font color="blue">activities</font> at     the plant</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">gaseous diffusion plants</font> are required to be <font color="blue">recertified every five</font>     years and the term of the <font color="blue">current certification expires on</font> <font color="blue">December </font>31,     2008</td>
+    </tr>
+    <tr>
+      <td>The NRC could fail to <font color="blue">renew either</font> or both of the <font color="blue">certificate</font>s if it     determines that we are foreign owned or controlled or the issuance of a     <font color="blue">certificate</font>  would  be  adverse  to  <font color="blue">United States </font>defense or security     <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">certificate</font> <font color="blue">for the Paducah </font>plant were not renewed, we     could no longer produce LEU at the Paducah plant, which would threaten our     ability to make <font color="blue">deliveries</font> to customers</td>
+    </tr>
+    <tr>
+      <td>The NRC has the authority to issue notices of violation for violations     of  the  Atomic  Energy Act of 1954, NRC <font color="blue">regulations</font> and <font color="blue">conditions</font> of     licenses, <font color="blue">certificate</font>s of compliance, or orders</td>
+    </tr>
+    <tr>
+      <td>The NRC has the authority     to <font color="blue">impose civil penalties</font> for some violations of its <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Penalties     under  NRC  <font color="blue">regulations</font> could include substantial fines, imposition of     <font color="blue">additional</font>  <font color="blue">requirements</font>  or  withdrawal  or suspension of licenses or     <font color="blue">certificate</font>s</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">significant</font> penalties were <font color="blue">imposed on us</font>, they could     <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">American <font color="blue">Centrifuge </font></font>Demonstration Facility is licensed to operate     until the earlier of <font color="blue">February </font>24, 2009 or the date the <font color="blue">temporary lease</font>, or     long-term <font color="blue">agreement</font> that is expected to supersede the <font color="blue">temporary lease</font>, with     DOE expires</td>
+    </tr>
+    <tr>
+      <td>Early <font color="blue">termination</font> of the license <font color="blue">could affect</font> our ability to     finance, construct and operate the <font color="blue">American <font color="blue">Centrifuge </font></font>Plant</td>
+    </tr>
+    <tr>
+      <td>Similarly,     failure  to obtain a license for the <font color="blue">construction</font> and operation of the     American  <font color="blue">Centrifuge </font>Plant in a <font color="blue">timely manner could</font> have a <font color="blue">significant</font>     <font color="blue">adverse impact</font> on our ability to finance and deploy the <font color="blue">American <font color="blue">Centrifuge </font></font>    <font color="blue">technology</font>  or to meet the <font color="blue">requirements</font> of the DOE-USEC Agreement</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">American <font color="blue">Centrifuge </font></font><font color="blue">facilities</font> in Oak Ridge are subject to <font color="blue">regulation by</font>     DOE  DOE  has  the authority to <font color="blue">impose civil penalties</font> and <font color="blue">additional</font>     <font color="blue">requirements</font> <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>27       _________________________________________________________________                Our  <font color="blue">operations</font>  are subject to <font color="blue">numerous federal</font>, state and local     <font color="blue"><font color="blue">environmental</font> protection laws</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>We incur substantial costs for <font color="blue">compliance with <font color="blue">environmental</font> laws</font> and     <font color="blue">regulations</font>, including the handling, treatment and disposal of <font color="blue">hazardous</font>,     low-level  <font color="blue">radioactive</font>  and  <font color="blue">mixed wastes generated as</font> a result of our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unanticipated </font>events or <font color="blue">regulatory <font color="blue">developments</font></font>, however, could     cause the amount and timing of <font color="blue">future <font color="blue">environmental</font> expenditures</font> to vary     <font color="blue">substantially</font> from those expected</td>
+    </tr>
+    <tr>
+      <td>Under a cleanup <font color="blue">agreement</font> with the EPA, we <font color="blue">removed certain</font> material     from the Starmet site in <font color="blue">South Carolina </font>that was <font color="blue">attributable</font> to quantities     of <font color="blue">depleted uranium</font> we had <font color="blue">sent there under</font> a 1998 contract</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could incur</font>     <font color="blue">additional</font> <font color="blue">costs associated with</font> our share of costs for cleanup of the     Starmet site, resulting from a variety of factors, including a <font color="blue">decision by</font>     federal or state agencies to <font color="blue">recover costs</font> for <font color="blue">prior cleanup</font> work or require     <font color="blue">additional</font> remediation at the site</td>
+    </tr>
+    <tr>
+      <td>Pursuant to <font color="blue">numerous federal</font>, state and local <font color="blue">environmental</font> laws and     <font color="blue">regulations</font>, we are required to hold multiple permits</td>
+    </tr>
+    <tr>
+      <td>Some permits require     periodic  renewal or review of their <font color="blue">conditions</font>, and we <font color="blue">cannot predict</font>     whether we will be able to <font color="blue">renew such permits</font> or whether material changes in     permit <font color="blue">conditions</font> will be imposed</td>
+    </tr>
+    <tr>
+      <td>Changes in permits could increase costs     of producing LEU and reduce our <font color="blue">profitability</font> while an <font color="blue">inability</font> to secure     or renew permits could prevent us from producing LEU needed to meet our     delivery <font color="blue">obligations</font> to customers</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> involve the use, <font color="blue">transportation</font> and disposal of toxic,     <font color="blue">hazardous</font> and/or <font color="blue">radioactive</font> chemicals and could result in <font color="blue">liability</font> without     regard to our fault or negligence</td>
+    </tr>
+    <tr>
+      <td>Our  plant  <font color="blue">operations</font>  involve  the use of toxic, <font color="blue">hazardous</font>, and     <font color="blue">radioactive</font> chemicals</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">chemical release would primarily pose</font> a <font color="blue">health risk</font>     to humans or animals in proximity to the release</td>
+    </tr>
+    <tr>
+      <td>If an <font color="blue">accident</font> were to     occur, its severity could be <font color="blue">significant</font>ly affected by the volume of the     release and the speed of corrective action taken by plant emergency response     personnel, as well as other <font color="blue">factors beyond</font> our control, such as weather and     wind <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Actions taken in response to an actual or suspected release     of <font color="blue">chemicals could</font> result in <font color="blue">significant</font> costs</td>
+    </tr>
+    <tr>
+      <td>NAC’s business involves providing products and services for the storage     and <font color="blue">transportation</font> of toxic, <font color="blue">hazardous</font> and <font color="blue">radioactive</font> materials, which, if     released or mishandled, could cause <font color="blue">personal injury</font> and property damage     (including <font color="blue">environmental</font> contamination)</td>
+    </tr>
+    <tr>
+      <td>The Price-Anderson Act requires DOE to indemnify USEC against claims     for public <font color="blue">liability</font> arising out of or in <font color="blue">connection</font> with <font color="blue">activities</font> under     the lease resulting from a <font color="blue">nuclear incident</font> or <font color="blue"><font color="blue">precautionary</font> <font color="blue">evacuation</font></font></td>
+    </tr>
+    <tr>
+      <td>If     an incident or <font color="blue">evacuation</font> is not covered under Price-Anderson, we could be     held liable for <font color="blue">damages regardless</font> of fault, <font color="blue">which could</font> have an adverse     effect on our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection</font>     with international <font color="blue">transportation</font> of LEU, it is possible for a claim to be     asserted which may not <font color="blue">fall within</font> the <font color="blue">indemnification under</font> Price-Anderson</td>
+    </tr>
+    <tr>
+      <td>In  our  contracts,  USEC  and NAC seek to <font color="blue">protect ourselves from</font>     <font color="blue">liability</font>, but there is no assurance that such contractual <font color="blue">limitations</font> on     <font color="blue">liability</font> will be effective in all cases or that our insurance will cover     all the liabilities we have assumed under those contracts</td>
+    </tr>
+    <tr>
+      <td>The costs of     defending against a claim arising out of a <font color="blue">nuclear incident</font> or <font color="blue">precautionary</font>     <font color="blue">evacuation</font>, and any <font color="blue">damages awarded as</font> a result of such a claim, could     <font color="blue">adversely</font> affect our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>28       _________________________________________________________________                The dollar amount of our sales backlog, as stated at any given time, is     not necessarily indicative of our <font color="blue">future earnings</font></td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005 our sales backlog <font color="blue">based on</font> existing contracts     was <font color="blue">approximately</font> dlra5dtta9 billion through 2015 (dlra5dtta1 billion through 2010     including dlra1dtta5 billion expected to be delivered in 2006)</td>
+    </tr>
+    <tr>
+      <td>Our backlog of sales is estimated from     <font color="blue">customer predictions</font> of <font color="blue">future purchases</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that the     <font color="blue">customers will</font> complete these purchases in the currently anticipated time     frame or at all</td>
+    </tr>
+    <tr>
+      <td>Reductions in backlog due to operational <font color="blue"><font color="blue">difficult</font>ies</font> or     changes in <font color="blue">requirements</font> of a customer or for other reasons could <font color="blue">adversely</font>     affect the revenues we actually receive from contracts included in the     backlog</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in our costs of production or other factors could cause     some of the sales included in our backlog to be at prices that are below our     cost of sales, <font color="blue">which <font color="blue">could <font color="blue">adversely</font> affect</font></font> our results of <font color="blue">operations</font> in     <font color="blue">future years</font></td>
+    </tr>
+    <tr>
+      <td>We use estimates in accounting for the future disposition of depleted     uranium and changes in these estimates or in actual <font color="blue">costs could</font> affect our     <font color="blue">future financial</font> results and liquidity</td>
+    </tr>
+    <tr>
+      <td>We store <font color="blue">depleted uranium</font> at the Paducah and <font color="blue">Portsmouth </font>plants and     accrue estimated costs for the future disposition of the <font color="blue">depleted uranium</font></td>
+    </tr>
+    <tr>
+      <td>The long-term <font color="blue">liability</font> for <font color="blue">depleted uranium</font> is <font color="blue">dependent</font> upon the volume of     <font color="blue">depleted uranium</font> generated and estimated processing, <font color="blue">transportation</font> and     disposal costs, which involves many <font color="blue">assumptions</font></td>
+    </tr>
+    <tr>
+      <td>Our estimated cost and     accrued  <font color="blue">liability</font>  are  subject to changes as new information becomes     available, and an increase in the estimate would increase our production     costs and have an adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate that we will send most or all of our <font color="blue">depleted uranium</font> to     DOE for disposition unless a more economic disposal option is available</td>
+    </tr>
+    <tr>
+      <td>DOE     is constructing <font color="blue">facilities</font> at the Paducah and <font color="blue">Portsmouth </font>plants to process     large quantities of <font color="blue">depleted uranium</font> owned by DOE and, under federal law,     DOE would also process our <font color="blue">depleted uranium</font> if we provided it to DOE We     would be required to reimburse DOE for costs of disposal, including a pro     rata share of capital costs</td>
+    </tr>
+    <tr>
+      <td>Our current estimated cost for <font color="blue">depleted uranium</font>     disposal is based primarily on projected cost data obtained from DOE without     <font color="blue">consideration given</font> to <font color="blue">unidentified contingencies</font> or reserves</td>
+    </tr>
+    <tr>
+      <td>This estimate     is less than a DOE estimate used in our NRC license application for the     American  <font color="blue">Centrifuge </font>Plant that included <font color="blue">unidentified contingencies</font> or     reserves</td>
+    </tr>
+    <tr>
+      <td>Our estimate was increased in 2005 and could be increased again as     <font color="blue">additional</font> information <font color="blue">becomes available</font></td>
+    </tr>
+    <tr>
+      <td>We are also required to issue letters of credit or other financial     assurances to secure a portion of our accrued <font color="blue">liability</font> for <font color="blue">depleted uranium</font>     disposal</td>
+    </tr>
+    <tr>
+      <td>Therefore, an increase in our estimate will require us to provide     <font color="blue">additional</font> financial assurance and <font color="blue">could <font color="blue">adversely</font> affect</font> our liquidity</td>
+    </tr>
+    <tr>
+      <td>The     amount  of  future  depleted  uranium  disposal  <font color="blue">costs could</font> also vary     <font color="blue">substantially</font> from amounts accrued and an increase in our actual cost of     <font color="blue">disposal could</font> have a material <font color="blue">adverse impact</font> on our results of <font color="blue">operations</font>     in <font color="blue">future years</font></td>
+    </tr>
+    <tr>
+      <td>For  <font color="blue">additional</font> information, see <font color="blue">Critical Accounting Estimates </font>in     Management’s Discussion and Analysis of Financial Condition and Results of     Operations, and note 10 to our <font color="blue">consolidated</font> financial statements</td>
+    </tr>
+    <tr>
+      <td>Deferral of revenue recognition could result in <font color="blue">volatility</font> in our     quarterly and annual results</td>
+    </tr>
+    <tr>
+      <td>Consequently, in sales transactions     where we have received payment and title has transferred to the customer but     delivery has not occurred because the terms of the <font color="blue">agreement</font> require us to     hold the uranium to which the customer has title or because a customer     <font color="blue">encounters</font>  brief  delays in taking delivery of LEU at our <font color="blue">facilities</font>,     recognition of revenue is deferred until the uranium or                                         29       _________________________________________________________________           LEU  is physically delivered</td>
+    </tr>
+    <tr>
+      <td>This deferral can potentially be over an     indefinite period and is outside our control and can result in <font color="blue">volatility</font> in     our quarterly and annual results</td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">significant</font> amount of revenue is     deferred  or  a  <font color="blue">significant</font>  amount of <font color="blue">previously</font> deferred revenue is     recognized, in a given period, earnings in that period will be affected,     <font color="blue">which could</font> result in <font color="blue">volatility</font> in our quarterly and annual results</td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">December </font>31,  2005 deferred revenue was dlra106dtta8 million</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional</font>     information on our accounting policy on revenue recognition, see note 8 to     our <font color="blue">consolidated</font> financial statements</td>
+    </tr>
+    <tr>
+      <td>Our operating results may fluctuate <font color="blue">significant</font>ly from quarter to     quarter, and even year to year, <font color="blue">which could</font> have an adverse effect on our     <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>Customer payments for the SWU component of LEU typically average dlra12dtta0     <font color="blue">million per</font> order</td>
+    </tr>
+    <tr>
+      <td>As a result, a <font color="blue">relatively</font> small change in the timing of     <font color="blue">customer orders may</font> cause operating results to be <font color="blue">substantially</font> above or     below expectations, <font color="blue">which could</font> have an adverse effect on our <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>The levels of returns on pension and post-retirement plan assets,     changes in <font color="blue">interest rates</font> and other <font color="blue">factors affecting</font> the amounts we have to     contribute to fund future pension liabilities <font color="blue">could <font color="blue">adversely</font> affect</font> our     earnings in future periods</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">earnings may</font> be positively or <font color="blue">negatively impacted by</font> the amount of     expense we record for our <font color="blue">employee benefit</font> plans</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">valuations</font> are <font color="blue">based on</font> <font color="blue">assumptions</font> that     we make relating to <font color="blue">financial market</font> and other economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes  </font>   in key economic indicators can result in changes in the <font color="blue">assumptions</font> we use</td>
+    </tr>
+    <tr>
+      <td>The  key year-end <font color="blue">assumptions</font> used to estimate pension expense for the     following year are the discount rate, the expected rate of return on plan     assets, healthcare cost trend rates and the rate of increase in future     <font color="blue">compensation levels</font></td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional</font> information and a discussion regarding     how our financial statements can be affected by pension plan accounting     policies, see <font color="blue">Critical Accounting Estimates </font>in Management’s Discussion and     Analysis of Financial Condition and Results of Operations, and note 12 to     our <font color="blue">consolidated</font> financial statements</td>
+    </tr>
+    <tr>
+      <td>Anti-takeover provisions in Delaware law and in our charter, bylaws and     shareholder rights plan <font color="blue">could delay</font> or prevent an acquisition of USEC          We are a Delaware corporation, and the anti-takeover provisions of     Delaware <font color="blue">law impose various impediments</font> to the ability of a <font color="blue">third party</font> to     acquire  control  of our company, even if a change of control would be     <font color="blue">beneficial</font> to our existing shareholders</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">certificate</font> of incorporation,     or charter, establishes <font color="blue">restrictions</font> on foreign ownership of our securities</td>
+    </tr>
+    <tr>
+      <td>Other provisions of our charter and bylaws may make it more <font color="blue">difficult</font> for a     <font color="blue">third party</font> to acquire control of us without the consent of our board of     directors</td>
+    </tr>
+    <tr>
+      <td>We also have adopted a shareholder rights plan, <font color="blue">which could</font>     increase  the  cost  of, or prevent, a takeover attempt</td>
+    </tr>
+    <tr>
+      <td>These various     <font color="blue">restrictions</font>  could deprive shareholders of the opportunity to realize     takeover premiums for their shares</td>
+    </tr>
+  </tbody>
+</table>

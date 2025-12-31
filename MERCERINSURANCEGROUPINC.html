@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "6: losses from", fill: "#3cd070"},
+{source: "6: losses from", target: "6: catastrophe", fill: "#3cd070"},
+{source: "6: catastrophe", target: "6: total amount", fill: "#3cd070"},
+{source: "6: total amount", target: "6: insured exposure", fill: "#3cd070"},
+{source: "6: insured exposure", target: "6: area affected by", fill: "#3cd070"},
+{source: "6: losses from", target: "7: mitigate catastrophe risk by reinsuring", fill: "#fbcce7"},
+{source: "7: mitigate catastrophe risk by reinsuring", target: "8: reinsurance may prove", fill: "#008080"},
+{source: "8: reinsurance may prove", target: "8: major catastrophic loss exceeds", fill: "#008080"},
+{source: "8: major catastrophic loss exceeds", target: "8: reinsurance limit", fill: "#008080"},
+{source: "8: reinsurance limit", target: "8: catastrophic losses", fill: "#008080"},
+{source: "8: catastrophic losses", target: "8: which individually fall", fill: "#008080"},
+{source: "8: which individually fall", target: "8: retention level", fill: "#008080"},
+{source: "8: reinsurance may prove", target: "9: accounting regulations", fill: "#deb887"},
+{source: "9: accounting regulations", target: "9: permit insurers", fill: "#deb887"},
+{source: "9: permit insurers", target: "9: catastrophic events until", fill: "#deb887"},
+{source: "9: catastrophic events until", target: "9: from catastrophic", fill: "#deb887"},
+{source: "9: from catastrophic", target: "9: events could", fill: "#deb887"},
+{source: "9: events could", target: "9: volatility", fill: "#deb887"},
+{source: "9: volatility", target: "9: fiscal quarter", fill: "#deb887"},
+{source: "9: fiscal quarter", target: "9: adverse affect on", fill: "#deb887"},
+{source: "9: adverse affect on", target: "9: financial condition", fill: "#deb887"},
+{source: "9: financial condition", target: "9: operations", fill: "#deb887"},
+{source: "9: accounting regulations", target: "10: adversely affected", fill: "#e6e8fa"},
+{source: "10: adversely affected", target: "27: underwriting risks depends on", fill: "#49796b"},
+{source: "27: underwriting risks depends on", target: "27: availability", fill: "#49796b"},
+{source: "27: availability", target: "27: reinsurance coverage", fill: "#49796b"},
+{source: "27: underwriting risks depends on", target: "28: Reinsurance ", fill: "#fc3"},
+{source: "28: Reinsurance ", target: "28: transferring", fill: "#fc3"},
+{source: "28: transferring", target: "28: insurance company", fill: "#fc3"},
+{source: "28: insurance company", target: "28: insurance companys liability", fill: "#fc3"},
+{source: "28: insurance companys liability", target: "28: premium under", fill: "#fc3"},
+{source: "28: premium under", target: "28: insurance policy", fill: "#fc3"},
+{source: "28: Reinsurance ", target: "39: risk with respect", fill: "#ff0"},
+{source: "39: risk with respect", target: "39: reinsurers with whom", fill: "#ff0"},
+{source: "39: reinsurers with whom", target: "39: buying reinsurance", fill: "#ff0"},
+{source: "39: buying reinsurance", target: "39: relieve us", fill: "#ff0"},
+{source: "39: relieve us", target: "39: liability", fill: "#ff0"},
+{source: "39: liability", target: "39: policyholders", fill: "#ff0"},
+{source: "39: risk with respect", target: "46: comply with insurance industry regulations", fill: "#c2b280"},
+{source: "46: comply with insurance industry regulations", target: "46: regulations", fill: "#c2b280"},
+{source: "46: comply with insurance industry regulations", target: "70: casualty insurance market", fill: "#c9dc87"},
+{source: "70: casualty insurance market", target: "70: highly competitive", fill: "#c9dc87"},
+{source: "70: casualty insurance market", target: "START_HERE", fill: "#c9dc87"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Property and Casualty Insurance</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Policy</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Insurance">Insurance</a></td>
+      <td>Securitization is the financial practice of pooling various types of contractual debt such as residential mortgages, commercial mortgages, auto loans or credit card debt obligations (or other non-debt assets which generate receivables) and selling their related cash flows to third party investors as securities, which may be described as bonds, pass-through securities, or collateralized debt obligations (CDOs). Investors are repaid from the principal and interest cash flows collected from the underlying debt and redistributed through the capital structure of the new financing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nationwide_Mutual_Insurance_Company">Nationwide Mutual Insurance Company</a></td>
+      <td>Nationwide Mutual Insurance Company and affiliated companies, commonly shortened to Nationwide, is a group of large U.S. insurance and financial services companies based in Columbus, OH. The company also operates regional headquarters in Scottsdale, AZ; Des Moines, IA; San Antonio, TX; Gainesville, FL; Raleigh, NC; Sacramento, CA, and Westerville, OH. Nationwide currently has approximately 25,391 employees, and is ranked #76 in the 2019 Fortune 500 list. Nationwide is currently ranked #25 in Fortune's "100 Best Companies to Work For".Nationwide Financial Services (NFS), a component of the group, was partially floated on the New York Stock Exchange prior to being repurchased by Nationwide Mutual in 2009.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liberty_Mutual">Liberty Mutual</a></td>
+      <td>Liberty Mutual Group is an American diversified global insurer and the sixth-largest property and casualty insurer in the United States. It ranks 71st on the Fortune 100 list of largest corporations in the United States based on 2020 revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Life_insurance">Life insurance</a></td>
+      <td>Life insurance (or life assurance, especially in the Commonwealth of Nations) is a contract between an insurance policy holder and an insurer or assurer, where the insurer promises to pay a designated beneficiary a sum of money upon the death of an insured person (often the policy holder). Depending on the contract, other events such as terminal illness or critical illness can also trigger payment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Life_Insurance_Corporation">Life Insurance Corporation</a></td>
+      <td>Life Insurance Corporation of India (LIC) is an Indian statutory insurance and investment corporation headquartered in the city of Mumbai, India. It is under the ownership of Government of India.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lloyd's_of_London">Lloyd's of London</a></td>
+      <td>Lloyd's of London, generally known simply as Lloyd's, is an insurance and reinsurance market located in London, United Kingdom. Unlike most of its competitors in the industry, it is not an insurance company; rather, Lloyd's is a corporate body governed by the Lloyd's Act 1871 and subsequent Acts of Parliament.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Health_insurance">Health insurance</a></td>
+      <td>Health insurance or medical insurance (also known as medical aid in South Africa) is a type of insurance that covers the whole or a part of the risk of a person incurring medical expenses. As with other types of insurance is risk among many individuals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/MetLife">MetLife</a></td>
+      <td>MetLife, Inc. is the holding corporation for the Metropolitan Life Insurance Company (MLIC), better known as MetLife, and its affiliates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mutual_insurance">Mutual insurance</a></td>
+      <td>A mutual insurance company is an insurance company owned entirely by its policyholders. Any profits earned by a mutual insurance company are either retained within the company or rebated to policyholders in the form of dividend distributions or reduced future premiums.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Melinda_Ballard">Melinda Ballard</a></td>
+      <td>Melinda Ballard (1958–2013) was a financial executive and activist for insurance policyholders in America. In 1999, she sued her insurer over mold damage in her 22-room family home in Dripping Springs, Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/FM_Global">FM Global</a></td>
+      <td>FM Global is an American mutual insurance company based in Johnston, Rhode Island, United States, with offices worldwide, that specializes in loss prevention services primarily to large corporations throughout the world in the Highly Protected Risk (HPR) property insurance market sector. "FM Global" is the communicative name of the company, whereas the legal name is "Factory Mutual Insurance Company".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Universal_life_insurance">Universal life insurance</a></td>
+      <td>Universal life insurance (often shortened to UL) is a type of cash value life insurance, sold primarily in the United States. Under the terms of the policy, the excess of premium payments above the current cost of insurance is credited to the cash value of the policy, which is credited each month with interest.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Embedded_value">Embedded value</a></td>
+      <td>The Embedded Value (EV) of a life insurance company is the present value of future profits plus adjusted net asset value. It is a construct from the field of actuarial science which allows insurance companies to be valued.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MERCER INSURANCE GROUP INC      ITEM 1A RISK FACTORS       Risks Relating to Our Industry       Catastrophic Events             As a property and <font color="blue">casualty insurer</font>, we are subject to claims from     <font color="blue"><font color="blue">catastrophe</font>s</font> that may have a <font color="blue">significant</font> <font color="blue">negative impact</font> on operating and     financial  results</td>
+    </tr>
+    <tr>
+      <td>We have experienced <font color="blue"><font color="blue">catastrophe</font> losses</font>, and can be     expected to experience <font color="blue"><font color="blue">catastrophe</font> losses</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Catastrophe </font>losses     can be caused <font color="blue">by various events</font>, including coastal storms, snow storms, ice     storms, freezing, hurricanes, earthquakes, tornadoes, wind, hail, fires, and     other  natural  or man-made disasters</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also face exposure</font> to losses     resulting from acts of war, acts of terrorism and <font color="blue">political instability</font></td>
+    </tr>
+    <tr>
+      <td>The extent     of <font color="blue">losses from</font> a <font color="blue">catastrophe</font> is a function of both the <font color="blue">total amount</font> of     <font color="blue">insured exposure</font> in the <font color="blue">area affected by</font> the event and the severity of the     event</td>
+    </tr>
+    <tr>
+      <td>We attempt to mitigate <font color="blue">catastrophe</font> risk by reinsuring a portion of our     exposure</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">reinsurance may prove</font> inadequate if:         •  A <font color="blue">major catastrophic loss exceeds</font> the <font color="blue">reinsurance limit</font>         •  A number of small <font color="blue">catastrophic losses</font> occur <font color="blue">which individually fall</font>     below the <font color="blue">retention level</font></td>
+    </tr>
+    <tr>
+      <td>In addition, because <font color="blue">accounting <font color="blue">regulations</font></font> do not <font color="blue">permit insurers</font> to     reserve for <font color="blue">catastrophic events until</font> they occur, claims <font color="blue">from catastrophic</font>     <font color="blue">events could</font> cause substantial <font color="blue">volatility</font> in our financial results for any     <font color="blue">fiscal quarter</font> or year and could have a material <font color="blue">adverse affect on</font> our     <font color="blue">financial condition</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to write new     business also could be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>Loss Reserves             We maintain reserves to <font color="blue">cover amounts</font> we estimate will be needed to     pay for <font color="blue">insured losses</font> and for the <font color="blue">expenses necessary</font> to settle claims</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Estimating </font>loss and <font color="blue">loss expense reserves</font> is a <font color="blue">difficult</font> and <font color="blue">complex process</font>     involving many variables and <font color="blue">subjective judgments</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Estimates </font>are <font color="blue">based on</font>     <font color="blue">management assessment</font> of the <font color="blue">known facts</font> and circumstances, prediction of     <font color="blue">future events</font>, claims severity and frequency and other subjective                                         29       _________________________________________________________________    [80]Table of <font color="blue">Contents       </font>factors</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">regularly review</font> our <font color="blue">reserving techniques</font> and our <font color="blue">overall amount</font>     of reserves</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">review historical data</font> and consider the impact of various     <font color="blue">factors such as</font>:         •  trends in claim frequency and severity;         •  information regarding each claim for losses;         •  legislative enactments, judicial decisions and <font color="blue">legal developments</font>     regarding damages; and         •  trends in <font color="blue">general economic <font color="blue">conditions</font></font>, including inflation</td>
+    </tr>
+    <tr>
+      <td>Our  estimated <font color="blue"><font color="blue">loss reserves</font> could</font> be incorrect and <font color="blue">potentially</font>     inadequate</td>
+    </tr>
+    <tr>
+      <td>If we determine that our <font color="blue">loss reserves</font> are inadequate, we will     have to <font color="blue">increase them</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">adjustment</font> would reduce income during the period     in which the <font color="blue">adjustment</font> is made, <font color="blue">which could</font> have a material <font color="blue">adverse impact</font>     on our <font color="blue">financial condition</font> and results of operation</td>
+    </tr>
+    <tr>
+      <td>There is no precise way     to determine the <font color="blue">ultimate <font color="blue">liability</font></font> for losses and <font color="blue">loss settlements prior</font> to     <font color="blue">final settlement</font> of the claim</td>
+    </tr>
+    <tr>
+      <td>Terrorism             The threat of terrorism, both within the <font color="blue">United States </font>and abroad, and     military and other actions and <font color="blue">heightened security measures</font> in response to     these types of threats, may cause <font color="blue">significant</font> <font color="blue">volatility</font> and declines in the     <font color="blue">equity markets</font> in the United States, Europe and elsewhere, as well as loss     of life, property damage, <font color="blue">additional</font> <font color="blue">disruptions</font> to commerce and reduced     economic  activity</td>
+    </tr>
+    <tr>
+      <td>Actual  <font color="blue">terrorist attacks could</font> cause <font color="blue">losses from</font>     insurance claims related to the property and <font color="blue">casualty insurance</font> <font color="blue">operations</font>     of <font color="blue">the Company </font>as well as a decrease in our stockholders’ equity, net income     and/or revenue</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Terrorism Risk Insurance Act </font>of 2002     requires  that  some coverage for terrorist loss be offered by primary     property insurers and provides Federal assistance for recovery of claims     through 2007</td>
+    </tr>
+    <tr>
+      <td>In addition, some of the assets in our <font color="blue"><font color="blue">investment</font> portfolio</font>     may be <font color="blue"><font color="blue">adversely</font> affected</font> by declines in the <font color="blue">equity markets</font> and economic     activity caused by the <font color="blue">continued threat</font> of terrorism, ongoing military and     other actions and <font color="blue">heightened security measures</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">cannot predict at</font> this time whether and the extent to which     <font color="blue">industry sectors</font> in which we maintain <font color="blue"><font color="blue"><font color="blue">investment</font>s</font> may suffer losses as</font> a     result of <font color="blue">potential decreased commercial</font> and <font color="blue">economic activity</font>, or how any     <font color="blue">such decrease might impact</font> the ability of <font color="blue">companies within</font> the affected     <font color="blue">industry sectors</font> to <font color="blue">pay interest</font> or <font color="blue">principal on</font> their securities, or how     the value of any <font color="blue">underlying collateral might</font> be affected</td>
+    </tr>
+    <tr>
+      <td>We can offer no     assurances that the threats of future terrorist-like events in the United     States and abroad or military actions by the <font color="blue">United States </font>will not have a     material adverse effect on our business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reinsurance </font>            Our ability to manage our exposure to <font color="blue"><font color="blue">underwriting</font> risks depends on</font>     the  <font color="blue">availability</font> and cost of <font color="blue">reinsurance coverage</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reinsurance </font>is the     practice  of <font color="blue">transferring</font> part of an <font color="blue">insurance company</font>’s <font color="blue">liability</font> and     <font color="blue">premium under</font> an <font color="blue">insurance policy</font> to another <font color="blue">insurance company</font></td>
+    </tr>
+    <tr>
+      <td>We use     <font color="blue">reinsurance arrangements</font> to limit and manage the amount of risk we retain,     to stabilize our <font color="blue">underwriting</font> results and to increase our <font color="blue">underwriting</font>     <font color="blue">capacity</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> and cost of reinsurance are subject to current     <font color="blue">market <font color="blue">conditions</font></font> and may vary <font color="blue">significant</font>ly over time</td>
+    </tr>
+    <tr>
+      <td>The potential exists     in  a <font color="blue">hard market cycle</font> for <font color="blue">reinsurance costs</font> to rise</td>
+    </tr>
+    <tr>
+      <td>If this occurs,     <font color="blue">reinsurance could become</font> more <font color="blue">difficult</font> to obtain and <font color="blue">the Company </font>may have     to <font color="blue">further increase</font> its <font color="blue">retention level</font>s</td>
+    </tr>
+    <tr>
+      <td>Any increase in our <font color="blue">retention level</font>s <font color="blue">will increase</font> our risk of loss</td>
+    </tr>
+    <tr>
+      <td>We may be unable to maintain our desired <font color="blue">reinsurance coverage</font> or to obtain     other <font color="blue">reinsurance coverage</font> in <font color="blue">adequate amounts</font> and at favorable rates</td>
+    </tr>
+    <tr>
+      <td>If we     are unable to renew our <font color="blue">expiring coverage</font> or obtain new coverage, it will be     <font color="blue">difficult</font> for us to manage our <font color="blue">underwriting</font> risks and operate our business     profitably</td>
+    </tr>
+    <tr>
+      <td>It is <font color="blue">also possible</font> that the losses we experience on risks we have     <font color="blue">reinsured will exceed</font> the <font color="blue">coverage limits on</font> the reinsurance</td>
+    </tr>
+    <tr>
+      <td>If the amount     of our <font color="blue">reinsurance coverage</font> is insufficient, our insurance losses could     increase <font color="blue">substantially</font></td>
+    </tr>
+    <tr>
+      <td>30       _________________________________________________________________    [81]Table of <font color="blue">Contents       </font>      If our <font color="blue">reinsurers</font> do not pay our claims in a <font color="blue">timely manner</font>, we may     <font color="blue">incur losses</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to loss and credit <font color="blue">risk with respect</font> to the     <font color="blue">reinsurers</font> with whom we deal because <font color="blue">buying reinsurance</font> does not <font color="blue">relieve us</font>     of our <font color="blue">liability</font> to <font color="blue">policyholders</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">reinsurers</font> are not capable of     fulfilling their <font color="blue">financial obligations</font> to us, our <font color="blue">insurance losses would</font>     increase</td>
+    </tr>
+    <tr>
+      <td>Investments             Our <font color="blue"><font color="blue">investment</font> portfolio</font> contains a <font color="blue">significant</font> amount of fixed-income     securities, including at different times bonds, mortgage-backed securities     (MBSs) and other securities</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market values</font> of all of our <font color="blue"><font color="blue">investment</font>s</font>     <font color="blue">fluctuate depending on economic <font color="blue">conditions</font></font> and other factors</td>
+    </tr>
+    <tr>
+      <td>The market     values of our fixed-income securities are <font color="blue">particularly sensitive</font> to changes     in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to prevent or minimize the <font color="blue">negative impact</font> of     interest  rate  changes</td>
+    </tr>
+    <tr>
+      <td>Additionally, we may, from time to time, for     business, <font color="blue">regulatory</font> or other reasons, elect or be required to <font color="blue">sell certain</font>     of our <font color="blue">invested assets at</font> a time when their <font color="blue">market values</font> are less than     their <font color="blue">original cost</font>, resulting in realized capital losses, which would     <font color="blue">reduce net income</font></td>
+    </tr>
+    <tr>
+      <td>Regulation             If we fail to <font color="blue"><font color="blue">comply with</font> insurance industry <font color="blue">regulations</font></font>, or if those     <font color="blue">regulations</font>  become  more  burdensome,  we  may not be able to operate     profitably</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">insurance companies</font> are <font color="blue">regulated by government agencies</font> in the     states in which we do business, <font color="blue">as well as by</font> the <font color="blue">federal government</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Most     </font>insurance <font color="blue">regulations</font> are designed to protect the interests of <font color="blue">policyholders</font>     rather  than  <font color="blue">shareholders</font>  and other investors</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulations</font> are     <font color="blue"><font color="blue">generally</font> administered by</font> a department of insurance in each state in which     we do business</td>
+    </tr>
+    <tr>
+      <td>State <font color="blue">insurance departments conduct periodic examinations</font> of the     affairs of <font color="blue">insurance companies</font> and require the filing of annual and other     reports relating to <font color="blue">financial condition</font>, holding <font color="blue">company issues</font> and other     matters</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulatory</font> <font color="blue">requirements</font> may <font color="blue">adversely</font> affect or inhibit our     ability to achieve some or all of our business <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">regulatory</font> authorities have <font color="blue">relatively broad discretion</font>     to deny or <font color="blue">revoke licenses</font> for <font color="blue">various reasons</font>, including the violation of     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>In  some  instances,  we  follow  practices <font color="blue">based on</font> our     <font color="blue">interpretations</font> of <font color="blue">regulations</font> or practices that we believe may be <font color="blue">generally</font>     <font color="blue">followed by</font> the industry</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">practices may</font> turn out to be <font color="blue">different from</font>     the  <font color="blue">interpretations</font>  of <font color="blue">regulatory</font> authorities</td>
+    </tr>
+    <tr>
+      <td>If we do not have the     <font color="blue">requisite licenses</font> and approvals or do not <font color="blue">comply with</font> applicable <font color="blue">regulatory</font>     <font color="blue">requirements</font>, insurance <font color="blue">regulatory</font> authorities could preclude or <font color="blue">temporarily</font>     <font color="blue">suspend us from</font> carrying on some or all of our <font color="blue">activities</font> or otherwise     penalize  us</td>
+    </tr>
+    <tr>
+      <td>This  <font color="blue">could <font color="blue">adversely</font> affect</font> our ability to operate our     business</td>
+    </tr>
+    <tr>
+      <td>Further, changes in the level of regulation of the insurance     industry or changes in laws or <font color="blue">regulations</font> themselves or <font color="blue">interpretations</font> by     <font color="blue">regulatory</font> authorities <font color="blue">could <font color="blue">adversely</font> affect</font> our ability to operate our     business</td>
+    </tr>
+    <tr>
+      <td>We are also subject to <font color="blue">various accounting</font> and <font color="blue">financial <font color="blue">requirements</font></font>     <font color="blue">established by</font> the National Association of Insurance Commissioners (NAIC)</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> these laws, <font color="blue">regulations</font> and <font color="blue">requirements</font>, it could     result in <font color="blue">consequences ranging from</font> a <font color="blue">regulatory</font> examination to a <font color="blue">regulatory</font>     takeover of one or more of our <font color="blue">insurance companies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, state <font color="blue">regulators</font> and the NAIC     continually re-examine existing laws and <font color="blue">regulations</font>, with an <font color="blue">emphasis on</font>     <font color="blue">insurance company</font> solvency issues and <font color="blue">fair treatment</font> of <font color="blue">policyholders</font></td>
+    </tr>
+    <tr>
+      <td>Insurance laws and <font color="blue">regulations</font> could change or <font color="blue">additional</font> restrictions could     be imposed that are more burdensome and make our business <font color="blue">less profitable</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to the <font color="blue">application</font> of US <font color="blue">generally</font> accepted accounting     principles (GAAP), which is <font color="blue">periodically</font> revised and/or expanded</td>
+    </tr>
+    <tr>
+      <td>As such,     we are <font color="blue">periodically</font> required to <font color="blue">adopt new</font> or <font color="blue">revised accounting standards</font>     issued  by  recognized  <font color="blue">authoritative</font>  bodies, including the Financial     Accounting Standards Board</td>
+    </tr>
+    <tr>
+      <td>It is possible that future changes required to     be <font color="blue">adopted could</font> change the <font color="blue">current accounting treatment</font> that we apply and     such changes could result in a material <font color="blue">adverse impact</font> on our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>31       _________________________________________________________________    [82]Table of <font color="blue">Contents       </font>Risks Relating to Our <font color="blue">Business     </font>  Geographic             Due to the <font color="blue">geographic concentration</font> of our business (<font color="blue">principally</font>, New     Jersey, Pennsylvania, California, Oregon, Nevada, and Arizona) <font color="blue">catastrophe</font>     and <font color="blue">natural peril losses may</font> have a <font color="blue">greater adverse</font> effect on us than they     would on a more <font color="blue">geographically diverse property</font> and <font color="blue">casualty insurer</font></td>
+    </tr>
+    <tr>
+      <td>We could be <font color="blue">significant</font>ly affected by legislative, judicial, economic,     <font color="blue">regulatory</font>, demographic and other events and <font color="blue">conditions</font> in these states</td>
+    </tr>
+    <tr>
+      <td>In     addition, we have <font color="blue">significant</font> exposure to <font color="blue">property losses</font> caused by severe     weather that affects any of these states</td>
+    </tr>
+    <tr>
+      <td>Those <font color="blue">losses could <font color="blue">adversely</font></font>     affect our results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>            The property and <font color="blue"><font color="blue">casualty insurance</font> market</font> in which we operate is     <font color="blue">highly <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>in the property and <font color="blue">casualty insurance</font>     business is <font color="blue">based on</font> many factors</td>
+    </tr>
+    <tr>
+      <td>These factors include the perceived     financial  strength of the insurer, premiums charged, policy terms and     <font color="blue">conditions</font>, services provided, reputation, financial ratings <font color="blue">assigned by</font>     <font color="blue">in<font color="blue">dependent</font> rating agencies</font> and the experience of the insurer in the line of     insurance to be written</td>
+    </tr>
+    <tr>
+      <td>We compete with stock <font color="blue">insurance companies</font>, mutual     companies, local cooperatives and other <font color="blue">underwriting</font> organizations</td>
+    </tr>
+    <tr>
+      <td>Many of     these  <font color="blue">competitors</font> have <font color="blue">substantially</font> greater financial, technical and     operating resources than we have</td>
+    </tr>
+    <tr>
+      <td>Many of the lines of insurance we write     are subject to <font color="blue">significant</font> price <font color="blue">competition</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">competitors</font> price their     <font color="blue">products aggressively</font>, our ability to grow or renew our business may be     <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">pay producers on</font> a <font color="blue">commission basis</font> to produce     business</td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> may offer higher <font color="blue">commissions</font> or insurance     at  lower premium rates through the use of salaried personnel or other     <font color="blue">distribution methods</font> that do not <font color="blue">rely on in<font color="blue">dependent</font> producers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased     </font><font color="blue">competition</font>  could  <font color="blue">adversely</font> affect our ability to attract and retain     business and <font color="blue">thereby reduce</font> our profits from <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Rating             A reduction in our AM Best <font color="blue"><font color="blue">rating could</font> affect</font> our ability to write     new business or renew our existing business</td>
+    </tr>
+    <tr>
+      <td>Ratings <font color="blue">assigned by</font> the AM     Best Company, Inc</td>
+    </tr>
+    <tr>
+      <td>are an important factor <font color="blue">influencing</font> the <font color="blue">competitive</font>     position of <font color="blue">insurance companies</font></td>
+    </tr>
+    <tr>
+      <td>AM Best <font color="blue">ratings represent in<font color="blue">dependent</font></font>     opinions  of  financial  strength  and  ability to <font color="blue">meet obligations</font> to     <font color="blue">policyholders</font> and are not <font color="blue">directed toward</font> the protection of investors</td>
+    </tr>
+    <tr>
+      <td>If     our <font color="blue">financial position deteriorates</font>, we may not maintain our favorable     <font color="blue">financial strength rating from</font> AM Best</td>
+    </tr>
+    <tr>
+      <td>A downgrade of our <font color="blue">rating could</font>     severely  limit  or <font color="blue">prevent us from writing desirable</font> business or from     renewing our existing business</td>
+    </tr>
+    <tr>
+      <td>Key Producers             Our results of <font color="blue">operations</font> may be <font color="blue"><font color="blue">adversely</font> affected</font> by any loss of     business  <font color="blue">from key producers</font></td>
+    </tr>
+    <tr>
+      <td>Our products are <font color="blue">marketed by in<font color="blue">dependent</font></font>     producers</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">insurance companies</font> compete with us for the services and     allegiance of these producers</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">producers may</font> choose</font> to direct business     to  our <font color="blue">competitors</font>, or <font color="blue">may direct less desirable risks</font> to us</td>
+    </tr>
+    <tr>
+      <td>Our two     <font color="blue">largest producers</font>, <font color="blue">Davis Insurance Agency </font>and Brown &amp; Brown, Inc, accounted     for approximately 17prca of our <font color="blue">direct premiums written</font> for the year ended     <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>H Thomas Davis, Jr, a director and executive officer of     the Company, is the owner of the Davis Insurance Agency, while Brown &amp;     Brown, Inc, is not <font color="blue">affiliated with us</font></td>
+    </tr>
+    <tr>
+      <td>If we experienced a <font color="blue">significant</font>     decrease in business from, or lost entirely, either of our two largest     producers or several of our other large producers, it would have a material     adverse effect on us</td>
+    </tr>
+    <tr>
+      <td>Dividends             Subsidiaries of <font color="blue">the Company </font>may declare and <font color="blue">pay dividends</font> to the     Company only if they are permitted to do so under the insurance <font color="blue">regulations</font>     of  their respective state of domicile</td>
+    </tr>
+    <tr>
+      <td>All of the states in which the     Company’s <font color="blue">subsidiaries</font> are <font color="blue">domiciled regulate</font> the payment of dividends</td>
+    </tr>
+    <tr>
+      <td>States, including New Jersey, Pennsylvania, and California require that the     Company give notice to the relevant state <font color="blue">insurance commissioner prior</font> to     its <font color="blue">subsidiaries</font> declaring any dividends and <font color="blue">distributions payable</font> to the     parent</td>
+    </tr>
+    <tr>
+      <td>During the                                         32       _________________________________________________________________    [83]Table of <font color="blue">Contents       </font>notice period, the state <font color="blue">insurance commissioner may disallow</font> all or part of     the <font color="blue">proposed dividend upon determination</font> that: (i) the insurer’s surplus is     not reasonable in relation to its <font color="blue">liabilities</font> and adequate to its financial     needs and those of the <font color="blue">policyholders</font>, or (ii) in the case of New Jersey, the     insurer  is otherwise in a hazardous <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     insurance <font color="blue">regulators</font> may block dividends or other payments to <font color="blue">affiliates</font>     that <font color="blue">would otherwise</font> be <font color="blue">permitted without prior approval upon determination</font>     that, because of the <font color="blue">financial condition</font> of the <font color="blue">insurance subsidiary</font> or     otherwise, payment of a dividend or any other payment to an <font color="blue">affiliate would</font>     be <font color="blue">detrimental</font> to an <font color="blue">insurance subsidiary</font>’s <font color="blue">policyholders</font> or <font color="blue">creditors</font></td>
+    </tr>
+    <tr>
+      <td>Technology              We  may  not  be  able to <font color="blue">successfully</font> implement our <font color="blue">technology</font>     initiative</td>
+    </tr>
+    <tr>
+      <td>We are changing the portion of our information <font color="blue">system supported</font>     by an <font color="blue">outside service bureau platform</font> to one using an <font color="blue">internal software</font>     package</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">new platform</font> may allow</font> a producer to produce business through     the Internet or through the method he or she has <font color="blue">historically</font> used</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Business     </font>processed and maintained in this <font color="blue">system through</font> the Internet <font color="blue">will provide</font>     <font color="blue">efficiency</font>  because  information  for  all users is <font color="blue">entered only once</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conversion </font>to the <font color="blue">new platform</font> is scheduled to be completed in the latter     part of 2006</td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">successfully</font> re-engineer our <font color="blue">internal processes</font>     to allow for <font color="blue">implementation</font> of this new system to the extent we desire</td>
+    </tr>
+    <tr>
+      <td>Further, during the <font color="blue">transition period</font> our producers’ ability to transact     business <font color="blue">with us may</font> be <font color="blue">interrupted</font>, and we and our <font color="blue">producers may</font> not be     able to provide our <font color="blue">customers with</font> the level of service to which they are     <font color="blue">accustomed</font></td>
+    </tr>
+    <tr>
+      <td>We believe that the ability to produce business through the <font color="blue">Internet     </font><font color="blue">will increase</font> our <font color="blue">revenues by</font> making it easier for us and our producers to     exchange information, and <font color="blue">should lower expenses by increasing ease</font> of use</td>
+    </tr>
+    <tr>
+      <td>However, our <font color="blue">producers may</font> not be willing to use the Internet feature of     this system</td>
+    </tr>
+    <tr>
+      <td>In addition, our short-term expenses have increased because of     <font color="blue">costs associated with</font> the <font color="blue">implementation</font> of the new system and the need to     maintain <font color="blue">two systems during</font> the transition</td>
+    </tr>
+    <tr>
+      <td>Acquisitions              The Company made an <font color="blue">acquisition</font> in 2005 and intends to grow its     business in part through <font color="blue">acquisition</font>s in the future as part of its long term     business strategy</td>
+    </tr>
+    <tr>
+      <td>These type of <font color="blue">transactions</font> involve <font color="blue">significant</font> challenges     and  risks  that the business <font color="blue">transactions</font> do not advance our business     strategy, that we don’t realize a satisfactory return on the <font color="blue">investment</font> we     make,  or  that we may experience <font color="blue">difficult</font>y in the <font color="blue">integration</font> of new     employees, business systems, and <font color="blue">technology</font> or diversion of management’s     <font color="blue">attention from</font> our other <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>These factors <font color="blue">could <font color="blue">adversely</font> affect</font>     our operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Key Personnel             We could be <font color="blue"><font color="blue">adversely</font> affected</font> by the loss of our <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>The     success of our business is <font color="blue">dependent</font>, to a large extent, on the efforts of     certain  <font color="blue">key management personnel</font>, and the loss of <font color="blue">key personnel</font> could     prevent  us  from  fully  <font color="blue">implementing</font> our business strategy and could     <font color="blue">significant</font>ly and <font color="blue">negatively affect</font> our <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>As we continue to grow, we will need to recruit and retain     <font color="blue">additional</font> qualified management personnel, and our ability to do so will     <font color="blue">depend upon</font> a number of factors, such as our results of <font color="blue">operations</font> and     prospects and the level of <font color="blue">competition</font> then prevailing in the market for     qualified  personnel</td>
+    </tr>
+    <tr>
+      <td>Presently, <font color="blue">competition</font> to attract and retain key     personnel is intense</td>
+    </tr>
+  </tbody>
+</table>

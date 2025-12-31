@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: earnings largely depend on", fill: "#ffba00"},
+{source: "3: earnings largely depend on", target: "3: interest income", fill: "#ffba00"},
+{source: "3: interest income", target: "3: net interest income measured as", fill: "#ffba00"},
+{source: "3: net interest income measured as", target: "3: difference between", fill: "#ffba00"},
+{source: "3: difference between", target: "3: assets such", fill: "#ffba00"},
+{source: "3: assets such", target: "3: interest expense", fill: "#ffba00"},
+{source: "3: interest expense", target: "3: liabilities", fill: "#ffba00"},
+{source: "3: liabilities", target: "3: such as deposits", fill: "#ffba00"},
+{source: "3: earnings largely depend on", target: "4: Generally ", fill: "#0c9"},
+{source: "4: Generally ", target: "4: contractual", fill: "#0c9"},
+{source: "4: Generally ", target: "6: significant", fill: "#08457e"},
+{source: "6: significant", target: "6: volatility", fill: "#08457e"},
+{source: "6: volatility", target: "6: market interest", fill: "#08457e"},
+{source: "6: significant", target: "7: longterm interest rates", fill: "#ff6fff"},
+{source: "7: longterm interest rates", target: "7: necessarily", fill: "#ff6fff"},
+{source: "7: longterm interest rates", target: "16: face further exposure", fill: "#b53389"},
+{source: "16: face further exposure", target: "16: interest rate risk due", fill: "#b53389"},
+{source: "16: interest rate risk due", target: "16: total deposits", fill: "#b53389"},
+{source: "16: total deposits", target: "16: certificates", fill: "#b53389"},
+{source: "16: certificates", target: "16: particularly", fill: "#b53389"},
+{source: "16: face further exposure", target: "20: competition", fill: "#9bddff"},
+{source: "20: competition", target: "20: profitability", fill: "#9bddff"},
+{source: "20: competition", target: "37: stock compensation", fill: "#ace5ee"},
+{source: "37: stock compensation", target: "37: significant", fill: "#ace5ee"},
+{source: "37: significant", target: "37: shareholders apos", fill: "#ace5ee"},
+{source: "37: stock compensation", target: "39: compensation expense", fill: "#4997d0"},
+{source: "39: compensation expense", target: "39: participants apos", fill: "#4997d0"},
+{source: "39: participants apos", target: "39: accounts each month based on", fill: "#4997d0"},
+{source: "39: compensation expense", target: "40: additional", fill: "#df73ff"},
+{source: "40: additional", target: "40: compensation", fill: "#df73ff"},
+{source: "40: compensation", target: "40: benefit expenses", fill: "#df73ff"},
+{source: "40: benefit expenses", target: "40: directors apos", fill: "#df73ff"},
+{source: "40: directors apos", target: "40: directors", fill: "#df73ff"},
+{source: "40: directors", target: "40: expense stemming", fill: "#df73ff"},
+{source: "40: expense stemming", target: "40: officers under", fill: "#df73ff"},
+{source: "40: additional", target: "42: additional", fill: "#99badd"},
+{source: "42: additional", target: "42: adversely affect", fill: "#99badd"},
+{source: "42: adversely affect", target: "42: profitability", fill: "#99badd"},
+{source: "42: profitability", target: "42: stockholders apos", fill: "#99badd"},
+{source: "42: additional", target: "51: Kearny MHC ", fill: "#d9004c"},
+{source: "51: Kearny MHC ", target: "51: transaction", fill: "#d9004c"},
+{source: "51: transaction", target: "51: stockholders", fill: "#d9004c"},
+{source: "51: stockholders", target: "51: elect directors", fill: "#d9004c"},
+{source: "51: elect directors", target: "51: approve employee benefit", fill: "#d9004c"},
+{source: "51: Kearny MHC ", target: "START_HERE", fill: "#d9004c"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_income">Net income</a></td>
+      <td>In business and accounting, net income (also total comprehensive income, net earnings, net profit, bottom line, sales profit, or credit sales) is an entity's income minus cost of goods sold, expenses, depreciation and amortization, interest, and taxes for an accounting period.It is computed as the residual of all revenues and gains less all expenses and losses for the period, and has also been defined as the net increase in shareholders' equity that results from a company's operations. It is different from gross income, which only deducts the cost of goods sold from revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liability_(financial_accounting)">Liability (financial accounting)</a></td>
+      <td>In financial accounting, a liability is defined as the future sacrifices of economic benefits that the entity is\nobliged to make to other entities as a result of past transactions or other past events, the settlement of which may result in the transfer or use of assets, provision of services or other yielding of economic benefits in the future.\n\n\n== Characteristics ==\nA liability is defined by the following characteristics:\n\nAny type of borrowing from persons or banks for improving a business or personal income that is payable during short or long time;\nA duty or responsibility to others that entails settlement by future transfer or use of assets, provision of services, or other transaction yielding an economic benefit, at a specified or determinable date, on occurrence of a specified event, or on demand;\nA duty or responsibility that obligates the entity to another, leaving it little or no discretion to avoid settlement; and,\nA transaction or event obligating the entity that has already occurredLiabilities in financial accounting need not be legally enforceable; but can be based on equitable obligations or constructive obligations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Equity_(finance)">Equity (finance)</a></td>
+      <td>In finance, equity is ownership of assets that may have debts or other liabilities attached to them. Equity is measured for accounting purposes by subtracting liabilities from the value of the assets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_liability_company">Limited liability company</a></td>
+      <td>A limited liability company (LLC) is the US-specific form of a private limited company. It is a business structure that can combine the pass-through taxation of a partnership or sole proprietorship with the limited liability of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Accounting_standard">Accounting standard</a></td>
+      <td>Publicly traded companies typically are subject to rigorous standards. Small and midsized businesses often follow more simplified standards, plus any specific disclosures required by their specific lenders and shareholders.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Generally_Accepted_Accounting_Principles_(United_States)">Generally Accepted Accounting Principles (United States)</a></td>
+      <td>Generally Accepted Accounting Principles (GAAP or U.S. GAAP, pronounced like "gap") is the accounting standard adopted by the U.S. Securities and Exchange Commission (SEC). While the SEC previously stated that it intends to move from U.S. GAAP  to the International Financial Reporting Standards (IFRS), the latter differ considerably from GAAP and progress has been slow and uncertain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Daylight_saving_time">Daylight saving time</a></td>
+      <td>Daylight saving time (DST), also known as daylight savings time or daylight time (United States, Canada, and Australia), and summer time (United Kingdom, European Union, and others), is the practice of advancing clocks (typically by one hour) during warmer months so that darkness falls at a later clock time. The typical implementation of DST is to set clocks forward by one hour in the spring ("spring forward"), and to set clocks back by one hour in autumn ("fall back") to return to standard time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chief_executive_officer">Chief executive officer</a></td>
+      <td>A chief executive officer (CEO), also known as a central executive officer (CEO), chief administrator officer (CAO), or just chief executive (CE), is one of a number of corporate executives charged with the management of an organization –  especially an independent legal entity such as a company or nonprofit institution. CEOs find roles in a range of organizations, including public and private corporations, non-profit organizations and even some government organizations (notably state-owned enterprises).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Root_certificate">Root certificate</a></td>
+      <td>In cryptography and computer security, a root certificate is a public key certificate that identifies a root certificate authority (CA). Root certificates are self-signed (and it is possible for a certificate to have multiple trust paths, say if the certificate was issued by a root that was cross-signed) and form the basis of an X.509-based public key infrastructure (PKI).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Perfect_competition">Perfect competition</a></td>
+      <td>In economics, specifically general equilibrium theory, a perfect market, also known as an atomistic market, is defined by several idealizing conditions, collectively called perfect competition, or atomistic competition. In theoretical models where conditions of perfect competition hold, it has been demonstrated that a market will reach an equilibrium in which the quantity supplied for every product or service, including labor, equals the quantity demanded at the current price.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition_law">Competition law</a></td>
+      <td>Competition law is the field of law that promotes or seeks to maintain market competition by regulating anti-competitive conduct by companies. Competition law is implemented through public and private enforcement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Monopolistic_competition">Monopolistic competition</a></td>
+      <td>Monopolistic competition is a type of imperfect competition such that there are many producers competing against each other, but selling products that are differentiated from one another (e.g. by branding or quality) and hence are not perfect substitutes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interspecific_competition">Interspecific competition</a></td>
+      <td>Interspecific competition, in ecology, is a form of competition in which individuals of different species compete for the same resources in an ecosystem (e.g. food or living space).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Climbing_competition">Climbing competition</a></td>
+      <td>A climbing competition (or comp) is usually held indoors on purpose built climbing walls. There are three main types of climbing competition: lead, speed, and bouldering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Small_Is_Profitable">Small Is Profitable</a></td>
+      <td>Small Is Profitable: The Hidden Economic Benefits of Making Electrical Resources the Right Size is a 2002 book by energy analyst Amory Lovins and others.  The book describes 207 ways in which the size of "electrical resources"—devices that make, save, or store electricity—affects their economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SAP_ERP">SAP ERP</a></td>
+      <td>SAP ERP is an enterprise resource planning software developed by the German company SAP SE. SAP ERP incorporates the key business functions of an organization. The latest version of SAP ERP (V.6.0) was made available in 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder">Shareholder</a></td>
+      <td>A shareholder (in the United States often referred to as stockholder) of a corporation is an individual or legal entity (such as another corporation, a body politic, a trust or partnership) that is registered by the corporation as the legal owner of shares of the share capital of a public or private corporation. Shareholders may be referred to as members of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_company">Public company</a></td>
+      <td>A public company, publicly traded company, publicly held company, publicly listed company, or public limited company is a company whose ownership is organized via shares of stock which are intended to be freely traded on a stock exchange or in over-the-counter markets. A public (publicly traded) company can be listed on a stock exchange (listed company), which facilitates the trade of shares, or not (unlisted public company).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stockholder_of_record">Stockholder of record</a></td>
+      <td>Stockholder of record is the name of an individual or entity shareholder that an issuer carries in its shareholder register as the registered holder (not necessarily the beneficial owner) of the issuer's securities. Dividends and other distributions are paid only to shareholders of record.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Board_of_directors">Board of directors</a></td>
+      <td>A board of directors (commonly referred simply as the board) is an executive committee that jointly supervises the activities of an organization, which can be either a for-profit or a nonprofit organization such as a business, nonprofit organization, or a government agency. \nThe powers, duties, and responsibilities of a board of directors are determined by government regulations (including the jurisdiction's corporate law) and the organization's own constitution and by-laws.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Daniels_(directors)">Daniels (directors)</a></td>
+      <td>Daniel Kwan (Chinese: 關家永) and Daniel Scheinert, collectively known as Daniels or the Daniels, are a duo of film directors and writers. They began their career as directors of music videos, including the popular DJ Snake promotional for the single "Turn Down for What" (2013).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Creative_director">Creative director</a></td>
+      <td>A creative director (or creative supervisor) is a person that makes high-level creative decisions, and with those decisions oversees the creation of creative assets such as advertisements, products, events, or logos. Creative director positions are often found within the television production, graphic design, film, music, video game, fashion, advertising, media, or entertainment industries, but may be useful in other creative organizations such as web development and software development firms as well.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_director">Executive director</a></td>
+      <td>An executive director is a member of a board of directors for an organisation, but the meaning of the term varies between countries.\n\n\n== United States ==\nIn the US, an executive director is a chief executive officer (CEO) or managing director of an organization, company, or corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Directors_Guild_of_America">Directors Guild of America</a></td>
+      <td>The Directors Guild of America (DGA) is an entertainment guild that represents the interests of film and television directors in the United States motion picture industry and abroad. Founded as the Screen Directors Guild in 1936, the group merged with the Radio and Television Directors Guild in 1960 to become the modern Directors Guild of America.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jessica_Stockholder">Jessica Stockholder</a></td>
+      <td>Jessica Stockholder (born 1959) is a Canadian-American artist known for site-specific installation works and sculptures that are often described as "paintings in space." She came to prominence in the early 1990s with monumental works that challenged boundaries between artwork and display environment as well as between pictorial and physical experience. Her art often presents a "barrage" of bold colors, textures and everyday objects, incorporating floors, walls and ceilings and sometimes spilling out of exhibition sites.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Database_transaction">Database transaction</a></td>
+      <td>A database transaction symbolizes a unit of work performed within a database management system (or similar system) against a database, and treated in a coherent and reliable way independent of other transactions. A transaction generally represents any change in a database.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Transaction_Publishers">Transaction Publishers</a></td>
+      <td>Transaction Publishers was a New Jersey-based publishing house that specialized in social science books and journals. It was located on the Livingston Campus of Rutgers University.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Transaction_processing_system">Transaction processing system</a></td>
+      <td>Transaction processing is a way of computing that divides work into individual, indivisible operations, called transactions.   A transaction processing system (TPS) is a software system, or software/hardware combination, that supports transaction processing.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><font color="blue">Kearny Financial Corp</font></td>
+    </tr>
+    <tr>
+      <td>Item 1A Risk Factors  - ---------------------    An increase in <font color="blue"><font color="blue">interest rate</font>s may</font> have an adverse effect on our earnings</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">earnings largely depend on</font> our net <font color="blue">interest income</font>, measured as the  <font color="blue">difference between</font>:              o    the <font color="blue">interest income</font> we earn on our interest-earning  assets, such                 as loans and securities; and              o    the <font color="blue">interest expense</font> we pay on our interest-bearing  <font color="blue">liabilities</font>,                 <font color="blue">such as deposits</font> and amounts we borrow</td>
+    </tr>
+    <tr>
+      <td>Generally,  the  rates  we  earn  on  our  assets  remain  fixed  for a  <font color="blue">contractual</font>  period</td>
+    </tr>
+    <tr>
+      <td>We,  like  many  <font color="blue">community</font>  banks  have  <font color="blue">liabilities</font>  that  <font color="blue">generally</font> have shorter <font color="blue">contractual</font>  maturities than our interest-earning  assets  or no <font color="blue">contractual</font>  maturities,  <font color="blue">such as savings</font> and <font color="blue"><font color="blue">money market</font> deposits</font></td>
+    </tr>
+    <tr>
+      <td>This  imbalance can create <font color="blue">significant</font>  earnings  <font color="blue">volatility</font>,  because <font color="blue">market interest</font>  rates change over time</td>
+    </tr>
+    <tr>
+      <td>In addition,  short-term and long-term <font color="blue">interest rate</font>s do  not <font color="blue">necessarily</font> change at the same time or at the same rate</td>
+    </tr>
+    <tr>
+      <td>In a period of rising <font color="blue">interest rate</font>s, the <font color="blue">interest income</font> earned on our  assets may not increase as rapidly as the interest paid on our  <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>We  are  vulnerable  to  <font color="blue">volatility</font>  in our earnings  resulting  from an increase in  interest  rates  because  the  majority  of  our  interest-earning   assets  are  relatively long-term,  fixed <font color="blue">rate assets</font></td>
+    </tr>
+    <tr>
+      <td>In an increasing rate <font color="blue">environment</font>,  we  can expect our cost of funds to increase  more rapidly than the yields earned on  our <font color="blue">loan portfolio</font> and securities  portfolio because our primary source of funds  is deposits with <font color="blue">generally</font>  shorter  maturities than the maturities on our loans  and  <font color="blue">investment</font>  securities</td>
+    </tr>
+    <tr>
+      <td>The result may be a narrowing  of our <font color="blue">net interest</font>  spread and a decrease in our earnings</td>
+    </tr>
+    <tr>
+      <td>In a period  of  falling  interest  rates,  <font color="blue">p<font color="blue">repayments</font></font>  of  loans  and  mortgage-backed  securities <font color="blue">generally</font> increase as borrowers refinance their debt  in order to reduce their borrowing cost</td>
+    </tr>
+    <tr>
+      <td>This causes <font color="blue">prepayment risk</font>, because in  a falling  <font color="blue">interest rate</font>  <font color="blue">environment</font>  we cannot  reinvest  <font color="blue">p<font color="blue">repayments</font></font> at rates  comparable  to the <font color="blue">rates earned on</font> the prepaid  loans or  securities</td>
+    </tr>
+    <tr>
+      <td>A falling  <font color="blue">interest rate</font> <font color="blue">environment</font>  results in a decrease in rates we <font color="blue">pay on deposits</font> and  <font color="blue">borrowings</font>, but the decrease in the cost of our funds may not be as great as the  decrease in the yields on our mortgage-backed securities and <font color="blue">loan portfolio</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face further exposure</font> to <font color="blue">interest rate</font> risk due to the large portion  of our <font color="blue">total deposits</font> that are  <font color="blue">certificates</font>  of deposit,  <font color="blue">particularly</font>   &amp;quote jumbo &amp;quote   <font color="blue">certificates</font>  of dlra100cmam000 or more</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Interest  </font>rates and <font color="blue">money market</font>  <font color="blue">conditions</font>  <font color="blue">significant</font>ly  influence deposit inflows, but the presence of jumbo <font color="blue">certificates</font>  of deposit  and  retention  of such  deposits  upon  maturity,  make them a more  volatile  source  of  funding  than  core  deposits</td>
+    </tr>
+    <tr>
+      <td>In order to  retain  jumbo  <font color="blue">certificates</font>, we may pay a <font color="blue">premium rate</font>, resulting in an increase in our cost of  funds</td>
+    </tr>
+    <tr>
+      <td>If we are  unwilling or unable to pay a <font color="blue">premium rate</font>, to the extent that  such funds do not <font color="blue">remain on deposit</font>,  <font color="blue">borrowings</font>  <font color="blue">may replace them</font>,  <font color="blue">which could</font>  increase  our cost of funds,  narrow our net  interest  spread and  decrease our  earnings</td>
+    </tr>
+    <tr>
+      <td>31    <PAGE>    Strong   <font color="blue">competition</font>   within  our   market   area  may  limit  our  growth  and  <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition  </font>is  intense  within the  banking  and  financial  services  industry in New Jersey</td>
+    </tr>
+    <tr>
+      <td>In our <font color="blue">market area</font>, we <font color="blue">compete with</font>  commercial  banks,  savings   <font color="blue"><font color="blue">institution</font>s</font>,   mortgage  brokerage  firms,  credit  unions,   finance  companies,  mutual funds, insurance companies,  brokerage and <font color="blue">investment</font> banking  firms  operating   locally  and  elsewhere</td>
+    </tr>
+    <tr>
+      <td>Many  of  these  <font color="blue">competitors</font>  have  <font color="blue">substantially</font>  greater resources,  higher lending limits and offer services that  we do not or cannot provide</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">competition</font> makes it more <font color="blue">difficult</font> for us to  <font color="blue">originate new loans</font> and retain and <font color="blue">attract new deposits</font></td>
+    </tr>
+    <tr>
+      <td>Price  <font color="blue">competition</font> for  loans may result in <font color="blue">originating</font>  <font color="blue">fewer loans</font>, or <font color="blue">earning less on</font> our loans,  and  price  <font color="blue">competition</font> for deposits may result in a reduction of our <font color="blue">deposit base</font> or  paying more on our deposits</td>
+    </tr>
+    <tr>
+      <td>Our  business  is  <font color="blue">geographically</font>  <font color="blue">concentrated</font>  in <font color="blue">New Jersey </font>and a downturn in  economic <font color="blue">conditions</font> within the state <font color="blue">could <font color="blue">adversely affect</font></font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>A substantial  majority of our loans are to individuals  and <font color="blue">businesses</font>  in New  Jersey</td>
+    </tr>
+    <tr>
+      <td>A decline  in the  economy  of the state  could have an adverse  <font color="blue">impact on</font> our earnings</td>
+    </tr>
+    <tr>
+      <td>We have a <font color="blue">significant</font>  amount of <font color="blue">real estate mortgages</font>,  such that a decrease in <font color="blue">local real estate values may adversely</font>  affect the value  of <font color="blue">property used as collateral</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Adverse  </font>changes in the <font color="blue">economy may also</font> have a  negative  effect on the ability of our  borrowers to make timely  <font color="blue">repayments</font>  of  their loans, which may adversely influence our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Due to our minority stock offering, our return on equity compares <font color="blue">unfavorably</font> to  other companies</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">could <font color="blue">negatively</font> influence</font> the price of our stock</td>
+    </tr>
+    <tr>
+      <td>The net  proceeds  from our initial  public  offering in <font color="blue">February  </font>2005  <font color="blue">substantially</font>  increased  our equity  capital</td>
+    </tr>
+    <tr>
+      <td>We expect to take time to invest  this <font color="blue">capital prudently</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that the stock market values a company based in part on  its return on equity,  our low return on equity relative to our peer group could  <font color="blue">negatively</font> affect the trading price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The costs of our <font color="blue">stock <font color="blue">compensation</font></font> plans are a <font color="blue">significant</font>  expense and funding  of the plans may dilute  <font color="blue">shareholders</font> &amp;apos   ownership  interest in Kearny  Financial  Corp</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effective </font><font color="blue">upon completion</font> of the Companyapstas <font color="blue">initial public offering</font>, the  Bank  established  an Employee  Stock  Ownership  Plan  ( &amp;quote ESOP &amp;quote )</td>
+    </tr>
+    <tr>
+      <td>We  currently  recognize <font color="blue"><font color="blue">compensation</font> expense</font> for the ESOP, as shares are committed for release  to the  participants &amp;apos   <font color="blue">accounts each month based on</font> the monthly  average  market  price  of  the  shares</td>
+    </tr>
+    <tr>
+      <td>We  currently  recognize   <font color="blue">additional</font>  annual  employee  <font color="blue">compensation</font> and <font color="blue">benefit expenses</font> and <font color="blue">directors</font> &amp;apos   <font color="blue">compensation</font>  <font color="blue">expense stemming</font>  from stock  options  granted  and  restricted  stock  awarded to  <font color="blue">directors</font>  and  <font color="blue">officers under</font> the 2005 Stock  Compensation  and Incentive  Plan</td>
+    </tr>
+    <tr>
+      <td>We expense the  <font color="blue">fair value</font> of all  options  over  their  vesting  periods  and the <font color="blue">fair value</font> of  <font color="blue">restricted shares over</font> the <font color="blue">requisite service periods</font>,  in <font color="blue">both cases five years</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">additional</font>  expenses  <font color="blue">adversely affect</font> our <font color="blue">profitability</font> and <font color="blue">stockholders</font> &amp;apos   equity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">Company  </font></font>utilized  <font color="blue">open market</font>  purchases  of common  stock to fund  restricted  <font color="blue">stock awards</font>;  however,  funding of <font color="blue">stock options</font>  <font color="blue">granted will come</font>  either  through <font color="blue">open market</font>  purchases or from the  issuance of  authorized  but  un-issued shares</td>
+    </tr>
+    <tr>
+      <td>Existing <font color="blue"><font color="blue">shareholders</font> will</font> experience a dilution in ownership  interest  in the event the <font color="blue">Company  </font>uses newly  issued  shares  <font color="blue">rather than open</font>  <font color="blue">market purchases</font> to fund <font color="blue">stock options</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Shareholders </font>own a minority of <font color="blue">Kearny Financial Corp</font></td>
+    </tr>
+    <tr>
+      <td>apstas <font color="blue">common stock</font> and are not  able to <font color="blue"><font color="blue">exercise voting control</font> <font color="blue">over most matters put</font></font> to a vote of <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Kearny MHC </font>owns a majority of Kearny  Financial  Corp</td>
+    </tr>
+    <tr>
+      <td>apstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>and is able to <font color="blue">exercise voting control</font>                                           32    <PAGE>    <font color="blue">over most matters put</font> to a vote of  <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>For  example,  <font color="blue">Kearny MHC </font>may  exercise  its voting  control to prevent a sale or merger  <font color="blue">transaction</font>  in which  <font color="blue">stockholders</font>  could receive a premium for their shares, to elect <font color="blue">directors</font> or to  <font color="blue">approve employee benefit</font> plans</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions  </font>in our  charter and by-laws  limit the rights of  <font color="blue">stockholders</font>,  may  deter potential takeovers and may reduce the trading price of our stock</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions  </font>in our charter and by-laws make it <font color="blue">difficult</font>  and expensive  to pursue a change in control or takeover  attempt  that our Board of  <font color="blue">Directors  </font>opposes</td>
+    </tr>
+    <tr>
+      <td>As a result,  you may not have an <font color="blue">opportunity</font> to <font color="blue">participate</font> in such a  <font color="blue">transaction</font>,  and the  trading  price of our  stock may not rise to the level of  other  <font color="blue"><font color="blue">institution</font>s</font>  that  are  more  vulnerable  to  hostile  takeovers</td>
+    </tr>
+    <tr>
+      <td>Such  provisions include:              o    the election of <font color="blue">directors</font> to staggered three-year terms;              o    provisions   restricting  the  calling  of  special  meetings  of                 <font color="blue">stockholders</font>;              o    the absence of cumulative  voting by <font color="blue">stockholders</font> in <font color="blue">elections</font> of                 <font color="blue">directors</font>; and              o    advance notice  <font color="blue">requirements</font> for stockholder  <font color="blue">nominations</font> and new                 business</td>
+    </tr>
+    <tr>
+      <td>The Office of Thrift Supervisionapstas policy on remutualization <font color="blue">transaction</font>s could   prohibit  <font color="blue">acquisition</font> of <font color="blue">Kearny Financial Corp</font>, which may <font color="blue">adversely affect</font> our   stock price</td>
+    </tr>
+    <tr>
+      <td>Office of Thrift Supervision ( &amp;quote OTS &amp;quote ) <font color="blue">regulations permit</font> the <font color="blue">acquisition</font>  of a  mutual  holding  company  by a  mutual  <font color="blue">institution</font>  in a  remutualization  <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Current OTS </font>policy, however, views remutualization <font color="blue">transaction</font>s as  raising   <font color="blue">significant</font>   issues  <font color="blue">concerning</font>   disparate   treatment  of  minority  <font color="blue">stockholders</font>  and  mutual  members  of the  target  entity  and  raising  issues  <font color="blue">concerning</font> the effect on the <font color="blue">mutual members</font> of the acquiring entity</td>
+    </tr>
+    <tr>
+      <td>The OTS may  give these issues  special  scrutiny and reject  <font color="blue">applications</font>  providing for the  remutualization  of a mutual  holding  company  unless the applicant can clearly  <font color="blue">demonstrate</font>  that there is no cause for OTSapstas concerns in the  particular  case</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Should the OTS </font>prohibit or otherwise  restrict these <font color="blue">transaction</font>s in the future,  our <font color="blue">stock price may</font> be <font color="blue">adversely affect</font>ed</td>
+    </tr>
+  </tbody>
+</table>

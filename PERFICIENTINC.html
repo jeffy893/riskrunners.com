@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: should carefully", fill: "#9f00c5"},
+{source: "2: should carefully", target: "2: following risk factors together with", fill: "#9f00c5"},
+{source: "2: following risk factors together with", target: "2: incorporated by reference into", fill: "#9f00c5"},
+{source: "2: incorporated by reference into", target: "2: common stock", fill: "#9f00c5"},
+{source: "2: should carefully", target: "3: financial condition", fill: "#ee82ee"},
+{source: "3: financial condition", target: "3: flows could", fill: "#ee82ee"},
+{source: "3: flows could", target: "3: materially adversely affected", fill: "#ee82ee"},
+{source: "3: financial condition", target: "5: economic weakness", fill: "#fada5e"},
+{source: "5: economic weakness", target: "5: services market", fill: "#fada5e"},
+{source: "5: services market", target: "5: could adversely affect", fill: "#fada5e"},
+{source: "5: could adversely affect", target: "5: financial condition", fill: "#fada5e"},
+{source: "5: financial condition", target: "5: operations", fill: "#fada5e"},
+{source: "5: economic weakness", target: "7: Internet ", fill: "#c54b8c"},
+{source: "7: Internet ", target: "7: but declined significantly", fill: "#c54b8c"},
+{source: "7: Internet ", target: "9: future growth", fill: "#b2ec5d"},
+{source: "9: future growth", target: "9: dependent", fill: "#b2ec5d"},
+{source: "9: dependent", target: "9: technology consulting services", fill: "#b2ec5d"},
+{source: "9: future growth", target: "21: highly specialized", fill: "#a67b5b"},
+{source: "21: highly specialized", target: "21: competition", fill: "#a67b5b"},
+{source: "21: competition", target: "21: management", fill: "#a67b5b"},
+{source: "21: management", target: "21: key personnel", fill: "#a67b5b"},
+{source: "21: highly specialized", target: "24: Retention ", fill: "#e25098"},
+{source: "24: Retention ", target: "24: particularly", fill: "#e25098"},
+{source: "24: particularly", target: "24: relationships", fill: "#e25098"},
+{source: "24: Retention ", target: "26: significant", fill: "#79443b"},
+{source: "26: significant", target: "26: individuals", fill: "#79443b"},
+{source: "26: individuals", target: "26: management", fill: "#79443b"},
+{source: "26: significant", target: "29: difficulty", fill: "#aa4069"},
+{source: "29: difficulty", target: "29: acquisition", fill: "#aa4069"},
+{source: "29: acquisition", target: "29: partnership opportunities", fill: "#aa4069"},
+{source: "29: difficulty", target: "START_HERE", fill: "#aa4069"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Risk_management">Risk management</a></td>
+      <td>Risk management is the identification, evaluation, and prioritization of risks (defined in ISO 31000 as the effect of uncertainty on objectives) followed by coordinated and economical application of resources to minimize, monitor, and control the probability or impact of unfortunate events or to maximize the realization of opportunities.\nRisks can come from various sources including uncertainty in international markets, threats from project failures (at any phase in design, development, production, or sustaining of life-cycles), legal liabilities, credit risk, accidents, natural causes and disasters, deliberate attack from an adversary, or events of uncertain or unpredictable root-cause.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology_consulting">Information technology consulting</a></td>
+      <td>In management, information technology consulting (also called IT consulting, computer consultancy, business and technology services, computing consultancy, technology consulting, and IT advisory) is a field of activity which focuses on advising organizations on how best to use information technology (IT) in achieving their business objectives.\nOnce a business owner defines the needs to take a business to the next level, a decision maker will define a scope, cost and a time frame of the project.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_management">Network management</a></td>
+      <td>Network management is the process of administering and managing computer networks. Services provided by this discipline include fault analysis, performance management, provisioning of networks and maintaining quality of service.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Women_Management">Women Management</a></td>
+      <td>Women Management is a modeling agency based in New York. Founded by Paul Rowland in 1988,  Women also has two sister agencies, Supreme Management and Women 360 Management, which is also part of the Women International Agency Chain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Problem_management">Problem management</a></td>
+      <td>Problem management is the process responsible for managing the lifecycle of all problems that happen or could happen in an IT service. The primary objectives of problem management are to prevent problems and resulting incidents from happening, to eliminate recurring incidents, and to minimize the impact of incidents that cannot be prevented.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Open_relationship">Open relationship</a></td>
+      <td>An open relationship is an intimate relationship that is sexually non-monogamous. The term is distinct from polyamory, in that it generally indicates a relationship where there is a primary emotional and intimate relationship between two partners, who agree to at least the possibility of sexual or emotional intimacy with other people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sibling_relationship">Sibling relationship</a></td>
+      <td>Siblings play a unique role in one another's lives that simulates the companionship of parents as well as the influence and assistance of friends. Because siblings often grow up in the same household, they have a large amount of exposure to one another, like other members of the immediate family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_relationship_management">Customer relationship management</a></td>
+      <td>Customer relationship management (CRM) is a process in which a business or other organization administers its interactions with customers, typically using data analysis to study large amounts of information.CRM systems compile data from a range of different communication channels, including a company's website, telephone, email, live chat, marketing materials and more recently, social media. They allow businesses to learn more about their target audiences and how to best cater for their needs, thus retaining customers and driving sales growth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Entity–relationship_model">Entity–relationship model</a></td>
+      <td>An entity–relationship model (or ER model) describes interrelated things of interest in a specific domain of knowledge. A basic ER model is composed of entity types (which classify the things of interest) and specifies relationships that can exist between entities (instances of those entity types).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Data_acquisition">Data acquisition</a></td>
+      <td>Data acquisition is the process of sampling signals that measure real world physical conditions and converting the resulting samples into digital numeric values that can be manipulated by a computer. Data acquisition systems, abbreviated by the initialisms DAS, DAQ, or DAU, typically convert analog waveforms into digital values for processing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Language_acquisition">Language acquisition</a></td>
+      <td>Language acquisition is the process by which humans acquire the capacity to perceive and comprehend language (in other words, gain the ability to be aware of language and to understand it), as well as to produce and use words and sentences to communicate.\nLanguage acquisition involves structures, rules and representation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Rules_of_Acquisition">Rules of Acquisition</a></td>
+      <td>In the fictional Star Trek universe, the Rules of Acquisition are a collection of sacred business proverbs of the ultra-capitalist race known as the Ferengi.\nThe first mention of rules in the Star Trek universe was in "The Nagus", an episode of the TV series Star Trek: Deep Space Nine (Season 1, Episode 10).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization">Resource acquisition is initialization</a></td>
+      <td>Resource acquisition is initialization (RAII) is a programming idiom used in several object-oriented, statically-typed programming languages to describe a particular language behavior.  In RAII, holding a resource is a class invariant, and is tied to object lifetime.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Language_acquisition_device">Language acquisition device</a></td>
+      <td>The Language Acquisition Device (LAD) is a claim from language acquisition research proposed by Noam Chomsky in the 1960s. The LAD concept is a purported instinctive mental capacity which enables an infant to acquire and produce language.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Right_to_Fair_Compensation_and_Transparency_in_Land_Acquisition,_Rehabilitation_and_Resettlement_Act,_2013">Right to Fair Compensation and Transparency in Land Acquisition, Rehabilitation and Resettlement Act, 2013</a></td>
+      <td>The Right to Fair Compensation and Transparency in Land Acquisition, Rehabilitation and Resettlement Act, 2013 (also Land Acquisition Act, 2013 or LARR Act or RFCTLARR Act) is an Act of Indian Parliament that regulates land acquisition and lays down the procedure and rules for granting compensation, rehabilitation and resettlement to the affected persons in India. The Act has provisions to provide fair compensation to those whose land is taken away, brings transparency to the process of acquisition of land to set up factories or buildings, infrastructural projects and assures rehabilitation of those affected.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PERFICIENT INC      Item 1A  <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">should carefully</font> consider the <font color="blue">following risk factors together with</font> the     other information contained in or <font color="blue">incorporated by reference into</font> this annual     report before you decide to buy our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>If any of these risks     actually occur, our business, <font color="blue">financial condition</font>, operating results or cash     <font color="blue">flows could</font> be <font color="blue"><font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affected</font></font></td>
+    </tr>
+    <tr>
+      <td>This could cause the trading     price of our <font color="blue">common stock</font> to decline and you may lose part or all of your     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Business           Prolonged <font color="blue">economic weakness</font> in the Internet software and <font color="blue">services market</font>     <font color="blue">could <font color="blue">adversely</font> affect</font> our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The market for middleware <font color="blue">and Internet </font>software and services has changed     <font color="blue">rapidly over</font> the <font color="blue">last seven years</font></td>
+    </tr>
+    <tr>
+      <td>The market for middleware and <font color="blue">Internet     </font>software and services expanded dramatically during 1999 and most of 2000,     <font color="blue">but declined <font color="blue">significant</font>ly</font> in 2001 and 2002</td>
+    </tr>
+    <tr>
+      <td>Market demand for <font color="blue">Internet     </font>software and <font color="blue">services began</font> to stabilize and improve throughout 2003, 2004     and 2005, but this trend may not continue</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future growth</font> is <font color="blue">dependent</font>     upon the demand for Internet software and services, and, in particular, the     information <font color="blue"><font color="blue">technology</font> consulting services</font> we provide</td>
+    </tr>
+    <tr>
+      <td>Demand and market     <font color="blue">acceptance</font> for middleware <font color="blue">and Internet </font>services are subject to a <font color="blue">high level</font>     of <font color="blue">uncertainty</font></td>
+    </tr>
+    <tr>
+      <td>Prolonged weakness in the middleware <font color="blue">and Internet </font>software     and <font color="blue">services industry</font> has caused in the past, and may cause in the future,     business <font color="blue">enterprises</font> to delay or cancel information <font color="blue">technology</font> projects,     reduce  their  overall  budgets and/or reduce or <font color="blue">cancel orders</font> for our     services</td>
+    </tr>
+    <tr>
+      <td>This, in turn, may lead to longer sales cycles, delays in purchase     <font color="blue">decisions</font>, payment and <font color="blue">collection</font>, and may also result in price pressures,     causing us to realize lower revenues and operating margins</td>
+    </tr>
+    <tr>
+      <td>If companies     cancel or delay their business and <font color="blue">technology</font> initiatives or choose to move     these initiatives in-house, our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font> could be <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to attract and retain information <font color="blue">technology</font> consulting     <font color="blue"><font color="blue">professional</font>s</font>, which could affect our ability to <font color="blue">compete <font color="blue"><font color="blue">effective</font>ly</font></font></td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">labor intensive</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our <font color="blue">success depends</font> in     large part upon our ability to attract, train, retain, motivate, manage and     <font color="blue"><font color="blue">effective</font>ly</font>  utilize  <font color="blue">highly skilled</font> information <font color="blue">technology</font> consulting     <font color="blue"><font color="blue">professional</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, our <font color="blue">technology</font> <font color="blue"><font color="blue">professional</font>s</font> are primarily     at-will employees</td>
+    </tr>
+    <tr>
+      <td>We also use in<font color="blue">dependent</font> subcontractors where <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>Failure to retain <font color="blue">highly skilled</font> <font color="blue">technology</font> <font color="blue"><font color="blue">professional</font>s</font> would impair our     ability to <font color="blue">adequately</font> manage staff and implement our existing projects and     to bid for or obtain new projects, which in turn <font color="blue">would <font color="blue">adversely</font> affect</font> our     operating results</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue"><font color="blue">success will depend</font> on</font> attracting</font> and retaining <font color="blue">senior <font color="blue">management</font></font> and     <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our  industry is <font color="blue">highly specialized</font> and the <font color="blue">competition</font> for qualified     <font color="blue">management</font> and <font color="blue">key personnel</font> is intense</td>
+    </tr>
+    <tr>
+      <td>We expect this to remain so for the     <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>We believe that our <font color="blue"><font color="blue">success will depend</font> on</font> retaining our     <font color="blue">senior <font color="blue">management</font></font> team and key technical and business <font color="blue">consulting personnel</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Retention  </font>is  <font color="blue">particularly</font>  important  in  our  business  as personal     <font color="blue"><font color="blue">relationship</font>s</font> are a critical element of obtaining and maintaining strong     <font color="blue"><font color="blue">relationship</font>s</font>  with  our  clients</td>
+    </tr>
+    <tr>
+      <td>In addition, as we <font color="blue">rapidly grow</font> our     business, our need for senior experienced <font color="blue">management</font> and <font color="blue">delivery personnel</font>     <font color="blue">increases substantially</font></td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">significant</font> number of these <font color="blue">individuals</font> stop     working for us, or if we are unable to attract top talent, our level of     <font color="blue">management</font>, technical, marketing and sales expertise could diminish or     otherwise be insufficient for our growth</td>
+    </tr>
+    <tr>
+      <td>We may be unable to achieve our     revenue and operating <font color="blue">performance objectives unless</font> we can attract and     retain <font color="blue">technically qualified</font> and <font color="blue">highly skilled</font> sales, technical, business     consulting, marketing and <font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">individuals</font> would be     <font color="blue">difficult</font> to replace, and <font color="blue">losing them could seriously harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>11       _________________________________________________________________           We  may  have  <font color="blue">difficult</font>y  in  identifying and competing for strategic     <font color="blue">acquisition</font> and <font color="blue">partnership opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Our business strategy includes the pursuit of strategic <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>We may     acquire  or  make  strategic  <font color="blue">investment</font>s in <font color="blue">complementary businesses</font>,     technologies, services or products, or <font color="blue">enter into strategic partnerships</font> or     <font color="blue">alliances with third parties</font> in the future in order to expand our business</td>
+    </tr>
+    <tr>
+      <td>We may be unable to identify suitable <font color="blue">acquisition</font>, strategic <font color="blue">investment</font> or     <font color="blue">strategic partnership candidates</font>, or if we do identify <font color="blue">suitable candidates</font>,     we may not complete those <font color="blue"><font color="blue">transactions</font> on terms commercially</font> favorable to     us,  or at all</td>
+    </tr>
+    <tr>
+      <td>If we fail to identify and <font color="blue">successfully</font> complete these     <font color="blue">transactions</font>, our <font color="blue"><font color="blue">competitive</font> position</font> and our <font color="blue">growth prospects could</font> be     <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>In  addition, we may face <font color="blue">competition</font> from other     companies with <font color="blue">significant</font>ly greater resources for <font color="blue">acquisition</font> candidates,     making it more <font color="blue">difficult</font> for us to acquire <font color="blue">suitable companies on</font> favorable     terms</td>
+    </tr>
+    <tr>
+      <td>Pursuing and completing potential <font color="blue">acquisition</font>s could divert <font color="blue">management</font>’s     attention and financial resources and may not produce the desired business     results</td>
+    </tr>
+    <tr>
+      <td>We  do  not  have <font color="blue">specific personnel dedicated</font> to pursuing and making     strategic <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>As a result, if we pursue any <font color="blue">acquisition</font>, our     <font color="blue">management</font> could spend a <font color="blue">significant</font> amount of time and financial resources     to pursue and integrate the acquired business with our existing business</td>
+    </tr>
+    <tr>
+      <td>To     pay for an <font color="blue">acquisition</font>, we might <font color="blue">use capital stock</font>, cash or a <font color="blue">combination</font> of     both</td>
+    </tr>
+    <tr>
+      <td>Alternatively, we <font color="blue">may borrow money from</font> a bank or other lender</td>
+    </tr>
+    <tr>
+      <td>If we     <font color="blue">use capital stock</font>, our <font color="blue">stockholders will</font> experience dilution</td>
+    </tr>
+    <tr>
+      <td>If we use cash     or <font color="blue">debt financing</font>, our <font color="blue">financial liquidity may</font> be reduced and the interest     on any <font color="blue">debt financing</font> <font color="blue">could <font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">From     </font>an <font color="blue">accounting</font> <font color="blue">perspective</font>, an <font color="blue">acquisition</font> may involve <font color="blue">amortization</font> or the     write-off of <font color="blue">significant</font> amounts of <font color="blue">intangible assets</font> that could <font color="blue">adversely</font>     affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Despite the <font color="blue">investment</font> of these <font color="blue">management</font> and financial resources, and     <font color="blue">completion</font> of due diligence with respect to these efforts, an <font color="blue">acquisition</font>     may not produce the anticipated revenues, earnings or business synergies for     a variety of reasons, including:                                             •       <font color="blue">difficult</font>ies in the <font color="blue">integration</font> of the technologies, services and personnel     of the acquired business;                                             •       the failure of <font color="blue">management</font> and acquired <font color="blue">services personnel</font> to perform as     expected;                                             •       the risks of <font color="blue">entering markets</font> in which we have no, or limited, prior     experience;                                             •       the failure to identify or <font color="blue">adequately</font> assess any undisclosed or potential     <font color="blue">liabilities</font> or problems of the acquired business including legal     <font color="blue">liabilities</font>;                                             •       the failure of the acquired business to achieve the forecasts we used to     determine the <font color="blue">purchase price</font>; or                                             •       the <font color="blue">potential loss</font> of <font color="blue">key personnel</font> of the acquired business</td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">difficult</font>ies  could  disrupt our ongoing business, distract our     <font color="blue">management</font>  and  <font color="blue">colleagues</font>,  increase our expenses and <font color="blue">materially</font> and     <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The market for the information <font color="blue"><font color="blue">technology</font> consulting services</font> we provide is     <font color="blue">competitive</font>,  has  low  barriers to entry and is <font color="blue">becoming <font color="blue">increasingly</font></font>     consolidated, which may <font color="blue">adversely</font> affect our <font color="blue">market position</font></td>
+    </tr>
+    <tr>
+      <td>The market for the information <font color="blue"><font color="blue">technology</font> consulting services</font> we provide is     <font color="blue">competitive</font>, rapidly evolving and subject to <font color="blue">rapid <font color="blue">technological</font></font> change</td>
+    </tr>
+    <tr>
+      <td>In     addition, there are <font color="blue"><font color="blue">relatively</font> low barriers</font> to <font color="blue">entry into</font> this market and     <font color="blue">therefore new entrants may compete with us</font> in the future</td>
+    </tr>
+    <tr>
+      <td>For example, due     to the rapid changes and <font color="blue">volatility</font> in our market, many well-capitalized     companies, including some of our partners, that have <font color="blue">focused on sectors</font> of     the Internet software and <font color="blue">services industry</font> that are not <font color="blue">competitive</font> with     our business <font color="blue">may refocus</font> their <font color="blue">activities</font> and deploy their resources to be     <font color="blue">competitive</font> with us</td>
+    </tr>
+    <tr>
+      <td>12       _________________________________________________________________                Our <font color="blue">future financial performance will depend</font>, in large part, on our     ability  to establish and maintain an advantageous <font color="blue">market position</font></td>
+    </tr>
+    <tr>
+      <td>We     currently  compete  with  regional and national information <font color="blue">technology</font>     <font color="blue"><font color="blue">consulting firm</font>s</font>, and, to a limited extent, offshore service providers and     in-house information <font color="blue">technology</font> departments</td>
+    </tr>
+    <tr>
+      <td>Many of the <font color="blue">larger regional</font> and     national information <font color="blue">technology</font> <font color="blue"><font color="blue">consulting firm</font>s</font> have <font color="blue">substantially longer</font>     operating histories, more <font color="blue">established reputations</font> and <font color="blue">potential partner</font>     <font color="blue"><font color="blue">relationship</font>s</font>,   greater  financial  resources,  sales  and  marketing     organizations, market penetration and research and <font color="blue">development <font color="blue">capabilities</font></font>,     <font color="blue">as well as broader product offerings</font> and <font color="blue">greater market presence</font> and name     <font color="blue">recognition</font></td>
+    </tr>
+    <tr>
+      <td>We  may face increasing <font color="blue">competitive</font> pressures from these     <font color="blue"><font color="blue">competitors</font> as</font> the market for Internet software and <font color="blue">services continues</font> to     grow</td>
+    </tr>
+    <tr>
+      <td>This may place us at a <font color="blue">disadvantage</font> to our <font color="blue">competitors</font>, which may harm     our ability to grow, maintain revenue or <font color="blue">generate net income</font></td>
+    </tr>
+    <tr>
+      <td>In  recent years, there has been substantial <font color="blue">consolidation</font> in our     industry,  and  we  expect  that  <font color="blue">there will</font> be <font color="blue">significant</font> <font color="blue">additional</font>     <font color="blue">consolidation</font>  in  the  near  future</td>
+    </tr>
+    <tr>
+      <td>As  a result of this increasing     <font color="blue">consolidation</font>, we expect that we will <font color="blue">increasingly</font> compete with larger firms     that have broader product offerings and greater financial resources than we     have</td>
+    </tr>
+    <tr>
+      <td>We believe that this <font color="blue">competition</font> could have a <font color="blue">significant</font> negative     effect on our marketing, distribution and reselling <font color="blue"><font color="blue">relationship</font>s</font>, pricing     of  services  and  products  and  our  product  <font color="blue">development budget</font> and     <font color="blue">capabilities</font></td>
+    </tr>
+    <tr>
+      <td>Any of these negative effects could <font color="blue">significant</font>ly impair our     results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to compete     <font color="blue">successfully</font> against new or <font color="blue">existing <font color="blue">competitors</font></font></td>
+    </tr>
+    <tr>
+      <td>Our business will suffer if we do not keep up with <font color="blue">rapid <font color="blue">technological</font></font>     change, <font color="blue">evolving industry standards</font> or changing <font color="blue">customer <font color="blue">requirements</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Rapidly  </font>changing <font color="blue">technology</font>, <font color="blue">evolving industry standards</font> and changing     customer needs are common in the Internet software and <font color="blue">services market</font></td>
+    </tr>
+    <tr>
+      <td>We     expect  <font color="blue">technological</font>  <font color="blue">developments</font> to <font color="blue">continue at</font> a rapid pace in our     industry</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technological </font><font color="blue">developments</font>, <font color="blue">evolving industry standards</font> and     changing customer needs could cause our business to be rendered obsolete or     non-<font color="blue">competitive</font>, especially if the market for the core set of eBusiness     solutions and <font color="blue">software platforms</font> in which we have expertise does not grow or     if <font color="blue">such growth</font> is <font color="blue">delayed due</font> to market <font color="blue">acceptance</font>, economic <font color="blue">uncertainty</font> or     other <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our <font color="blue">success will depend</font>, in part, on our     ability to:                                             •       continue to develop our <font color="blue">technology</font> expertise;                                             •       enhance our <font color="blue">current services</font>;                                             •       develop <font color="blue">new services</font> that meet changing customer needs;                                             •       advertise and market our services; and                                             •       influence and respond to <font color="blue">emerging industry standards</font> and other <font color="blue">technological</font>     changes</td>
+    </tr>
+    <tr>
+      <td>We must accomplish all of these tasks in a timely and cost-<font color="blue">effective</font> manner</td>
+    </tr>
+    <tr>
+      <td>We  might not succeed in <font color="blue"><font color="blue">effective</font>ly</font> doing any of these tasks, and our     failure to succeed could have a material and adverse effect on our business,     <font color="blue">financial condition</font> or results of <font color="blue">operations</font>, including <font color="blue">materially</font> reducing     our revenue and operating results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may also incur</font> substantial costs to keep up with changes surrounding the     Internet</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unresolved </font><font color="blue">critical issues concerning</font> the <font color="blue">commercial use</font> and     <font color="blue">government regulation</font> of the Internet include the following:                                             •       security;                                             •       <font color="blue">intellectual property ownership</font>;                                             •       privacy;                                             •       taxation; and                                             •       <font color="blue">liability issues</font></td>
+    </tr>
+    <tr>
+      <td>Any costs we incur because of these factors could <font color="blue">materially</font> and <font color="blue">adversely</font>     affect  our  business,  <font color="blue">financial condition</font> and results of <font color="blue">operations</font>,     including <font color="blue">reduced net income</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our revenue is <font color="blue">dependent</font> upon building long-term     <font color="blue"><font color="blue">relationship</font>s</font> with our clients and our operating results <font color="blue">could suffer</font> if we     fail to maintain these <font color="blue"><font color="blue">relationship</font>s</font></td>
+    </tr>
+    <tr>
+      <td>13       _________________________________________________________________           Our  <font color="blue">professional</font>  services  <font color="blue">agreements with clients</font> are in most cases     terminable on 10 to 30 days’ notice</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">client may choose at</font> any time to use     another <font color="blue">consulting firm</font> or choose to perform services we <font color="blue">provide through</font>     their own <font color="blue">internal resources</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we rely on our clients’ interests     in maintaining the <font color="blue">continuity</font> of our <font color="blue">services rather than on <font color="blue">contractual</font></font>     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Termination </font>of a <font color="blue"><font color="blue">relationship</font> with</font> a <font color="blue">significant</font> client or     with  a group of clients that account for a <font color="blue">significant</font> portion of our     revenues <font color="blue">could <font color="blue">adversely</font> affect</font> our revenues and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to meet our clients’ performance <font color="blue">expectations</font>, our <font color="blue">reputation may</font>     be harmed</td>
+    </tr>
+    <tr>
+      <td>As a services provider, our ability to attract and retain clients depends to     a large extent on our <font color="blue"><font color="blue">relationship</font>s</font> with our clients and our reputation for     <font color="blue">high quality</font> services and integrity</td>
+    </tr>
+    <tr>
+      <td>We also believe that the importance of     reputation and name <font color="blue">recognition</font> is increasing and <font color="blue">will continue</font> to increase     due to the number of providers of information <font color="blue">technology</font> services</td>
+    </tr>
+    <tr>
+      <td>As a     result, if a client is not satisfied with our services or does not perceive     our solutions to be <font color="blue">effective</font> or of <font color="blue">high quality</font>, our <font color="blue">reputation may</font> be     damaged and we may be unable to <font color="blue">attract new</font>, or retain existing, clients and     <font color="blue">colleagues</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may face potential liability</font> to customers if our customers’ systems fail</td>
+    </tr>
+    <tr>
+      <td>Our eBusiness <font color="blue">integration</font> solutions are often critical to the operation of     our customers’ businesses and <font color="blue">provide benefits</font> that may be <font color="blue">difficult</font> to     quantify</td>
+    </tr>
+    <tr>
+      <td>If one of our customers’ systems fails, the <font color="blue">customer could</font> make a     claim for substantial damages <font color="blue">against us</font>, regardless of our <font color="blue">responsibility</font>     for that failure</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">limitations</font> of <font color="blue">liability set forth</font> in our contracts     may not be enforceable in all instances and may not <font color="blue">otherwise protect us</font>     <font color="blue">from liability</font> for damages</td>
+    </tr>
+    <tr>
+      <td>Our insurance coverage may not continue to be     <font color="blue">available on reasonable terms</font> or in <font color="blue">sufficient amounts</font> to cover one or more     large claims</td>
+    </tr>
+    <tr>
+      <td>If we experience one or more large claims <font color="blue">against us</font> that     <font color="blue">exceed available insurance coverage</font> or result in changes in our insurance     policies, including <font color="blue">premium increases</font> or the imposition of large deductible     or co-insurance <font color="blue">requirements</font>, our business and financial results could     suffer</td>
+    </tr>
+    <tr>
+      <td>The loss of one or more of our <font color="blue">significant</font> software partners would have a     material adverse effect on our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">partnerships with software vendors enable us</font> to reduce our cost of sales     and <font color="blue">increase win rates through leveraging</font> our partners’ marketing efforts     and  strong  vendor  <font color="blue">endorsements</font></td>
+    </tr>
+    <tr>
+      <td>The  loss  of one or more of these     <font color="blue"><font color="blue">relationship</font>s</font> and <font color="blue">endorsements</font> could increase our sales and <font color="blue">marketing costs</font>,     lead to longer sales cycles, harm our reputation and brand <font color="blue">recognition</font>,     reduce our revenues and <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In particular, a substantial portion of our solutions are built on IBM     WebSphere platforms and a <font color="blue">significant</font> number of our clients are identified     through joint selling opportunities conducted with IBM and through sales     leads  obtained  from  our <font color="blue"><font color="blue">relationship</font> with</font> <font color="blue">IBM Revenue </font>from IBM was     <font color="blue">approximately</font> 9prca, 17prca and 35prca of <font color="blue">total revenue</font> for the years ended <font color="blue"><font color="blue">December </font>    </font>31, 2005, 2004 and 2003, respectively</td>
+    </tr>
+    <tr>
+      <td>The loss of our <font color="blue"><font color="blue">relationship</font> with</font>, or     a <font color="blue">significant</font> reduction in the services we perform for IBM would have a     material adverse effect on our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our quarterly revenue, expenses and operating results have varied in the     past and may vary <font color="blue">significant</font>ly in the future</td>
+    </tr>
+    <tr>
+      <td>In addition, many factors     <font color="blue">affecting</font> our operating results are outside of our control, such as:                                             §       demand for Internet software and services;                                             §       <font color="blue">customer <font color="blue">budget cycles</font></font>;                                             §       changes in our customers’ desire for our partners’ products and our     services;                                             §       pricing changes in our industry;                                             §       <font color="blue">government regulation</font> and legal <font color="blue">developments</font> regarding the use of the     Internet; and                                             §       general economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>14       _________________________________________________________________           As a result, if we experience <font color="blue">unanticipated</font> changes in the number or nature     of our projects or in our <font color="blue">employee <font color="blue"><font color="blue">utilization rate</font>s</font></font>, we could experience     large <font color="blue">variations</font> in quarterly operating results and losses in any particular     quarter</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue"><font color="blue">services revenue</font>s</font> may fluctuate quarterly due</font> to <font color="blue">seasonality</font> or timing     of <font color="blue">completion</font> of projects</td>
+    </tr>
+    <tr>
+      <td>We may experience <font color="blue">seasonal fluctuations</font> in our <font color="blue"><font color="blue">services revenue</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We expect     that <font color="blue"><font color="blue">services revenue</font>s</font> in the <font color="blue">fourth quarter</font> of a <font color="blue">given year may typically</font>     be lower than in other quarters in that <font color="blue">year as there</font> are <font color="blue">fewer billable</font>     days in this <font color="blue">quarter as</font> a result of vacations and holidays</td>
+    </tr>
+    <tr>
+      <td>In addition, we     <font color="blue">generally</font>  perform <font color="blue">services on</font> a project basis</td>
+    </tr>
+    <tr>
+      <td>While we <font color="blue">seek wherever</font>     possible to <font color="blue"><font color="blue">counterbalance</font> periodic declines</font> in revenues on <font color="blue">completion</font> of     large projects <font color="blue">with new <font color="blue">arrangements</font></font> to <font color="blue">provide services</font> to the <font color="blue">same client</font>     or others, we may not be able to <font color="blue">avoid declines</font> in revenues when large     projects are completed</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to obtain <font color="blue">sufficient new</font> projects to     <font color="blue">counterbalance</font> any <font color="blue">decreases</font> in work upon <font color="blue">completion</font> of large projects could     <font color="blue">adversely</font> affect our revenues and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">software revenue</font> may fluctuate quarterly</font>, leading to <font color="blue">volatility</font> in our     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">software revenue</font> may fluctuate quarterly</font> and be higher in the fourth     quarter of a <font color="blue">given year as procurement policies</font> of our <font color="blue">clients may</font> result in     higher <font color="blue">technology</font> spending towards the end of <font color="blue">budget cycles</font></td>
+    </tr>
+    <tr>
+      <td>This seasonal     trend may <font color="blue">materially</font> affect our quarter-to-quarter revenues, margins and     operating results</td>
+    </tr>
+    <tr>
+      <td>Our overall gross <font color="blue">margin fluctuates quarterly based on</font> our services and     <font color="blue">software revenue</font> mix, which may cause our stock price to fluctuate</td>
+    </tr>
+    <tr>
+      <td>The gross <font color="blue">margin on</font> our <font color="blue">services revenue</font> is, in most instances, greater than     the gross <font color="blue">margin on</font> our <font color="blue">software revenue</font></td>
+    </tr>
+    <tr>
+      <td>In addition, gross     <font color="blue">margin on</font> <font color="blue">software revenue</font> may fluctuate as a result of variances in gross     <font color="blue">margin on</font> individual <font color="blue">software products</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">stock price may</font> be <font color="blue">negatively</font>     affected in quarters in which our gross margin <font color="blue">decreases</font></td>
+    </tr>
+    <tr>
+      <td>Our  services gross margins are subject to <font color="blue">fluctuations as</font> a result of     variances in <font color="blue"><font color="blue">utilization rate</font>s</font> and <font color="blue">billing rates</font></td>
+    </tr>
+    <tr>
+      <td>Our services gross margins are <font color="blue">affected by trends</font> in the <font color="blue">utilization rate</font> of     our <font color="blue"><font color="blue">professional</font>s</font>, defined as the percentage of our <font color="blue"><font color="blue">professional</font>s</font>’ time     billed to <font color="blue">customers divided by</font> the <font color="blue">total available hours</font> in a period, and in     the <font color="blue">billing rates</font> we charge our clients</td>
+    </tr>
+    <tr>
+      <td>Our operating expenses, including     employee salaries, rent and <font color="blue">administrative expenses</font> are <font color="blue">relatively</font> fixed and     cannot be <font color="blue">reduced on</font> short notice to compensate for <font color="blue">unanticipated</font> <font color="blue">variations</font>     in the number or size of projects in process</td>
+    </tr>
+    <tr>
+      <td>Any resulting     non-billable time may <font color="blue">adversely</font> affect our gross margins</td>
+    </tr>
+    <tr>
+      <td>The average <font color="blue">billing rates</font> for our <font color="blue">services may decline due</font> to rate     pressures from <font color="blue">significant</font> customers and other <font color="blue">market factors</font>, including     <font color="blue">innovations</font> and average <font color="blue">billing rates</font> charged by our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Also, our     average  <font color="blue">billing rates</font> will decline if we acquire <font color="blue">companies with lower</font>     average <font color="blue">billing rates</font> than ours</td>
+    </tr>
+    <tr>
+      <td>To sell our products and <font color="blue">services at higher</font>     prices, we <font color="blue">must continue</font> to develop and introduce <font color="blue">new services</font> and products     that  <font color="blue">incorporate new technologies</font> or high-performance features</td>
+    </tr>
+    <tr>
+      <td>If we     experience <font color="blue">pricing pressures</font> or fail to develop <font color="blue">new services</font>, our revenues     and gross margins could decline, which could harm our business, financial     condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to complete fixed-fee contracts within budget and on time, our     results of <font color="blue">operations</font> could be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>Under these <font color="blue">contractual</font>     <font color="blue">arrangements</font>, we bear the risk of cost overruns, <font color="blue">completion</font> delays, wage     inflation and other <font color="blue">cost increases</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to estimate <font color="blue">accurately</font> the     resources and time required to complete a project or fail to complete our     <font color="blue">contractual</font> obligations within the <font color="blue">scheduled timeframe</font>, our results of     <font color="blue">operations</font> could be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that in the     future we will not price these contracts in<font color="blue">appropriate</font>ly, which may result     in losses</td>
+    </tr>
+    <tr>
+      <td>We may not be able to maintain our level of <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Although we have been profitable for the <font color="blue">past eleven quarters</font>, we may not be     able to sustain or increase <font color="blue">profitability</font> on a quarterly or <font color="blue">annual basis</font> in     the  future</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you of any operating results</td>
+    </tr>
+    <tr>
+      <td>In future     quarters, our operating results may not <font color="blue">meet public market analysts</font>’ and     investors’ <font color="blue">expectations</font></td>
+    </tr>
+    <tr>
+      <td>If this occurs, the price of our <font color="blue">common stock</font> will     <font color="blue">likely fall</font></td>
+    </tr>
+    <tr>
+      <td>15       _________________________________________________________________           If we do not <font color="blue"><font color="blue">effective</font>ly</font> manage our growth, our results of <font color="blue">operations</font> and     cash <font color="blue">flows could</font> be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to operate <font color="blue">profitably with</font> positive <font color="blue">cash flows depends largely</font>     on how <font color="blue"><font color="blue">effective</font>ly</font> we manage our growth</td>
+    </tr>
+    <tr>
+      <td>In order to create the <font color="blue">additional</font>     <font color="blue">capacity necessary</font> to <font color="blue">accommodate</font> the demand for our services, we may need     to  implement  a variety of new and <font color="blue">upgraded operational</font> and financial     systems,  procedures and controls, open new offices or hire <font color="blue">additional</font>     <font color="blue">colleagues</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Implementation </font>of these new systems, procedures and controls may     require substantial <font color="blue">management</font> efforts and our efforts to do so may not be     successful</td>
+    </tr>
+    <tr>
+      <td>The  opening  of  new offices or the hiring of <font color="blue">additional</font>     <font color="blue">colleagues</font> may result in idle or <font color="blue">underutilized capacity</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">periodically</font>     assess  the expected long-term capacity utilization of our offices and     <font color="blue"><font color="blue">professional</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to achieve or maintain <font color="blue">optimal utilization</font>     of our offices and <font color="blue"><font color="blue">professional</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If demand for our services does not meet     our <font color="blue">expectations</font>, our revenues and <font color="blue">cash flows will</font> not be sufficient to     offset these expenses and our results of <font color="blue">operations</font> and cash <font color="blue">flows could</font> be     <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">recorded deferred offering costs</font> in <font color="blue">connection with</font> the <font color="blue">conversion</font>     of our <font color="blue"><font color="blue">registration</font> statement into</font> a <font color="blue">shelf <font color="blue">registration</font> statement</font>, and our     <font color="blue">inability</font> to net these <font color="blue">costs against</font> the proceeds of <font color="blue">future offerings from</font>     our <font color="blue">shelf <font color="blue">registration</font> statement</font> could result in a non-cash expense in our     <font color="blue">Statement of Operations </font>in a <font color="blue">future period</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">initially filed</font> a <font color="blue"><font color="blue">registration</font> statement with</font> the Securities and Exchange     Commission on March 7, 2005 to register the offer and sale by the <font color="blue">Company     </font>and certain selling stockholders of shares of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Due to     overall  market <font color="blue">conditions</font> during the second quarter, we converted our     <font color="blue"><font color="blue">registration</font> statement into</font> a <font color="blue">shelf <font color="blue">registration</font> statement</font> to allow for     offers and sales of <font color="blue">common stock</font> from time to time as market <font color="blue">conditions</font>     permit</td>
+    </tr>
+    <tr>
+      <td>To  date, we have recorded <font color="blue">approximately</font> dlra942cmam000 of deferred     offering costs (<font color="blue">approximately</font> dlra579cmam000 after tax, if <font color="blue">ever expensed</font>) in     <font color="blue">connection with</font> the offering and have classified these <font color="blue">costs as prepaid</font>     expenses in other non-current assets on our <font color="blue">balance sheet</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">sell shares</font> of <font color="blue">common stock</font> from our <font color="blue">shelf <font color="blue">registration</font> statement</font>, we     will be allowed to net these accumulated deferred offering <font color="blue">costs against</font> the     proceeds  of  the offering</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">raise funds through</font> an equity     offering from the <font color="blue">shelf <font color="blue">registration</font> statement</font> or fail to maintain the     <font color="blue">effective</font>ness of the <font color="blue">shelf <font color="blue">registration</font> statement</font>, the <font color="blue">currently capitalized</font>     <font color="blue">deferred offering costs will</font> be expensed</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">expense would</font> be a non-cash     <font color="blue">accounting</font> charge as all of these expenses have <font color="blue">already been paid</font></td>
+    </tr>
+    <tr>
+      <td>The Public Company Accounting Oversight Board, or PCAOB, is conducting an     <font color="blue">annual inspection</font> of our <font color="blue">external auditors</font> BDO Seidman, LLP            The PCAOB is a <font color="blue">new private agency established</font> to oversee the auditors of     publicly held companies</td>
+    </tr>
+    <tr>
+      <td>In 2005, the PCAOB conducted an <font color="blue">annual inspection</font>     of BDO Seidman, LLP (BDO), as they do with all other large public <font color="blue">accounting</font>     firms that audit the <font color="blue">financial statements</font> of publicly held companies</td>
+    </tr>
+    <tr>
+      <td>The     PCAOB inspected BDO’s audits of a number of BDO clients, including BDO’s     audit of our <font color="blue">financial statements</font> for the year ended <font color="blue">December </font>31, 2004</td>
+    </tr>
+    <tr>
+      <td>The     PCAOB staff has told BDO they <font color="blue">differ with</font> our <font color="blue">accounting</font> for forfeitable     shares of <font color="blue">stock issued</font> in <font color="blue">connection with</font> one of our <font color="blue">acquisition</font>s in 2004     and has referred this matter to its Board</td>
+    </tr>
+    <tr>
+      <td><font color="blue">We and BDO </font>believe that our     <font color="blue">accounting</font> for this <font color="blue">acquisition</font> is correct</td>
+    </tr>
+    <tr>
+      <td>If it were ultimately determined     that different <font color="blue">accounting</font> should be used for this <font color="blue">acquisition</font>, we estimate     the resulting <font color="blue">accounting</font> impact would be a non-cash expense of <font color="blue">approximately</font>     dlra600cmam000 per year after <font color="blue">taxes over</font> a period of <font color="blue">three years from</font> the date of     the <font color="blue">acquisition</font> and a reduction in the <font color="blue">acquisition</font>’s <font color="blue">purchase price</font> of     dlra3dtta1 million reflected on our <font color="blue">balance sheet</font> as reductions in goodwill and     stockholders’ equity as of the <font color="blue">acquisition</font> date</td>
+    </tr>
+    <tr>
+      <td>The PCAOB’s inspection of     BDO  is ongoing and there can be <font color="blue">no assurance as</font> to its <font color="blue">final scope</font> or     <font color="blue">completion</font></td>
+    </tr>
+    <tr>
+      <td>SPECIAL NOTE REGARDING FORWARD-LOOKING STATEMENTS           Some of the statements contained in this annual report that are not purely     historical statements discuss future <font color="blue">expectations</font>, contain projections of     results of <font color="blue">operations</font> or <font color="blue">financial condition</font> or state other forward-looking     information</td>
+    </tr>
+    <tr>
+      <td>Those statements are subject to known and <font color="blue">unknown risks</font>,     <font color="blue">uncertainties</font> and other factors that could cause the actual results to     differ  <font color="blue">materially</font>  from  those  contemplated  by  the statements</td>
+    </tr>
+    <tr>
+      <td>The     “forward-looking” information is <font color="blue">based on various factors</font> and was derived     <font color="blue">using numerous assumptions</font></td>
+    </tr>
+    <tr>
+      <td>In some cases, you can identify these so-called     forward-looking  statements  by  words  like  “may,” “will,” “should,”     “expects,” “plans,” “anticipates,” “believes,” “estimates,” “predicts,”     “potential”  or  “continue”  or  the negative of those words and other     comparable words</td>
+    </tr>
+    <tr>
+      <td>You should be aware that those <font color="blue">statements only reflect</font> our     <font color="blue">predictions</font></td>
+    </tr>
+    <tr>
+      <td>Actual events or results <font color="blue">may differ substantially</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Important     </font>factors that could cause our actual results to be <font color="blue">materially</font> different from     the  forward-looking  statements are disclosed under the heading “Risk     Factors” in this annual report</td>
+    </tr>
+    <tr>
+      <td>16       _________________________________________________________________           Although we believe that the <font color="blue">expectations</font> reflected in the forward-looking     statements are reasonable, we <font color="blue">cannot guarantee future</font> results, levels of     activity, performance or <font color="blue">achievements</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">under no duty</font> to update any of     the forward-looking statements after the date of this annual report to     <font color="blue">conform such statements</font> to actual results</td>
+    </tr>
+  </tbody>
+</table>

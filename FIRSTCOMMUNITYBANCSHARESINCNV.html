@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "5: Company ", fill: "#f7e98e"},
+{source: "5: Company ", target: "5: will continue", fill: "#f7e98e"},
+{source: "5: will continue", target: "5: income from", fill: "#f7e98e"},
+{source: "5: income from", target: "5: differential", fill: "#f7e98e"},
+{source: "5: differential", target: "5: spread between", fill: "#f7e98e"},
+{source: "5: spread between", target: "5: interest earned on loans securities", fill: "#f7e98e"},
+{source: "5: interest earned on loans securities", target: "5: interest paid on deposits borrowings", fill: "#f7e98e"},
+{source: "5: Company ", target: "7: materially", fill: "#d7837f"},
+{source: "7: materially", target: "7: adversely", fill: "#d7837f"},
+{source: "7: adversely", target: "7: Companys ", fill: "#d7837f"},
+{source: "7: Companys ", target: "7: net interest spread levels", fill: "#d7837f"},
+{source: "7: net interest spread levels", target: "7: prepayments", fill: "#d7837f"},
+{source: "7: prepayments", target: "7: cash flows", fill: "#d7837f"},
+{source: "7: cash flows", target: "7: market value", fill: "#d7837f"},
+{source: "7: market value", target: "7: securities portfolio", fill: "#d7837f"},
+{source: "7: securities portfolio", target: "7: overall profitability", fill: "#d7837f"},
+{source: "7: materially", target: "8: The Banks ", fill: "#2e8b57"},
+{source: "8: The Banks ", target: "8: pay dividends", fill: "#2e8b57"},
+{source: "8: pay dividends", target: "8: regulatory limitations", fill: "#2e8b57"},
+{source: "8: regulatory limitations", target: "8: such dividends", fill: "#2e8b57"},
+{source: "8: such dividends", target: "8: future may", fill: "#2e8b57"},
+{source: "8: future may", target: "8: Companys ", fill: "#2e8b57"},
+{source: "8: Companys ", target: "8: obligations", fill: "#2e8b57"},
+{source: "8: The Banks ", target: "9: The Company ", fill: "#ad6f69"},
+{source: "9: The Company ", target: "9: separate legal", fill: "#ad6f69"},
+{source: "9: separate legal", target: "9: subsidiaries", fill: "#ad6f69"},
+{source: "9: subsidiaries", target: "9: significant", fill: "#ad6f69"},
+{source: "9: significant", target: "9: operations", fill: "#ad6f69"},
+{source: "9: The Company ", target: "11: capacity", fill: "#004953"},
+{source: "11: capacity", target: "11: necessary dividends", fill: "#004953"},
+{source: "11: necessary dividends", target: "11: dividends from", fill: "#004953"},
+{source: "11: dividends from", target: "11: the Companys ", fill: "#004953"},
+{source: "11: the Companys ", target: "11: obligations", fill: "#004953"},
+{source: "11: capacity", target: "12: availability", fill: "#a52a2a"},
+{source: "12: availability", target: "12: by various statutes", fill: "#a52a2a"},
+{source: "12: by various statutes", target: "12: regulations", fill: "#a52a2a"},
+{source: "12: availability", target: "13: possible depending upon", fill: "#6ca0dc"},
+{source: "13: possible depending upon", target: "13: financial condition", fill: "#6ca0dc"},
+{source: "13: financial condition", target: "13: OCC the Banks ", fill: "#6ca0dc"},
+{source: "13: OCC the Banks ", target: "13: primary regulator could", fill: "#6ca0dc"},
+{source: "13: primary regulator could", target: "13: payments by", fill: "#6ca0dc"},
+{source: "13: possible depending upon", target: "16: The Banks ", fill: "#007fff"},
+{source: "16: The Banks ", target: "16: loan losses may", fill: "#007fff"},
+{source: "16: loan losses may", target: "16: cover actual", fill: "#007fff"},
+{source: "16: The Banks ", target: "20: managements", fill: "#00703c"},
+{source: "20: managements", target: "20: loan losses", fill: "#00703c"},
+{source: "20: loan losses", target: "20: considerations with respect", fill: "#00703c"},
+{source: "20: managements", target: "START_HERE", fill: "#00703c"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Banks</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Commercial Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Amazon_(company)">Amazon (company)</a></td>
+      <td>Amazon.com, Inc. ( AM-ə-zon) is an American multinational technology company which focuses on e-commerce, cloud computing, digital streaming, and artificial intelligence.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_debt_obligation">Collateralized debt obligation</a></td>
+      <td>A collateralized debt obligation (CDO) is a type of structured asset-backed security (ABS). Originally developed as instruments for the corporate debt markets, after 2002 CDOs became vehicles for refinancing mortgage-backed securities (MBS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_food_reaction">Adverse food reaction</a></td>
+      <td>An adverse food reaction is an adverse response by the body to food or a specific type of food.The most common adverse reaction is a food allergy, which is an adverse immune response to either a specific type or a range of food proteins.\nHowever, other adverse responses to food are not allergies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Diuretic">Diuretic</a></td>
+      <td>Diuresis () is increased urination (polyuria) or, in the related word senses more often intended, the physiologic process that produces such an increase or the administration of medications to encourage that process. It involves extra urine production in the kidneys as part of the body's homeostatic maintenance of fluid balance.In healthy people, the drinking of extra water produces mild diuresis to maintain the body water  balance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lluís_Companys">Lluís Companys</a></td>
+      <td>Lluís Companys i Jover (Catalan pronunciation: [ʎuˈis kumˈpaɲs]; 21 June 1882 – 15 October 1940) was a Spanish politician from Catalonia who served as president of Catalonia from 1934 and during the Spanish Civil War.\nCompanys was a lawyer close to labour movement and one of the most prominent leaders of the Republican Left of Catalonia (ERC) political party, founded in 1931.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Estadi_Olímpic_Lluís_Companys">Estadi Olímpic Lluís Companys</a></td>
+      <td>Estadi Olímpic Lluís Companys (Catalan pronunciation: [əsˈtaði uˈlimpiɡ ʎuˈis kumˈpaɲs], formerly known as the Estadi Olímpic de Montjuïc and Estadio de Montjuic) is a stadium in Barcelona, Catalonia, Spain. Originally built in 1927 for the 1929 International Exposition in the city (and Barcelona's bid for the 1936 Summer Olympics, which were awarded to Berlin), it was renovated in 1989 to be the main stadium for the 1992 Summer Olympics and 1992 Summer Paralympics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_largest_companies_in_the_United_States_by_revenue">List of largest companies in the United States by revenue</a></td>
+      <td>This list comprises the largest companies in the United States by revenue as of 2022, according to the Fortune 500 tally of companies. Retail corporation Walmart has been the largest company in the US by revenue since 2014.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/El_Tarròs">El Tarròs</a></td>
+      <td>El Tarròs (Spanish: Tarrós) is a small village in Tornabous municipality, in the province of Lleida, in Catalonia, Spain. In 2008 it had 100 inhabitants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Pokémon_Company">The Pokémon Company</a></td>
+      <td>The Pokémon Company (株式会社ポケモン, Kabushiki gaisha Pokémon) is a Japanese company responsible for brand management, production, publishing, marketing and licensing of the Pokémon franchise, which consists of video game software, a trading card game, anime television series, films, manga, home entertainment products, merchandise, and other ventures. It was established through a joint investment by the three businesses holding the copyright of Pokémon: Nintendo, Game Freak, and Creatures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Honest_Company">The Honest Company</a></td>
+      <td>The Honest Company, Inc. is an American consumer goods company, founded by actress Jessica Alba.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Gazprom_subsidiaries">List of Gazprom subsidiaries</a></td>
+      <td>Russian energy company Gazprom has several hundred subsidiaries and affiliated companies owned and controlled directly or indirectly. The subsidiaries and affiliated companies are listed by country.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_right">Subsidiary right</a></td>
+      <td>A subsidiary right (also called a subright or sub-lease) is the right to produce or publish a product in different formats based on the original material. Subsidiary rights are common in the publishing and entertainment industries, in which subsidiary rights are granted by the author to an agent, publisher, newspaper, or film studio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Toshiba_subsidiaries">List of Toshiba subsidiaries</a></td>
+      <td>Subsidiaries of Toshiba. Together, these companies form the Toshiba Group.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Víctor_Gay_Zaragoza">Víctor Gay Zaragoza</a></td>
+      <td>Víctor Gay Zaragoza (born 19 June 1982 in Barcelona, Spain) is a writer, storyteller, trainer and consultant on storytelling. He is author of the essays "Filosofía Rebelde" (Rebel Philosophy), "50 libros que cambiarán tu vida" (50 books that will change your life) and the historical novel "El defensor" (The defender).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Queen's_Regulations">Queen's Regulations</a></td>
+      <td>The Queen's Regulations (first published in 1731 and known as the King's Regulations when the monarch is a king) is a collection of orders and regulations in force in the Royal Navy, British Army, Royal Air Force, and Commonwealth Realm Forces (where the same person as on the British throne is also their separate head of state), forming guidance for officers of these armed services in all matters of discipline and personal conduct. Originally, a single set of regulations were published in one volume.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Allowance_for_Loan_and_Lease_Losses">Allowance for Loan and Lease Losses</a></td>
+      <td>In banking, the Allowance for Loan and Lease Losses (ALLL), formerly known as the reserve for bad debts, is a calculated reserve that financial institutions establish in relation to the estimated credit risk within the institution's assets. This credit risk represents the charge-offs that will most likely be realized against an institution's operating income as of the financial statement end date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Student_loan">Student loan</a></td>
+      <td>A student loan is a type of loan designed to help students pay for post-secondary education and the associated fees, such as tuition, books and supplies, and living expenses. It may differ from other types of loans in the fact that the interest rate may be substantially lower and the repayment schedule may be deferred while the student is still in school.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Expected_loss">Expected loss</a></td>
+      <td>Expected loss is the sum of the values of all possible losses, each multiplied by the probability of that loss occurring. \nIn bank lending (homes, autos, credit cards, commercial lending, etc.) the expected loss on a loan varies over time for a number of reasons.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FIRST COMMUNITY BANCSHARES INC /NV/      ITEM 1A   RISK FACTORS              <font color="blue">The Company </font>and its subsidiary business are subject to interest rate risk     and <font color="blue">variations</font> in <font color="blue">interest rates</font> may <font color="blue">negatively</font> affect its financial     performance</td>
+    </tr>
+    <tr>
+      <td>We are unable to <font color="blue">predict actual <font color="blue">fluctuations</font></font> of <font color="blue">market <font color="blue">interest rates</font> with</font>     complete accuracy</td>
+    </tr>
+    <tr>
+      <td>Rate <font color="blue">fluctuations</font> are <font color="blue">affected by</font> many factors, including     inflation, recession, a rise in <font color="blue">unemployment</font>, a tightening of the money     supply and domestic and <font color="blue">international disorder</font> and <font color="blue">instability</font> in domestic     and <font color="blue">foreign financial markets</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the <font color="blue">interest rate environment may reduce profits</font></td>
+    </tr>
+    <tr>
+      <td>We expect that     the  <font color="blue">Company  </font>and  the  Bank  <font color="blue">will continue</font> to realize <font color="blue">income from</font> the     <font color="blue">differential</font> or “spread” between the interest earned on loans, securities     and other interest-earning assets, and interest paid on deposits, borrowings     and other interest-bearing liabilities</td>
+    </tr>
+    <tr>
+      <td>Net <font color="blue">interest spreads</font> are <font color="blue">affected by</font>     the <font color="blue">difference between</font> the maturities and <font color="blue">repricing characteristics</font> of     interest-earning assets and interest-bearing liabilities</td>
+    </tr>
+    <tr>
+      <td>Changes in levels     of  market  interest  rates  could <font color="blue">materially</font> and <font color="blue">adversely</font> affect the     Company’s net interest spread, levels of <font color="blue">prepayments</font> and <font color="blue">cash flows</font>, the     <font color="blue">market value</font> of its <font color="blue">securities portfolio</font>, and <font color="blue">overall <font color="blue">profitability</font></font></td>
+    </tr>
+    <tr>
+      <td>The Bank’s ability to <font color="blue">pay dividends</font> is subject to <font color="blue"><font color="blue">regulatory</font> limitations</font>     which, to the extent the Company requires <font color="blue">such dividends</font> in the future, may     affect the Company’s ability to pay its <font color="blue">obligations</font> and <font color="blue">pay dividends</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>is a <font color="blue">separate legal</font> entity from the Bank and its <font color="blue">subsidiaries</font>     and does not have <font color="blue">significant</font> <font color="blue">operations</font> of its own</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>currently     <font color="blue">depends on</font> the Bank’s cash and <font color="blue">liquidity as well as dividends</font> to pay the     Company’s operating expenses and dividends to <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>No assurance can     be  made that in the future the Bank will have the <font color="blue">capacity</font> to pay the     <font color="blue">necessary dividends</font> and that the Company will not require <font color="blue">dividends from</font> the     Bank to satisfy the Company’s <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of dividends     from  the  Bank  is limited <font color="blue">by various statutes</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>It is     possible, depending upon the <font color="blue">financial condition</font> <font color="blue">of the Company </font>and other     factors  that the OCC, the Bank’s primary regulator, could assert that     payment of dividends or other <font color="blue">payments by</font> the Bank are an unsafe or unsound     practice</td>
+    </tr>
+    <tr>
+      <td>In the event the Bank is unable to <font color="blue">pay dividends</font> sufficient to     satisfy the Company’s <font color="blue">obligations</font> and the Bank is unable to <font color="blue">pay dividends</font> to     the Company, the Company may not be able to service its <font color="blue">obligations</font> as they     <font color="blue">become due</font>, including payments required to be made to the FCBI Capital     Trust, a business trust subsidiary of the Company, or <font color="blue">pay dividends</font> on the     Company’s <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, the <font color="blue">inability</font> to receive dividends     from the Bank could <font color="blue">adversely</font> affect the Company’s <font color="blue">financial condition</font>,     results of <font color="blue">operations</font>, <font color="blue">cash flows</font> and prospects</td>
+    </tr>
+    <tr>
+      <td>The Bank’s allowance for <font color="blue"><font color="blue">loan losses</font> may</font> not be adequate to <font color="blue">cover actual</font>     losses</td>
+    </tr>
+    <tr>
+      <td>Like all <font color="blue">financial <font color="blue">institutions</font></font>, the Bank maintains an allowance for loan     losses  to provide for <font color="blue">probable loan defaults</font> and non-performance</td>
+    </tr>
+    <tr>
+      <td>The     Bank’s allowance for <font color="blue"><font color="blue">loan losses</font> may</font> not be adequate to <font color="blue">cover actual</font> loan     losses, and <font color="blue">future provisions</font> for <font color="blue">loan losses</font> could <font color="blue">materially</font> and <font color="blue">adversely</font>     affect the Bank’s operating results</td>
+    </tr>
+    <tr>
+      <td>The Bank’s allowance for <font color="blue">loan losses</font> is     determined  by  analyzing  historical  loan  losses, current trends in     <font color="blue">delinquencies</font>  and charge-offs, plans for <font color="blue">problem loan resolution</font>, the     opinions of our <font color="blue">regulators</font>, changes in the size and <font color="blue">composition</font> of the loan     portfolio and industry information</td>
+    </tr>
+    <tr>
+      <td>Also included in management’s estimates     for <font color="blue">loan losses</font> are <font color="blue">considerations with respect</font> to the impact of economic     events, the outcome of which are uncertain</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The                                         </font>6       _________________________________________________________________    [57]Table of <font color="blue">Contents       </font>amount of <font color="blue">future losses</font> is susceptible to changes in economic, operating and     other <font color="blue">conditions</font>, including changes in <font color="blue">interest rates</font> that may be beyond the     Bank’s control, and these <font color="blue"><font color="blue">losses may exceed</font> current</font> estimates</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Federal     </font><font color="blue">regulatory</font> agencies, as an integral part of their <font color="blue">examination process</font>,     review the Bank’s loans and allowance for <font color="blue">loan losses</font></td>
+    </tr>
+    <tr>
+      <td>While we believe that     the Bank’s allowance for <font color="blue">loan losses</font> is adequate to provide for probable     losses, we <font color="blue">cannot assure</font> you that we will not need to increase the Bank’s     allowance for <font color="blue">loan losses</font> or that <font color="blue">regulators</font> will not require us to increase     this allowance</td>
+    </tr>
+    <tr>
+      <td>Either of these <font color="blue">occurrences</font> could <font color="blue">materially</font> and <font color="blue">adversely</font>     affect the Bank’s earnings and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s business is subject to <font color="blue">various lending</font> and other economic     risks that could <font color="blue">adversely</font> impact the Company’s results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Changes in economic <font color="blue">conditions</font>, <font color="blue">particularly</font> an economic slowdown, could     hurt the Company’s business</td>
+    </tr>
+    <tr>
+      <td>The Company’s business is directly <font color="blue">affected by</font>     political and market <font color="blue">conditions</font>, broad trends in industry and finance,     <font color="blue">legislative</font> and <font color="blue">regulatory</font> changes, and changes in <font color="blue"><font color="blue">governmental</font> monetary</font> and     fiscal  policies  and inflation, all of which are beyond the Company’s     control</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">deterioration</font> in economic <font color="blue">conditions</font>, in particular an economic     slowdown  within  the Company’s geographic region, could result in the     <font color="blue">following consequences</font>, any of <font color="blue">which could hurt</font> the Company’s business     <font color="blue">materially</font>:             •  loan <font color="blue">delinquencies</font> may increase;         •  <font color="blue">problem assets</font> and foreclosures may increase;         •  demand for the Company’s products and <font color="blue">services may decline</font>; and         •  collateral for loans made by the Company may decline in value, in turn     reducing a client’s borrowing power, and reducing the value of assets and     <font color="blue">collateral associated with</font> the Company’s loans held for <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>A downturn in the <font color="blue">real estate market could hurt</font> the Company’s business</td>
+    </tr>
+    <tr>
+      <td>The Company’s business <font color="blue">activities</font> and credit exposure are <font color="blue">concentrated</font> in     Virginia, West Virginia, North Carolina, Tennessee and the surrounding     <font color="blue">southeast region</font></td>
+    </tr>
+    <tr>
+      <td>A downturn in this regional <font color="blue">real estate market could hurt</font>     the Company’s business because of the <font color="blue">geographic concentration within</font> this     <font color="blue">regional area</font></td>
+    </tr>
+    <tr>
+      <td>If there is a <font color="blue">significant</font> decline in <font color="blue">real estate values</font>, the     collateral for the Company’s <font color="blue">loans will provide less security</font></td>
+    </tr>
+    <tr>
+      <td>As a result,     the  Company’s  ability  to  <font color="blue">recover on defaulted loans by selling</font> the     <font color="blue">underlying real estate would</font> be diminished, and we would be more likely to     <font color="blue">suffer losses on defaulted loans</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s level of credit risk is <font color="blue">increasing due</font> to the expansion of     its <font color="blue">commercial lending</font>, and the <font color="blue">concentration on <font color="blue">middle market</font> customers</font>     <font color="blue">with <font color="blue">heightened vulnerability</font></font> to economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Commercial </font> </font>business  and  commercial  <font color="blue">real estate loans generally</font> are     considered riskier than single-family residential loans because they have     larger  balances  to  a <font color="blue">single borrower</font> or group of related borrowers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Commercial </font>business and <font color="blue">commercial real estate loans involve risks</font> because     the borrower’s ability to repay the <font color="blue">loan typically depends primarily on</font> the     <font color="blue">successful operation</font> of the business or the <font color="blue">property securing</font> the loan</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Most     </font>of the commercial business loans are made to small business or <font color="blue">middle market</font>     customers who may have a <font color="blue">heightened vulnerability</font> to economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, a portion of these loans have been made or acquired by the <font color="blue">Company  </font>   in the <font color="blue">last several years</font> and the <font color="blue">borrowers may</font> not have experienced a     complete business or <font color="blue">economic cycle</font></td>
+    </tr>
+    <tr>
+      <td>The Bank <font color="blue">may suffer losses</font> in its <font color="blue"><font color="blue">loan portfolio</font> despite</font> its <font color="blue">underwriting</font>     practices</td>
+    </tr>
+    <tr>
+      <td>The Bank seeks to mitigate the <font color="blue">risks inherent</font> in the Bank’s <font color="blue">loan portfolio</font>     by adhering to specific <font color="blue">underwriting</font> practices</td>
+    </tr>
+    <tr>
+      <td>These practices include     analysis of a borrower’s prior credit history, financial statements, tax     returns and cash flow projections, valuation of <font color="blue">collateral based on</font> reports     of <font color="blue">independent appraisers</font> and <font color="blue">verification</font> of <font color="blue">liquid assets</font></td>
+    </tr>
+    <tr>
+      <td>Although the     Bank believes that its <font color="blue">underwriting</font> criteria are <font color="blue">appropriate</font> for the various     kinds of loans it makes, the Bank <font color="blue">may incur losses on loans</font> that meet its     <font color="blue">underwriting</font> criteria, and these <font color="blue">losses may exceed</font> the <font color="blue">amounts set aside as</font>     reserves in the Bank’s allowance for <font color="blue">loan losses</font></td>
+    </tr>
+    <tr>
+      <td>7       _________________________________________________________________    [58]Table of <font color="blue">Contents       </font>   <font color="blue">The Company </font>and its <font color="blue">subsidiaries</font> are subject to extensive regulation     which could <font color="blue">adversely</font> affect them</td>
+    </tr>
+    <tr>
+      <td>The  Company and its <font color="blue">subsidiaries</font>’ <font color="blue">operations</font> are subject to extensive     regulation by federal, state and local <font color="blue">governmental</font> <font color="blue">authorities</font> and are     subject to various laws and judicial and <font color="blue">administrative</font> <font color="blue">decisions</font> imposing     <font color="blue">requirements</font> and <font color="blue">restrictions</font> on part or all of the Company’s <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>believes that it is in substantial compliance in all material     respects  with  applicable  federal,  state  and local laws, rules and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Because the Company’s business is <font color="blue">highly regulated</font>, the laws,     rules and <font color="blue">regulations</font> applicable to it are subject to <font color="blue">regular modification</font>     and change</td>
+    </tr>
+    <tr>
+      <td>There are various laws, rules and <font color="blue">regulations</font> that impact the     Company’s <font color="blue">operations</font>, including, among other things, matters pertaining to     corporate governance, <font color="blue">requirements</font> for listing and <font color="blue">maintenance on national</font>     <font color="blue">securities exchanges</font> and over the <font color="blue">counter markets</font>, Securities and Exchange     Commission (“SEC”) <font color="blue">rules pertaining</font> to public reporting <font color="blue">disclosures</font> and     banking  <font color="blue">regulations</font>  governing  the  amount of loans that a financial     institution, such as the Bank, can acquire for <font color="blue">investment</font> from an affiliate</td>
+    </tr>
+    <tr>
+      <td>In addition, the Financial Accounting Standards Board (“FASB”), made changes     which require, among other things, the expensing of the costs relating to     the issuance of <font color="blue">stock options</font></td>
+    </tr>
+    <tr>
+      <td>These laws, rules and <font color="blue">regulations</font>, or any     other laws, rules or <font color="blue">regulations</font>, that may be adopted in the future, could     make compliance more <font color="blue">difficult</font> or expensive, restrict the Company’s ability     to originate, broker or sell loans, further limit or restrict the amount of     commissions, interest or other <font color="blue">charges earned on loans originated</font> or sold by     the Bank and otherwise <font color="blue">adversely</font> affect the Company’s business, financial     condition or prospects</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font><font color="blue">faces strong <font color="blue">competition</font> from</font> other <font color="blue">financial <font color="blue">institutions</font></font>,     <font color="blue">financial service companies</font> and other <font color="blue">organizations offering services</font>     similar to those <font color="blue">offered by</font> the Company and its <font color="blue">subsidiaries</font>, which could     hurt the Company’s business</td>
+    </tr>
+    <tr>
+      <td>The Company’s business <font color="blue">operations</font> are <font color="blue">centered primarily</font> in Virginia, West     Virginia, North Carolina, Tennessee and the surrounding <font color="blue">southeast region</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased  </font><font color="blue">competition</font>  within  this <font color="blue">region may</font> result in <font color="blue">reduced loan</font>     <font color="blue">originations</font>  and  deposits</td>
+    </tr>
+    <tr>
+      <td>Ultimately, we may not be able to compete     <font color="blue">successfully against current</font> and <font color="blue">future <font color="blue">competitors</font></font></td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue"><font color="blue">competitors</font> offer</font>     the types of loans and <font color="blue">banking services</font> that we offer</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">competitors</font>     include other savings associations, <font color="blue">national banks</font>, regional banks and other     <font color="blue">community banks</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>also faces <font color="blue">competition</font> from many other types of     financial  <font color="blue">institutions</font>, including finance companies, brokerage firms,     <font color="blue">insurance companies</font>, credit unions, mortgage banks and other financial     <font color="blue">intermediaries</font></td>
+    </tr>
+    <tr>
+      <td>In particular, the Bank’s <font color="blue">competitors</font> include other state     and <font color="blue">national banks</font> and major financial companies whose greater resources may     <font color="blue">afford them</font> a <font color="blue">marketplace advantage by enabling them</font> to maintain numerous     <font color="blue">banking locations</font> and mount extensive promotional and <font color="blue">advertising campaigns</font></td>
+    </tr>
+    <tr>
+      <td>Additionally,  banks  and  other  financial  <font color="blue">institutions</font>  with larger     <font color="blue">capitalization</font> and financial <font color="blue">intermediaries</font> not subject to bank <font color="blue">regulatory</font>     <font color="blue">restrictions</font> have <font color="blue">larger lending limits</font> and are <font color="blue">thereby able</font> to serve the     credit needs of <font color="blue">larger clients</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">institutions</font>, <font color="blue">particularly</font> to the     extent they are more <font color="blue">diversified than</font> the Company, may be able to offer the     <font color="blue">same loan products</font> and services that the Company <font color="blue">offers at</font> more <font color="blue">competitive</font>     rates and prices</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the Company </font>is unable to attract and retain banking     clients, the Company may be unable to continue the Bank’s loan and deposit     growth and the Company’s business, <font color="blue">financial condition</font> and <font color="blue">prospects may</font> be     <font color="blue">negatively</font> affected</td>
+    </tr>
+  </tbody>
+</table>

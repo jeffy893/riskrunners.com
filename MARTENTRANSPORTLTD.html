@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: following factors", fill: "#9370db"},
+{source: "1: following factors", target: "1: carefully", fill: "#9370db"},
+{source: "1: carefully", target: "1: connection with", fill: "#9370db"},
+{source: "1: connection with", target: "1: evaluation", fill: "#9370db"},
+{source: "1: evaluation", target: "1: financial condition", fill: "#9370db"},
+{source: "1: financial condition", target: "1: operations prospects", fill: "#9370db"},
+{source: "1: operations prospects", target: "1: investment", fill: "#9370db"},
+{source: "1: investment", target: "1: common stock", fill: "#9370db"},
+{source: "1: following factors", target: "3: Additional ", fill: "#00827f"},
+{source: "3: Additional ", target: "3: uncertainties", fill: "#00827f"},
+{source: "3: uncertainties", target: "3: presently known", fill: "#00827f"},
+{source: "3: presently known", target: "3: immaterial may also impair", fill: "#00827f"},
+{source: "3: immaterial may also impair", target: "3: operations", fill: "#00827f"},
+{source: "3: Additional ", target: "4: general economic", fill: "#e2062c"},
+{source: "4: general economic", target: "4: largely out", fill: "#e2062c"},
+{source: "4: largely out", target: "4: which could", fill: "#e2062c"},
+{source: "4: which could", target: "4: materially adverse", fill: "#e2062c"},
+{source: "4: general economic", target: "10: highly competitive", fill: "#138808"},
+{source: "10: highly competitive", target: "10: competitive", fill: "#138808"},
+{source: "10: competitive", target: "10: fragmented industry", fill: "#138808"},
+{source: "10: fragmented industry", target: "10: could impair", fill: "#138808"},
+{source: "10: could impair", target: "10: profitability", fill: "#138808"},
+{source: "10: highly competitive", target: "31: regulations", fill: "#f88379"},
+{source: "31: regulations", target: "31: released by tractor", fill: "#f88379"},
+{source: "31: released by tractor", target: "31: affect tractors", fill: "#f88379"},
+{source: "31: affect tractors", target: "31: effective date", fill: "#f88379"},
+{source: "31: regulations", target: "START_HERE", fill: "#f88379"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Life and Health Insurance</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Policy</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Neanderthal">Neanderthal</a></td>
+      <td>Neanderthals (, also Neandertals, Homo neanderthalensis or Homo sapiens neanderthalensis) are an extinct species or subspecies of archaic humans who lived in Eurasia until about 40,000 years ago. While the cause of their extinction remains “highly contested”, demographic factors like small population size, inbreeding, and random fluctuations are considered likely factors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Homo_erectus">Homo erectus</a></td>
+      <td>Homo erectus (; meaning "upright man") is an extinct species of archaic human from the Pleistocene, with its earliest occurrence about 2 million years ago. Several human species, such as H. heidelbergensis and H. antecessor, with the former generally considered to have been the ancestor to Neanderthals, Denisovans, and modern humans, appear to have emerged within the possibly Asian populations of H. erectus.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Little_Boy">Little Boy</a></td>
+      <td>"Little Boy" was the codename for the type of atomic bomb dropped on the Japanese city of Hiroshima on 6 August 1945 during World War II. It was the first nuclear weapon used in warfare. The bomb was dropped by the Boeing B-29 Superfortress Enola Gay piloted by Colonel Paul W. Tibbets, Jr., commander of the 509th Composite Group of the United States Army Air Forces and Captain Robert A. Lewis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Abortion_in_the_United_States_by_state">Abortion in the United States by state</a></td>
+      <td>Abortion in the United States is legal, subject to balancing tests tying state regulation of abortion to the three trimesters of pregnancy, via the landmark 1973 case of Roe v. Wade, the first abortion case to be taken to the Supreme Court.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Great_Filter">Great Filter</a></td>
+      <td>The Great Filter, in the context of the Fermi paradox, is one possible resolution of the paradox.  It posits that in the development of life from the earliest stages of abiogenesis to reaching the highest levels of development on the Kardashev scale, there exists some particular barrier to development that makes detectable extraterrestrial life exceedingly rare.The concept originates in Robin Hanson's argument that the failure to find any extraterrestrial civilizations in the observable universe implies that something is wrong with one or more of the arguments (from various scientific disciplines) that the appearance of advanced intelligent life is probable; this observation is conceptualized in terms of a "Great Filter" which acts to reduce the great number of sites where intelligent life might arise to the tiny number of intelligent species with advanced civilizations actually observed (currently just one: human).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Doomsday_device">Doomsday device</a></td>
+      <td>A doomsday device is a hypothetical construction — usually a weapon or weapons system — which could destroy all life on a planet, particularly Earth, or destroy the planet itself, bringing "doomsday", a term used for the end of planet Earth. Most hypothetical constructions rely on hydrogen bombs being made arbitrarily large, assuming there are no concerns about delivering them to a target (see Teller–Ulam design) or that they can be "salted" with materials designed to create long-lasting and hazardous fallout (e.g., a cobalt bomb).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_nuclear_close_calls">List of nuclear close calls</a></td>
+      <td>A nuclear close call is an incident that could have led to at least one unintended nuclear detonation or explosion. These incidents typically involve a perceived imminent threat to a nuclear-armed country which could lead to retaliatory strikes against the perceived aggressor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Material_adverse_change">Material adverse change</a></td>
+      <td>In the fields of mergers and acquisitions and corporate finance, a material adverse change (abbreviated MAC), material adverse event (MAE), or material adverse effect (also MAE) is a change in circumstances that significantly reduces the value of a company. A contract to acquire, invest in, or lend money to a company often contains a  term that allows the acquirer, investor, or lender to cancel the transaction if a material adverse change occurs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Force_majeure">Force majeure</a></td>
+      <td>Force majeure (lit. superior force, with the sense of overwhelming force, from French)\nis a common clause in contracts which essentially frees both parties from liability or obligation when an extraordinary event or circumstance beyond the control of the parties, such as a war, strike, riot, crime, epidemic or sudden legal changes prevents one or both parties from fulfilling their obligations under the contract.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Murder_of_Sarah_Everard">Murder of Sarah Everard</a></td>
+      <td>On the evening of 3 March 2021, 33-year-old Sarah Everard was kidnapped in South London, England, as she was walking home to the Brixton Hill area from a friend's house near Clapham Common. Metropolitan Police officer Wayne Couzens told Everard that he was arresting her for having breached COVID-19 regulations but drove her to near Dover where he raped and strangled her, before burning her body and disposing of her remains in a nearby pond.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conflict_of_interest">Conflict of interest</a></td>
+      <td>A conflict of interest (COI) is a situation in which a person or organization is involved in multiple interests, financial or otherwise, and serving one interest could involve working against another. Typically, this relates to situations in which the personal interest of an individual or organization might adversely affect a duty owed to make decisions for the benefit of a third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_analysis">Profitability analysis</a></td>
+      <td>In cost accounting, profitability analysis is an analysis of the profitability of an organisation's output. Output of an organisation can be grouped into products, customers, locations, channels and/or transactions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer profitability (CP) is the profit the firm makes from serving a customer or customer group over a specified period of time, specifically the difference between the revenues earned from and the costs associated with the customer relationship in a specified period. According to Philip Kotler,"a profitable customer is a person, household or a company that overtime, yields a revenue stream that exceeds by an acceptable amount the company's cost stream of attracting, selling and servicing the customer."\nCalculating customer profit is an important step in understanding which customer relationships are better than others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitable_growth">Profitable growth</a></td>
+      <td>Profitable Growth is the combination of profitability and growth, more precisely the combination of Economic Profitability and Growth of Free cash flows. Profitable growth is aimed at seducing the financial community; it emerged in the early 80s when shareholder value creation became firms’ main objective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Porter's_five_forces_analysis">Porter's five forces analysis</a></td>
+      <td>Porter's Five Forces Framework is a method of analysing the operating environment of a competition of a business. It draws from industrial organization (IO) economics to derive five forces that determine the competitive intensity and, therefore, the attractiveness (or lack thereof) of an industry in terms of its profitability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_income">Net income</a></td>
+      <td>In business and accounting, net income (also total comprehensive income, net earnings, net profit, bottom line, sales profit, or credit sales) is an entity's income minus cost of goods sold, expenses, depreciation and amortization, interest, and taxes for an accounting period.It is computed as the residual of all revenues and gains less all expenses and losses for the period, and has also been defined as the net increase in shareholders' equity that results from a company's operations. It is different from gross income, which only deducts the cost of goods sold from revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MARTEN TRANSPORT LTD      ITEM 1A                                            RISK FACTORS         The <font color="blue">following factors</font> are important and should be considered <font color="blue">carefully</font> in     <font color="blue">connection with</font> any <font color="blue">evaluation</font> of our business, <font color="blue">financial condition</font>, results     of <font color="blue">operations</font>, prospects, or an <font color="blue">investment</font> in our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The risks     and  <font color="blue"><font color="blue">uncertainties</font> described</font> below are those that we currently believe     <font color="blue">may <font color="blue">materially</font> affect</font> our company or our financial results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks     and  <font color="blue">uncertainties</font> not <font color="blue">presently known</font> to us or that we currently deem     <font color="blue">immaterial may also impair</font> our business <font color="blue">operations</font> or affect our financial     results</td>
+    </tr>
+    <tr>
+      <td>Our business is subject to <font color="blue">general economic</font> and business factors that are     <font color="blue">largely out</font> of our control, any of <font color="blue">which could</font> have a <font color="blue"><font color="blue">materially</font> adverse</font>     effect on our operating results</td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">dependent on</font> a number of     <font color="blue">general economic</font> and business factors that may have a <font color="blue"><font color="blue">materially</font> adverse</font>     effect on our results of <font color="blue">operations</font>, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>These factors include <font color="blue">excess capacity</font> in the <font color="blue">trucking industry</font>, strikes or     other work stoppages, and <font color="blue"><font color="blue">significant</font> increases</font> or <font color="blue">fluctuations</font> in interest     rates, fuel taxes, and license and <font color="blue">registration fees</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">affected by</font>     <font color="blue">recessionary economic cycles</font> and downturns in                                           5     ______________________________________________________________________         customers’ business cycles, particularly in <font color="blue">market segments</font> and <font color="blue">industries</font>     where we have a <font color="blue"><font color="blue">significant</font> concentration</font> of customers</td>
+    </tr>
+    <tr>
+      <td>Economic <font color="blue">conditions</font>     <font color="blue">may <font color="blue">adversely</font></font>  affect  our  customers and their ability to pay for our     services</td>
+    </tr>
+    <tr>
+      <td>It is not possible to predict the effects of actual or <font color="blue">threatened armed</font>     conflicts or terrorist attacks, efforts to combat terrorism, military action     against  any foreign state, <font color="blue">heightened security <font color="blue">requirements</font></font>, or other     related events and the <font color="blue">subsequent effects on</font> the economy or on consumer     confidence  in the United States, or the impact, if any, on our future     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We operate in a <font color="blue">highly <font color="blue">competitive</font></font> and <font color="blue">fragmented industry</font>, and numerous     <font color="blue">competitive</font>  factors  <font color="blue">could impair</font> our ability to maintain our current     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> many other <font color="blue">truckload carriers</font> that provide     temperature-sensitive service of <font color="blue">varying sizes</font> and, to a lesser extent, with     less-than-<font color="blue">truckload carriers</font>, railroads and other <font color="blue"><font color="blue">transportation</font> companies</font>,     many of which have more equipment, a wider range of services and greater     capital  <font color="blue">resources than</font> we do or have other <font color="blue">competitive</font> advantages</td>
+    </tr>
+    <tr>
+      <td>In     particular, several of the largest <font color="blue">truckload carriers</font> that <font color="blue">offer primarily</font>     dry-van service also offer temperature-sensitive service, and these carriers     could  attempt to increase their business in the temperature-sensitive     market</td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> <font color="blue">periodically</font> reduce their <font color="blue">freight rates</font> to     gain  business, <font color="blue">especially</font> during times of reduced growth rates in the     economy, which may limit our ability to maintain or <font color="blue">increase <font color="blue">freight rates</font></font>     or maintain <font color="blue"><font color="blue">significant</font> growth</font> in our business</td>
+    </tr>
+    <tr>
+      <td>In addition, many customers     reduce  the  number  of carriers they use by selecting so-called “core     carriers” as approved service providers, or <font color="blue">conduct bids from multiple</font>     carriers for their shipping needs, and in some instances we may not be     <font color="blue">selected as</font> a <font color="blue">core carrier</font> or to <font color="blue">provide service under such bids</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  the <font color="blue">trend toward consolidation</font> in the <font color="blue">trucking industry</font>     may create other large <font color="blue">carriers with greater financial resources</font> and other     <font color="blue">competitive</font> advantages relating to their size</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font><font color="blue">from freight</font>     logistics  and  <font color="blue">brokerage companies may negatively impact</font> our customer     <font color="blue">relationships</font> and <font color="blue">freight rates</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, economies of scale that may be     passed  on  to  smaller  <font color="blue">carriers by procurement aggregation providers</font>     may improve such carriers’ ability to <font color="blue">compete with</font> us</td>
+    </tr>
+    <tr>
+      <td>We derive a <font color="blue">significant</font> portion of our <font color="blue">revenue from</font> our <font color="blue">major customers</font>, the     loss of one or more of <font color="blue">which could</font> have a <font color="blue"><font color="blue">materially</font> adverse</font> effect on our     business</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our revenue is <font color="blue">generated from</font> our major     customers</td>
+    </tr>
+    <tr>
+      <td>For 2005, our top 30 customers, based on revenue, accounted for     <font color="blue">approximately</font>  76prca of our revenue; our <font color="blue">top ten customers accounted</font> for     <font color="blue">approximately</font> 51prca of our revenue; our <font color="blue">top five customers accounted</font> for     <font color="blue">approximately</font> 40prca of our revenue; and our <font color="blue">top two customers accounted</font> for     <font color="blue">approximately</font>  24prca  of  our revenue</td>
+    </tr>
+    <tr>
+      <td>Generally, we enter into one-year     <font color="blue">contracts with</font> our <font color="blue">major customers</font>, the majority of which do not contain any     <font color="blue">firm obligations</font> to <font color="blue">ship with us</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that, <font color="blue">upon expiration</font>     of <font color="blue">existing contracts</font>, these <font color="blue">customers will continue</font> to use our services or     that,  if  they do, they <font color="blue">will continue at</font> the <font color="blue">same levels</font></td>
+    </tr>
+    <tr>
+      <td>Many of our     customers  <font color="blue">periodically</font>  solicit bids from multiple carriers for their     shipping needs, and this process may depress <font color="blue">freight rates</font> or result in loss     of business to our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>A reduction in or <font color="blue">termination</font> of our <font color="blue">services by one</font> or more of our     <font color="blue">major customers</font> could have a <font color="blue"><font color="blue">materially</font> adverse</font> effect on our business and     operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font>prices, reduced productivity, and <font color="blue">restricted <font color="blue">availability</font></font> of new     <font color="blue"><font color="blue">revenue equipment</font> could</font> cause our <font color="blue">financial condition</font>, results of <font color="blue">operations</font>     and <font color="blue">cash flows</font> to suffer</td>
+    </tr>
+    <tr>
+      <td>We have experienced higher prices for <font color="blue">new tractors</font>     over the past few years, primarily as a result of higher commodity prices,     better  pricing  power  among  <font color="blue">equipment <font color="blue">manufacturers</font></font>, and <font color="blue">government</font>     <font color="blue"><font color="blue">regulations</font> applicable</font> to <font color="blue">newly manufactured tractors</font> and <font color="blue">diesel engines</font></td>
+    </tr>
+    <tr>
+      <td>We     expect to continue to <font color="blue">pay increased prices</font> for <font color="blue">revenue equipment</font> and incur     <font color="blue">additional expenses</font> and related <font color="blue">financing costs</font> for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Our business could be harmed if we are unable to continue to obtain an     <font color="blue">adequate supply</font> of <font color="blue">new tractors</font> and trailers or if we have to pay increased     prices for new <font color="blue">revenue equipment</font></td>
+    </tr>
+    <tr>
+      <td>The  EPA  adopted revised emissions control <font color="blue">regulations</font>, which require     <font color="blue">progressive reductions</font> in exhaust emissions from <font color="blue">diesel engines</font> through     2010, for <font color="blue">engines manufactured</font> in October 2002, and thereafter</td>
+    </tr>
+    <tr>
+      <td>The revised     <font color="blue">regulations</font> decrease the amount of emissions that can be <font color="blue">released by tractor</font>     engines  and  <font color="blue">affect tractors</font> produced after the <font color="blue">effective date</font> of the     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these <font color="blue">regulations</font> has increased the cost of our     <font color="blue">new tractors</font>, lowered fuel mileage and increased our operating expenses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Some                                           </font>6     ______________________________________________________________________         <font color="blue">manufacturers</font> have <font color="blue">significant</font>ly increased new equipment prices, in part to     <font color="blue">meet new engine design <font color="blue">requirements</font> imposed by</font> the EPA, and eliminated or     sharply reduced the price of repurchase <font color="blue">commitments</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">adverse effects</font>     <font color="blue">combined with</font> the <font color="blue">uncertainty as</font> to the <font color="blue">re<font color="blue">liability</font></font> of the <font color="blue">vehicles equipped</font>     with the newly designed <font color="blue">diesel engines</font> and the <font color="blue">residual values</font> that will be     realized from the <font color="blue">disposition</font> of these <font color="blue">vehicles could increase</font> our costs or     <font color="blue">otherwise <font color="blue"><font color="blue">adversely</font> affect</font></font> our business or <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The next round of     <font color="blue">restrictions</font>  will  take  effect in 2007</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with the 2007 EPA     standards is expected to result in <font color="blue">further declines</font> in <font color="blue">fuel economy</font>, and     may result in <font color="blue">further increases</font> in the cost of <font color="blue">new tractors</font></td>
+    </tr>
+    <tr>
+      <td>We  have  <font color="blue">significant</font> ongoing capital <font color="blue">requirements</font> that <font color="blue">could harm</font> our     <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue">cash flows</font> if we are unable     to <font color="blue">generate sufficient cash from</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">truckload industry</font> is     <font color="blue">capital intensive</font>, and our policy of operating <font color="blue">newer equipment</font> requires us     to expend <font color="blue">significant</font> amounts annually</td>
+    </tr>
+    <tr>
+      <td>If we elect to expand our fleet in     <font color="blue">future periods</font>, our capital needs <font color="blue">would increase</font></td>
+    </tr>
+    <tr>
+      <td>We expect to pay for     projected  capital  <font color="blue">expenditures</font>  with  <font color="blue">cash flows</font> from <font color="blue">operations</font> and     <font color="blue">borrowings under</font> our revolving credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to generate     sufficient cash from <font color="blue">operations</font> and obtain <font color="blue">financing on</font> favorable terms in     the future, we may have to limit our growth, enter into less favorable     <font color="blue">financing arrangements</font>, or operate our <font color="blue">revenue equipment</font> for <font color="blue">longer periods</font>,     any of <font color="blue">which could</font> have a <font color="blue"><font color="blue">materially</font> adverse</font> effect on our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Ongoing  </font>insurance  and claims expenses could <font color="blue">significant</font>ly affect our     earnings</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future insurance</font> and claims <font color="blue">expense might exceed historical</font>     levels, <font color="blue">which could</font> reduce our earnings</td>
+    </tr>
+    <tr>
+      <td>We self-insure for a portion of our     claims  exposure resulting from workers’ <font color="blue">compensation</font>, auto <font color="blue">liability</font>,     general <font color="blue">liability</font>, cargo and <font color="blue">property damage</font> claims, <font color="blue">as well as employees</font>’     <font color="blue">health insurance</font></td>
+    </tr>
+    <tr>
+      <td>We also are responsible for our <font color="blue">legal expenses</font> relating to     such claims</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">reserve currently</font> for anticipated losses and expenses</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">periodically</font>  evaluate  and  adjust our claims reserves to reflect our     experience</td>
+    </tr>
+    <tr>
+      <td>However, ultimate results <font color="blue">may differ from</font> our estimates, which     could result in <font color="blue">losses over</font> our <font color="blue">reserved amounts</font></td>
+    </tr>
+    <tr>
+      <td>We  maintain insurance above the amounts for which we self-insure with     <font color="blue">licensed insurance carriers</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe the <font color="blue">aggregate insurance</font>     <font color="blue">limits should</font> be sufficient to <font color="blue">cover reasonably</font> expected claims, it is     possible that one or more claims <font color="blue">could exceed</font> our <font color="blue">aggregate <font color="blue">coverage limits</font></font></td>
+    </tr>
+    <tr>
+      <td>Insurance carriers have <font color="blue">raised premiums</font> for many <font color="blue">businesses</font>, including     <font color="blue">trucking companies</font></td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">expenses increase</font>, or if we experience a claim in excess     of our <font color="blue">coverage limits</font>, or we experience a claim for <font color="blue">which coverage</font> is not     provided,  results  of our <font color="blue">operations</font> and <font color="blue">financial condition</font> could be     <font color="blue">materially</font> and <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in <font color="blue">compensation</font> or <font color="blue">difficulty</font> in attracting drivers could affect     our <font color="blue">profitability</font> and ability to grow</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">recent years</font> the <font color="blue">transportation</font>     industry has experienced substantial <font color="blue">difficulty</font> in attracting and retaining     <font color="blue">qualified drivers</font>, including <font color="blue"><font color="blue">independent</font> contractor</font>s, with <font color="blue">competition</font> for     drivers being <font color="blue">increasingly intense</font></td>
+    </tr>
+    <tr>
+      <td>With the increased <font color="blue">competition</font> for     drivers, we have experienced greater <font color="blue">difficulty</font> in attracting sufficient     numbers of <font color="blue">qualified drivers</font></td>
+    </tr>
+    <tr>
+      <td>In addition, due in part to <font color="blue">current economic</font>     <font color="blue">conditions</font>, including the cost of fuel and insurance, the <font color="blue">available pool</font> of     <font color="blue"><font color="blue"><font color="blue">independent</font> contractor</font> drivers</font> is <font color="blue">smaller than</font> it has <font color="blue">been historically</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we may face <font color="blue">difficulty</font> in attracting and retaining drivers for     all of our <font color="blue">current tractors</font> and for those we may add</td>
+    </tr>
+    <tr>
+      <td>Additionally, we     may face <font color="blue">difficulty</font> in increasing the number of our <font color="blue"><font color="blue">independent</font> contractor</font>     drivers</td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">industry suffers from high <font color="blue">turnover rate</font>s</font> of     drivers</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">turnover rate</font> requires us to recruit a substantial number of     drivers</td>
+    </tr>
+    <tr>
+      <td>Moreover, our <font color="blue">turnover rate</font> could increase</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     continue to <font color="blue">attract drivers</font> and contract with <font color="blue"><font color="blue">independent</font> contractor</font>s, we     could be required to <font color="blue">continue adjusting</font> our driver <font color="blue">compensation</font> package     beyond  the norm or <font color="blue">let trucks sit idle</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effective January </font>1, 2005, we     increased  the  amount  paid to <font color="blue">company drivers</font> by 1 cent per mile and     increased the <font color="blue">incentives paid</font> to <font color="blue"><font color="blue">independent</font> contractor</font>s</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also instituted</font>     a <font color="blue">second pay increase</font> of 2 cents per mile for <font color="blue"><font color="blue">company drivers</font> effective</font>     April 1, 2005</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">compensation</font> of drivers and <font color="blue"><font color="blue">independent</font> contractor</font>s is     subject to <font color="blue">market forces</font>, and we may increase their <font color="blue">compensation</font> further in     <font color="blue">future periods</font></td>
+    </tr>
+    <tr>
+      <td>An increase in our expenses or in the number of tractors     without  drivers  could <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affect</font> our growth and     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>7     ______________________________________________________________________         <font color="blue">Fluctuations </font>in the price or <font color="blue">availability</font> of <font color="blue">fuel may increase</font> our cost of     operation, <font color="blue">which could</font> <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We     require large amounts of <font color="blue">diesel fuel</font> to operate our tractors and to power     the temperature-control units on our trailers</td>
+    </tr>
+    <tr>
+      <td>Fuel  prices  tend  to fluctuate, and prices and     <font color="blue">availability</font> of all <font color="blue">petroleum products</font> are subject to political, economic     and <font color="blue">market factors</font> that are beyond our control</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend primarily on fuel</font>     surcharges, volume purchasing arrangements with truck stop chains and bulk     purchases of fuel at our terminals to control our <font color="blue">fuel expenses</font></td>
+    </tr>
+    <tr>
+      <td>There can     be no assurance that we will be able to collect fuel surcharges, enter into     <font color="blue">volume purchase agreements</font>, or execute <font color="blue">successful hedges</font> in the future</td>
+    </tr>
+    <tr>
+      <td>The     absence  of  <font color="blue">meaningful</font>  <font color="blue">fuel price protection through</font> these measures,     <font color="blue">fluctuations</font> in <font color="blue">fuel prices</font>, or a shortage of <font color="blue">diesel fuel</font>, could <font color="blue">materially</font>     and <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Seasonality </font>and the impact of weather can affect our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">tractor productivity <font color="blue">generally</font> decreases during</font> the <font color="blue">winter season</font> because     inclement  weather  impedes  <font color="blue">operations</font> and some <font color="blue">shippers reduce</font> their     shipments</td>
+    </tr>
+    <tr>
+      <td>At the same time, operating expenses <font color="blue">generally</font> increase, with     fuel  <font color="blue">efficiency</font>  declining because of engine idling and harsh weather     creating higher <font color="blue">accident</font> frequency, increased claims and more equipment     repairs</td>
+    </tr>
+    <tr>
+      <td>We can also suffer short-term impacts from weather-related events     such as hurricanes, blizzards, ice-storms, and floods that <font color="blue">could harm</font> our     results or make our results more volatile</td>
+    </tr>
+    <tr>
+      <td>We operate in a <font color="blue">highly regulated industry</font> and <font color="blue">increased costs</font> of compliance     with, or <font color="blue">liability</font> for violation of, existing or future <font color="blue">regulations</font> could     have a <font color="blue"><font color="blue">materially</font> adverse</font> effect on our business</td>
+    </tr>
+    <tr>
+      <td>The DOT and various state     and  local agencies exercise broad powers over our business, <font color="blue">generally</font>     governing  such <font color="blue">activities</font> as <font color="blue">authorization</font> to engage in motor carrier     <font color="blue">operations</font>, safety and insurance <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">company drivers</font> and     <font color="blue">independent</font>  <font color="blue">contractors</font>  <font color="blue">also must comply with</font> the safety and fitness     <font color="blue">regulations</font> promulgated by the DOT, including those relating to drug and     alcohol   testing   and  hours-of-service</td>
+    </tr>
+    <tr>
+      <td>In response, we     negotiated  delay  time <font color="blue">charges with</font> the majority of our customers</td>
+    </tr>
+    <tr>
+      <td>In     July 2004, the <font color="blue">United States </font>Court of Appeals for the District of Columbia     vacated the new hours-of-service <font color="blue">regulations</font> in their entirety and remanded     the matter to the Federal Motor Carriers Safety Administration, or FMCSA,     for  <font color="blue">reconsideration</font></td>
+    </tr>
+    <tr>
+      <td>In  August 2005,  in  response  to  the Surface     Transportation Extension Act of 2004 (Part V) <font color="blue">temporarily extending</font> the     hours-of-service  <font color="blue">regulations</font>,  the  FMCSA  issued  a  revised  set of     hours-of-service <font color="blue">regulations</font> effective October 1, 2005</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">regulations</font> did     not have a <font color="blue">significant</font> impact on our <font color="blue">operations</font> or financial results for     2005 or 2004</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">uncompensated shortfalls</font> in our <font color="blue">utilization due</font> to     <font color="blue">compliance with</font> the <font color="blue">regulations</font> could <font color="blue">adversely</font> impact our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Service <font color="blue">instability</font> in the <font color="blue">railroad industry could increase</font> our operating     costs and reduce our ability to <font color="blue">offer <font color="blue">intermodal services</font></font>, <font color="blue">which could</font>     <font color="blue">adversely</font>  affect  our  revenue,  results  of <font color="blue">operations</font>, and customer     <font color="blue">relationships</font></td>
+    </tr>
+    <tr>
+      <td>In most markets, rail service is limited to     a <font color="blue">few railroads</font> or even a <font color="blue">single railroad</font></td>
+    </tr>
+    <tr>
+      <td>Any reduction in <font color="blue">service by</font> the     <font color="blue">railroads with which</font> we have, or in the <font color="blue">future may</font> have, <font color="blue">relationships</font> is     likely to increase the cost of the rail-based services we provide and reduce     the <font color="blue">re<font color="blue">liability</font></font>, timeliness, and <font color="blue">overall attractiveness</font> of our rail-based     services</td>
+    </tr>
+    <tr>
+      <td>Furthermore, railroads are <font color="blue">relatively free</font> to <font color="blue">adjust shipping</font>     rates up or down as market <font color="blue">conditions</font> permit</td>
+    </tr>
+    <tr>
+      <td>Price increases could result     in <font color="blue">higher costs</font> to our customers and reduce or eliminate our ability to     <font color="blue">offer <font color="blue">intermodal services</font></font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">cannot assure</font> you that we will be     able  to  negotiate  additional <font color="blue">contracts with</font> railroads to expand our     capacity, add additional routes, or obtain multiple providers, <font color="blue">which could</font>     limit our ability to provide this service</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to <font color="blue">various <font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font>,     the violation of <font color="blue">which could</font> result in substantial fines or penalties</td>
+    </tr>
+    <tr>
+      <td>We     are subject to <font color="blue">various <font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font> dealing with the     handling of <font color="blue">hazardous</font> materials, fuel storage tanks, air emissions from our     vehicles and facilities, engine idling, and discharge and retention of storm     water</td>
+    </tr>
+    <tr>
+      <td>We operate in <font color="blue">industrial areas</font>, where <font color="blue">truck terminals</font> and other     industrial <font color="blue">activities</font> are located, and where <font color="blue">groundwater</font> or other forms of     <font color="blue"><font color="blue">environmental</font> contamination</font> have occurred</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> involve the risks     of <font color="blue">fuel spillage</font> or seepage, <font color="blue">environmental</font> damage, and <font color="blue"><font color="blue">hazardous</font> waste</font>     disposal, among others</td>
+    </tr>
+    <tr>
+      <td>Although we have instituted programs to monitor and     control  <font color="blue">environmental</font>  risks  and  promote <font color="blue">compliance with</font> applicable     <font color="blue">environmental</font> laws and <font color="blue">regulations</font>, if we are involved in a spill or other     <font color="blue">accident</font>  involving  <font color="blue">hazardous</font>  substances or if we are found to be in     violation  of  applicable  laws or <font color="blue">regulations</font>, we could be subject to     <font color="blue">liabilities</font>, including substantial fines or penalties or civil                                           8     ______________________________________________________________________         and criminal <font color="blue">liability</font>, any of <font color="blue">which could</font> have a <font color="blue"><font color="blue">materially</font> adverse</font> effect     on our business and operating results</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">management</font> information <font color="blue">systems may prove</font> inadequate</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend upon</font> our     <font color="blue">management</font> information systems for many aspects of our business</td>
+    </tr>
+    <tr>
+      <td>Some of our     key software has been developed <font color="blue">internally</font> by our <font color="blue">programmers</font> or by adapting     purchased software to our needs and this software may not be easily modified     or  integrated  with  other software and systems</td>
+    </tr>
+    <tr>
+      <td>Our business will be     <font color="blue">materially</font> and <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> if our <font color="blue">management</font> information systems are     disrupted or if we are unable to improve, upgrade, integrate or expand our     systems as we continue to execute our <font color="blue">growth strategy</font>, including our new     logistics and <font color="blue">intermodal services</font></td>
+    </tr>
+  </tbody>
+</table>

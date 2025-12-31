@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "4: trading price", fill: "#b31b1b"},
+{source: "4: trading price", target: "4: common stock could", fill: "#b31b1b"},
+{source: "4: common stock could", target: "4: decline due", fill: "#b31b1b"},
+{source: "4: trading price", target: "6: agreements with", fill: "#1034a6"},
+{source: "6: agreements with", target: "6: Sun NetApp ", fill: "#1034a6"},
+{source: "6: Sun NetApp ", target: "6: exclusively", fill: "#1034a6"},
+{source: "6: exclusively", target: "6: relationship", fill: "#1034a6"},
+{source: "6: relationship", target: "6: significant", fill: "#1034a6"},
+{source: "6: agreements with", target: "39: could influence", fill: "#ffe4e1"},
+{source: "39: could influence", target: "39: relationship", fill: "#ffe4e1"},
+{source: "39: relationship", target: "39: channel partners", fill: "#ffe4e1"},
+{source: "39: channel partners", target: "39: Sun and NetApp ", fill: "#ffe4e1"},
+{source: "39: Sun and NetApp ", target: "39: competitive", fill: "#ffe4e1"},
+{source: "39: competitive", target: "39: storage system suppliers", fill: "#ffe4e1"},
+{source: "39: storage system suppliers", target: "39: quality standards", fill: "#ffe4e1"},
+{source: "39: quality standards", target: "39: products sufficient", fill: "#ffe4e1"},
+{source: "39: products sufficient", target: "39: expectations", fill: "#ffe4e1"},
+{source: "39: expectations", target: "39: sufficient quantity", fill: "#ffe4e1"},
+{source: "39: sufficient quantity", target: "39: timely manner", fill: "#ffe4e1"},
+{source: "39: could influence", target: "43: existing contracts", fill: "#fad6a5"},
+{source: "43: existing contracts", target: "43: channel partners", fill: "#fad6a5"},
+{source: "43: channel partners", target: "43: preferential basis over", fill: "#fad6a5"},
+{source: "43: preferential basis over", target: "43: competitors", fill: "#fad6a5"},
+{source: "43: existing contracts", target: "62: Manufacturing ", fill: "#e2062c"},
+{source: "62: Manufacturing ", target: "62: disruptions could harm", fill: "#e2062c"},
+{source: "62: Manufacturing ", target: "90: First Quarter ", fill: "#555d50"},
+{source: "90: First Quarter ", target: "90: Second Quarter ", fill: "#555d50"},
+{source: "90: Second Quarter ", target: "90: Third Quarter ", fill: "#555d50"},
+{source: "90: Third Quarter ", target: "90: Fourth Quarter ", fill: "#555d50"},
+{source: "90: Fourth Quarter ", target: "90: deferred tax benefit from reversal", fill: "#555d50"},
+{source: "90: deferred tax benefit from reversal", target: "90: valuation allowance", fill: "#555d50"},
+{source: "90: First Quarter ", target: "91: public markets could", fill: "#f64a8a"},
+{source: "91: public markets could", target: "91: significant negative", fill: "#f64a8a"},
+{source: "91: significant negative", target: "91: trading price", fill: "#f64a8a"},
+{source: "91: trading price", target: "91: common stock", fill: "#f64a8a"},
+{source: "91: common stock", target: "91: given period", fill: "#f64a8a"},
+{source: "91: public markets could", target: "112: These ", fill: "#1560bd"},
+{source: "112: These ", target: "112: pricing pressures", fill: "#1560bd"},
+{source: "112: pricing pressures", target: "112: continuing decreases", fill: "#1560bd"},
+{source: "112: continuing decreases", target: "112: prices such as", fill: "#1560bd"},
+{source: "112: prices such as", target: "112: controllers", fill: "#1560bd"},
+{source: "112: These ", target: "186: executive officers", fill: "#fb607f"},
+{source: "186: executive officers", target: "186: directors", fill: "#fb607f"},
+{source: "186: directors", target: "186: affiliates", fill: "#fb607f"},
+{source: "186: affiliates", target: "186: significant", fill: "#fb607f"},
+{source: "186: significant", target: "186: outstanding shares which could prevent us from", fill: "#fb607f"},
+{source: "186: outstanding shares which could prevent us from", target: "186: adversely affect", fill: "#fb607f"},
+{source: "186: executive officers", target: "START_HERE", fill: "#fb607f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Defy norms</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Demonstrate</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price_of_oil">Price of oil</a></td>
+      <td>The price of oil, or the oil price, generally refers to the spot price of a barrel (159 litres) of benchmark crude oil—a reference price for buyers and sellers of crude oil such as West Texas Intermediate (WTI), Brent Crude, Dubai Crude, OPEC Reference Basket, Tapis crude, Bonny Light, Urals oil, Isthmus and Western Canadian Select (WCS). Oil prices are determined by global supply and demand, rather than any country's domestic production level.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price">Price</a></td>
+      <td>A prince is a male ruler (ranked below a king, grand prince, and grand duke) or a male member of a monarch's or former monarch's family. Prince is also a title of nobility (often highest), often hereditary, in some European states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_relationship_management">Customer relationship management</a></td>
+      <td>Customer relationship management (CRM) is a process in which a business or other organization administers its interactions with customers, typically using data analysis to study large amounts of information.CRM systems compile data from a range of different communication channels, including a company's website, telephone, email, live chat, marketing materials and more recently, social media. They allow businesses to learn more about their target audiences and how to best cater for their needs, thus retaining customers and driving sales growth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_analysis">Competitor analysis</a></td>
+      <td>Competitive analysis in marketing and strategic management is an assessment of the strengths and weaknesses of current and potential competitors. This analysis provides both an offensive and defensive strategic context to identify opportunities and threats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_backlinking">Competitor backlinking</a></td>
+      <td>Competitor backlinking is a search engine optimization strategy that involves analyzing the backlinks of competing websites within a vertical search. The outcome of this activity is designed to increase organic search engine rankings and to gain an understanding of the link building strategies used by business competitors.By analyzing the backlinks to competitor websites, it is possible to gain a benchmark on the number of links and the quality of links that is required for high search engine rankings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitors_for_the_Crown_of_Scotland">Competitors for the Crown of Scotland</a></td>
+      <td>When the crown of Scotland became vacant in September 1290 on the death of the seven-year-old child Queen Margaret, 13 claimants to the throne came forward. Those with the most credible claims were John Balliol, Robert Bruce, John Hastings and Floris V, Count of Holland.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_of_athletics">Sport of athletics</a></td>
+      <td>Athletics is a group of sporting events that involves competitive running, jumping, throwing, and walking. The most common types of athletics competitions are track and field, road running, cross country running, and racewalking.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_Group">Competitor Group</a></td>
+      <td>Competitor Group, Inc. (CGI) is a privately held, for-profit, sports marketing and management company based in Mira Mesa, San Diego, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Dancing_with_the_Stars_(American_TV_series)_competitors">List of Dancing with the Stars (American TV series) competitors</a></td>
+      <td>Dancing with the Stars is an American reality television show in which celebrity contestants and professional dance partners compete to be the best dancers, as determined by the show's judges and public voting. The series first broadcast in 2005, and thirty complete seasons have aired on ABC. During each season, competitors are progressively eliminated on the basis of public voting and scores received from the judges until only a few contestants remain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Round-robin_tournament">Round-robin tournament</a></td>
+      <td>A round-robin tournament (or all-play-all tournament) is a competition in which each contestant meets every other participant, usually in turn. A round-robin contrasts with an elimination tournament, in which participants are eliminated after a certain number of losses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Convertible_bond">Convertible bond</a></td>
+      <td>In finance, a convertible bond or  convertible note or convertible debt (or a convertible debenture if it has a maturity of greater than 10 years) is a type of bond that the holder can convert into a specified number of shares of common stock in the issuing company or cash of equal value.  It is a hybrid security with debt- and equity-like features.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Class_B_share">Class B share</a></td>
+      <td>In finance, a Class B share or Class C share is a designation for a share class of a common or preferred stock that typically has strengthened voting rights or other benefits compared to a Class A share that may have been created. The equity structure, or how many types of shares are offered, is determined by the corporate charter.B share can also refer to various terms relating to stock classes:\n\nB share (mainland China), a class of stock on the Shanghai and Shenzhen stock exchanges\nB share (NYSE), a class of stock on the New York Stock ExchangeMost of the time, Class B shares may have lower repayment priorities in the event a company declares bankruptcy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chief_executive_officer">Chief executive officer</a></td>
+      <td>A chief executive officer (CEO), chief administrator officer (CAO), central executive officer (CEO), or just chief executive (CE), is one of a number of corporate executives charged with the management of an organization –  especially an independent legal entity such as a company or nonprofit institution. CEOs find roles in a range of organizations, including public and private corporations, non-profit organizations and even some government organizations (notably state-owned enterprises).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Board_of_directors">Board of directors</a></td>
+      <td>A board of directors (commonly referred simply as the board) is an executive committee that jointly supervises the activities of an organization, which can be either a for-profit or a nonprofit organization such as a business, nonprofit organization, or a government agency. \nThe powers, duties, and responsibilities of a board of directors are determined by government regulations (including the jurisdiction's corporate law) and the organization's own constitution and by-laws.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Daniels_(directors)">Daniels (directors)</a></td>
+      <td>Daniel Kwan (Chinese: 關家永) and Daniel Scheinert, collectively known as Daniels or the Daniels, are a duo of film directors and writers. They began their career as directors of music videos, including the popular DJ Snake promotional for the single "Turn Down for What" (2013).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Directors'_Fortnight">Directors' Fortnight</a></td>
+      <td>The Directors' Fortnight (French: Quinzaine des Réalisateurs) is an independent selection of the Cannes Film Festival. It was started in 1969 by the French Directors Guild after the events of May 1968 resulted in cancellation of the Cannes festival as an act of solidarity with striking workers.The Directors' Fortnight showcases a programme of shorts and feature films and documentaries worldwide.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Creative_director">Creative director</a></td>
+      <td>A creative director (or creative supervisor) is a person that makes high-level creative decisions, and with those decisions oversees the creation of creative assets such as advertisements, products, events, or logos. Creative director positions are often found within the television production, graphic design, film, music, video game, fashion, advertising, media, or entertainment industries, but may be useful in other creative organizations such as web development and software development firms as well.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Film_director">Film director</a></td>
+      <td>A film director controls a film's artistic and dramatic aspects and visualizes the screenplay (or script) while guiding the film crew and actors in the fulfilment of that vision. The director has a key role in choosing the cast members, production design and all the creative aspects of filmmaking.The film director gives direction to the cast and crew and creates an overall vision through which a film eventually becomes realized or noticed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_director">Executive director</a></td>
+      <td>An executive director is a member of a board of directors for an organisation, but the meaning of the term varies between countries.\n\n\n== United States ==\nIn the US, an executive director is a chief executive officer (CEO) or managing director of an organization, company, or corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bala_(director)">Bala (director)</a></td>
+      <td>Balasubramanian known as Bala is an Indian film director, screenwriter, and producer, working in Tamil cinema. Often considered to be one of the finest directors in Tamil, Bala is widely acclaimed for "revolutionizing Tamil cinema" through his realistic, dark and disturbing depiction of the working class on celluloid screen.Just within directing a handful of films, his movies went on to win 6 National Awards, 13 State awards, 15 Filmfare Awards, 14 International Festival Awards and numerous coveted state awards which created a storm within the Indian movie scene.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Directors_Guild_of_America">Directors Guild of America</a></td>
+      <td>The Directors Guild of America (DGA) is an entertainment guild that represents the interests of film and television directors in the United States motion picture industry and abroad. Founded as the Screen Directors Guild in 1936, the group merged with the Radio and Television Directors Guild in 1960 to become the modern Directors Guild of America.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DOT HILL SYSTEMS CORP      Item 1A      Risk Factors             Our business, results of <font color="blue">operations</font> and <font color="blue">financial condition may</font> be     <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affected due</font> to any of the <font color="blue">following risks</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">risks described</font> below are not the only ones we face</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks we are     not <font color="blue">presently aware</font> of or that we currently believe are <font color="blue">immaterial may also</font>     impair our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of our <font color="blue"><font color="blue">common stock</font> could</font>     <font color="blue">decline due</font> to any of these risks</td>
+    </tr>
+    <tr>
+      <td>In assessing these risks, you <font color="blue">should also</font>     refer to the other information contained or <font color="blue"><font color="blue">incorporate</font>d by reference</font> in     this <font color="blue">Annual Report </font>on Form 10-K, including our <font color="blue">financial statements</font> and     related notes</td>
+    </tr>
+    <tr>
+      <td>Under our OEM <font color="blue"><font color="blue">agreement</font>s with</font> Sun, NetApp and others, our customers are not     required to make minimum purchases or purchase <font color="blue">exclusively</font> from us, and we     <font color="blue">cannot assure</font> you that our <font color="blue">relationship</font> with these key customers will not be     terminated or will generate <font color="blue">significant</font> sales</td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">highly <font color="blue">dependent</font> on</font> our <font color="blue">relationship</font> with Sun, and we     believe will be <font color="blue">dependent</font>, in the future, on our <font color="blue">relationship</font> with NetApp,     once sales to that <font color="blue">customer begin</font> to increase</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Sales to Sun </font>accounted for     86dtta3prca and 86dtta2prca of our net revenue for the years ended <font color="blue">December </font>31, 2004 and     2005 respectively</td>
+    </tr>
+    <tr>
+      <td>Our OEM <font color="blue"><font color="blue">agreement</font> with</font> Sun had an initial term of three     years  and was extended in <font color="blue">September </font>2005 for an <font color="blue"><font color="blue">additional</font> five years</font>     through January 2011</td>
+    </tr>
+    <tr>
+      <td>Our OEM <font color="blue"><font color="blue">agreement</font> with</font> NetApp has a term of three     years  from the <font color="blue">first commercial product shipments by</font> NetApp, which is     <font color="blue">currently scheduled forth</font> the <font color="blue">second half</font> of 2006</td>
+    </tr>
+    <tr>
+      <td>There are no minimum     purchase <font color="blue">requirements</font> or <font color="blue">guarantees</font> in our <font color="blue"><font color="blue">agreement</font> with</font> Sun or NetApp, the     <font color="blue">agreement</font>s do not obligate those customers to purchase storage solutions     <font color="blue">exclusively</font> from us on a continual basis and either customer may cancel     purchase orders submitted under the <font color="blue">agreement</font> at any time</td>
+    </tr>
+    <tr>
+      <td>Further, either     <font color="blue">customer may terminate</font> the <font color="blue">entire contract prior</font> to the <font color="blue">contract expiration</font>     <font color="blue">date upon</font> the occurrence of <font color="blue">certain events</font> that are not <font color="blue">remedied within</font> a     <font color="blue">specified cure period</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">decision by</font> these customers to terminate their     <font color="blue">respective contracts</font>, to cease making purchases or to <font color="blue">cancel purchase orders</font>     would cause our revenues to <font color="blue">decline <font color="blue">substantially</font></font></td>
+    </tr>
+    <tr>
+      <td>We cannot be certain if,     when or to what extent any customer might <font color="blue">cancel purchase orders</font>, cease     making purchases or elect not to renew the <font color="blue">applicable contract upon</font> the     expiration of the <font color="blue">current term</font></td>
+    </tr>
+    <tr>
+      <td>We expect to receive a substantial majority     of our projected net revenue for the year ended <font color="blue">December </font>31, 2006 from sales     of our products to <font color="blue">Sun and NetApp</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will achieve     these expected <font color="blue">sales levels</font></td>
+    </tr>
+    <tr>
+      <td>If we do not achieve the <font color="blue">sales levels</font> we expect     to receive from these customers, our business and result of <font color="blue">operations</font> will     be <font color="blue">significant</font>ly harmed</td>
+    </tr>
+    <tr>
+      <td>14       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>Any decline in Sun’s or NetApp’s <font color="blue">sales <font color="blue">could harm</font></font> our business</td>
+    </tr>
+    <tr>
+      <td>A substantial majority of our revenues are generated by sales to Sun,     and we expect a substantial majority of our future revenues to be generated     by  a  <font color="blue">combination</font>  of  sales  to <font color="blue">Sun and NetApp</font></td>
+    </tr>
+    <tr>
+      <td>If Sun’s or NetApp’s     storage-related  <font color="blue">sales decline</font>, our <font color="blue">revenues will also decline</font> and our     business could be <font color="blue">materially</font> harmed</td>
+    </tr>
+    <tr>
+      <td>In addition, Sun’s quarterly operating     results <font color="blue">typically fluctuate downward</font> in the <font color="blue">first quarter</font> of their fiscal     year when <font color="blue">compared with</font> the <font color="blue">immediately preceding fourth quarter</font></td>
+    </tr>
+    <tr>
+      <td>Further,     in June 2005, Sun acquired StorageTek, which is a <font color="blue">fellow provider</font> of storage     systems</td>
+    </tr>
+    <tr>
+      <td>Additionally, Sun <font color="blue">purchases products from</font> Engenio</td>
+    </tr>
+    <tr>
+      <td><font color="blue">During October     </font>2004, Engenio announced that it had broadened its OEM <font color="blue"><font color="blue">agreement</font> with</font> Sun</td>
+    </tr>
+    <tr>
+      <td>Under terms of the expanded <font color="blue">agreement</font>, Engenio <font color="blue">will provide</font> Sun with new     <font color="blue">modular storage <font color="blue">technology</font></font> and will co-develop future Sun <font color="blue">storage products</font></td>
+    </tr>
+    <tr>
+      <td>While we do not currently believe that Engenio’s <font color="blue">relationship</font> with Sun or     Sun’s <font color="blue">acquisition</font> of <font color="blue">StorageTek </font>will impact our sales or our <font color="blue">relationship</font>     with  Sun,  we  cannot  predict  with  <font color="blue">certainty</font> the impact that these     <font color="blue">circumstances will</font> have, if any, on our <font color="blue">future sales</font> to Sun</td>
+    </tr>
+    <tr>
+      <td>In addition, it is likely that NetApp’s sales of any <font color="blue">storage products</font>     supplied to it <font color="blue">by us will fluctuate on</font> a quarterly or seasonal basis, which     <font color="blue"><font color="blue"><font color="blue">fluctuations</font> will</font> affect</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>Due to the infancy of the     <font color="blue">relationship</font>, we can not be certain of what affect these <font color="blue"><font color="blue">fluctuations</font> will</font>     have on our quarterly results, if any</td>
+    </tr>
+    <tr>
+      <td>Lower than anticipated sales to NetApp <font color="blue">could harm</font> our business and render     our <font color="blue">expectations</font> inaccurate, <font color="blue">which could</font> lead to a decrease in our stock     price</td>
+    </tr>
+    <tr>
+      <td>During the third quarter of 2005, we entered into <font color="blue">a Development </font>and     OEM  Supply Agreement with NetApp pursuant to which we will design and     develop  general  purpose  <font color="blue">disk arrays</font> for a variety of products to be     developed for sale to NetApp</td>
+    </tr>
+    <tr>
+      <td>We expect that sales to NetApp <font color="blue">will increase</font>,     and have predicted that in the future, sales to NetApp will reduce our     <font color="blue">dependence upon</font> Sun <font color="blue">significant</font>ly and increase our <font color="blue">revenue <font color="blue">substantially</font></font></td>
+    </tr>
+    <tr>
+      <td>There  are  no  <font color="blue">guarantees</font>  that  our <font color="blue">relationship</font> with NetApp will be     successful, or that we will achieve the expected volume of sales to NetApp</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">agreement</font> with</font> NetApp does not provide for <font color="blue">minimum purchase quantities</font>,     and allows for NetApp to terminate the contract or stop purchasing from us     upon  the  occurrence  of  <font color="blue">certain events</font></td>
+    </tr>
+    <tr>
+      <td>If our sales to NetApp fall     <font color="blue">substantially</font> short of our <font color="blue">predictions</font> and, to the extent that our current     <font color="blue">stock price reflects</font> anticipated increases in our revenue or <font color="blue">profits based</font>     on sales to NetApp, our <font color="blue">stock price likely will fall</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> on sales to a <font color="blue">relatively</font> small number of customers</td>
+    </tr>
+    <tr>
+      <td>While we intend to <font color="blue">expand sales</font> to <font color="blue">channel partners</font>, we expect to     experience <font color="blue">continued <font color="blue">concentration</font></font> in our <font color="blue">customer base</font></td>
+    </tr>
+    <tr>
+      <td>As a result, if our     <font color="blue">relationship</font> with any of our customers were disrupted, we would lose a     <font color="blue">significant</font> portion of our anticipated net revenue</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that     our <font color="blue">relationship</font> with Sun, NetApp or other <font color="blue">channel partners</font> will expand or     not otherwise be disrupted</td>
+    </tr>
+    <tr>
+      <td>Factors that <font color="blue">could influence</font> our <font color="blue">relationship</font>     with <font color="blue">significant</font> <font color="blue">channel partners</font>, including <font color="blue">Sun and NetApp</font>, include:         •  our ability to maintain our products at prices that are <font color="blue">competitive</font>     with those of other <font color="blue">storage system suppliers</font>;         •  our ability to maintain <font color="blue">quality standards</font> for our <font color="blue">products sufficient</font>     to meet the <font color="blue">expectations</font> of our <font color="blue">channel partners</font>; and         •  our ability to produce, ship and deliver a <font color="blue">sufficient quantity</font> of our     products in a <font color="blue">timely manner</font> to meet the needs of our <font color="blue">channel partners</font></td>
+    </tr>
+    <tr>
+      <td>None of our contracts with our existing <font color="blue">channel partners</font>, including     <font color="blue">Sun and NetApp</font>, contain any <font color="blue">minimum purchasing commitments</font></td>
+    </tr>
+    <tr>
+      <td>Further, we do     not expect that future contracts with <font color="blue">channel partners</font>, if any, will include     any <font color="blue">minimum purchasing commitments</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the timing or volume of     <font color="blue">purchases by</font> our <font color="blue">major customers could</font> result in <font color="blue">lower revenue</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     our <font color="blue">existing contracts</font> do not require our <font color="blue">channel partners</font> to purchase our     products <font color="blue">exclusively</font> or on a <font color="blue">preferential basis over</font> the products of any of     our <font color="blue"><font color="blue">competitor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, our <font color="blue">channel partners</font> may sell the products of     our <font color="blue"><font color="blue">competitor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>15       _________________________________________________________________    [66]Table of <font color="blue">Contents       </font>Our business and operating results may suffer if we encounter <font color="blue">significant</font>     <font color="blue">product defects due</font> to the <font color="blue">introduction</font> of our new, integrated systems</td>
+    </tr>
+    <tr>
+      <td>We completed the integration of RAID <font color="blue">controller <font color="blue">technology</font></font> we obtained     in  our  <font color="blue">acquisition</font>  of <font color="blue">Chaparral </font><font color="blue">into certain</font> of our <font color="blue">storage systems</font>     resulting in the <font color="blue">introduction</font> of new, integrated systems</td>
+    </tr>
+    <tr>
+      <td>Our new, integrated systems, as well as our legacy products, may     contain  undetected  errors or failures, which may be discovered after     shipment,  resulting in a loss of revenue or a loss or delay in market     acceptance, which <font color="blue">could harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>Even if the errors are detected     before shipment, such errors could result in the halting of production, the     delay  of  shipments, loss of goodwill, tarnishment of reputation or a     substantial decrease in revenue</td>
+    </tr>
+    <tr>
+      <td>Our standard <font color="blue">warranty provides</font> that if our     systems do not function to <font color="blue">published specifications</font>, we will repair or     replace  the defective component or <font color="blue">system without charge</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant     </font>warranty costs, <font color="blue">particularly</font> those that exceed reserves, could <font color="blue">adversely</font>     impact our business</td>
+    </tr>
+    <tr>
+      <td>In addition, defects in our <font color="blue">products could</font> result in     our customers claiming property damages, consequential damages, personal     injury or even death, <font color="blue">which could</font> also result in our loss of customers and     goodwill</td>
+    </tr>
+    <tr>
+      <td>Any  such  claim could distract <font color="blue">management</font>’s attention from     operating our business and, if successful, result in damage claims against     us that might not be <font color="blue">covered by</font> our insurance</td>
+    </tr>
+    <tr>
+      <td>The loss of one or more <font color="blue">suppliers could slow</font> or interrupt the production and     sales of our products</td>
+    </tr>
+    <tr>
+      <td>Solectron, our <font color="blue">third party</font> <font color="blue">manufacture</font>r, relies on third parties to     <font color="blue">supply key <font color="blue">components</font></font> of our <font color="blue">storage products</font></td>
+    </tr>
+    <tr>
+      <td>Many of these <font color="blue">components</font> are     available  only  from limited sources in the quantities and quality we     require</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Solectron </font>purchases the majority of our RAID <font color="blue"><font color="blue">controllers</font> from</font>     <font color="blue">Infortrend </font>Technology, Inc, or Infortrend</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Solectron </font>may not be able to     purchase the type or quantity of <font color="blue">components</font> from <font color="blue">third party</font> suppliers as     needed in the future</td>
+    </tr>
+    <tr>
+      <td>From time to time there is <font color="blue">significant</font> market demand for <font color="blue">disk drives</font>,     RAID <font color="blue">controllers</font> and other <font color="blue">components</font>, and we may experience component     shortages,  selective  <font color="blue">supply <font color="blue">allocation</font>s</font> and <font color="blue">increased prices</font> of such     <font color="blue">components</font></td>
+    </tr>
+    <tr>
+      <td>In such event, we may be required to purchase our <font color="blue">components</font>     from  <font color="blue">alternative suppliers</font></td>
+    </tr>
+    <tr>
+      <td>Even if <font color="blue">alternative sources</font> of supply for     critical <font color="blue">components</font> such as <font color="blue">disk drives</font> and <font color="blue">controllers</font> become available,     incorporating  substitute <font color="blue">components</font> into our <font color="blue">products could</font> delay our     ability to deliver our products in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>For example, we estimate     that replacing Infortrend’s RAID <font color="blue">controllers</font> with those of another supplier     <font color="blue">would involve <font color="blue">several months</font></font> of hardware and software modification, which     could <font color="blue">significant</font>ly harm our ability to meet our customers’ orders for our     products, damage our customer <font color="blue">relationship</font>s and result in a loss of sales</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Manufacturing </font>disruptions <font color="blue">could harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>We rely on <font color="blue">Solectron </font>to <font color="blue">manufacture</font> <font color="blue">substantially</font> all of our products</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue"><font color="blue">agreement</font> with</font> <font color="blue">Solectron </font>is terminated or if <font color="blue">Solectron </font>does not     perform its <font color="blue">obligations under</font> our <font color="blue">agreement</font>, it could take <font color="blue">several months</font> to     <font color="blue">establish alternative manufacturing</font> for our products and we may not be able     to fulfill our customers’ orders in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Under our OEM <font color="blue">agreement</font>     with  Sun,  Sun  has the right to require that we use a <font color="blue">third party</font> to     <font color="blue">manufacture</font> our products</td>
+    </tr>
+    <tr>
+      <td>Such an external <font color="blue">manufacture</font>r must meet Sun’s     <font color="blue">engineering</font>, qualification and <font color="blue">logistics <font color="blue">requirements</font></font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue"><font color="blue">agreement</font> with</font>     <font color="blue">Solectron </font>terminates, we may be unable to find another external <font color="blue">manufacture</font>r     that  meets  Sun’s <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>With our <font color="blue">increased use</font> of third-party     <font color="blue">manufacture</font>rs, our ability to control the timing of shipments has continued     and <font color="blue">will continue</font> to decrease</td>
+    </tr>
+    <tr>
+      <td>Delayed <font color="blue">shipment could</font> result in the deferral     or <font color="blue">cancellation</font> of purchases of our products</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> deferral or     <font color="blue">cancellation</font> of these <font color="blue">sales would harm</font> our results of <font color="blue">operations</font> in any     <font color="blue">particular quarter</font></td>
+    </tr>
+    <tr>
+      <td>Net revenue for a period may be <font color="blue">lower than predicted</font> if     large <font color="blue">orders forecasted</font> for that period are delayed or are not realized,     <font color="blue">which could</font> result in <font color="blue">cash flow problems</font> or a decline in our stock price</td>
+    </tr>
+    <tr>
+      <td>Any shortage of <font color="blue">disk drives</font> or other <font color="blue">components</font> could increase our costs or     harm our ability to <font color="blue">manufacture</font> and deliver our <font color="blue">storage products</font> to our     customers in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Demand for <font color="blue">disk drives</font> recently surpassed supply, forcing drive     <font color="blue">manufacture</font>rs, including those who supply the <font color="blue">disk drives</font> integrated into     many of our <font color="blue">storage products</font>, to manage <font color="blue">allocation</font> of their inventory</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If                                         </font>16       _________________________________________________________________    [67]Table of <font color="blue">Contents       </font>this shortage is prolonged, we may be forced to <font color="blue">pay higher prices</font> for disk     drives or may be unable to <font color="blue">purchase sufficient quantities</font> of <font color="blue">disk drives</font> to     meet our customers’ demand for our <font color="blue">storage products</font> in a <font color="blue">timely manner</font> or at     all</td>
+    </tr>
+    <tr>
+      <td>Similar <font color="blue">circumstances could</font> occur <font color="blue">with respect</font> to other <font color="blue">necessary</font>     <font color="blue">components</font></td>
+    </tr>
+    <tr>
+      <td>For the years ended <font color="blue">December </font>31, 2005, 2004 and 2003 we <font color="blue">recorded net</font>     income of dlra26dtta6 million, dlra11dtta6 million and dlra12dtta1 million, respectively;     however, for the years ended <font color="blue">December </font>31, 2002 and 2001, we <font color="blue">incurred net</font>     losses of dlra34dtta3 million and dlra43dtta4 million, respectively</td>
+    </tr>
+    <tr>
+      <td>Further, our latest     <font color="blue">forecast predicts</font> that we will incur a loss during our <font color="blue">first quarter</font> of     2006,  fueled,  in  part,  by  an <font color="blue">increased investment</font> in research and     <font color="blue">development</font> and the <font color="blue">implementation</font> of a <font color="blue">new enterprise resource</font> planning, or     ERP, <font color="blue">software package</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be profitable in     any <font color="blue">future period</font></td>
+    </tr>
+    <tr>
+      <td>Our future capital <font color="blue">requirements</font> will depend on, and could     increase <font color="blue">substantially</font> as a result of, many factors, including:         •  our plans to maintain and enhance our <font color="blue">engineering</font>, research,     <font color="blue">development</font> and <font color="blue">product testing programs</font>;         •  the success of our <font color="blue">manufacturing strategy</font>;         •  the success of our sales and <font color="blue">marketing efforts</font>;          •   the  extent  and  terms  of any <font color="blue">development</font>, marketing or other     <font color="blue">arrangements</font>;         •  changes in economic, regulatory or <font color="blue">competitive</font> <font color="blue">conditions</font>; and         •  costs of filing, prosecuting, defending and <font color="blue">enforcing <font color="blue">intellectual</font></font>     <font color="blue">property rights</font></td>
+    </tr>
+    <tr>
+      <td>Our available cash, cash equivalents and short-term investments as of     <font color="blue">December </font>31, 2005 totaled dlra122dtta2 million</td>
+    </tr>
+    <tr>
+      <td>We presently expect cash, cash     equivalents, short-term investments and cash generated from <font color="blue">operations</font> to be     sufficient to meet our operating and capital <font color="blue">requirements</font> through at least     the <font color="blue">next twelve months</font></td>
+    </tr>
+    <tr>
+      <td>However, unanticipated events, such as Sun’s or     NetApp’s failure to meet its <font color="blue">product purchase forecast</font> or <font color="blue">extraordinary</font>     expenses or operating expenses in excess of our <font color="blue">projections</font>, may require us     to <font color="blue">raise <font color="blue">additional</font> funds</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">raise <font color="blue">additional</font> funds</font> on     <font color="blue"><font color="blue">commercially</font> reasonable terms</font> or at all</td>
+    </tr>
+    <tr>
+      <td>Any sales of our debt or equity     securities in the <font color="blue">future may</font> have a substantial dilutive effect on our     <font color="blue">existing <font color="blue">stockholders</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are able to <font color="blue">borrow funds</font>, we may be required to     <font color="blue">grant liens on</font> our assets to the provider of any source of financing or     <font color="blue">enter into</font> operating, <font color="blue">debt service</font> or working <font color="blue">capital covenants with</font> any     provider of financing that <font color="blue">could hinder</font> our ability to operate our business     in <font color="blue">accordance with</font> our plans</td>
+    </tr>
+    <tr>
+      <td>As a result, our ability to borrow money on a     secured basis may be impaired, and we may not be able to issue secured debt     on <font color="blue"><font color="blue">commercially</font> reasonable terms</font> or at all</td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [68]Table of <font color="blue">Contents       </font>Our quarterly operating results have fluctuated <font color="blue">significant</font>ly in the past     and are not a good indicator of <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td>Our quarterly operating results have fluctuated <font color="blue">significant</font>ly in the     <font color="blue">past as shown</font> in the <font color="blue">following table</font> and are not a good indicator of future     performance (in millions)</td>
+    </tr>
+    <tr>
+      <td>Quarter   Net Revenue   Net Income (Loss)       <font color="blue">First Quarter </font>2002                                 $ 10dtta9     $ (6dtta2 )       <font color="blue">Second Quarter </font>2002                                   11dtta2       (8dtta9 )       <font color="blue">Third Quarter </font>2002                                    8dtta6       (7dtta3 )       <font color="blue">Fourth Quarter </font>2002                                   16dtta3       (11dtta9 )       <font color="blue">First Quarter </font>2003                                   30dtta5       (1dtta5 )       <font color="blue">Second Quarter </font>2003                                     48dtta4       2dtta6       <font color="blue">Third Quarter </font>2003                                     51dtta0       4dtta3       <font color="blue">Fourth Quarter </font>2003                                     57dtta5       6dtta6       <font color="blue">First Quarter </font>2004                                   47dtta9       (2dtta6 )       <font color="blue">Second Quarter </font>2004                                     69dtta0       6dtta7       <font color="blue">Third Quarter </font>2004                                     57dtta0       3dtta5       <font color="blue">Fourth Quarter </font>2004                                     65dtta5       4dtta0       <font color="blue">First Quarter </font>2005                                     58dtta0       2dtta1       <font color="blue">Second Quarter </font>2005                                     65dtta9       3dtta3       <font color="blue">Third Quarter </font>2005                                   53dtta6       (1dtta3 )       <font color="blue">Fourth Quarter </font>2005*                                    56dtta3       22dtta5         * Includes <font color="blue">deferred tax benefit from reversal</font> of <font color="blue">valuation allowance</font> of     dlra25dtta3 million</td>
+    </tr>
+    <tr>
+      <td>In addition, the announcement of financial results that fall short of     the results anticipated by the <font color="blue"><font color="blue">public market</font>s could</font> have an immediate and     <font color="blue">significant</font> negative effect on the <font color="blue">trading price</font> of our <font color="blue">common stock</font> in any     <font color="blue">given period</font></td>
+    </tr>
+    <tr>
+      <td>We may have <font color="blue"><font color="blue">difficult</font>y predicting future</font> operating results due to both     internal and <font color="blue">external factors affecting</font> our business and <font color="blue">operations</font>, which     could cause our stock price to decline</td>
+    </tr>
+    <tr>
+      <td>Our operating results may vary <font color="blue">significant</font>ly in the <font color="blue">future depending</font>     on a number of factors, many of which are out of our control, including:         •  the size, timing, <font color="blue">cancellation</font> or <font color="blue">rescheduling</font> of <font color="blue">significant</font> orders;         •  the cost of <font color="blue">litigation</font> and <font color="blue">settlements involving <font color="blue">intellectual</font> property</font>     and other issues;         •  product configuration, mix and <font color="blue">quality issues</font>;         •  <font color="blue">market acceptance</font> of our <font color="blue">new products</font> and <font color="blue">product <font color="blue">enhancements</font></font> and new     <font color="blue">product announcements</font> or <font color="blue">introduction</font>s by our <font color="blue"><font color="blue">competitor</font>s</font>;         •  <font color="blue">manufacturing costs</font>;         •  <font color="blue">deferrals</font> of <font color="blue">customer orders</font> in <font color="blue">anticipation</font> of <font color="blue">new products</font> or product     <font color="blue">enhancements</font>;         •  changes in <font color="blue">pricing by us</font> or our <font color="blue"><font color="blue">competitor</font>s</font>;         •  our ability to develop, introduce and market <font color="blue">new products</font> and product     <font color="blue">enhancements</font> on a <font color="blue">timely basis</font>;         •  hardware component costs and availability, <font color="blue">particularly</font> <font color="blue">with respect</font> to     hardware <font color="blue">components</font> obtained from Infortrend, a sole-source provider;         •  our success in creating brand awareness and in expanding our sales and     <font color="blue">marketing programs</font>;                                         18       _________________________________________________________________    [69]Table of <font color="blue">Contents       </font>  •  the level of <font color="blue">competition</font>;         •  potential <font color="blue">reductions</font> in <font color="blue">inventories</font> held by <font color="blue">channel partners</font>;         •  slowing sales of the products of our <font color="blue">channel partners</font>;         •  <font color="blue">technological</font> changes in the <font color="blue"><font color="blue">open systems storage</font> market</font>;         •  levels of <font color="blue">expenditure</font>s on research, <font color="blue">engineering</font> and product     <font color="blue">development</font>;         •  changes in our business strategies;         •  personnel changes; and         •  <font color="blue">general economic trends</font> and other factors</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">customers delay</font> or <font color="blue">cancel orders</font> or <font color="blue">return products</font>, our results of     <font color="blue">operations</font> could be harmed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">generally</font> do not <font color="blue">enter into</font> long-term purchase contracts with     customers, and <font color="blue">customers usually</font> have the right to extend or <font color="blue">delay shipment</font>     of their orders, <font color="blue">return products</font> and <font color="blue">cancel orders</font></td>
+    </tr>
+    <tr>
+      <td>As a result, sales in     any period are <font color="blue">generally</font> <font color="blue">dependent</font> on orders booked and shipped in that     period</td>
+    </tr>
+    <tr>
+      <td>Delays in shipment orders, product returns and order <font color="blue">cancellation</font>s     in excess of the levels we expect would harm our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">sales cycle</font> varies <font color="blue">substantially</font> and <font color="blue">future net revenue</font> in any period     may be lower than our <font color="blue">historical revenues</font> or forecasts</td>
+    </tr>
+    <tr>
+      <td>Our sales are <font color="blue">difficult</font> to forecast because the <font color="blue">open systems storage</font>     market is <font color="blue">rapidly evolving</font> and our <font color="blue">sales cycle</font> varies <font color="blue">substantially</font> from     customer to customer</td>
+    </tr>
+    <tr>
+      <td>Customer orders for our products can range in value     from a <font color="blue">few thousand dollars</font> to over a <font color="blue">million dollars</font></td>
+    </tr>
+    <tr>
+      <td>The length of time     between  <font color="blue">initial contact with</font> a <font color="blue">potential customer</font> and the sale of our     <font color="blue">product may last from six</font> to 24 months</td>
+    </tr>
+    <tr>
+      <td>This is <font color="blue">particularly</font> true during     times of <font color="blue">economic slowdown</font>, for sales to <font color="blue">channel partners</font> and for the sale     and <font color="blue">installation</font> of <font color="blue">complex solutions</font></td>
+    </tr>
+    <tr>
+      <td>We have shifted our business strategy     to focus primarily on <font color="blue">channel partners</font>, with whom <font color="blue">sales cycle</font>s are <font color="blue">generally</font>     lengthier, more costly and <font color="blue">less certain than direct sales</font> to end-users</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>factors that may extend our <font color="blue">sales cycle</font>, <font color="blue">particularly</font>     orders for <font color="blue">new products</font>, include:         •  the amount of time needed for <font color="blue">technical <font color="blue">evaluation</font>s by customers</font>;         •  customers’ budget constraints and changes to customers’ budgets during     the course of the <font color="blue">sales cycle</font>;         •  customers’ internal review and <font color="blue">testing procedures</font>; and         •  our <font color="blue">engineering</font> work <font color="blue">necessary</font> to integrate a <font color="blue">storage solution with</font> a     customer’s system</td>
+    </tr>
+    <tr>
+      <td>Our net revenue is <font color="blue">difficult</font> for us to <font color="blue">predict since</font> it is directly     <font color="blue">affected by</font> the timing of large orders</td>
+    </tr>
+    <tr>
+      <td>Due to the <font color="blue">unpredictable timing</font> of     <font color="blue">customer orders</font>, we <font color="blue">may ship products representing</font> a <font color="blue">significant</font> portion of     our  net sales for a quarter during the last month of that quarter</td>
+    </tr>
+    <tr>
+      <td>In     addition, our <font color="blue">expense levels</font> are based, in part, on our <font color="blue">expectations</font> as to     <font color="blue">future sales</font></td>
+    </tr>
+    <tr>
+      <td>As a result, if <font color="blue">sales levels</font> are below <font color="blue">expectations</font>, our     operating results may be <font color="blue">disproportionately</font> affected</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you     that we will experience <font color="blue">sales growth</font> in <font color="blue">future period</font>s</td>
+    </tr>
+    <tr>
+      <td>The market for our products is subject to substantial <font color="blue">pricing pressure</font> that     may decrease our margins</td>
+    </tr>
+    <tr>
+      <td>Pricing pressures exist in the <font color="blue">data <font color="blue">storage market</font></font> and have harmed and     may, in the future, continue to harm our net revenue and earnings</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">pricing pressure</font>s are due, in part, to <font color="blue">continuing decreases</font> in component     prices, such as those of disks and RAID <font color="blue">controllers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Decreases </font>in component     prices are <font color="blue">customarily</font> passed on to <font color="blue">customers by</font> storage companies through a     continuing decrease in price of storage hardware systems</td>
+    </tr>
+    <tr>
+      <td>In addition,     because we expect to continue to make most of our sales to a small number of     customers, we are subject to continued <font color="blue">pricing pressure</font>s from our customers,     <font color="blue">particularly</font> our OEM customers</td>
+    </tr>
+    <tr>
+      <td>Pricing pressures are also due, in part, to     the current <font color="blue">difficult</font> economic <font color="blue">conditions</font>, which have led many companies in     our industry to pursue a strategy of <font color="blue">decreasing prices</font> in order to win     sales, the narrowing of                                         19       _________________________________________________________________    [70]Table of <font color="blue">Contents       </font>functional differences among <font color="blue"><font color="blue">competitor</font>s</font>, which forces companies to compete     <font color="blue">on price as opposed</font> to features of products, and the <font color="blue">introduction</font> of new     <font color="blue">technologies</font>, which leaves older <font color="blue">technology</font> more vulnerable to pricing     pressures</td>
+    </tr>
+    <tr>
+      <td>To the extent we are unable to offset those pressures with     <font color="blue">commensurate</font> cost <font color="blue">reductions</font> from our suppliers or by providing <font color="blue">new products</font>     and features, our margins will be harmed</td>
+    </tr>
+    <tr>
+      <td>Our success depends <font color="blue">significant</font>ly upon our ability to protect our     <font color="blue">intellectual</font> property and to <font color="blue">avoid infringing</font> the <font color="blue">intellectual</font> property of     third parties, which has already resulted in costly, time-consuming     <font color="blue">litigation</font> and could result in the <font color="blue">inability</font> to <font color="blue">offer certain products</font></td>
+    </tr>
+    <tr>
+      <td>We rely primarily on patents, copyrights, trademarks, trade secrets,     <font color="blue">non<font color="blue">disclosure</font></font>  <font color="blue">agreement</font>s  and  <font color="blue">common law</font> to protect our <font color="blue">intellectual</font>     property</td>
+    </tr>
+    <tr>
+      <td>For example, we have <font color="blue">registered trademarks</font> for SANnet, SANpath,     SANscape, Stratis, Dot Hill, Dot Hill Systems and the Dot Hill logo</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Despite     </font>our efforts to protect our <font color="blue">intellectual</font> property, unauthorized parties may     attempt to <font color="blue">copy aspects</font> of our products or obtain and use information that     we regard <font color="blue">as proprietary</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the laws of <font color="blue">foreign countries may</font> not     <font color="blue">adequately protect</font> our <font color="blue">intellectual</font> <font color="blue">property rights</font></td>
+    </tr>
+    <tr>
+      <td>Our efforts to protect     our <font color="blue">intellectual</font> property from <font color="blue">third party</font> discovery and <font color="blue"><font color="blue">infringement</font> may</font> be     insufficient  and third parties may in<font color="blue">dependent</font>ly develop <font color="blue">technologies</font>     similar to ours, duplicate our products or <font color="blue">design around</font> our patents</td>
+    </tr>
+    <tr>
+      <td>On October 17, 2003, <font color="blue">Crossroads </font>Systems, or Crossroads, filed a     <font color="blue">lawsuit against us</font> in the <font color="blue">United States </font>District Court in Austin, Texas     alleging that our <font color="blue">products infringe two</font> <font color="blue">United States </font><font color="blue">patents assigned</font> to     Crossroads, Patent Numbers 5cmam941cmam972 and 6cmam425cmam035</td>
+    </tr>
+    <tr>
+      <td>We were <font color="blue">served with</font> the     <font color="blue">lawsuit on</font> October 27, 2003</td>
+    </tr>
+    <tr>
+      <td>In March 2004, <font color="blue">Chaparral </font>was <font color="blue">added as</font> a party     to  the  lawsuit</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">patents involve storage routers</font> and methods for     providing  <font color="blue">virtual local storage</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Patent Number </font>5cmam941cmam972 involves the     interface of SCSI <font color="blue">storage devices</font> and the <font color="blue">Fibre Channel </font>protocol and Patent     Number 6cmam425cmam035 involves the interface of any one-transport medium and a     <font color="blue">second transport medium</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we have <font color="blue">meritorious defenses</font> to     Crossroads’ claims and intend to <font color="blue"><font color="blue">vigorously defend against</font> them</font></td>
+    </tr>
+    <tr>
+      <td>We have     already  incurred,  and expect to continue to incur, <font color="blue">significant</font> legal     expenses in <font color="blue">connection with</font> this <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">defense costs</font>, and other     expenses related to this <font color="blue">litigation</font>, will be <font color="blue">expensed as incurred</font> and will     <font color="blue"><font color="blue">negatively</font> affect</font> our future operating results</td>
+    </tr>
+    <tr>
+      <td>If we are not successful in     our defense of Crossroads’ claims, we may be required to pay <font color="blue">significant</font>     amounts in the form of damages for <font color="blue">past <font color="blue">infringement</font></font></td>
+    </tr>
+    <tr>
+      <td>We also could be     required to pay <font color="blue">significant</font> amounts in the form of <font color="blue">licensing fees</font> to allow     us to continue to <font color="blue">market certain</font> products in the future, or <font color="blue">Crossroads </font>may     deny us a license, <font color="blue">which could</font> lead to our <font color="blue">inability</font> to <font color="blue">market certain</font>     products  at  all</td>
+    </tr>
+    <tr>
+      <td>Further, other third parties may assert <font color="blue">additional</font>     <font color="blue">infringement</font> claims against us in the future, which would similarly require     us to incur substantial license fees, legal fees and other expenses, and     <font color="blue">distract <font color="blue">management</font> from</font> the <font color="blue">operations</font> of our business</td>
+    </tr>
+    <tr>
+      <td>We expect that providers of <font color="blue">storage products</font> will increasingly be     subject to <font color="blue">infringement</font> claims as the number of products and <font color="blue"><font color="blue">competitor</font>s</font>     increases</td>
+    </tr>
+    <tr>
+      <td>In  addition  to  the  formal claims <font color="blue">brought against us by</font>     Crossroads,  we receive, from time to time, <font color="blue">letters from third parties</font>     suggesting  that  we  may require a <font color="blue"><font color="blue">license from</font> such third parties</font> to     <font color="blue">manufacture</font> or sell our products</td>
+    </tr>
+    <tr>
+      <td>We evaluate all <font color="blue">such communications</font> to     <font color="blue">assess whether</font> to seek a <font color="blue">license from</font> the <font color="blue">patent owner</font></td>
+    </tr>
+    <tr>
+      <td>We may be required     to <font color="blue">purchase licenses</font> that could have a material <font color="blue">impact on</font> our business, or,     we may not be able to obtain the <font color="blue">necessary</font> <font color="blue">license from</font> a <font color="blue">third party</font> on     <font color="blue"><font color="blue">commercially</font> reasonable terms</font>, or at all</td>
+    </tr>
+    <tr>
+      <td>Consequently, we could be <font color="blue">prohibited from marketing products</font> that     <font color="blue">incorporate</font> the <font color="blue">protected <font color="blue">technology</font></font> or incur substantial costs to redesign     our products in a manner to avoid <font color="blue">infringement</font> of <font color="blue">third party</font> <font color="blue">intellectual</font>     <font color="blue">property rights</font></td>
+    </tr>
+    <tr>
+      <td>The market for <font color="blue">storage systems</font> is intensely <font color="blue">competitive</font> and our results of     <font color="blue">operations</font>, pricing and business could be harmed if we fail to maintain or     expand our <font color="blue">market position</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">storage market</font> is intensely <font color="blue">competitive</font> and is <font color="blue"><font color="blue">characterized</font> by</font>     rapidly  changing <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We compete primarily against in<font color="blue">dependent</font>     <font color="blue">storage system suppliers</font>, including EMC, Hitachi, Engenio, and Xyratex</td>
+    </tr>
+    <tr>
+      <td>20       _________________________________________________________________    [71]Table of <font color="blue">Contents       </font>      Many of our existing and potential <font color="blue"><font color="blue">competitor</font>s</font> have longer operating     histories, greater name <font color="blue">recognition</font> and <font color="blue">substantially</font> greater financial,     technical, sales, marketing and other <font color="blue">resources than us</font></td>
+    </tr>
+    <tr>
+      <td>As a result, they     may have more advanced <font color="blue">technology</font>, larger <font color="blue">distribution</font> channels, stronger     brand names, better customer service and access to more customers than we     do</td>
+    </tr>
+    <tr>
+      <td>Other large companies with <font color="blue">significant</font> resources could become direct     <font color="blue"><font color="blue">competitor</font>s</font>, either through acquiring a <font color="blue">competitor</font> or <font color="blue">through internal</font>     efforts</td>
+    </tr>
+    <tr>
+      <td>Additionally,  a number of new, privately held companies are     currently attempting to enter the <font color="blue">storage market</font>, some of which may become     <font color="blue">significant</font> <font color="blue"><font color="blue">competitor</font>s</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Any of these existing or potential     <font color="blue"><font color="blue">competitor</font>s</font>  may  be  able  to respond more quickly to new or emerging     <font color="blue">technologies</font> and changes in customer <font color="blue">requirements</font>, devote greater resources     to the <font color="blue">development</font>, promotion and sale of products or deliver <font color="blue">competitive</font>     <font color="blue">products at lower prices than us</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could also lose current</font> or future business to any of our suppliers     or <font color="blue">manufacture</font>rs, some of <font color="blue">which directly</font> and <font color="blue">indirectly <font color="blue">compete with</font> us</font></td>
+    </tr>
+    <tr>
+      <td>Currently, we leverage our supply and manufacturing <font color="blue">relationship</font>s to provide     a <font color="blue">significant</font> share of our products</td>
+    </tr>
+    <tr>
+      <td>Our suppliers and <font color="blue">manufacture</font>rs are     very <font color="blue">familiar with</font> the <font color="blue">specific attributes</font> of our products and may be able     to  provide  our  <font color="blue">customers with</font> similar products</td>
+    </tr>
+    <tr>
+      <td>We also expect that     <font color="blue">competition</font> <font color="blue">will increase</font> as a result of <font color="blue">industry consolidation</font> and the     creation of companies with new, innovative product offerings</td>
+    </tr>
+    <tr>
+      <td>Current and potential <font color="blue"><font color="blue">competitor</font>s</font>     have established or may establish <font color="blue">cooperative</font> <font color="blue">relationship</font>s among themselves     or with third parties to increase the ability of their products to address     the needs of our prospective customers</td>
+    </tr>
+    <tr>
+      <td>Accordingly, it is possible that new     <font color="blue"><font color="blue">competitor</font>s</font> or alliances among <font color="blue"><font color="blue">competitor</font>s</font> may emerge and rapidly acquire     <font color="blue">significant</font> market share</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font> is likely to result in price     <font color="blue">reductions</font>, reduced operating margins and <font color="blue">potential loss</font> of market share,     any  of  which  <font color="blue">could harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>We believe that the principal     <font color="blue">competitive</font> factors affecting the <font color="blue">storage systems</font> market include:         •  <font color="blue">product performance</font>, features, <font color="blue">scalability</font> and <font color="blue">reliability</font>;         •  price;         •  <font color="blue">product breadth</font>;         •  <font color="blue">timeliness</font> of new product <font color="blue">introduction</font>s; and         •  <font color="blue">interoperability</font> and ease of <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be able to successfully <font color="blue">incorporate</font>     these  <font color="blue">factors into</font> our products and <font color="blue">compete against current</font> or future     <font color="blue"><font color="blue">competitor</font>s</font>  or  that  <font color="blue">competitive</font> pressures we <font color="blue">face will</font> not harm our     business</td>
+    </tr>
+    <tr>
+      <td>If we are unable to develop and <font color="blue">market products</font> to <font color="blue">compete with</font>     the products of <font color="blue"><font color="blue">competitor</font>s</font>, our business will be <font color="blue">materially</font> and <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>In addition, if major <font color="blue">channel partners</font> who are also <font color="blue"><font color="blue">competitor</font>s</font>     <font color="blue">cease purchasing</font> our products in order to <font color="blue">concentrate on sales</font> of their own     products, our business will be harmed</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">open systems storage</font> market</font> is rapidly changing and we may be unable to     keep pace with or properly prepare for the effects of those changes</td>
+    </tr>
+    <tr>
+      <td>The  open  systems  data  <font color="blue">storage market</font> in which we operate is     <font color="blue">characterized</font>  by  rapid  <font color="blue">technological</font>  change,  <font color="blue">frequent new product</font>     <font color="blue">introduction</font>s, evolving industry standards and <font color="blue">consolidation among</font> our     <font color="blue"><font color="blue">competitor</font>s</font>, suppliers and customers</td>
+    </tr>
+    <tr>
+      <td>Customer <font color="blue">preferences</font> in this market     are  <font color="blue">difficult</font>  to  predict  and  changes in those <font color="blue">preferences</font> and the     <font color="blue">introduction</font> of <font color="blue">new products</font> by our <font color="blue"><font color="blue">competitor</font>s</font> or us could render our     <font color="blue">existing products obsolete</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success will depend upon</font> our ability to     address  the <font color="blue">increasingly sophisticated</font> needs of customers, to enhance     existing products, and to develop and <font color="blue">introduce on</font> a <font color="blue">timely basis</font>, new     <font color="blue">competitive</font> products, including <font color="blue">new software</font> and hardware, and <font color="blue">enhancements</font>     to  existing  software  and hardware that keep pace with <font color="blue">technological</font>     <font color="blue">development</font>s and <font color="blue">emerging industry standards</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot successfully</font>     identify, manage, develop, <font color="blue">manufacture</font> or market <font color="blue">product <font color="blue">enhancements</font></font> or new     products, our business will be harmed</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">consolidation among</font> our     <font color="blue"><font color="blue">competitor</font>s</font>, suppliers and <font color="blue">customers may harm</font> our business <font color="blue">by increasing</font> the     resources of our <font color="blue"><font color="blue">competitor</font>s</font>, reducing the number of <font color="blue">suppliers available</font> to     us for our product <font color="blue">components</font> and increasing <font color="blue">competition</font> for <font color="blue">customers by</font>     reducing customer-purchasing decisions</td>
+    </tr>
+    <tr>
+      <td>21       _________________________________________________________________    [72]Table of <font color="blue">Contents       </font>A <font color="blue">significant</font> percentage of our expenses are fixed, and if we fail to     <font color="blue">generate revenues</font> in <font color="blue">associated periods</font>, our operating results will be     harmed</td>
+    </tr>
+    <tr>
+      <td>Although we have taken a number of steps to reduce operating costs, we     may  have to take <font color="blue">further measures</font> to <font color="blue">reduce expenses</font> if we experience     operating losses or do not achieve a <font color="blue">stable net income</font></td>
+    </tr>
+    <tr>
+      <td>A number of factors     <font color="blue">could preclude us from successfully bringing costs</font> and expenses in line with     our net revenue, such as the fact that our <font color="blue">expense levels</font> are based in part     on our <font color="blue">expectations</font> as to <font color="blue">future sales</font>, and that a <font color="blue">significant</font> percentage of     our expenses are fixed, <font color="blue">which limits</font> our ability to <font color="blue">reduce expenses</font> quickly     in response to any shortfalls in net revenue</td>
+    </tr>
+    <tr>
+      <td>As a result, if net revenue     does not meet our <font color="blue">projections</font>, operating results may be <font color="blue"><font color="blue">negatively</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>We may experience shortfalls in net revenue for <font color="blue">various reasons</font>, including:         •  <font color="blue">significant</font> <font color="blue">pricing pressure</font>s that occur because of declines in selling     <font color="blue">prices over</font> the life of a product or because of increased <font color="blue">competition</font>;         •  <font color="blue">sudden shortages</font> of <font color="blue">raw materials</font> or fabrication, test or assembly     <font color="blue">capacity</font> constraints that lead our suppliers and <font color="blue">manufacture</font>rs to allocate     <font color="blue">available supplies</font> or <font color="blue">capacity</font> to other customers, which, in turn, may harm     our ability to meet our <font color="blue">sales obligations</font>; and         •  the reduction, <font color="blue">rescheduling</font> or <font color="blue">cancellation</font> of <font color="blue">customer orders</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we typically plan our production and <font color="blue">inventory levels</font>     based  on  internal  forecasts  of  customer  demand,  which is highly     unpredictable  and  can fluctuate <font color="blue">substantially</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, in     response to anticipated <font color="blue">long lead times</font> to obtain inventory and materials     from our <font color="blue">outside suppliers</font>, we may order materials in advance of anticipated     <font color="blue">customer demand</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">advance ordering</font> has continued and may result in     excess  <font color="blue">inventory levels</font> or unanticipated inventory write-downs due to     expected orders that fail to <font color="blue">materialize</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends on</font> our ability to attract and retain <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">performance depends</font> in <font color="blue">significant</font> part on our ability to attract     and retain talented senior <font color="blue">management</font> and other <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our key     personnel  include  Dana  Kammersgard, our <font color="blue">Chief Executive Officer </font>and     President, Patrick Collins, our Chief Operating Officer, and Preston Romm,     our <font color="blue">Chief Financial Officer</font></td>
+    </tr>
+    <tr>
+      <td>If any of these <font color="blue">individuals</font> were to terminate     his <font color="blue">employment with us</font>, we would be required to locate and hire a suitable     <font color="blue">replacement</font></td>
+    </tr>
+    <tr>
+      <td>For example, <font color="blue">James Lambert </font><font color="blue">retired as</font> our <font color="blue">Vice Chairman </font>and     <font color="blue">Chief Executive Officer </font>in March 2006 and Mr</td>
+    </tr>
+    <tr>
+      <td>Kammersgard was <font color="blue">appointed as</font>     our  Chief  Executive  Officer to replace Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for     attracting talented employees in the <font color="blue">technology</font> industry is intense</td>
+    </tr>
+    <tr>
+      <td>We may     be unable to identify suitable <font color="blue">replacement</font>s for any employees that we lose</td>
+    </tr>
+    <tr>
+      <td>In addition, even if we are successful in locating suitable <font color="blue">replacement</font>s,     the time and <font color="blue">cost involved</font> in recruiting, hiring, training and <font color="blue">integrating</font>     new  employees, <font color="blue">particularly</font> key employees responsible for <font color="blue">significant</font>     portions  of  our  <font color="blue">operations</font>, <font color="blue">could harm</font> our business by delaying our     <font color="blue">production schedule</font>, our research and <font color="blue">development</font> efforts, our ability to     execute on our business strategy and our client <font color="blue">development</font> and marketing     efforts</td>
+    </tr>
+    <tr>
+      <td>Many of our customer <font color="blue">relationship</font>s are <font color="blue">based on</font> personal <font color="blue">relationship</font>s     between the customer and our sales <font color="blue">representatives</font></td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">representatives</font>     terminate their <font color="blue">employment with us</font>, we may be forced to expend substantial     resources to attempt to retain the customers that the sales <font color="blue">representatives</font>     serviced</td>
+    </tr>
+    <tr>
+      <td>Ultimately, if we were <font color="blue">unsuccessful</font> in retaining these customers,     our <font color="blue">net revenue would decline</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">executive officers</font> and <font color="blue">directors</font> and their <font color="blue">affiliates</font> own a <font color="blue">significant</font>     percentage of our <font color="blue">outstanding shares</font>, <font color="blue">which could</font> <font color="blue">prevent us from</font> being     acquired and <font color="blue">adversely</font> affect our stock price</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, our <font color="blue">executive officers</font>, <font color="blue">directors</font> and their     <font color="blue">affiliates</font> beneficially owned approximately 11dtta2prca of our <font color="blue">outstanding shares</font>     of <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>These individual <font color="blue">stockholders</font> may be able to influence     matters requiring <font color="blue">approval by</font> our <font color="blue">stockholders</font>, including the election of a     majority of our <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">voting power</font> of these <font color="blue">stockholders</font> under     certain <font color="blue">circumstances could</font> have the effect of delaying or preventing a     change in control of us</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">concentration</font> of <font color="blue">ownership may also</font> make it     more  <font color="blue">difficult</font>  or expensive for us to obtain financing</td>
+    </tr>
+    <tr>
+      <td>Further, any     substantial sale of shares by these <font color="blue">individuals</font> could depress the market     price of our <font color="blue">common stock</font> and impair our ability to raise capital in the     <font color="blue">future through</font> the sale of our <font color="blue">equity securities</font></td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________    [73]Table of <font color="blue">Contents       </font>Protective provisions in our charter and bylaws and the existence of our     <font color="blue">stockholder rights</font> plan <font color="blue">could prevent</font> a takeover which <font color="blue">could harm</font> our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">certificate</font> of <font color="blue">incorporation</font> and <font color="blue">bylaws contain</font> a number of     provisions that <font color="blue">could impede</font> a takeover or <font color="blue">prevent us from</font> being acquired,     including,  but  not  limited to, a <font color="blue">classified board</font> of <font color="blue">directors</font>, the     <font color="blue">elimination</font> of our <font color="blue">stockholders</font>’ ability to take <font color="blue">action by written consent</font>     and <font color="blue">limitations on</font> the ability of our <font color="blue">stockholders</font> to remove a <font color="blue">director from</font>     <font color="blue">office without</font> cause</td>
+    </tr>
+    <tr>
+      <td>Our board of <font color="blue">directors</font> may issue <font color="blue">additional</font> shares of     <font color="blue">common stock</font> or <font color="blue">establish one</font> or more classes or series of <font color="blue">preferred stock</font>     with such designations, relative voting rights, dividend rates, liquidation     and other rights, <font color="blue">preferences</font> and <font color="blue">limitations as</font> determined by our board of     <font color="blue">directors</font>  without  stockholder  approval</td>
+    </tr>
+    <tr>
+      <td>In  addition, we adopted a     <font color="blue">stockholder rights</font> plan in May 2003 that is designed to <font color="blue">impede takeover</font>     <font color="blue">transactions</font> that are not <font color="blue">supported by</font> our board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Each of these     charter and bylaw provisions and the <font color="blue">stockholder rights</font> plan gives our board     of <font color="blue">directors</font>, acting <font color="blue">without stockholder approval</font>, the ability to prevent,     or render more <font color="blue">difficult</font> or costly, the <font color="blue">completion</font> of a <font color="blue">takeover transaction</font>     that our <font color="blue">stockholders</font> might view as being in their <font color="blue">best interests</font></td>
+    </tr>
+    <tr>
+      <td>The exercise of <font color="blue"><font color="blue">outstanding warrants</font> may</font> result in dilution to our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Dilution of the per share value of our <font color="blue"><font color="blue">common stock</font> could</font> result from     the exercise of <font color="blue">outstanding warrants</font></td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005 there were     <font color="blue">outstanding warrants</font> to purchase 1cmam720cmam696 shares of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The     warrants have exercise prices ranging from dlra2dtta97 to dlra4dtta50 per share and     expire <font color="blue">at various dates through</font> March 14, 2008</td>
+    </tr>
+    <tr>
+      <td>When the exercise price of     the warrants is less than the <font color="blue">trading price</font> of our <font color="blue">common stock</font>, exercise of     the  warrants  would  have  a dilutive effect on our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">possibility</font> of the issuance of shares of our <font color="blue">common stock</font> upon exercise of     the <font color="blue">warrants could</font> cause the <font color="blue">trading price</font> of our <font color="blue">common stock</font> to decline</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">stock price may</font> be <font color="blue">highly volatile</font> and could <font color="blue">decline <font color="blue">substantially</font></font> and     <font color="blue">unexpectedly</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of our shares of <font color="blue">common stock</font> has been <font color="blue">affected by</font>     the factors disclosed in this section <font color="blue">as well as prevailing economic</font> and     <font color="blue">financial trends</font> and <font color="blue">conditions</font> in the <font color="blue">public <font color="blue">securities markets</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Share     </font>prices of companies in <font color="blue">technology</font>-related industries, such as ours, tend to     exhibit a high degree of <font color="blue">volatility</font></td>
+    </tr>
+    <tr>
+      <td>The announcement of financial results     that fall short of the results anticipated by the <font color="blue"><font color="blue">public market</font>s could</font> have     an immediate and <font color="blue">significant</font> negative effect on the <font color="blue">trading price</font> of our     shares in any <font color="blue">given period</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">shortfalls may</font> result <font color="blue">from events</font> that are     beyond our <font color="blue">immediate control</font>, can be unpredictable and, since a <font color="blue">significant</font>     proportion of our <font color="blue">sales during each fiscal quarter tend</font> to occur in the     <font color="blue">latter stages</font> of the quarter, may not be <font color="blue">discernible until</font> the end of a     financial reporting period</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">factors may contribute</font> to the <font color="blue">volatility</font>     of the <font color="blue">trading value</font> of our <font color="blue">shares regardless</font> of our long-term prospects</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">trading price</font> of our shares may also be <font color="blue">affected by</font> <font color="blue">development</font>s,     including reported financial results and <font color="blue">fluctuations</font> in <font color="blue">trading price</font>s of     the shares of other publicly held companies, in our industry <font color="blue">generally</font> and     our  business  segment  in  particular,  which may not have any direct     <font color="blue">relationship</font> with our business or prospects</td>
+    </tr>
+    <tr>
+      <td>In the past, securities class action <font color="blue">litigation</font> has often been brought     against a company following periods of <font color="blue">volatility</font> in the <font color="blue">market price</font> of its     securities</td>
+    </tr>
+    <tr>
+      <td>For example, in late January and early <font color="blue">February </font>2006, numerous     <font color="blue"><font color="blue">complaints</font> against us purporting</font> to be class actions were filed in the     <font color="blue">United States </font>District Court for the Southern District of California</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">complaints</font> allege violations of <font color="blue">federal securities laws</font> related to alleged     inflation in our stock price in <font color="blue">connection with</font> various statements and     alleged omissions to the public and to the <font color="blue">securities markets</font> and declines     in our stock price in <font color="blue">connection with</font> the <font color="blue">restatement</font> of certain of our     quarterly <font color="blue">financial statements</font> for fiscal year 2004, and <font color="blue">seeking damages</font>     therefore</td>
+    </tr>
+    <tr>
+      <td>In addition, two <font color="blue">complaints</font> purporting to be <font color="blue">derivative actions</font>     have been filed in <font color="blue">California </font>state <font color="blue">court against certain</font> of our <font color="blue">directors</font>     and <font color="blue">executive officers</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">complaints</font> are <font color="blue">based on</font> the <font color="blue">same facts</font> and     <font color="blue">circumstances described</font> in the federal class action <font color="blue">complaints</font> and <font color="blue">generally</font>     allege that the named <font color="blue">directors</font> and <font color="blue">officers breached</font> their <font color="blue">fiduciary duties</font>     by  failing to <font color="blue">oversee adequately</font> our financial reporting</td>
+    </tr>
+    <tr>
+      <td>Each of the     <font color="blue">complaints</font> <font color="blue">generally</font> seek an <font color="blue">unspecified amount</font> of damages</td>
+    </tr>
+    <tr>
+      <td>The cases are in     the very <font color="blue">preliminary stages</font></td>
+    </tr>
+    <tr>
+      <td>We believe the <font color="blue">allegations against us</font> and     certain of our <font color="blue">directors</font> and <font color="blue">executive officers</font> in this action are without     merit and we intend to <font color="blue">vigorously defend against</font> these claims</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Securities     </font><font color="blue">litigation</font> could result in the <font color="blue">expenditure</font> of substantial                                         23       _________________________________________________________________    [74]Table of <font color="blue">Contents       </font>funds, divert <font color="blue">management</font>’s attention and resources, harm our reputation in     the industry and the <font color="blue">securities markets</font> and reduce our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Future sales of our <font color="blue">common stock</font> may hurt our <font color="blue">market price</font></td>
+    </tr>
+    <tr>
+      <td>A  substantial  number of shares of our <font color="blue">common stock</font> may become     available for resale</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">stockholders</font> sell substantial amounts of our     <font color="blue">common stock</font> in the <font color="blue">public market</font>, the <font color="blue">market price</font> of our <font color="blue">common stock</font>     <font color="blue">could decline</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">sales might also</font> make it more <font color="blue">difficult</font> for us to sell     equity  securities  in  the  future  at  times and prices that we deem     <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we are obligated to file a <font color="blue">registration statement</font>     <font color="blue">with respect</font> to the resale of up to 1cmam394cmam269 shares of our <font color="blue">common stock</font>     <font color="blue">issuable upon exercise</font> of warrants held by Sun</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Geopolitical </font>military <font color="blue">conditions</font>, including <font color="blue">terrorist attacks</font> and other acts     of war, may <font color="blue">materially</font> and <font color="blue">adversely</font> affect the markets on which our common     <font color="blue">stock trades</font>, the markets in which we operate, our <font color="blue">operations</font> and our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Terrorist </font>attacks and other acts of war, and any response to them, may     lead  to  armed  <font color="blue">hostilities</font>  and such <font color="blue">development</font>s would likely cause     instability  in <font color="blue">financial markets</font></td>
+    </tr>
+    <tr>
+      <td>Armed <font color="blue">hostilities</font> and <font color="blue">terrorism may</font>     <font color="blue">directly impact</font> our facilities, personnel and <font color="blue">operations</font> that are located in     the <font color="blue">United States </font>and <font color="blue">internationally</font>, as well as those of our channel     partners, suppliers, <font color="blue">third party</font> <font color="blue">manufacture</font>r and customers</td>
+    </tr>
+    <tr>
+      <td>Furthermore,     severe <font color="blue">terrorist attacks</font> or acts of war may result in <font color="blue">temporary halts</font> of     <font color="blue">commercial activity</font> in the <font color="blue">affected regions</font>, and may result in reduced     demand for our products</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">development</font>s could have a material adverse     effect on our business and the <font color="blue">trading price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with Sarbanes-Oxley Act of 2002</td>
+    </tr>
+    <tr>
+      <td>We  are  exposed to <font color="blue">significant</font> costs and <font color="blue">risks associated with</font>     <font color="blue">complying with increasingly stringent</font> and <font color="blue">complex regulation</font> of corporate     governance  and  <font color="blue">disclosure</font>  standards</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changing </font>laws, <font color="blue">regulations</font> and     standards relating to <font color="blue">corporate governance</font> and public <font color="blue">disclosure</font>, including     the Sarbanes-Oxley Act of 2002, new SEC <font color="blue">regulations</font> and <font color="blue">Nasdaq Stock Market     </font>rules require growing <font color="blue">expenditure</font> of <font color="blue">management</font> time and <font color="blue">external resources</font></td>
+    </tr>
+    <tr>
+      <td>In  particular, Section 404 of the Sarbanes-Oxley Act of 2002 requires     <font color="blue">management</font>’s annual review and <font color="blue">evaluation</font> of our internal controls, and     <font color="blue">attestations</font>  of  the  <font color="blue">effectiveness</font>  of  our internal controls by our     in<font color="blue">dependent</font>  auditors</td>
+    </tr>
+    <tr>
+      <td>This process has required us to hire <font color="blue">additional</font>     personnel and <font color="blue">outside advisory services</font> and has resulted in <font color="blue">significant</font>     <font color="blue">accounting</font> and <font color="blue">legal expenses</font></td>
+    </tr>
+    <tr>
+      <td>We expect to continue to incur <font color="blue">significant</font>     expense in <font color="blue">future period</font>s to comply with <font color="blue">regulations</font> pertaining to corporate     governance  as  described above</td>
+    </tr>
+    <tr>
+      <td>In addition, we are in the process of     <font color="blue">implementing</font> an ERP system</td>
+    </tr>
+    <tr>
+      <td>This process is <font color="blue">extremely complicated</font>, time     consuming and expensive, and while we believe the <font color="blue">implementation</font> will be     successful, it may not be sufficient to address all of our <font color="blue">accounting</font> system     <font color="blue">management</font> needs</td>
+    </tr>
+  </tbody>
+</table>

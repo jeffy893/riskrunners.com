@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: Annual Report ", fill: "#b06500"},
+{source: "1: Annual Report ", target: "1: operations", fill: "#b06500"},
+{source: "1: operations", target: "1: materially", fill: "#b06500"},
+{source: "1: materially", target: "1: in any Annual Report", fill: "#b06500"},
+{source: "1: Annual Report ", target: "6: average sales prices", fill: "#66424d"},
+{source: "6: average sales prices", target: "6: decline although", fill: "#66424d"},
+{source: "6: decline although", target: "6: partially offset by", fill: "#66424d"},
+{source: "6: partially offset by", target: "6: increased product mix", fill: "#66424d"},
+{source: "6: increased product mix", target: "6: relatively higher priced notebook", fill: "#66424d"},
+{source: "6: relatively higher priced notebook", target: "6: PCs Gateway ", fill: "#66424d"},
+{source: "6: PCs Gateway ", target: "6: PCs in Retail ", fill: "#66424d"},
+{source: "6: average sales prices", target: "9: adversely", fill: "#d70040"},
+{source: "9: adversely", target: "10: upon thirdparty patents", fill: "#efdecd"},
+{source: "10: upon thirdparty patents", target: "10: intellectual property licensing could", fill: "#efdecd"},
+{source: "10: intellectual property licensing could", target: "10: exposes us", fill: "#efdecd"},
+{source: "10: exposes us", target: "10: litigation", fill: "#efdecd"},
+{source: "10: upon thirdparty patents", target: "11: will continue", fill: "#9370db"},
+{source: "11: will continue", target: "11: thirdparty", fill: "#9370db"},
+{source: "11: thirdparty", target: "11: technology", fill: "#9370db"},
+{source: "11: will continue", target: "20: operations", fill: "#007ba7"},
+{source: "20: operations", target: "20: materially adversely affected", fill: "#007ba7"},
+{source: "20: operations", target: "33: significantly", fill: "#fcf75e"},
+{source: "33: significantly", target: "33: distribution", fill: "#fcf75e"},
+{source: "33: distribution", target: "33: Gateways ", fill: "#fcf75e"},
+{source: "33: Gateways ", target: "33: adversely affected", fill: "#fcf75e"},
+{source: "33: significantly", target: "START_HERE", fill: "#fcf75e"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Consumer Electronics</td>
+    </tr>
+    <tr>
+      <td>Computer and Electronics Retail</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Travel to meet</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Original_equipment_manufacturer">Original equipment manufacturer</a></td>
+      <td>An original equipment manufacturer (OEM) is generally perceived as a company that produces parts and equipment that may be marketed by another manufacturer.\nHowever, the term is also used in several other ways, which causes ambiguity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_possession">Adverse possession</a></td>
+      <td>Adverse possession, sometimes colloquially described as "squatter's rights", is a legal principle in the Anglo-American common law under which a person who does not have legal title to a piece of property—usually land (real property)—may acquire legal ownership based on continuous possession or occupation of the property without the permission (licence) of its legal owner. The possession by a person is not adverse if they are in possession as a tenant or licensee of the legal owner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_food_reaction">Adverse food reaction</a></td>
+      <td>An adverse food reaction is an adverse response by the body to food or a specific type of food.The most common adverse reaction is a food allergy, which is an adverse immune response to either a specific type or a range of food proteins.\nHowever, other adverse responses to food are not allergies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_party">Adverse party</a></td>
+      <td>An adverse party is an opposing party in a lawsuit under an adversary system of law.  In general, an adverse party is a party against whom judgment is sought or "a party interested in sustaining a judgment or decree." For example, the adverse party for a defendant is the plaintiff.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Material_adverse_change">Material adverse change</a></td>
+      <td>In the fields of mergers and acquisitions and corporate finance, a material adverse change (abbreviated MAC), material adverse event (MAE), or material adverse effect (also MAE) is a change in circumstances that significantly reduces the value of a company. A contract to acquire, invest in, or lend money to a company often contains a  term that allows the acquirer, investor, or lender to cancel the transaction if a material adverse change occurs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Digital_Millennium_Copyright_Act">Digital Millennium Copyright Act</a></td>
+      <td>The Digital Millennium Copyright Act (DMCA) is a 1998 United States copyright law that implements two 1996 treaties of the World Intellectual Property Organization (WIPO). It criminalizes production and dissemination of technology, devices, or services intended to circumvent measures that control access to copyrighted works (commonly known as digital rights management or DRM).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Monobjc">Monobjc</a></td>
+      <td>Monobjc is a bridge API for Mac OS X to allow applications that run on Mono runtime to access various Mac OS X API.\nIt brings to .NET developers the ability to use in a totally transparent manner and with no native code, most of the Mac OS X API and especially Cocoa. This means that developer can leverage the power of .NET and its libraries and produce applications that provides a native UI look and feel under Mac OS X.\nThe Monobjc's key points are:\n\nSimple access to every major Mac OS X frameworks (Cocoa, WebKit, QuickTime, AddressBook, etc.)\nSimple Access to thirdparty frameworks (Sparkle, Growl, CorePlot, SM2DGraphView)\nWorks on both 32 and 64 bits systems\nComplete API documentation for an easy use in the IDE\nApplications can be submitted and redistributed on the Mac App Store.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Broken_Sword">Broken Sword</a></td>
+      <td>Broken Sword is a series of adventure games. The first game in the series, Broken Sword: The Shadow of the Templars, was released and developed in 1996 by British developer Revolution Software.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PlayNow_Arena">PlayNow Arena</a></td>
+      <td>PlayNow was Sony Ericsson's download service for media that included music, games, ringtones, wallpapers and themes. It was introduced in February 2004 as a way for owners of SE phones to listen to and directly purchase ringtones.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alone_in_the_Dark_(1992_video_game)">Alone in the Dark (1992 video game)</a></td>
+      <td>Alone in the Dark is a survival horror video game designed by Frédérick Raynal and developed and published by Infogrames for the PC. Alone in the Dark was released for MS-DOS in 1992, ported for the 3DO by Krisalis in 1994, and ported for iOS by Atari, Inc. in 2014.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/OpenFOAM">OpenFOAM</a></td>
+      <td>OpenFOAM (for "Open-source Field Operation And Manipulation") is a C++ toolbox for the development of customized numerical solvers, and pre-/post-processing utilities for the solution of continuum mechanics problems, most prominently including computational fluid dynamics (CFD).\nThere are three main variants of OpenFOAM software that are released as free and open-source software under the GNU General Public License Version 3.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Assets_under_management">Assets under management</a></td>
+      <td>In finance, assets under management (AUM), sometimes called funds under management, measures the total market value of all the financial assets which an individual or financial institution—such as a mutual fund, venture capital firm, or depository institution—or a decentralized network protocol controls, typically on behalf of a client.  These funds may be managed for clients/users or for themselves in the case of a financial institution which has mutual funds or holds its own venture capital.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Decree_nisi">Decree nisi</a></td>
+      <td>A decree nisi or rule nisi (from Latin  nisi 'unless') is a court order that will come into force at a future date unless a particular condition is met. Unless the condition is met, the ruling becomes a decree absolute (rule absolute), and is binding.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gateway_(telecommunications)">Gateway (telecommunications)</a></td>
+      <td>A gateway is a piece of networking hardware or software used in telecommunications networks that allows data to flow from one discrete network to another. Gateways are distinct from routers or switches in that they communicate using more than one protocol to connect multiple networks and can operate at any of the seven layers of the open systems interconnection model (OSI).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gateway-to-Gateway_Protocol">Gateway-to-Gateway Protocol</a></td>
+      <td>Border Gateway Protocol (BGP) is a standardized exterior gateway protocol designed to exchange routing and reachability information among autonomous systems (AS) on the Internet. BGP is classified as a path-vector routing protocol, and it makes routing decisions based on paths, network policies, or rule-sets configured by a network administrator.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Media_gateway">Media gateway</a></td>
+      <td>A media gateway is a translation device or service that converts media streams between disparate telecommunications technologies such as POTS, SS7, Next Generation Networks (2G, 2.5G and 3G radio access networks) or private branch exchange (PBX) systems. Media gateways enable multimedia communications across packet networks using transport protocols such as Asynchronous Transfer Mode (ATM) and Internet Protocol (IP).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Strange_Gateways">Strange Gateways</a></td>
+      <td>Strange Gateways is a collection of stories by American writer E. Hoffmann Price. It was released in 1967 by Arkham House in an edition of 2,007 copies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gateways_to_Annihilation">Gateways to Annihilation</a></td>
+      <td>Gateways to Annihilation is the sixth studio album by the death metal band Morbid Angel.\nThis album saw a change in musical style as the speed-laden intensity of the previous album Formulas Fatal to the Flesh was abandoned for a slower, more droning style, reminiscent of Blessed Are the Sick.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Defence_mechanism">Defence mechanism</a></td>
+      <td>In psychoanalytic theory, a defence mechanism (American English: defense mechanism), is an unconscious psychological operation that functions to protect a person from anxiety-producing thoughts and feelings related to internal conflicts and outer stressors.Defence mechanisms may result in healthy or unhealthy consequences depending on the circumstances and frequency with which the mechanism is used. Defence mechanisms (German: Abwehrmechanismen) are psychological strategies brought into play by the unconscious mind to manipulate, deny, or distort reality in order to defend against feelings of anxiety and unacceptable impulses and to maintain one's self-schema or other schemas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ivor_Montagu">Ivor Montagu</a></td>
+      <td>Ivor Goldsmid Samuel Montagu (23 April 1904, in Kensington, London – 5 November 1984, in Watford) was an English filmmaker, screenwriter, producer, film critic, writer, table tennis player, and Communist activist in the 1930s. He helped to develop a lively intellectual film culture in Britain during the interwar years, and was also the founder of the International Table Tennis Federation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Day_the_Music_Died">The Day the Music Died</a></td>
+      <td>On February 3, 1959, American rock and roll musicians Buddy Holly, Ritchie Valens, and "The Big Bopper" J. P. Richardson were killed in a plane crash near Clear Lake, Iowa, together with pilot Roger Peterson. The event later became known as "The Day the Music Died" after singer-songwriter Don McLean referred to it as such in his 1971 song "American Pie".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Botswana">Botswana</a></td>
+      <td>Botswana ( (listen), also UK: ), officially the Republic of Botswana (Setswana: Lefatshe la Botswana, [lɪˈfatsʰɪ la bʊˈtswana]), is a landlocked country in Southern Africa. Botswana is topographically flat, with up to 70 percent of its territory being the Kalahari Desert.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GATEWAY INC      Item 1A    Risk Factors          In  addition to other information contained in this Annual Report, the     following factors <font color="blue">could affect</font> our future business, results of <font color="blue">operations</font>,     <font color="blue">cash flows</font> or <font color="blue">financial position</font>, and could cause future results to differ     <font color="blue">materially</font> from those expressed in any of the forward-looking statements     contained in this Annual Report</td>
+    </tr>
+    <tr>
+      <td>The PC industry is <font color="blue">extremely <font color="blue">competitive</font></font> and <font color="blue">pricing pressures</font> have reduced     our gross margins and challenge our ability to maintain <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consolidation  </font>in  the PC industry has resulted in larger and stronger     <font color="blue">competitors</font> in many of our markets and we continue to experience increased     <font color="blue">competition</font> <font color="blue">in the PC </font>industry in certain of our business segments</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">compete primarily on</font> the basis of customer satisfaction, price, product     value, <font color="blue">technology</font>, product offerings with innovative performance features,     quality, reliability, brand recognition, customer service and support, and     by maintaining <font color="blue">strategic supplier <font color="blue">relationships</font></font> that <font color="blue">enable us</font> to bring     products  to  <font color="blue">market quickly</font></td>
+    </tr>
+    <tr>
+      <td>We expect these <font color="blue"><font color="blue">competitive</font> pressures</font> to     <font color="blue">continue into</font> the <font color="blue">foreseeable future</font>, including the reduction of average     unit prices in Retail</td>
+    </tr>
+    <tr>
+      <td>We also expect that <font color="blue">average sales prices</font> of our PCs     will  continue to decline, although this may be <font color="blue">partially offset by</font> an     <font color="blue">increased product mix</font> of <font color="blue">relatively higher priced notebook</font> PCs, <font color="blue">Gateway  </font>   branded <font color="blue">PCs in Retail </font>and liquid crystal display monitors</td>
+    </tr>
+    <tr>
+      <td>If we continue to     reduce PC prices in response to <font color="blue">competition</font> we may be unable to maintain or     improve gross margins through cost <font color="blue">reductions</font> or <font color="blue">offsetting sales</font> of higher     margin Non-PC products</td>
+    </tr>
+    <tr>
+      <td>Our overall gross <font color="blue">margin as</font> a percentage of sales     has <font color="blue">declined due</font> to our shift in <font color="blue">overall <font color="blue">distribution</font></font> to <font color="blue">third party retail</font>     and <font color="blue"><font color="blue">competitive</font> pressures</font></td>
+    </tr>
+    <tr>
+      <td>To the extent we are unable to maintain or grow     our revenues and market share and maintain or improve our gross margins, our     business prospects and <font color="blue">financial condition</font> would be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Reliance upon third-party patents and <font color="blue"><font color="blue">intellectual</font> property licensing could</font>     limit  our  ability to innovate and <font color="blue">exposes us</font> to actual and potential     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>There is no assurance that we <font color="blue">will continue</font> to have access to existing or     new  third-party  <font color="blue">technology</font>  for use in our products</td>
+    </tr>
+    <tr>
+      <td>While it may be     <font color="blue">necessary</font>  in the future to seek or <font color="blue">renew licenses</font> relating to various     aspects of our products and business methods, we believe that <font color="blue">based upon</font>     past  experience and industry practice, <font color="blue">such licenses</font> generally can be     obtained <font color="blue">on commercially reasonable terms</font></td>
+    </tr>
+    <tr>
+      <td>However, there is no assurance     that the <font color="blue">necessary</font> licenses would be <font color="blue">available on</font> acceptable terms</td>
+    </tr>
+    <tr>
+      <td>If we or     our suppliers are unable to obtain <font color="blue">such licenses</font>, we may be forced to market     <font color="blue">products without certain desirable <font color="blue">technological</font></font> features</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could also</font>     incur substantial costs to redesign our <font color="blue">products around</font> other parties’     protected <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>Because of <font color="blue">technological</font> changes <font color="blue">in the PC </font>industry and the convergence of     PCs with Non-PC products, current extensive <font color="blue">patent coverage</font>, and the rapid     rate of issuance of <font color="blue">new patents</font>, it is <font color="blue">possible certain <font color="blue">components</font></font> of our     products and business methods may unknowingly infringe upon existing patents     of others</td>
+    </tr>
+    <tr>
+      <td>For example, we are a party to <font color="blue">various lawsuits</font> and claims,     including   <font color="blue">assertions</font>   of   patent  <font color="blue">infringements</font>  and  <font color="blue">intellectual</font>     property-related <font color="blue">administrative</font> proceedings that arise in <font color="blue">connection with</font>     our business</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">intellectual</font> property-related lawsuits and claims     have not <font color="blue">historically</font> had a material adverse effect on our <font color="blue">consolidated</font>     <font color="blue">financial position</font>, operating results or <font color="blue">cash flows</font>, we <font color="blue">cannot predict</font> the     outcome of these <font color="blue">matters with certainty</font></td>
+    </tr>
+    <tr>
+      <td>If such relief was granted     or substantial damages were incurred, our business and results of <font color="blue">operations</font>     would be <font color="blue">materially</font> <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In addition, responding to such     claims, <font color="blue">regardless</font> of their merit, is time consuming, results in <font color="blue">significant</font>     expenses, and diverts the attention of <font color="blue">management</font> and <font color="blue">technical personnel</font></td>
+    </tr>
+    <tr>
+      <td>We attempt to transfer the risk of <font color="blue">inadvertent <font color="blue">patent infringement</font></font> to our     <font color="blue">original design <font color="blue">manufacturers</font></font> and <font color="blue">suppliers via contract</font></td>
+    </tr>
+    <tr>
+      <td>We are not always     successful in <font color="blue">contractually transferring such risk</font> to our original design     <font color="blue">manufacturers</font> and suppliers, and even when we do so we may be unable to     enforce their <font color="blue">obligations</font> or they may be unable to <font color="blue">adequately defend</font> any     <font color="blue">patent infringement</font> claims against our PCs and Gateway-branded Non-PC                                           9     ______________________________________________________________________    [33]Table of <font color="blue">Contents       </font>products</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">impose upon</font> our <font color="blue">original design <font color="blue">manufacturers</font></font>     and suppliers the costs of <font color="blue">patent infringement</font> claims, our future operating     results and <font color="blue"><font color="blue">financial condition</font> could</font> be <font color="blue">materially</font> <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Because <font color="blue">one customer accounts</font> for a substantial portion of our revenues, the     loss of this <font color="blue">customer would</font> cause a <font color="blue">significant</font> decline in our revenues</td>
+    </tr>
+    <tr>
+      <td>A  <font color="blue">single customer</font>, Best Buy, accounted for approximately 34prca of total     revenues for 2005, up from 23prca of <font color="blue">total revenues</font> for 2004, and is expected     to continue to be a <font color="blue">significant</font> customer in the future</td>
+    </tr>
+    <tr>
+      <td>Although we work to     expand  and diversify our customer base, <font color="blue">reductions</font> or <font color="blue">terminations</font> of     <font color="blue">product purchases by</font>, or <font color="blue">pricing pressures</font> from, this customer or other     major third-party retailers without an <font color="blue">offsetting increase</font> in new sales to     other customers, would result in a substantial decline in our revenue and     operating results</td>
+    </tr>
+    <tr>
+      <td>Failure to develop and maintain <font color="blue">relationships</font> with several key third-party     retailers could <font color="blue">adversely</font> affect sales</td>
+    </tr>
+    <tr>
+      <td>Our products are <font color="blue">sold <font color="blue">primarily through</font> direct channels</font> and third-party     <font color="blue">retail partners</font></td>
+    </tr>
+    <tr>
+      <td>Third-party <font color="blue">retail sales</font> have expanded <font color="blue">significant</font>ly since     early 2004</td>
+    </tr>
+    <tr>
+      <td>We expect a substantial portion of our <font color="blue">future sales will</font> be to a     small  number  of key third-party retailers</td>
+    </tr>
+    <tr>
+      <td>Additionally, third-party     retailer  <font color="blue">orders may vary considerably from quarter</font> to quarter</td>
+    </tr>
+    <tr>
+      <td>If the     <font color="blue">financial condition</font> of these retailers weakens or if they were to cease or     <font color="blue">significant</font>ly reduce the <font color="blue">distribution</font> of our products, Gateway’s business     and  financial  results  could  be  <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">significant</font>     <font color="blue">variability</font> is experienced, Gateway’s business and financial results for a     <font color="blue">particular quarter could</font> be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In addition, failure to     foster and maintain strategic <font color="blue">relationships</font> with these retailers and find a     <font color="blue">balance between direct sales</font> and third-party <font color="blue">retail sales</font> could have a     <font color="blue">significant</font> <font color="blue">adverse impact on</font> our revenues and operating results</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue"><font color="blue">attract new</font> customers</font>, retain our existing customers and/or     <font color="blue">replace revenues associated with</font> our higher-margin service revenues, our     operating results will be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>The success of our business <font color="blue">depends on increasing</font> the overall number of     customer  <font color="blue">transactions</font> in a cost-<font color="blue">effective</font> manner</td>
+    </tr>
+    <tr>
+      <td>To do this, we must     <font color="blue">attract new</font> and repeat <font color="blue">customers through</font> our <font color="blue">various marketing channels</font>,     including our website, our <font color="blue">telephone call centers</font>, our <font color="blue">professional sales</font>     force  and  our  third-party  retail  partners, and <font color="blue">then convert</font> these     interactions into sales <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">reduced marketing expenditures</font>     have  <font color="blue">contributed</font> to <font color="blue">reduced demand within</font> our <font color="blue">Direct and <font color="blue">Professional </font>    </font>segments  and  our ability to <font color="blue"><font color="blue">successfully</font> bid on future public</font> sector     business could be <font color="blue">negatively impacted</font> if we fail to perform under any of our     <font color="blue">existing public</font> sector contracts</td>
+    </tr>
+    <tr>
+      <td>Furthermore, some of our third-party     <font color="blue">retail partners</font> sell or <font color="blue">may sell private label</font> PCs <font color="blue">at <font color="blue">competitive</font> prices</font></td>
+    </tr>
+    <tr>
+      <td>These sales have the potential to <font color="blue">adversely</font> affect our market share</td>
+    </tr>
+    <tr>
+      <td>In     addition,  a  portion  of Gateway’s revenue and profit is <font color="blue">derived from</font>     higher-margin Internet <font color="blue">access services</font> and <font color="blue">extended warranties sold</font> in prior     periods and recognized over time under our revenue recognition policy, which     we  expect  to  decline  in the future</td>
+    </tr>
+    <tr>
+      <td>If we do not achieve increased     <font color="blue">transaction volume</font>, or replace our <font color="blue">higher margin service revenues with</font>     <font color="blue">alternative sources</font> of <font color="blue">profit margin</font>, our ability to grow and maintain     <font color="blue">profitability</font> will be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Information </font><font color="blue">technology</font> systems integration issues could disrupt our internal     <font color="blue">operations</font>,  which  could  have  <font color="blue">significant</font>  adverse  effects  on our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">implementing</font> a <font color="blue">new enterprise resource</font> planning system, as well as     order capture and <font color="blue">customer service applications</font>, and continue to develop and     <font color="blue">modify certain</font> of our other systems</td>
+    </tr>
+    <tr>
+      <td>We have experienced <font color="blue">development</font> and     <font color="blue">implementation</font>  delays  with  certain  projects, and we may experience     <font color="blue">interruptions</font> in <font color="blue">availability</font> of portions of our information <font color="blue">technology</font>     <font color="blue">infrastructure</font>, <font color="blue">additional</font> delays in <font color="blue">development</font> and <font color="blue">implementation</font>, or     <font color="blue">unanticipated system errors</font></td>
+    </tr>
+    <tr>
+      <td>We may not be successful in <font color="blue">implementing</font> these     <font color="blue">new systems</font>, and <font color="blue">transitioning data</font> and other aspects of the <font color="blue">process could</font>     be expensive, time consuming and <font color="blue">disruptive</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue"><font color="blue">disruption</font>s</font> that may occur     in the <font color="blue">implementation</font> of these <font color="blue">new systems</font> or any <font color="blue">future systems could</font>     <font color="blue">adversely</font>                                           10     ______________________________________________________________________    [34]Table of <font color="blue">Contents       </font>affect our ability to report in an accurate and <font color="blue">timely manner</font> the results of     our financial <font color="blue">operations</font> and <font color="blue">otherwise efficiently</font> operate our business,     <font color="blue">which could</font> have <font color="blue">significant</font> adverse effects on our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on <font color="blue">manufacturing</font></font> and <font color="blue">services provided by</font> a limited number     of <font color="blue">third parties</font> and failure to <font color="blue">properly manage</font> these <font color="blue">relationships</font> could     <font color="blue">significant</font>ly impact our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are dependent upon third-party providers of <font color="blue">manufacturing</font> and support     services</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">currently outsource</font> all of our <font color="blue">manufacturing</font> <font color="blue">operations</font>, a     <font color="blue">significant</font>  portion  of  our  service and <font color="blue">support functions</font>, and some     <font color="blue">administrative</font> and <font color="blue">operational services</font> to third-party providers under     contract</td>
+    </tr>
+    <tr>
+      <td>One of the third-party providers of service and <font color="blue">support functions</font>     is partly-owned by Gateway and controlled by a former executive officer of     Gateway</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>we have <font color="blue">partnered with certain vendors</font>, we have no     assurance that business <font color="blue">interruptions</font> will not occur or that these third     <font color="blue">parties will meet</font> the needs of our business</td>
+    </tr>
+    <tr>
+      <td>If we are unable to properly     manage our <font color="blue">relationships</font> with these third-party providers or <font color="blue">accurately</font>     forecast our <font color="blue">demand <font color="blue">requirements</font></font> for them, our revenues and gross margins     may be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Similarly, if our third-party providers do not     <font color="blue">comply with</font> their contractual <font color="blue">obligations</font>, our results of <font color="blue">operations</font> could     be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>We require a <font color="blue">high volume</font> of <font color="blue">quality products</font> and <font color="blue">components</font> for our PC and     Non-PC offerings, substantially all of which are obtained from a limited     number of <font color="blue">original design <font color="blue">manufacturers</font></font> and suppliers</td>
+    </tr>
+    <tr>
+      <td>In some <font color="blue">circumstances</font>     we  maintain  single or dual-source vendor <font color="blue">relationships</font>, such as with     <font color="blue"><font color="blue">Microsoft </font> </font>for  operating  system  products  and  <font color="blue">Intel and AMD for PC     </font><font color="blue">microprocessors</font></td>
+    </tr>
+    <tr>
+      <td>There currently is a <font color="blue">lawsuit between</font> AMD and Intel, the     outcome of <font color="blue">which could</font> impact our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If the supply of a     key material product or component were delayed or curtailed, our ability to     ship the related product in a timely and cost-<font color="blue">effective</font> manner could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>We seek to mitigate a portion of these risks in some     <font color="blue">cases by</font> maintaining insurance to <font color="blue">protect ourselves against loss</font> of profits     due to a vendor’s <font color="blue">inability</font> to perform due to an <font color="blue">insurable property loss</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, we seek to <font color="blue">mitigate such risks by</font> having <font color="blue">dual sources</font> of supply     where <font color="blue">appropriate</font> and by using reputable and <font color="blue">reliable vendors</font></td>
+    </tr>
+    <tr>
+      <td>However, even     where <font color="blue">multiple vendors</font> are available, we <font color="blue">may source from</font> a <font color="blue">single vendor</font> to     take advantage of <font color="blue">volume discounts</font>, for <font color="blue">product technical characteristics</font> or     <font color="blue">quality reasons</font>, or to maintain access to certain key <font color="blue">components</font> that are at     times subject to industry-wide <font color="blue">availability</font> and <font color="blue">pricing pressures</font></td>
+    </tr>
+    <tr>
+      <td>In cases     where we need to switch to another original design manufacturer or supplier     and  <font color="blue">alternative sources</font> of supply are available, qualification of the     sources and <font color="blue">establishment</font> of <font color="blue">reliable new</font> or <font color="blue"><font color="blue">additional</font> production with such</font>     original  design <font color="blue">manufacturers</font> or <font color="blue">suppliers could</font> result in delays and     <font color="blue">possible <font color="blue">reductions</font></font> in net sales</td>
+    </tr>
+    <tr>
+      <td>We also receive market <font color="blue">development</font> funding     from a few of these suppliers</td>
+    </tr>
+    <tr>
+      <td>If the amount of market <font color="blue">development</font> funding     were to <font color="blue">significant</font>ly decline, our results of <font color="blue">operations</font> could be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>To minimize some of these risks, we monitor the <font color="blue">financial status</font> of certain     key <font color="blue">original design <font color="blue">manufacturers</font></font>, suppliers and <font color="blue">service providers</font> and     assess the likelihood of <font color="blue">disruption</font> to the supply of products, <font color="blue">components</font>,     or services</td>
+    </tr>
+    <tr>
+      <td>Certain of our commercial partners currently are financially     weak, and we have established <font color="blue">contingency</font> plans to mitigate our financial     and operating exposure</td>
+    </tr>
+    <tr>
+      <td>However, such plans for any <font color="blue">key commercial partner</font>     that  experiences  financial  <font color="blue">instability</font>  may  not  <font color="blue">prevent delays</font> or     <font color="blue"><font color="blue">curtailment</font>s</font> of <font color="blue">deliveries</font> of <font color="blue">key products</font>, <font color="blue">components</font> or services, or     eliminate our <font color="blue">financial exposure</font> to future costs such as warranty claims or     the write-off of <font color="blue">receivables from</font> the re-sale of component <font color="blue">raw materials</font> to     select <font color="blue">original design <font color="blue">manufacturers</font></font>, <font color="blue">which could</font> <font color="blue">adversely</font> affect our     future operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In addition, industry consolidation impacts our supply chain and many of our     <font color="blue">competitors</font> obtain products or <font color="blue">components</font> from the <font color="blue">same original design</font>     <font color="blue">manufacturers</font> and suppliers that we utilize</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font> may obtain     <font color="blue">better pricing</font> and other terms, more favorable <font color="blue">allocations</font> of products and     <font color="blue">components</font> during periods of limited supply, and <font color="blue">could limit</font> our ability to     engage in <font color="blue">relationships</font> with certain <font color="blue">original design <font color="blue">manufacturers</font></font> and     suppliers</td>
+    </tr>
+    <tr>
+      <td>In addition, certain of our <font color="blue">original design <font color="blue">manufacturers</font></font> and     <font color="blue">suppliers could</font> decide in the future to not <font color="blue">continue conducting</font> business     with  us</td>
+    </tr>
+    <tr>
+      <td>Any  of  these  actions by our <font color="blue">competitors</font>, original design     <font color="blue">manufacturers</font> or <font color="blue">suppliers could</font> <font color="blue">adversely</font> affect our future operating     results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>11     ______________________________________________________________________    [35]Table of <font color="blue">Contents       </font>Our plans to open a <font color="blue">final assembly facility</font> <font color="blue">exposes us</font> to financial and     <font color="blue">operational risk</font></td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">better serve</font> our <font color="blue"><font color="blue">Professional </font>and Direct </font>customers, we plan to open a     Gateway dedicated US <font color="blue">final assembly facility</font> in 2006</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">will assemble</font>     configure-to-order desktops, notebooks and <font color="blue">servers according</font> to customer     <font color="blue">specifications at</font> this facility, as well as provide custom imaging services     and <font color="blue">government compliance certification</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">new facility</font> is expected to     increase our ability to serve our <font color="blue"><font color="blue">Professional </font>and Direct </font>customers and     improve our <font color="blue">cost efficiency</font></td>
+    </tr>
+    <tr>
+      <td>The facility will, however, increase our fixed     costs, require us to implement <font color="blue"><font color="blue">additional</font> systems</font> and controls, and require     <font color="blue">additional</font> <font color="blue">management</font> oversight and expertise</td>
+    </tr>
+    <tr>
+      <td>Should any of these costs and     <font color="blue"><font color="blue">requirements</font> escalate</font>, our results of <font color="blue">operations</font> and <font color="blue">financial condition</font>     could be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">reliance on</font> <font color="blue">original design <font color="blue">manufacturers</font></font> or suppliers of <font color="blue">key products</font>     and  <font color="blue">components</font>  exposes  us  to  <font color="blue">potential <font color="blue">product quality issues</font></font> and     <font color="blue">unanticipated <font color="blue">warranty costs</font></font> that <font color="blue">could affect</font> the on-time delivery and     performance of our products and services</td>
+    </tr>
+    <tr>
+      <td>While <font color="blue">outsourcing arrangements may lower</font> our product and operating costs,     they also reduce our <font color="blue">direct control over production</font> and <font color="blue">distribution</font></td>
+    </tr>
+    <tr>
+      <td>If we     are unable to ship our products in desired quantities and in a <font color="blue">timely manner</font>     due  to  a  delay or <font color="blue">curtailment</font> of the supply of material products or     <font color="blue">components</font>,  or <font color="blue">product quality issues</font> arise due to faulty products or     <font color="blue">components</font> <font color="blue">manufactured</font> by <font color="blue">original design <font color="blue">manufacturers</font></font> or suppliers, the     market for our products or <font color="blue">services could</font> be <font color="blue">adversely</font> affected with a     resulting  reduction  in revenues</td>
+    </tr>
+    <tr>
+      <td>Our estimated warranty and extended     <font color="blue">warranty costs</font> are <font color="blue">affected by ongoing <font color="blue">product failure rates</font></font> and specific     product class failures</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">product failure rates</font>, material usage or service     <font color="blue">delivery costs exceed</font> our estimates due to faulty products or <font color="blue">components</font>     <font color="blue">manufactured</font>  by  <font color="blue">original design <font color="blue">manufacturers</font></font> or suppliers, warranty     <font color="blue">expenses may increase</font></td>
+    </tr>
+    <tr>
+      <td>In many instances we <font color="blue">rely on offshore suppliers</font>,     <font color="blue">particularly from</font> Asia, for product assembly and <font color="blue">manufacturing</font>, and risks     associated with <font color="blue">transportation</font>, including timely delivery to our primary     ports of Los Angeles and Long Beach, California, and other natural or human     <font color="blue">factors may disrupt</font> the flow of product</td>
+    </tr>
+    <tr>
+      <td>If for any reason <font color="blue">manufacturing</font> or     logistics in any of these locations or the subsequent <font color="blue">transportation</font> to the     US or other <font color="blue">customer locations</font> were <font color="blue">disrupted by economic</font>, business,     <font color="blue">environment</font>al, political, medical, military or <font color="blue">terrorist events</font>, Gateway’s     <font color="blue">operations</font> and <font color="blue"><font color="blue">financial condition</font> could</font> be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In addition,     we  may experience production and <font color="blue">financial <font color="blue">difficult</font>ies</font> if any of our     <font color="blue">significant</font> <font color="blue">original design <font color="blue">manufacturers</font></font> or <font color="blue">suppliers suffer financial</font>     <font color="blue">instability</font></td>
+    </tr>
+    <tr>
+      <td>This includes our <font color="blue">likely <font color="blue">inability</font></font> to obtain <font color="blue">reimbursement</font> for     prepaid <font color="blue">warranty costs</font> from certain <font color="blue">original design <font color="blue">manufacturers</font></font>, should     their  financial  condition  <font color="blue">deteriorate</font></td>
+    </tr>
+    <tr>
+      <td>Should <font color="blue">such original design</font>     <font color="blue">manufacturers</font> or <font color="blue">suppliers fail</font> to either produce or deliver <font color="blue">products as</font>     scheduled  or to <font color="blue">provide prepaid warranty coverage</font>, our <font color="blue">operations</font> and     <font color="blue">financial condition</font> may be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Failure to develop and introduce new and <font color="blue">technological</font>ly advanced products     in an <font color="blue">industry characterized by</font> short <font color="blue">product life cycles</font> could <font color="blue">adversely</font>     affect our growth and efforts to sustain <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue">model depends on bringing new</font> and <font color="blue">innovative products</font> to market     quickly</td>
+    </tr>
+    <tr>
+      <td>The success of our <font color="blue">product <font color="blue">introduction</font>s depends on</font> many factors     including the <font color="blue">availability</font> of <font color="blue">new products</font>, successful quality control and     <font color="blue">launch readiness efforts</font>, our ability to <font color="blue"><font color="blue">successfully</font> forecast product</font>     demand, training of sales and <font color="blue">support personnel</font>, and <font color="blue">customer <font color="blue">acceptance</font></font> of     new <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">introduction</font> of <font color="blue">certain new technologies</font>,     such as the upcoming <font color="blue">Microsoft </font>Windows^® Vista™ operating system, presents     <font color="blue">us with uncertainties</font> regarding the speed of <font color="blue">customer <font color="blue">acceptance</font></font> and the     related <font color="blue">forecasting</font> of <font color="blue">customer demand</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">successfully</font>     <font color="blue">forecast demand</font> for <font color="blue">new products</font>, we may not <font color="blue">properly manage</font> our inventory     levels  and  may  have <font color="blue">increased exposure</font> to supply shortages, product     obsolescence and other supply-related risks</td>
+    </tr>
+    <tr>
+      <td>Short <font color="blue">product life cycles</font> resulting from rapid changes in <font color="blue">technology</font> and     consumer  <font color="blue">preferences</font> and <font color="blue">declining product prices characterize</font> the PC     industry  and Non-PC products</td>
+    </tr>
+    <tr>
+      <td>Our internal engineering personnel work     <font color="blue">closely with product</font> and component suppliers and other <font color="blue">technology</font> developers     to evaluate the latest <font color="blue">development</font>s in PC and Non-PC products</td>
+    </tr>
+    <tr>
+      <td>There is no     assurance that we <font color="blue">will continue</font> to have access to or the right to use new     <font color="blue">technology</font>,  or be successful incorporating such new <font color="blue">technology</font> in our     products in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>12     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>The failure to <font color="blue">properly manage</font> <font color="blue">inventory could</font> result in material losses</td>
+    </tr>
+    <tr>
+      <td>By <font color="blue">distributing</font> many of our <font color="blue">products directly</font> to our <font color="blue">customers prior</font> to our     <font color="blue">acquisition</font> of eMachines, we <font color="blue">historically</font> avoided the need to maintain high     levels of finished goods inventory</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">minimized costs</font> and <font color="blue">allowed us</font> to     respond more quickly to changing <font color="blue">customer demand</font>s and reduced our exposure     to the risk of finished <font color="blue">product obsolescence</font></td>
+    </tr>
+    <tr>
+      <td>As we <font color="blue">increase sales volume</font>     into third-party retail channels, managing our <font color="blue">inventory <font color="blue"><font color="blue">effective</font>ly</font></font> has     <font color="blue">become <font color="blue">increasingly</font> important</font></td>
+    </tr>
+    <tr>
+      <td>Third-party <font color="blue">retailers may quickly increase</font>     orders during periods of product shortages, cancel orders if their inventory     is too high, or <font color="blue">delay orders</font> in <font color="blue">anticipation</font> of <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td>Orders also     may be adjusted in response to the supply of our <font color="blue">competitors</font>’ products and     <font color="blue">seasonal fluctuations</font> in end-user demand</td>
+    </tr>
+    <tr>
+      <td>If we are not successful in <font color="blue">forecasting</font>     component or <font color="blue">product demand</font>, we could have excess or insufficient inventory     of certain <font color="blue">components</font> or products and any <font color="blue">excess inventory may</font> result in     <font color="blue">reduced prices</font> and inventory write- downs, which in turn could result in     lower gross margins</td>
+    </tr>
+    <tr>
+      <td>A decrease in <font color="blue">market demand</font> or a decision to increase     supply, among other factors, could result in higher finished goods and     component <font color="blue">inventory levels</font>, and a decrease in value of this <font color="blue">inventory could</font>     have a negative effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe our     inventory and related <font color="blue">reserve provisions</font> are adequate, given the rapid and     <font color="blue">unpredictable pace</font> of <font color="blue">product obsolescence</font> <font color="blue">in the PC </font>industry, no assurance     can be given that we will not incur <font color="blue">significant</font> <font color="blue">additional</font> inventory and     related charges</td>
+    </tr>
+    <tr>
+      <td>In addition, by purchasing component <font color="blue">parts on behalf</font> of     <font color="blue">original design <font color="blue">manufacturers</font></font>, we have increased our credit risk with these     <font color="blue">original design <font color="blue">manufacturers</font></font></td>
+    </tr>
+    <tr>
+      <td>The failure to attract, retain and <font color="blue">motivate key personnel could</font> have a     <font color="blue">significant</font> near-term <font color="blue">adverse impact on</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to attract, retain and <font color="blue">motivate employees</font> and maintain employee     morale  has  been <font color="blue">adversely</font> impacted by a number of factors, including     workforce  <font color="blue">reductions</font>,  the closure of <font color="blue">facilities</font> and a <font color="blue">competitive</font> PC     business <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced, and <font color="blue">may continue</font> to experience,     turnover in senior <font color="blue">management</font> and in the <font color="blue">general workforce</font></td>
+    </tr>
+    <tr>
+      <td>Most recently,     our former <font color="blue">Chief Executive Officer </font><font color="blue">resigned on</font> <font color="blue">February </font>8, 2006 and our     Chairman of the Board, Richard D Snyder, assumed the role of interim Chief     Executive Officer</td>
+    </tr>
+    <tr>
+      <td>Based on past experiences with other companies, these     <font color="blue">transitions</font>, including the <font color="blue">transition from</font> an interim to a permanent Chief     Executive Officer, may be a <font color="blue">distraction</font> to senior <font color="blue">management</font>, business     <font color="blue">operations</font>, commercial partners and customers</td>
+    </tr>
+    <tr>
+      <td>Turnover, <font color="blue">particularly among</font>     senior <font color="blue">management</font>, can also create <font color="blue">distraction</font>s as we search for <font color="blue">replacement</font>     personnel,  which  could result in <font color="blue">significant</font> recruiting, relocation,     training  and other costs, and can cause <font color="blue">operational inefficiencies as</font>     <font color="blue">replacement</font> personnel become familiar with our business and <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, manpower in <font color="blue">certain areas may</font> be constrained, <font color="blue">which could</font> lead to     <font color="blue"><font color="blue">disruption</font>s</font> over time</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that we <font color="blue">will continue</font> to     <font color="blue">successfully</font>  attract  or retain the <font color="blue">management</font> we need, or be able to     maintain an <font color="blue">optimal workforce size</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">inability</font> to attract, retain or     <font color="blue">motivate such personnel</font> or <font color="blue">address manpower constraints as</font> needed could     <font color="blue">materially</font> <font color="blue">adversely</font> affect our future operating results and financial     condition</td>
+    </tr>
+    <tr>
+      <td>We have outsourced <font color="blue">operations</font> in <font color="blue">countries outside</font> of the US and changes     in the political <font color="blue">environment</font>, economic policies and other <font color="blue">factors within</font>     those countries or the US could <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>We have outsourced a substantial portion of our <font color="blue">manufacturing</font> <font color="blue">operations</font> to     countries  in <font color="blue">Asia and Eastern Europe and to Mexico</font></td>
+    </tr>
+    <tr>
+      <td>A change in these     countries’ economic liberalization and deregulation policies could <font color="blue">adversely</font>     affect business and <font color="blue">economic conditions</font> in the <font color="blue">affected country generally</font>     and <font color="blue">could negatively impact</font> the cost-saving benefits of our outsourced     <font color="blue">operations</font> overseas</td>
+    </tr>
+    <tr>
+      <td>While our contract <font color="blue">obligations</font> are typically in US     dollars, changes in <font color="blue">currency exchange rates could impact</font> our suppliers and     increase our prices</td>
+    </tr>
+    <tr>
+      <td>In particular, the recent change in the Chinese yuan to     <font color="blue">United States </font><font color="blue">dollar exchange rate</font>, or any future changes, <font color="blue">could increase</font>     our costs for products and <font color="blue">components</font> sourced from China</td>
+    </tr>
+    <tr>
+      <td>Any political     <font color="blue">instability</font> <font color="blue">could also</font> change the present satisfactory legal <font color="blue">environment</font> for     us through the imposition of restrictions on foreign ownership, repatriation     of funds, adverse labor laws, and the like</td>
+    </tr>
+    <tr>
+      <td>Further, <font color="blue">risks associated with</font>     <font color="blue">transportation</font>  and  other natural or <font color="blue">human factors</font>, including disease     epidemics, may disrupt <font color="blue">operations</font> in and the flow of <font color="blue">products from certain</font>     countries</td>
+    </tr>
+    <tr>
+      <td>We also have <font color="blue">outsourced workers</font> in <font color="blue">countries outside</font> of the US     in technical support call                                           13     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font>centers,  repair  centers, and <font color="blue">refurbishment centers</font></td>
+    </tr>
+    <tr>
+      <td>These outsourced     <font color="blue">operations</font>  present  us with similar economic and <font color="blue">political risks</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">political climate</font> <font color="blue">in the US </font>also could change so that it would not be     practical for us to <font color="blue">use <font color="blue">international</font> operational</font> and <font color="blue">manufacturing</font> centers</td>
+    </tr>
+    <tr>
+      <td>This could <font color="blue">adversely</font> affect our ability to maintain or create low-cost     <font color="blue">operations</font> outside the US         Environmental laws and <font color="blue">regulations</font> and <font color="blue">unforeseen costs could impact</font> our     <font color="blue">future earnings</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Production </font>and marketing of products in certain states and countries may     subject Gateway to <font color="blue">environment</font>al and other <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also could face</font>     <font color="blue">significant</font> costs and <font color="blue">liabilities</font> in <font color="blue">connection with</font> product take-back     legislation, which provides customers the ability to <font color="blue">return product at</font> the     end of its useful life and <font color="blue">places financial</font> and other <font color="blue">responsibility</font> for     <font color="blue">environment</font>ally safe collection, recycling, treatment and <font color="blue">disposal with</font>     Gateway</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also face increasing <font color="blue">complexity</font></font> in our <font color="blue">product design</font> and     <font color="blue">procurement</font> and <font color="blue">operations</font> as we adjust to new and <font color="blue">upcoming <font color="blue">requirements</font></font>     relating  to  the <font color="blue">materials composition</font> of our products, including the     <font color="blue">restrictions on lead</font> and certain other substances in <font color="blue">electronics</font> that will     apply to specified <font color="blue">electronics</font> products put on the market in the European     Union as of July 1, 2006 (Restriction of Hazardous Substances (ROHS))</td>
+    </tr>
+    <tr>
+      <td>The     European  Union has <font color="blue">also finalized</font> the Waste Electrical and Electronic     Equipment Directive, which makes producers of electrical goods, including     computers and printers, financially responsible for <font color="blue">specified collection</font>,     recycling, treatment and disposal of past and <font color="blue">future covered products</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">There     </font>is  substantial  <font color="blue">complexity</font>  <font color="blue">associated with compliance with</font> these new     <font color="blue">regulations</font> and the costs of <font color="blue">implementation</font> are not <font color="blue">easily quantifiable</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font><font color="blue">also necessitates</font> our <font color="blue">reliance on</font> the <font color="blue">representations</font> made by     suppliers  as  to material composition; while such <font color="blue">representations</font> are     believed to be accurate, we could face <font color="blue">significant</font> costs and <font color="blue">liabilities</font> if     the <font color="blue">representations</font> prove to not be accurate</td>
+    </tr>
+    <tr>
+      <td>Furthermore, we <font color="blue">must rely on</font>     our  suppliers’  ability to respond to <font color="blue">environment</font>al <font color="blue">requirements</font> with     <font color="blue">compliant products</font> and <font color="blue">documentation</font> in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Similar laws and <font color="blue">regulations</font> have been or may be enacted in other states and     countries</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">environment</font>al <font color="blue">regulations</font> may require Gateway to reengineer     its products to utilize <font color="blue">components</font> which are more <font color="blue">environment</font>ally compatible     and such <font color="blue">reengineering</font> and component <font color="blue">substitution</font> may result in <font color="blue">additional</font>     costs to Gateway</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although Gateway </font>does not anticipate any material adverse     effects based on the nature of our <font color="blue">operations</font> and the effect of such laws,     there is no assurance that <font color="blue">such existing laws</font> or <font color="blue">future laws will</font> not have a     material adverse effect on Gateway</td>
+    </tr>
+    <tr>
+      <td>With  the  shift to third-party retail, we are <font color="blue">increasingly</font> subject to     <font color="blue">seasonality</font> which can make it <font color="blue">difficult</font> to forecast results of <font color="blue">operations</font>     and anticipate near term <font color="blue">development</font>s</td>
+    </tr>
+    <tr>
+      <td>Gateway’s revenues and operating margins vary among products, <font color="blue">distribution</font>     channels and the <font color="blue">seasonal buying habits</font> of our customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Historically </font>    </font>revenues in the Retail segment are <font color="blue">seasonally higher</font> during the second half     of the year, and <font color="blue">Professional </font>segment revenues are <font color="blue">seasonally higher</font> in the     second and <font color="blue">third quarters</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, the overall operating margins of     Gateway in any <font color="blue">given period will depend</font>, in part, on the product, geographic     and <font color="blue">channel mix reflected</font> in that period’s net sales, as well as <font color="blue">seasonality</font>     factors  related  to  the  time of the year</td>
+    </tr>
+    <tr>
+      <td>In addition, we typically     experience an increase in <font color="blue">sales activity</font> near quarter-end</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Developments </font>late     in a quarter, such as lower-than-anticipated demand for Gateway’s products     or  late  arriving  <font color="blue">components</font> and scheduling/production delays at our     <font color="blue">manufacturing</font> or logistics partners, fluctuations in product, geographic and     channel  mix, and the effect of <font color="blue">seasonality</font> on our sales and operating     margins can have <font color="blue">significant</font> adverse impacts on Gateway and our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font> for a given reporting period</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Expansion </font>into <font color="blue"><font color="blue">international</font> markets</font> <font color="blue">exposes us</font> to <font color="blue">increased risks</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Gateway  </font>has  expanded  sales  of PCs and certain Non-PC <font color="blue">products into</font>     <font color="blue"><font color="blue">international</font> markets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">While Gateway </font><font color="blue">previously sold</font> PCs in <font color="blue">international</font>     markets and eMachines has been selling in <font color="blue"><font color="blue">international</font> markets</font> for several     years, there can be no assurance that such markets will accept Gateway PCs     and Non-PC products to the extent we expect</td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font>sales are subject     to  certain  <font color="blue">inherent risks</font> including unexpected changes in <font color="blue">regulatory</font>     <font color="blue">requirements</font> and tariffs, including antidumping penalties, risks in hedging     for <font color="blue">foreign currency fluctuations</font> for                                           14     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font>non-US dollar sales, <font color="blue">difficult</font>ies in managing foreign <font color="blue">operations</font>, legal     remedies that can <font color="blue">affect accounts receivable collection</font> and <font color="blue">potentially</font>     adverse  tax  <font color="blue">consequences</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  given that our products in     <font color="blue">international</font>  markets  are  sold  <font color="blue">primarily through</font> a small number of     third-party <font color="blue">retail partners</font>, Gateway’s business and financial results could     be <font color="blue">adversely</font> affected if the <font color="blue">financial condition</font> of any of these retailers     weakens or if they were to cease or <font color="blue">significant</font>ly reduce the <font color="blue">distribution</font> of     our products</td>
+    </tr>
+    <tr>
+      <td>For those <font color="blue">international</font> sales denominated in US dollars, any     <font color="blue">strengthening</font>  of  the US <font color="blue">dollar relative</font> to the currencies of other     countries  into which we sell our products and <font color="blue">services could</font> make our     products   and   services   more   expensive,   thereby  reducing  the     price-<font color="blue">competitive</font>ness of our products</td>
+    </tr>
+    <tr>
+      <td>Should any of these <font color="blue">difficult</font>ies     arise, our results of <font color="blue">operations</font> and <font color="blue"><font color="blue">financial condition</font> could</font> be <font color="blue">adversely</font>     impacted</td>
+    </tr>
+    <tr>
+      <td>War, terrorist acts and other political and <font color="blue">economic uncertainties may</font>     <font color="blue">adversely</font> affect our operating results</td>
+    </tr>
+    <tr>
+      <td>War and the related political and economic uncertainties, <font color="blue">terrorist attacks</font>,     national and <font color="blue">international</font> responses to <font color="blue">terrorist attacks</font>, and other acts of     hostility could <font color="blue">materially</font> <font color="blue">adversely</font> affect demand for our products and     disrupt our supply chain or <font color="blue">customer fulfillment logistics</font> or <font color="blue">operations</font>,     resulting in an <font color="blue">adverse impact on</font> our future operating results and financial     condition</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot sustain</font> our recent <font color="blue">profitability</font> and we incur <font color="blue">significant</font> net     losses or negative <font color="blue">cash flows</font>, the business could fail</td>
+    </tr>
+    <tr>
+      <td>We experienced net losses in the years ended <font color="blue">December </font>31, 2003 and 2004 of     dlra515 million and dlra568 million, respectively</td>
+    </tr>
+    <tr>
+      <td>While we reported net income of     dlra6 million for the year ended <font color="blue">December </font>31, 2005, approximately dlra40dtta5 million     was <font color="blue">attributable</font> to the Marketing, Development and Settlement Agreement with     Microsoft, and we cannot guarantee that our <font color="blue">profitability</font> <font color="blue">will continue</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional  </font><font color="blue">significant</font>  net  losses would <font color="blue">materially</font> <font color="blue">adversely</font> affect     Gateway’s <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>Our cash and <font color="blue">marketable securities balances</font> have <font color="blue">declined since</font> the first     quarter  of  2004 from <font color="blue">historically</font> higher levels due to the eMachines     <font color="blue">acquisition</font>, restructuring our company, working <font color="blue">capital usage</font> in support of     expanding our Retail business, and other operating, investing and financing     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>While our cash and <font color="blue">marketable securities balances</font> did not change     <font color="blue">materially</font> from <font color="blue">December </font>31, 2004 to <font color="blue">December </font>31, 2005, we may be unable to     generate  positive cash flow, which would result in <font color="blue">declining cash</font> and     <font color="blue">marketable securities balances</font></td>
+    </tr>
+    <tr>
+      <td>While we believe we will have sufficient     cash and <font color="blue">financial flexibility</font> to meet our <font color="blue">operational cash</font> needs, if we are     unable to maintain <font color="blue">sufficient liquidity</font>, our future results of <font color="blue">operations</font>     and <font color="blue">financial condition</font> would be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>Public <font color="blue">perception</font> regarding Internet security and <font color="blue">online privacy could</font>     <font color="blue">adversely</font> affect our revenues and fraudulent customer <font color="blue">activities</font> perpetrated     <font color="blue">online could</font> result in losses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customer  </font>concerns  over the security of <font color="blue">transactions</font> conducted on the     Internet or the privacy of user information may inhibit the growth of our     web sales</td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">securely transmit confidential</font> information, <font color="blue">such as customer</font>     credit <font color="blue">card numbers</font>, we <font color="blue">rely on encryption</font> and authentication <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unanticipated </font>events or <font color="blue">development</font>s could result in a compromise or breach     of the systems we use to <font color="blue">protect customer transaction data</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, our     information <font color="blue">systems <font color="blue">infrastructure</font></font> and that of our <font color="blue">service providers</font> may be     vulnerable to viruses, other <font color="blue">harmful code</font> or <font color="blue">harmful activity transmitted</font>     over  the  Internet</td>
+    </tr>
+    <tr>
+      <td>While  we <font color="blue">proactively search</font> and <font color="blue">protect against</font>     <font color="blue">intrusions into</font> our <font color="blue">infrastructure</font>, a virus, other <font color="blue">harmful code</font> or harmful     <font color="blue">activity could</font> cause a service <font color="blue">disruption</font></td>
+    </tr>
+    <tr>
+      <td>Even <font color="blue">though historical losses</font> related to fraudulent customer <font color="blue">activities</font> have     <font color="blue">been minimal</font>, we bear some of the <font color="blue">financial risk from products</font> or services     <font color="blue">purchased through fraudulent payment methods</font></td>
+    </tr>
+    <tr>
+      <td>We have implemented a number     of anti-fraud measures, but a failure to <font color="blue">adequately control fraudulent</font>     methods of payment could <font color="blue">adversely</font> affect our <font color="blue">operations</font> and financial     results</td>
+    </tr>
+    <tr>
+      <td>15     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>Failure to <font color="blue">accurately</font> estimate and monitor our rebate-redemption rates could     <font color="blue">significant</font>ly impact results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>From time to time we offer <font color="blue">product rebates</font> on purchases of certain of our     PCs and Non-PC products</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">use historical data</font> to <font color="blue">assist us</font> in determining     the percentage of customers who will claim these <font color="blue">product rebates</font></td>
+    </tr>
+    <tr>
+      <td>We must     estimate  future  product  rebate  <font color="blue">redemptions</font>  to  price our products     <font color="blue"><font color="blue">effective</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>If we experience an <font color="blue">unexpected increase</font> in <font color="blue">rebate redemption</font>     rates, then the <font color="blue"><font color="blue">effective</font> average selling price</font> of our <font color="blue">products would</font> be     reduced  below the level we anticipated and our <font color="blue">net revenues</font> and gross     margins  would  decline,  thereby  <font color="blue">adversely</font>  impacting our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Further, to the <font color="blue">extent customers</font> do not <font color="blue">cash product rebate</font>     checks,  we  could be liable to <font color="blue">pay unclaimed funds</font> to certain states,     including amounts <font color="blue">attributable</font> to <font color="blue">prior periods</font></td>
+    </tr>
+    <tr>
+      <td>A substantial portion of our services and <font color="blue">support offerings</font>, including     <font color="blue">customer care</font>, is provided by third-party <font color="blue">service providers</font> and we could     experience <font color="blue">additional</font> costs and/or declines in <font color="blue">customer satisfaction levels</font>     if we are unable to <font color="blue">properly monitor</font> and <font color="blue">manage <font color="blue">such providers</font></font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">consolidated</font> our service and <font color="blue">support providers</font> and <font color="blue">rely on such</font>     providers to <font color="blue">supply warranty repairs</font> and other <font color="blue">support offerings</font>, including     customer and tech-support services, to our customers</td>
+    </tr>
+    <tr>
+      <td>While <font color="blue">such providers</font>     are required to maintain certain service levels, there can be no guarantee     that <font color="blue">such companies will provide</font> our <font color="blue">customers with</font> the same high-level of     service  we  otherwise  would provide ourselves, <font color="blue">which could</font> result in     <font color="blue">additional</font> corrective costs, lower <font color="blue">customer satisfaction levels</font> and declines     in <font color="blue">customer demand</font></td>
+    </tr>
+    <tr>
+      <td>If we do not maintain our reputation and expand our <font color="blue">name recognition</font>, we may     lose customers which would <font color="blue">adversely</font> impact our financial results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Developing </font>and maintaining awareness of our Gateway and eMachines brand     names is critical to achieving widespread <font color="blue">acceptance</font> of our PC and Non-PC     offerings</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Promotion </font>and <font color="blue">enhancement</font> of our brand will depend largely on     whether we cost-<font color="blue"><font color="blue">effective</font>ly</font> provide reliable and desirable products and     services  to customers and the <font color="blue"><font color="blue">effective</font>ness</font> of our <font color="blue">marketing efforts</font></td>
+    </tr>
+    <tr>
+      <td>Currently, third-party retailers are often our <font color="blue">first points</font> of <font color="blue">contact with</font>     consumers and these <font color="blue">retailers provide</font> much of our <font color="blue">product advertising as</font> we     have reduced our <font color="blue">internal spending on marketing</font></td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">retailers reduce</font>     or <font color="blue">cease advertising</font> our products, we may need to increase our own sales and     <font color="blue">marketing expenses</font> to create and maintain brand <font color="blue">awareness among potential</font>     consumers</td>
+    </tr>
+    <tr>
+      <td>If customers do not perceive our products to be of <font color="blue">high quality</font>,     our brand names and <font color="blue">reputation could</font> be harmed, <font color="blue">which could</font> <font color="blue">adversely</font> impact     our financial results</td>
+    </tr>
+    <tr>
+      <td>Recent changes in <font color="blue">accounting</font> for <font color="blue">equity <font color="blue">compensation</font> will</font> <font color="blue">adversely</font> affect     earnings and <font color="blue">could affect</font> our ability to attract and retain <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>Historically, we have <font color="blue">used <font color="blue">stock options</font> as</font> a component of our employee     <font color="blue"><font color="blue">compensation</font> program</font> in order to align employees’ interests with those of     our stockholders, encourage retention, and provide <font color="blue">competitive</font> <font color="blue">compensation</font>     packages</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">December </font>2004, the <font color="blue">Financial Accounting Standards Board </font>issued     SFAS Number 123-R, which requires companies to record a charge to earnings     for  the  fair  value of <font color="blue">employee stock option grants</font> and other equity     <font color="blue">incentives</font>,  <font color="blue">effective</font>  for interim and <font color="blue">annual periods beginning</font> after     <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">accelerated</font> the vesting of all <font color="blue">stock options</font>     that had <font color="blue">exercise prices</font> in excess of the <font color="blue">market price on</font> October 4, 2005,     because these options did not <font color="blue">provide sufficient incentive</font> to our employees     when <font color="blue">compared with</font> the <font color="blue">potential future <font color="blue">compensation</font> expense</font> that would have     been <font color="blue">attributable</font> to these options, we expect that <font color="blue">equity <font color="blue">compensation</font> will</font>     continue to be a component of our total <font color="blue"><font color="blue">compensation</font> program</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">accounting</font>     treatment for outstanding unvested equity awards will affect our future     earnings  and  could  limit  Gateway’s <font color="blue">willingness</font> to use equity-based     <font color="blue">compensation</font> plans, <font color="blue">which could</font> affect our ability to attract and retain     employees</td>
+    </tr>
+  </tbody>
+</table>

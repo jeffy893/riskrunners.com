@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: risks described", fill: "#ed9121"},
+{source: "3: risks described", target: "3: only ones facing us", fill: "#ed9121"},
+{source: "3: risks described", target: "4: Additional ", fill: "#6c541e"},
+{source: "4: Additional ", target: "4: immaterial may also impair", fill: "#6c541e"},
+{source: "4: immaterial may also impair", target: "4: adversely affect", fill: "#6c541e"},
+{source: "4: adversely affect", target: "4: financial condition", fill: "#6c541e"},
+{source: "4: financial condition", target: "4: operations", fill: "#6c541e"},
+{source: "4: Additional ", target: "5: manufactured", fill: "#da2c43"},
+{source: "5: manufactured", target: "5: modular housing industry", fill: "#da2c43"},
+{source: "5: modular housing industry", target: "5: highly cyclical", fill: "#da2c43"},
+{source: "5: highly cyclical", target: "5: wide fluctuations", fill: "#da2c43"},
+{source: "5: wide fluctuations", target: "5: aggregate sales", fill: "#da2c43"},
+{source: "5: manufactured", target: "6: volatility", fill: "#c19a6b"},
+{source: "6: volatility", target: "6: external factors beyond", fill: "#c19a6b"},
+{source: "6: external factors beyond", target: "6: control such as", fill: "#c19a6b"},
+{source: "6: control such as", target: "6: availability", fill: "#c19a6b"},
+{source: "6: availability", target: "6: retail financing", fill: "#c19a6b"},
+{source: "6: retail financing", target: "6: interest rates", fill: "#c19a6b"},
+{source: "6: interest rates", target: "6: unemployment trends", fill: "#c19a6b"},
+{source: "6: unemployment trends", target: "6: wholesale financing", fill: "#c19a6b"},
+{source: "6: wholesale financing", target: "6: housing supply", fill: "#c19a6b"},
+{source: "6: housing supply", target: "6: defaults by retail customers", fill: "#c19a6b"},
+{source: "6: defaults by retail customers", target: "6: repossessions", fill: "#c19a6b"},
+{source: "6: repossessions", target: "6: industry level", fill: "#c19a6b"},
+{source: "6: industry level", target: "6: repossessed manufactured homes", fill: "#c19a6b"},
+{source: "6: repossessed manufactured homes", target: "6: international tensions", fill: "#c19a6b"},
+{source: "6: international tensions", target: "6: hostilities", fill: "#c19a6b"},
+{source: "6: hostilities", target: "6: consumer confidence", fill: "#c19a6b"},
+{source: "6: consumer confidence", target: "6: inventory levels", fill: "#c19a6b"},
+{source: "6: inventory levels", target: "6: regulatory", fill: "#c19a6b"},
+{source: "6: regulatory", target: "6: zoning matters", fill: "#c19a6b"},
+{source: "6: zoning matters", target: "6: capital markets", fill: "#c19a6b"},
+{source: "6: capital markets", target: "6: general economic conditions", fill: "#c19a6b"},
+{source: "6: general economic conditions", target: "6: traditionally", fill: "#c19a6b"},
+{source: "6: traditionally", target: "6: fall months", fill: "#c19a6b"},
+{source: "6: volatility", target: "9: manufactured housing industry", fill: "#fbec5d"},
+{source: "9: manufactured housing industry", target: "9: significant downturn", fill: "#fbec5d"},
+{source: "9: manufactured housing industry", target: "16: availability", fill: "#900"},
+{source: "16: availability", target: "16: consumer financing", fill: "#900"},
+{source: "16: consumer financing", target: "16: manufactured homes continues", fill: "#900"},
+{source: "16: availability", target: "17: repossessed homes", fill: "#71a6d2"},
+{source: "17: repossessed homes", target: "17: sale continues", fill: "#71a6d2"},
+{source: "17: sale continues", target: "17: adverse impact on", fill: "#71a6d2"},
+{source: "17: adverse impact on", target: "17: new manufactured homes", fill: "#71a6d2"},
+{source: "17: repossessed homes", target: "START_HERE", fill: "#71a6d2"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Consumer Finance</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Apparel Accessories and Luxury Goods</td>
+    </tr>
+    <tr>
+      <td>Thrifts and Mortgage Finance</td>
+    </tr>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Bombings</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_risk">Manufactured risk</a></td>
+      <td>Manufactured risks are risks that are produced by the modernization process, particularly by innovative developments in science and technology. They create risk environments that have little historical reference, and are therefore largely unpredictable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Met_Operations">Met Operations</a></td>
+      <td>Met Operations, also known as Met Ops, is one of the four business groups which forms the Metropolitan Police Service. It was created during the 2018-19 restructuring of the service, amalgamating many of its functions from the Operations side of the Specialist Crime &amp; Operations Directorate formed in 2012, with the Specialist Crime side of that Directorate placed under the new Frontline Policing Directorate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_controversy">Manufactured controversy</a></td>
+      <td>A manufactured controversy (sometimes shortened to manufactroversy) is a contrived disagreement, typically motivated by profit or ideology, designed to create public confusion concerning an issue about which there is no substantial academic dispute. This concept has also been referred to as manufactured uncertainty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_housing">Manufactured housing</a></td>
+      <td>Manufactured housing (commonly known as mobile homes in the United States) is a type of prefabricated housing that is largely assembled in factories and then transported to sites of use.  The definition of the term in the United States is regulated by federal law (Code of Federal Regulations, 24 CFR 3280): "Manufactured homes are built as dwelling units of at least 320 square feet (30 m2) in size with a permanent chassis to assure the initial and continued transportability of the home."  The requirement to have a wheeled chassis permanently attached differentiates "manufactured housing" from other types of prefabricated homes, such as modular homes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing_Consent">Manufacturing Consent</a></td>
+      <td>Manufacturing Consent: The Political Economy of the Mass Media is a 1988 book by Edward S. Herman and Noam Chomsky. It argues that the mass communication media of the U.S. "are effective and powerful ideological institutions that carry out a system-supportive propaganda function, by reliance on market forces, internalized assumptions, and self-censorship, and without overt coercion", by means of the propaganda model of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_Landscapes">Manufactured Landscapes</a></td>
+      <td>Manufactured Landscapes is a 2006 feature-length documentary film about the industrial landscape photography of Edward Burtynsky. It was directed by Jennifer Baichwal and is distributed by Zeitgeist Films.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Engineered_wood">Engineered wood</a></td>
+      <td>Engineered wood, also called mass timber, composite wood, man-made wood, or manufactured board, includes a range of derivative wood products which are manufactured by binding or fixing the strands, particles, fibres, or veneers or boards of wood, together with adhesives, or other methods of fixation to form composite material. The panels vary in size but can range upwards of 64 by 8 feet (19.5 by 2.4 m) and in the case of cross-laminated timber (CLT) can be of any thickness from a few inches to 16 inches (410 mm) or more.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automotive_industry">Automotive industry</a></td>
+      <td>The automotive industry comprises a wide range of companies and organizations involved in the design, development, manufacturing, marketing, and selling of motor vehicles. It is one of the world's largest industries by revenue (from 16 % such as in France up to 40 % to countries like Slovakia).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_automobiles_manufactured_in_Ontario">List of automobiles manufactured in Ontario</a></td>
+      <td>This is a list of automobile Assembly Plants in Ontario, Canada.  Ontario produces more vehicles than any other jurisdiction in North America, with six of the world's top manufacturers operating assembly plants in Windsor, Brampton, Oakville, Alliston, Woodstock, Cambridge, and Ingersoll.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prefabricated_home">Prefabricated home</a></td>
+      <td>Prefabricated homes, often referred to as prefab homes or simply prefabs, are specialist dwelling types of prefabricated building, which are manufactured off-site in advance, usually in standard sections that can be easily shipped and assembled. Some current prefab home designs include architectural details inspired by postmodernism or futurist architecture.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Clayton_Homes">Clayton Homes</a></td>
+      <td>Clayton Homes (or Clayton) is the largest builder of manufactured housing and modular homes in the United States. It is owned by Warren Buffett's Berkshire Hathaway.Clayton Homes' corporate headquarters are in Maryville, Tennessee.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Toter">Toter</a></td>
+      <td>A toter, or toter truck, is a tractor unit specifically designed for the modular and manufactured housing industries. \n\n\n== Characteristics ==\nThe toter is often confused or mistaken for a semi-trailer tractor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability">Availability</a></td>
+      <td>In reliability engineering, the term availability has the following meanings:\n\nThe degree to which a system, subsystem or equipment is in a specified operable and committable state at the start of a mission, when the mission is called for at an unknown, i.e. a random, time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High_availability">High availability</a></td>
+      <td>High availability (HA) is a characteristic of a system which aims to ensure an agreed level of operational performance, usually uptime, for a higher than normal period.\nModernization has resulted in an increased reliance on these systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_heuristic">Availability heuristic</a></td>
+      <td>The availability heuristic, also known as availability bias, is a mental shortcut that relies on immediate examples that come to a given person's mind when evaluating a specific topic, concept, method or decision. The availability heuristic operates on the notion that if something can be recalled, it must be important, or at least more important than alternative solutions which are not as readily recalled.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Not_Available">Not Available</a></td>
+      <td>Not Available is the second studio album (released as the fourth) by the Residents, recorded in 1974. The album was allegedly meant to only be released once its creators completely forgot about its existence (adhering to their "Theory of Obscurity," in which an artist's purest work is created without an audience) - however, due to ongoing delays in the release of Eskimo, Not Available was released to supply the demand for new Residents material, given their unexpected critical and commercial success following the release of the Duck Stab EP.\n\n\n== History ==\nIt is said that the lyrics and themes of Not Available arose from personal tensions within the group, and that the project began as a private psychodrama before being adapted into a possible operetta.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_factor">Availability factor</a></td>
+      <td>The availability factor of a power plant is the amount of time that it is able to produce electricity over a certain period, divided by the amount of the time in the period. Occasions where only partial capacity is available may or may not be deducted.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Continuous_availability">Continuous availability</a></td>
+      <td>Continuous availability is an approach to computer system and application design that protects users against downtime, whatever the cause and ensures that users remain connected to their documents, data files and business applications. Continuous availability describes the information technology methods to ensure business continuity.In early days of computing, availability was not considered business critical.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High-availability_cluster">High-availability cluster</a></td>
+      <td>High-availability clusters (also known as HA clusters, fail-over clusters) are groups of computers that support server applications that can be reliably utilized with a minimum amount of down-time.  They operate by using high availability software to harness redundant computers in groups or clusters that provide continued service when system components fail.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Route_availability">Route availability</a></td>
+      <td>Route Availability (RA) is the system by which the permanent way and supporting works (bridges, embankments, etc.) of the railway network of Great Britain are graded. All routes are allocated an RA number between 1 and 10.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_cascade">Availability cascade</a></td>
+      <td>An availability cascade is a self-reinforcing cycle that explains the development of certain kinds of collective beliefs. A novel idea or insight, usually one that seems to explain a complex process in a simple or straightforward manner, gains rapid currency in the popular discourse by its very simplicity and by its apparent insightfulness.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Available-to-promise">Available-to-promise</a></td>
+      <td>Available-to-promise (ATP) is a business function that provides a response to customer order inquiries, based on resource availability.\n It generates available quantities of the requested product, and delivery due dates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Home">Home</a></td>
+      <td>Time is the continued sequence of existence and events that occurs in an apparently irreversible succession from the past, through the present, into the future. It is a component quantity of various measurements used to sequence events, to compare the duration of events or the intervals between them, and to quantify rates of change of quantities in material reality or in the conscious experience.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/UFP_Industries">UFP Industries</a></td>
+      <td>UFP Industries, Inc., was founded in Michigan in 1955 as a supplier of lumber to the manufactured housing industry. Today UFP Industries is a multibillion-dollar holding company with subsidiaries around the globe that serve three markets: retail, industrial and construction.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_Housing_Institute">Manufactured Housing Institute</a></td>
+      <td>The Manufactured Housing Institute (MHI) is a U.S. trade organization representing companies and organizations that are involved in the production, sale and financing of manufactured housing, prefabricated home and modular home units.\nThe MHI hosts trade conferences, coordinates lobbying before the United States Congress and state legislatures on issues relating to manufactured housing, compiles and publishes data relating to industry sales and provides marketing and public relations support to raise the awareness of manufactured housing.The organization was created in 1975 and is headquartered in Arlington, Virginia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mobile_home">Mobile home</a></td>
+      <td>A mobile home (also known as a house trailer, park home, trailer, or trailer home) is a prefabricated structure, built in a factory on a permanently attached chassis before being transported to site (either by being towed or on a trailer). Used as permanent homes, or for holiday or temporary accommodation, they are often left permanently or semi-permanently in one place, but can be moved, and may be required to move from time to time for legal reasons.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Modular_building">Modular building</a></td>
+      <td>A modular building is a prefabricated building that consists of repeated sections called modules. Modularity involves constructing sections away from the building site, then delivering them to the intended site.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tornadoes_of_2022">Tornadoes of 2022</a></td>
+      <td>This page documents the tornadoes and tornado outbreaks of 2012. Extremely destructive tornadoes form most frequently in the United States, Bangladesh, Brazil and Eastern India, but they can occur almost anywhere under the right conditions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Excel_Homes">Excel Homes</a></td>
+      <td>Excel Homes Group, LLC, in Camp Hill, PA, was a manufacturer of custom modular homes in the United States. According to the company, Excel Homes built more than 28,000 modular homes in its climate-controlled plants in Liverpool, Pennsylvania and Avis, Pennsylvania, since its founding in 1984.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NOBILITY HOMES INC    Item 1A Risk Factors  _______  ____________    COMPANY RISK FACTORS    The ownership of our <font color="blue"><font color="blue">common stock</font> involves</font> a number of risks and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">should carefully</font> consider the following risks, together with the information  <font color="blue">provided elsewhere</font> in our 10-K and <font color="blue">Annual Report</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">risks described</font> below are  not the <font color="blue">only ones facing us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks that are currently unknown to us  or that we currently consider to be <font color="blue">immaterial may also impair</font> our business or  <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">financial condition</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>MANUFACTURED HOUSING INDUSTRY IS HIGHLY CYCLICAL    The <font color="blue">manufactured</font> and <font color="blue"><font color="blue">modular housing</font> industry</font> is <font color="blue">highly cyclical</font> and seasonal  and has experienced <font color="blue">wide fluctuations</font> in <font color="blue">aggregate sales</font> in the past</td>
+    </tr>
+    <tr>
+      <td>We are  subject to <font color="blue">volatility</font> in operating results due to <font color="blue">external factors beyond</font> our  <font color="blue">control such as</font>:            o   <font color="blue">availability</font> of <font color="blue">retail financing</font>;          o   the level and stability of <font color="blue">interest rates</font>;          o   <font color="blue">un<font color="blue">employment</font> trends</font>;          o   impact of hurricanes or seasonal weather <font color="blue">conditions</font>;          o   the <font color="blue">availability</font> of <font color="blue">wholesale financing</font>;          o   <font color="blue">housing supply</font> and demand;          o   <font color="blue"><font color="blue">defaults by</font> retail customers</font> resulting in <font color="blue"><font color="blue">repossession</font>s</font>;          o   <font color="blue">industry level</font> of used or repossessed <font color="blue">manufactured</font> homes;          o   <font color="blue">international tensions</font> and <font color="blue">hostilities</font>;          o   levels of <font color="blue">consumer confidence</font>;          o   <font color="blue">inventory levels</font>;          o   <font color="blue">regulatory</font> and <font color="blue">zoning matters</font>;          o   access to <font color="blue">capital markets</font>;          o   changes in <font color="blue"><font color="blue">general economic</font> <font color="blue">conditions</font></font>; and          o   commodity prices    Sales in our market area are also seasonal in nature, with sales of homes  <font color="blue">traditionally</font> being stronger in the summer and <font color="blue">fall months</font></td>
+    </tr>
+    <tr>
+      <td>The cyclical and  seasonal nature of our business causes our revenues and operating results to  fluctuate and makes it <font color="blue">difficult</font> for <font color="blue">management</font> to <font color="blue">forecast sales</font> and profits in  <font color="blue">uncertain times</font></td>
+    </tr>
+    <tr>
+      <td>As a result of seasonal and cyclical downturns, results from  any quarter should not be relied upon as being <font color="blue">indicative</font> of performance in  future quarters</td>
+    </tr>
+    <tr>
+      <td>MANUFACTURED HOUSING INDUSTRY EXPERIENCING A SIGNIFICANT DOWNTURN    Since mid-1999, the <font color="blue">manufactured</font> housing industry has experienced a prolonged  and <font color="blue">significant downturn</font></td>
+    </tr>
+    <tr>
+      <td>Annual shipments have <font color="blue">declined from approximately</font>  350cmam000 to 132cmam000 in 2005</td>
+    </tr>
+    <tr>
+      <td>This downturn has resulted in part from the fact  that, beginning in 1999, <font color="blue">consumer lenders</font> in the sector began to tighten  <font color="blue">underwriting standards</font> and curtail credit <font color="blue">availability</font> in response to higher  than anticipated rates of <font color="blue">loan defaults</font> and <font color="blue">significant losses upon</font> the  <font color="blue">repossession</font> and resale of <font color="blue">homes securing defaulted loans</font></td>
+    </tr>
+    <tr>
+      <td>Other causes of the  downturn include a reduced number of <font color="blue">consumer lenders</font> in the <font color="blue">traditional chattel</font>  (home-only) lending sector, higher <font color="blue">interest rates</font> on home-only loans and  <font color="blue">generally unfavorable economic <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>These factors have resulted in  declining <font color="blue">wholesale shipments</font>, excess <font color="blue">manufacturing</font> and <font color="blue">retail locations</font> and  <font color="blue">surplus inventory</font></td>
+    </tr>
+    <tr>
+      <td>6  <PAGE>    As a result of the foregoing factors, <font color="blue">based on</font> industry data, we estimate that  approximately 54prca of all industry <font color="blue">retail locations</font> have closed since 1999 and  that <font color="blue">industry manufacturers</font> have closed 120 <font color="blue">manufacturing</font> facilities,  representing 36prca of the industryapstas <font color="blue">manufacturing</font> facilities</td>
+    </tr>
+    <tr>
+      <td>It is possible that the <font color="blue">current industry downturn</font> is likely to continue, at  least in the near term</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of <font color="blue">consumer financing</font> for the purchase  of <font color="blue">manufactured</font> homes continues to be constrained</td>
+    </tr>
+    <tr>
+      <td>In addition, the number of  <font color="blue">repossessed homes</font> being offered for <font color="blue">sale continues</font> to have an <font color="blue">adverse impact on</font>  demand for new <font color="blue">manufactured</font> homes</td>
+    </tr>
+    <tr>
+      <td>Although it is <font color="blue">difficult</font> to <font color="blue">predict future</font>  industry <font color="blue">conditions</font>, these <font color="blue">factors tend</font> to indicate that a <font color="blue">sustained recovery</font> in  the <font color="blue">manufactured</font> housing industry is unlikely to occur in the near term</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">current industry downturn</font> gets <font color="blue">materially</font> worse, we may incur operating  and net income <font color="blue">reductions</font>, and may be required to take steps in an attempt to  mitigate the effect of unfavorable industry <font color="blue">conditions</font>, such as the closure of  facilities, <font color="blue"><font color="blue">retail sales</font> centers</font>, or <font color="blue">consolidation</font> of existing <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>These  steps could impair our ability to conduct our business in a <font color="blue">manner consistent</font>  <font color="blue">with past practice</font> and could make it more <font color="blue">difficult</font> for us to expand our  <font color="blue">operations</font> if and when <font color="blue">industry <font color="blue">conditions</font> improve</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, some of these  steps could lead to fixed <font color="blue">asset <font color="blue">impairment</font> charges</font> and <font color="blue">goodwill <font color="blue">impairment</font></font>  charges</td>
+    </tr>
+    <tr>
+      <td>MANUFACTURED HOUSING INDUSTRY IS VERY COMPETITIVE    The <font color="blue">manufactured</font> and <font color="blue"><font color="blue">modular housing</font> industry</font> is <font color="blue">highly competitive</font> and some of  our <font color="blue">competitors</font> are larger and have <font color="blue">stronger balance sheets</font> and <font color="blue">cash flow</font>, as  well as greater access to capital, than we do</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>at both the  <font color="blue">manufacturing</font> and <font color="blue">retail levels</font> is <font color="blue">based upon several factors</font>, including price,  product features, reputation for service and quality, merchandising, terms of  <font color="blue">retailer promotional programs</font> and the terms of <font color="blue">retail customer financing</font></td>
+    </tr>
+    <tr>
+      <td>Numerous companies produce <font color="blue">manufactured</font> homes in our market</td>
+    </tr>
+    <tr>
+      <td>In addition, our  homes compete with <font color="blue">repossessed homes</font> that are offered for sale in our market</td>
+    </tr>
+    <tr>
+      <td>A  number of our <font color="blue">manufacturing</font> <font color="blue">competitors</font> also have their own <font color="blue">retail distribution</font>  systems and <font color="blue">consumer finance</font> and insurance <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The ability to offer  <font color="blue">consumer finance</font> and <font color="blue">insurance products may provide</font> some larger <font color="blue">competitors</font> with  an advantage</td>
+    </tr>
+    <tr>
+      <td>Based <font color="blue">on <font color="blue">retail sales</font></font>, the <font color="blue">ten largest manufacturers accounted</font> for  approximately 80 percent of the retail <font color="blue">manufactured</font> housing market</td>
+    </tr>
+    <tr>
+      <td>In addition,  there are many in<font color="blue">dependent</font> <font color="blue">manufactured</font> housing <font color="blue">retail locations</font> in most areas  where we have retail <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Because barriers to entry for <font color="blue">manufactured</font>  <font color="blue">housing retailers</font> are low, we believe that where <font color="blue">wholesale floor</font> plan financing  is available, it is <font color="blue">relatively easy</font> for <font color="blue">new retailers</font> to <font color="blue">enter into</font> our market  as <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">products compete with</font> other forms of low to  moderate-cost housing, including new and existing site-built homes, apartments,  townhouses and <font color="blue">condominiums</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">compete effectively</font> in this  <font color="blue">environment</font>, our <font color="blue">retail sales</font>, <font color="blue">wholesale shipments</font> and operating results could  be reduced</td>
+    </tr>
+    <tr>
+      <td>REDUCED AVAILABILITY OF CONSUMER FINANCING    The reduced <font color="blue">availability</font> of financing for our <font color="blue">retail customers could continue</font> to  affect our <font color="blue">sales volume</font></td>
+    </tr>
+    <tr>
+      <td>Our retailers, as well as retail buyers of our  products, generally secure financing from third party lenders, which, in the  case of <font color="blue">manufactured</font> housing, have <font color="blue">been negatively <font color="blue">affected by</font> adverse loan</font>  experience</td>
+    </tr>
+    <tr>
+      <td>For example, Conseco, Associate, Chase and GreenPoint, which have  been very <font color="blue">important lenders</font> for customers of ours and of our dealers in the  1990apstas, have <font color="blue">withdrawn from</font> the <font color="blue">manufactured</font> housing finance business</td>
+    </tr>
+    <tr>
+      <td>A  <font color="blue">consumer seeking</font> to finance the purchase of a <font color="blue">manufactured</font> home without land  <font color="blue">will generally pay</font> a <font color="blue">higher interest rate</font> and have a <font color="blue">shorter loan maturity than</font>  a <font color="blue">consumer seeking</font> to finance the purchase of land and the home</td>
+    </tr>
+    <tr>
+      <td>In addition,  home-only financing is at times more <font color="blue">difficult</font> to obtain than the financing for  site-built homes</td>
+    </tr>
+    <tr>
+      <td>Reduced <font color="blue">availability</font> of such financing, tightened underwriting  standards, and high <font color="blue">interest rates</font> are currently having an adverse effect on the  <font color="blue">manufactured</font> housing business and our <font color="blue">housing sales</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  quasi-<font color="blue">governmental</font> agencies such as Fannie Mae and Freddie Mac, which are  <font color="blue">important purchasers</font> of <font color="blue">loans from financial <font color="blue">institutions</font></font>, have tightened  standards relating to the <font color="blue">manufactured</font> housing loans that they will buy</td>
+    </tr>
+    <tr>
+      <td>There  can be no assurance that affordable <font color="blue">retail financing</font> for <font color="blue">manufactured</font> or modular  <font color="blue">homes will</font> be <font color="blue">available on</font> a <font color="blue">widespread basis</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">third party financing</font> were to  become unavailable or were to be <font color="blue">further restricted</font>, this could have a material  adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>7  <PAGE>    Availability of financing is <font color="blue">dependent</font> on the lending practices of financial  <font color="blue">institutions</font>, financial markets, <font color="blue">governmental</font> policies and economic <font color="blue">conditions</font>,  all of which are largely beyond our control</td>
+    </tr>
+    <tr>
+      <td>For example, since 1999 floor plan  lenders have tightened credit <font color="blue">availability</font> and Conseco Finance and Deutsche  Financial Services, <font color="blue">which accounted</font> for approximately 45prca of <font color="blue">wholesale floor</font>  plan financing, have exited that business in the <font color="blue">manufactured</font> housing industry  and Transamerica and Bombardierapstas <font color="blue">manufactured</font> housing wholesale finance  <font color="blue">businesses</font> have been acquired by <font color="blue">General Electric Corp</font></td>
+    </tr>
+    <tr>
+      <td>There are currently  three national lending <font color="blue">institutions</font> that specialize in providing <font color="blue">wholesale floor</font>  plan financing to <font color="blue">manufactured</font> <font color="blue">housing retailers</font></td>
+    </tr>
+    <tr>
+      <td>Reduced <font color="blue">availability</font> of floor  plan <font color="blue">lending may affect</font> the <font color="blue">inventory levels</font> of our in<font color="blue">dependent</font> retailers, their  number of <font color="blue"><font color="blue">retail sales</font> centers</font> and related <font color="blue">wholesale demand</font></td>
+    </tr>
+    <tr>
+      <td>INCREASE IN PRICES AND UNAVAILABILITY OF RAW MATERIALS    Our results of <font color="blue">operations</font> can be <font color="blue">affected by</font> the pricing and <font color="blue">availability</font> of raw  materials</td>
+    </tr>
+    <tr>
+      <td>In our <font color="blue">last two <font color="blue">fiscal year</font>s</font>, for example, we experienced an increase  in prices of our <font color="blue">raw materials</font> of approximately 8prca to 10prca per year</td>
+    </tr>
+    <tr>
+      <td>Although we  attempt to increase the <font color="blue">sales prices</font> of our homes in response to higher  materials costs, such increases typically lag behind the <font color="blue">escalation</font> of materials  costs</td>
+    </tr>
+    <tr>
+      <td>Three of the most important <font color="blue">raw materials</font> used in our <font color="blue">operations</font>, lumber,  <font color="blue">gypsum wallboard</font> and insulation, have experienced <font color="blue"><font color="blue">significant price</font> fluctuations</font>  in the <font color="blue">past <font color="blue">fiscal year</font></font></td>
+    </tr>
+    <tr>
+      <td>Sudden increases in demand for these <font color="blue">construction</font>  materials, as has recently occurred, caused <font color="blue">by natural disasters</font> or other market  forces, can <font color="blue">greatly increase</font> the costs of materials or limit the <font color="blue">availability</font> of  <font color="blue">such materials</font></td>
+    </tr>
+    <tr>
+      <td>Although we have not experienced any shortage of <font color="blue">such building</font>  materials today, there can be no assurance that <font color="blue">sufficient supplies</font> of lumber,  <font color="blue">gypsum wallboard</font> and insulation, as well as other materials, <font color="blue">will continue</font> to be  available to us on terms we regard as satisfactory</td>
+    </tr>
+    <tr>
+      <td>GEOGRAPHIC CONCENTRATION    We are <font color="blue">concentrated geographically</font> in Florida which could <font color="blue"><font color="blue">adversely</font> affect</font> our  business</td>
+    </tr>
+    <tr>
+      <td>A decline in the demand for <font color="blue">manufactured</font> housing in Florida, a  decline in the economy of Florida, and the impact of hurricanes in Florida or  other adverse <font color="blue">conditions</font> could have a material adverse affect on our results of  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>ZONING REGULATIONS FOR OUR HOMES    If the factory-built housing industry is not able to secure favorable local  zoning ordinances, or if there are changes in zoning <font color="blue">regulations</font>, our sales  <font color="blue">could decline</font> and our operating results <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">limitation on</font> the  growth of the number of <font color="blue">sites available</font> for <font color="blue">manufactured</font> or <font color="blue">modular homes</font>, or on  the operation or <font color="blue">starting new</font> of <font color="blue">manufactured</font> <font color="blue">housing communities</font>, could  <font color="blue"><font color="blue">adversely</font> affect</font> our sales</td>
+    </tr>
+    <tr>
+      <td>In addition, new product opportunities that we may  wish to pursue for our <font color="blue">manufactured</font> or <font color="blue">modular housing</font> business could cause us  to encounter new zoning <font color="blue">regulations</font> and affect the <font color="blue">potential market</font> for these  <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Manufactured </font><font color="blue">housing communities</font> and individual <font color="blue">home placements</font>  are subject to <font color="blue">local zoning ordinances</font> and other local <font color="blue">regulations</font> relating to  <font color="blue">utility service</font> and <font color="blue">construction</font> of roadways</td>
+    </tr>
+    <tr>
+      <td>In the past, there has been  resistance by property owners to the adoption of <font color="blue">zoning ordinances permitting</font>  the location of <font color="blue">manufactured</font> or <font color="blue">modular homes</font> in <font color="blue">residential areas</font>, and we  believe that this resistance has <font color="blue"><font color="blue">adversely</font> affect</font>ed the growth of the industry</td>
+    </tr>
+    <tr>
+      <td>The inability of the <font color="blue">manufactured</font> home industry to affect change in these zoning  ordinances could have an adverse effect on our results of <font color="blue">operations</font> and we  cannot be certain that <font color="blue">manufactured</font> <font color="blue">homes will</font> receive more widespread  <font color="blue">acceptance</font> or that additional localities will adopt <font color="blue">zoning ordinances permitting</font>  the location of <font color="blue">manufactured</font> homes</td>
+    </tr>
+    <tr>
+      <td>CONTINGENT LIABILITIES    We have, and <font color="blue">will continue</font> to have, <font color="blue">contingent <font color="blue">wholesale repurchase obligations</font></font>  <font color="blue">which could become actual obligations</font> that we <font color="blue">must satisfy</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may incur losses</font>  under these <font color="blue">wholesale repurchase obligations</font> or be required to fund these or  other <font color="blue">contingent obligations</font> that would reduce our earnings</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font>  a floor plan <font color="blue">arrangement</font> for our <font color="blue">home shipments</font> to in<font color="blue">dependent</font> retailers, the  <font color="blue">financial institution</font> that provides the <font color="blue">retailer financing customarily</font> requires                                             8  <PAGE>    us to <font color="blue">enter into</font> a <font color="blue">separate repurchase agreement with</font> the <font color="blue">financial institution</font></td>
+    </tr>
+    <tr>
+      <td>Under this separate agreement, generally for a period 12 to 18 months from the  date of our sale to the retailer, upon default by the retailer and <font color="blue">repossession</font>  of the home by the <font color="blue">financial institution</font>, we are <font color="blue">generally obligated</font> to purchase  from the lender the related floor plan loan or the home at a price equal to the  <font color="blue">unpaid principal amount</font> of the loan, plus certain administrative and handling  expenses, reduced by the cost of any damage to the home and any <font color="blue">missing parts</font> or  <font color="blue">accessories</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">difference between</font> the gross <font color="blue">repurchase price</font> and the price at  which the repurchased <font color="blue">manufactured</font> home can then be resold, which is typically  at a discount to the <font color="blue">original sale price</font>, is an expense to us</td>
+    </tr>
+    <tr>
+      <td>Thus, if we were  obligated to repurchase a large number of <font color="blue">manufactured</font> homes in the future, this  <font color="blue">would increase</font> our costs, which could have a negative effect on our earnings</td>
+    </tr>
+    <tr>
+      <td>During fiscal 2005 and 2004, there were <font color="blue">no losses incurred under</font> these  <font color="blue">repurchase <font color="blue">agreements</font></font></td>
+    </tr>
+    <tr>
+      <td>We estimate that our <font color="blue">potential obligations under such</font>  <font color="blue">repurchase <font color="blue">agreements</font></font> were approximately dlra617cmam000 in 2005 and dlra1cmam363cmam000 in  2004</td>
+    </tr>
+    <tr>
+      <td>We may be required to <font color="blue">honor contingent repurchase obligations</font> in the  future and <font color="blue">may incur additional expense as</font> a consequence of these repurchase  <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Tightened </font>credit <font color="blue">standards by lenders</font> and more <font color="blue">aggressive attempts</font> to <font color="blue">accelerate</font>  <font color="blue">collection</font> of <font color="blue">outstanding accounts with retailers could</font> result in <font color="blue">defaults by</font>  retailers and <font color="blue">consequently repurchase obligations on</font> our part may be <font color="blue">higher than</font>  has <font color="blue">historically been</font> the case</td>
+    </tr>
+    <tr>
+      <td>DEPENDENCE UPON INDEPENDENT RETAILERS    If we are unable to establish or maintain <font color="blue"><font color="blue">relationships</font> with</font> in<font color="blue">dependent</font>  retailers who sell our homes, our <font color="blue">sales <font color="blue">could decline</font></font> and our operating results  <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>During fiscal 2005, approximately 25prca of our <font color="blue">wholesale shipments</font>  of <font color="blue">manufactured</font> homes were made to in<font color="blue">dependent</font> <font color="blue">retail locations</font> in Florida</td>
+    </tr>
+    <tr>
+      <td>As  is common in the industry, in<font color="blue">dependent</font> <font color="blue">retailers may</font> sell <font color="blue">manufactured</font> homes  produced <font color="blue">by competing manufacturers</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to establish  <font color="blue"><font color="blue">relationships</font> with</font> new in<font color="blue">dependent</font> retailers or maintain good <font color="blue"><font color="blue">relationships</font> with</font>  in<font color="blue">dependent</font> retailers that sell our homes</td>
+    </tr>
+    <tr>
+      <td>Even if we do establish and maintain  <font color="blue"><font color="blue">relationships</font> with</font> in<font color="blue">dependent</font> retailers, these retailers are not obligated to  sell our <font color="blue">manufactured</font> homes exclusively, and may choose to sell our <font color="blue">competitors</font> &amp;apos   <font color="blue">homes instead</font></td>
+    </tr>
+    <tr>
+      <td>The in<font color="blue">dependent</font> retailers with whom we have <font color="blue">relationships</font> can  cancel these <font color="blue">relationships</font> on short notice</td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">retailers may</font> not  <font color="blue">remain financially solvent as</font> they are subject to industry, economic,  <font color="blue">demographic</font> and <font color="blue">seasonal trends</font> similar to the ones we face</td>
+    </tr>
+    <tr>
+      <td>If we do not  establish and maintain <font color="blue"><font color="blue">relationships</font> with</font> solvent in<font color="blue">dependent</font> retailers in our  market, <font color="blue">sales <font color="blue">could decline</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">DEPENDENCE UPON MAJESTIC </font>21    During fiscal 1997, we contributed dlra250cmam000 for a 50prca interest in a joint  venture with 21st Mortgage, to <font color="blue">provide mortgage financing</font> on our <font color="blue">manufactured</font>  homes sold by our retail division</td>
+    </tr>
+    <tr>
+      <td>As a 50prca partner we do not have any legal  authority to manage or control this partnershipapstas <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>During fiscal 2004  we transferred dlra250cmam000 from our <font color="blue">existing joint venture</font> in Majestic 21 in order  to <font color="blue">participate</font> in a new finance revenue sharing agreement with 21st Mortgage</td>
+    </tr>
+    <tr>
+      <td>This revenue sharing agreement <font color="blue">will continue</font> to <font color="blue">provide mortgage financing</font> to  customers who qualify for <font color="blue">such mortgage financing</font>, and who <font color="blue">purchase homes</font>  through our <font color="blue">Prestige Homes </font><font color="blue"><font color="blue">retail sales</font> centers</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">management</font> of 21st <font color="blue">Mortgage  </font>has industry experience in managing, servicing and <font color="blue">collecting <font color="blue">loan portfolio</font>s</font>;  however, many borrowers require notices and reminders to keep their loans  current and to <font color="blue">prevent delinquencies</font> and <font color="blue">foreclosures</font></td>
+    </tr>
+    <tr>
+      <td>A substantial increase in  the <font color="blue">delinquency rate</font> that results from improper servicing or <font color="blue">mortgage loan</font>  performance in general could <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">profitability</font> and <font color="blue">cash flow</font>  from the <font color="blue">loan portfolio</font> for Majestic 21</td>
+    </tr>
+    <tr>
+      <td>Majestic 21 makes loans to borrowers  that it believes are credit worthy <font color="blue">based on</font> its credit <font color="blue">guidelines</font></td>
+    </tr>
+    <tr>
+      <td>However, the  ability of these customers to repay their loans may be <font color="blue">affected by</font> a number of  factors, including, but not limited to national, regional and local economic  <font color="blue">conditions</font>; changes or continued weakness in specific industry segments; natural  hazard risks <font color="blue">affecting</font> the region in which the borrower resides; and <font color="blue">employment</font>,  financial or life <font color="blue">circumstances</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, if Majestic 21apstas <font color="blue">operations</font> are not  <font color="blue">financially successful</font>, our results may also be <font color="blue"><font color="blue">adversely</font> affect</font>ed, and we could  lose some or all of our <font color="blue">investment</font> in Majestic 21</td>
+    </tr>
+    <tr>
+      <td>9  <PAGE>    DEPENDENCE UPON PRESTIGE HOME CENTERS    During fiscal 2005 approximately 75prca of our <font color="blue">wholesale shipments</font> of <font color="blue">manufactured</font>  homes were <font color="blue">sold through</font> Prestige Home Centers, our own <font color="blue">retail distribution</font>  network</td>
+    </tr>
+    <tr>
+      <td>If Prestigeapstas <font color="blue">retail sales</font> are <font color="blue"><font color="blue">adversely</font> affect</font>ed by changes in  <font color="blue">conditions</font> such as economic, <font color="blue">demographic</font>s, weather, <font color="blue"><font color="blue">repossession</font>s</font>, un<font color="blue">employment</font>  trends, <font color="blue">interest rates</font>, <font color="blue">availability</font> of <font color="blue">retail financing</font>, personnel, and housing  demand, our revenue and operating results <font color="blue">could decline</font></td>
+    </tr>
+    <tr>
+      <td>DEPENDENCE UPON TWO EXECUTIVE OFFICERS    We are <font color="blue">dependent</font> to a <font color="blue">significant extent upon</font> the efforts of our two principal  <font color="blue">executive officers</font>, Terry Trexler, Chairman of the Board and Chief Executive  Officer and Tom Trexler, Executive Vice President and President of Prestige Home  Centers, our <font color="blue">retail distribution</font> network</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Tom Trexler </font>is <font color="blue">also responsible</font> for  the <font color="blue">operations</font> of the mortgage and <font color="blue">insurance divisions</font></td>
+    </tr>
+    <tr>
+      <td>The loss or the  <font color="blue">prolonged absence</font> of the services of either or both principal <font color="blue">executive officers</font>  could have a material adverse effect upon our business, <font color="blue">financial condition</font> and  results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">continued growth</font> is also <font color="blue">dependent</font> upon our ability  to attract and retain additional skilled <font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>CONTROLLED BY TWO SHAREHOLDERS    Approximately 64prca of our <font color="blue">outstanding <font color="blue">common stock</font></font> is <font color="blue">beneficially</font> owned or  <font color="blue">controlled by</font> our Chairman and CEO, Terry Trexler and our Executive Vice  President and President of Prestige Home Centers, Tom Trexler</td>
+    </tr>
+    <tr>
+      <td>As a result,  these <font color="blue">shareholders</font>, acting together, are able to determine the outcome of  <font color="blue">elections</font> of our <font color="blue">directors</font> and thereby control the <font color="blue">management</font> of our business</td>
+    </tr>
+    <tr>
+      <td>VOLATILITY OF STOCK PRICE    Our <font color="blue"><font color="blue">common stock</font> price</font> has been volatile and <font color="blue">may continue</font> to be volatile</td>
+    </tr>
+    <tr>
+      <td>The  price of our <font color="blue">common stock</font> may fluctuate widely, depending upon a number of  factors, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>These factors include the  perceived prospects of our business and the <font color="blue">manufactured</font> housing industry as a  whole; differences between our <font color="blue">actual financial</font> and operating results and those  expected <font color="blue">by investors</font> and analysts; changes in analysts &amp;apos  <font color="blue">recommendations</font> or  <font color="blue">projections</font>; changes <font color="blue">affecting</font> the <font color="blue">availability</font> of financing in the wholesale  and consumer lending markets; future issuances of our <font color="blue">common stock</font> for stock  options or acquisitions; actions or announcements by <font color="blue">competitors</font>; lack of  liquidity in our stock; changes in the <font color="blue">regulatory</font> <font color="blue">environment</font> in which we  operate; and changes in <font color="blue">general economic</font> or market <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  <font color="blue">stock markets generally</font> experience <font color="blue">significant price</font> and volume <font color="blue">volatility</font> from  time to time which may <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">market price</font> of our <font color="blue">common stock</font> for  <font color="blue">reasons unrelated</font> to our performance</td>
+    </tr>
+    <tr>
+      <td>All of these factors may <font color="blue">adversely</font> impact  the <font color="blue">market price</font>s of our <font color="blue">common stock</font> in the future</td>
+    </tr>
+    <tr>
+      <td>GOVERNMENT REGULATIONS    Our <font color="blue">manufactured</font> housing business is subject to extensive federal and state  <font color="blue">regulations</font>, including <font color="blue">construction</font> and <font color="blue">safety standards</font> for <font color="blue">manufactured</font> homes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Amendments </font>to any of these <font color="blue">regulations</font> and the <font color="blue">implementation</font> of new <font color="blue">regulations</font>  could significantly increase the costs of <font color="blue">manufacturing</font>, purchasing, operating  or selling our products and could have an adverse effect on our results of  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">comply with present</font> or future <font color="blue">regulations</font> could  result in fines, potential civil and <font color="blue">criminal liability</font>, suspension of sales or  production, or cessation of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a <font color="blue">major product recall</font>  could have an adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to a variety of Federal and state <font color="blue">environment</font>al  <font color="blue">regulations</font> relating to noise pollution and the use, generation, storage,  treatment, emission and disposal of <font color="blue">hazardous materials</font> and wastes</td>
+    </tr>
+    <tr>
+      <td>Although we  believe that we are currently in material <font color="blue">compliance with applicable</font>  <font color="blue">environment</font>al <font color="blue">regulations</font>, our failure to <font color="blue">comply with present</font> or future  <font color="blue">regulations</font> could result in fines, potential civil and <font color="blue">criminal liability</font>,  suspension of production or <font color="blue">operations</font>, alterations to the <font color="blue">manufacturing</font>  process, costly cleanup or <font color="blue">capital expenditures</font></td>
+    </tr>
+    <tr>
+      <td>10  <PAGE>    GOODWILL IMPAIRMENT    A portion of our total assets at <font color="blue">fiscal year</font> end 2005 consisted of goodwill, all  of which is <font color="blue">attributable</font> to our retail <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effective </font>in fiscal 2002, we  adopted Statement of Financial Accounting Standards Nodtta 142, Goodwill and Other  Intangible Assets</td>
+    </tr>
+    <tr>
+      <td>Instead, we  <font color="blue">review goodwill at least annually</font> to determine whether it has <font color="blue">become impaired</font></td>
+    </tr>
+    <tr>
+      <td>If goodwill has <font color="blue">become impaired</font>, we charge the <font color="blue">impairment</font> as an expense in the  period in which the <font color="blue">impairment</font> occurred</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">goodwill could</font> be impaired if  developments <font color="blue">affecting</font> the acquired locations of our retail <font color="blue">operations</font>, lead us  to conclude that the earnings we expect to <font color="blue">derive from</font> the acquired locations of  our retail <font color="blue">operations</font> will be <font color="blue">substantially reduced</font></td>
+    </tr>
+    <tr>
+      <td>A write off of all or part  of our <font color="blue">goodwill could</font> <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font> and financial  condition</td>
+    </tr>
+    <tr>
+      <td>WARRANTY CLAIMS    We are subject to warranty claims in the <font color="blue">ordinary course</font> of our business</td>
+    </tr>
+    <tr>
+      <td>Although we maintain reserves for such claims, which to date have been adequate,  there can be no assurance that <font color="blue">warranty expense levels will remain at current</font>  levels or that such reserves <font color="blue">will continue</font> to be adequate</td>
+    </tr>
+    <tr>
+      <td>A large number of  warranty claims exceeding our <font color="blue">current warranty expense levels could</font> have an  adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>SARBANES-OXLEY - SECTION 404    By <font color="blue">fiscal year</font> end 2007, we <font color="blue">must comply with</font> Section 404 of the Sarbanes-Oxley  Act which requires us to <font color="blue">evaluate annually</font> the <font color="blue">effectiveness</font> of our internal  <font color="blue">controls <font color="blue">over financial</font></font> reporting as of the end of each <font color="blue">fiscal year</font> and to  include a <font color="blue">management</font> report assessing the <font color="blue">effectiveness</font> of our <font color="blue">internal controls</font>  <font color="blue">over financial</font> reporting in our annual report</td>
+    </tr>
+    <tr>
+      <td>Section 404 also requires our  in<font color="blue">dependent</font> registered public accounting firm to attest to, and report on,  <font color="blue">management</font>apstas assessment of our internal <font color="blue">controls <font color="blue">over financial</font></font> reporting</td>
+    </tr>
+    <tr>
+      <td>If we  fail to meet our deadline for adoption or we fail to maintain the adequacy of  our <font color="blue">internal controls</font>, as such standards are modified, supplemented or amended  from time to time, we <font color="blue">cannot assure</font> you that we will be able to conclude in the  future that we have effective internal <font color="blue">controls <font color="blue">over financial</font></font> reporting in  <font color="blue">accordance with</font> Section 404</td>
+    </tr>
+    <tr>
+      <td>If we fail to maintain a system of effective  <font color="blue">internal controls</font>, it could have an adverse effect on our business and stock  price</td>
+    </tr>
+  </tbody>
+</table>

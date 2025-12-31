@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "4: healthcare professionals", fill: "#08e8de"},
+{source: "4: healthcare professionals", target: "4: healthcare staffing", fill: "#08e8de"},
+{source: "4: healthcare staffing", target: "4: at reasonable costs", fill: "#08e8de"},
+{source: "4: at reasonable costs", target: "4: could increase", fill: "#08e8de"},
+{source: "4: could increase", target: "4: negatively impact", fill: "#08e8de"},
+{source: "4: healthcare professionals", target: "5: rely significantly on", fill: "#ace5ee"},
+{source: "5: rely significantly on", target: "5: professionals", fill: "#ace5ee"},
+{source: "5: professionals", target: "5: licenses necessary", fill: "#ace5ee"},
+{source: "5: licenses necessary", target: "5: requirements", fill: "#ace5ee"},
+{source: "5: requirements", target: "5: hospital healthcare facility clients", fill: "#ace5ee"},
+{source: "5: hospital healthcare facility clients", target: "5: physician practice groups", fill: "#ace5ee"},
+{source: "5: rely significantly on", target: "6: healthcare staffing personnel with", fill: "#556b2f"},
+{source: "6: healthcare staffing personnel with", target: "6: temporary healthcare staffing companies", fill: "#556b2f"},
+{source: "6: temporary healthcare staffing companies", target: "6: with hospitals healthcare", fill: "#556b2f"},
+{source: "6: with hospitals healthcare", target: "6: facilities", fill: "#556b2f"},
+{source: "6: facilities", target: "6: physician practice groups based on", fill: "#556b2f"},
+{source: "6: physician practice groups based on", target: "6: quantity diversity", fill: "#556b2f"},
+{source: "6: quantity diversity", target: "6: assignments offered compensation packages", fill: "#556b2f"},
+{source: "6: assignments offered compensation packages", target: "6: healthcare professionals", fill: "#556b2f"},
+{source: "6: healthcare staffing personnel with", target: "15: operations may deteriorate", fill: "#c40233"},
+{source: "15: operations may deteriorate", target: "15: operations personnel", fill: "#c40233"},
+{source: "15: operations may deteriorate", target: "16: dependent upon", fill: "#d70a53"},
+{source: "16: dependent upon", target: "16: operations", fill: "#d70a53"},
+{source: "16: dependent upon", target: "20: highly competitive market", fill: "#ff004f"},
+{source: "20: highly competitive market", target: "20: competitive", fill: "#ff004f"},
+{source: "20: competitive", target: "20: success depends on", fill: "#ff004f"},
+{source: "20: success depends on", target: "20: healthcare facility", fill: "#ff004f"},
+{source: "20: healthcare facility", target: "20: physician practice", fill: "#ff004f"},
+{source: "20: physician practice", target: "20: demonstrating", fill: "#ff004f"},
+{source: "20: highly competitive market", target: "24: primary competitive factors", fill: "#51484f"},
+{source: "24: primary competitive factors", target: "24: hospital healthcare facility", fill: "#51484f"},
+{source: "24: hospital healthcare facility", target: "24: physician practice", fill: "#51484f"},
+{source: "24: physician practice", target: "24: professionals", fill: "#51484f"},
+{source: "24: professionals", target: "24: requirements providing qualified employees", fill: "#51484f"},
+{source: "24: requirements providing qualified employees", target: "24: timely manner pricing", fill: "#51484f"},
+{source: "24: timely manner pricing", target: "24: competitively", fill: "#51484f"},
+{source: "24: competitively", target: "24: effectively", fill: "#51484f"},
+{source: "24: primary competitive factors", target: "36: Additionally ", fill: "#ffa089"},
+{source: "36: Additionally ", target: "36: incremental fees from", fill: "#ffa089"},
+{source: "36: incremental fees from", target: "36: organizations", fill: "#ffa089"},
+{source: "36: organizations", target: "36: may negatively", fill: "#ffa089"},
+{source: "36: may negatively", target: "36: profitability", fill: "#ffa089"},
+{source: "36: Additionally ", target: "START_HERE", fill: "#ffa089"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Life and Health Insurance</td>
+    </tr>
+    <tr>
+      <td>Insurance Brokers</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Policy</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Health_professional">Health professional</a></td>
+      <td>A health professional , healthcare professional, or healthcare worker (sometimes abbreviated HCW) is a provider of health care treatment and advice based on formal training and experience. The field includes those who work as a nurse, physician (such as family physician, internist, obstetrician, psychiatrist, radiologist, surgeon etc.), physician assistant,  registered dietitian, veterinarian, veterinary technician, optometrist, pharmacist, pharmacy technician, medical assistant, physical therapist, occupational therapist, dentist, midwife, psychologist, or who perform services in allied health professions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hospital">Hospital</a></td>
+      <td>A hospital is a health care institution providing patient treatment with specialized health science and auxiliary healthcare staff and medical equipment. The best-known type of hospital is the general hospital, which typically has an emergency department to treat urgent health problems ranging from fire and accident victims to a sudden illness.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional">Professional</a></td>
+      <td>A professional is a member of a profession or any person who earns a living from a specified professional activity. The term also describes the standards of education and training that prepare members of the profession with the particular knowledge and skills necessary to perform their specific role within that profession.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Professionals_(The_Professionals_album)">The Professionals (The Professionals album)</a></td>
+      <td>The Professionals was going to be the debut album of the rock band the Professionals. It was originally scheduled for release in 1980 by Virgin Records.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_wrestling">Professional wrestling</a></td>
+      <td>Professional wrestling, often shortened to pro wrestling, or simply wrestling, is a form of entertainment and performing art which combines athletics with theatrical performance. It takes the form of scripted "matches," which are presented as authentic combat sport.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_sports">Professional sports</a></td>
+      <td>In professional sports, as opposed to amateur sports, participants receive payment for their performance. Professionalism in sport has come to the fore through a combination of developments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_association">Professional association</a></td>
+      <td>A professional association (also called  a professional body, professional organization, or professional society) usually seeks to further a particular profession, the interests of individuals and organisations engaged in that profession, and the public interest. In the United States, such an association is typically a nonprofit business league for tax purposes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_development">Professional development</a></td>
+      <td>Professional development is learning to earn or maintain professional credentials such as academic degrees to formal coursework, attending conferences, and informal learning opportunities situated in practice. It has been described as intensive and collaborative, ideally incorporating an evaluative stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professionalization">Professionalization</a></td>
+      <td>Professionalization is a social process by which any trade or occupation transforms itself into a true "profession of the highest integrity and competence." The definition of what constitutes a profession is often contested. Professionalization tends to result in establishing acceptable qualifications, one or more professional associations to recommend best practice and to oversee the conduct of members of the profession, and some degree of demarcation of the qualified from unqualified amateurs (that is, professional certification).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Group_medical_practice_in_the_United_States">Group medical practice in the United States</a></td>
+      <td>Group medical practices practice medicine by physicians who share resources.There are approximately 230,187 physician practices in the United States. Among the physician practices, 16.5% had only one office-based physician in 2016.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Concierge_medicine">Concierge medicine</a></td>
+      <td>Concierge medicine, also known as retainer medicine, is a relationship between a patient and a primary care physician in which the patient pays an annual fee or retainer. This may or may not be in addition to other charges.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Managed_care">Managed care</a></td>
+      <td>The term managed care or managed healthcare is used in the United States to describe a group of activities intended to reduce the cost of providing health care and providing American health insurance while improving the quality of that care ("managed care techniques").  It has become the predominant system of delivering and receiving American health care since its implementation in the early 1980s, and has been largely unaffected by the Affordable Care Act of 2010.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/National_Accreditation_Board_for_Hospitals_&amp;_Healthcare_Providers">National Accreditation Board for Hospitals &amp; Healthcare Providers</a></td>
+      <td>National Accreditation Board for Hospitals &amp; Healthcare Providers), abbreviated as NABH, is a constituent board of Quality Council of India (QCI), set up to establish and operate accreditation programme for healthcare organizations. Formed in 2005, it is the principal accreditation for hospitals in India.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Health_facility">Health facility</a></td>
+      <td>A health facility is, in general, any location where healthcare is provided. Health facilities range from small clinics and doctor's offices to urgent care centers and large hospitals with elaborate emergency rooms and trauma centers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Physician">Physician</a></td>
+      <td>A physician (American English), medical practitioner (Commonwealth English), medical doctor, or simply doctor, is a health professional who practices medicine, which is concerned with promoting, maintaining or restoring health through the study, diagnosis, prognosis and treatment of disease, injury, and other physical and mental impairments. Physicians may focus their practice on certain disease categories, types of patients, and methods of treatment—known as specialities—or they may assume responsibility for the provision of continuing and comprehensive medical care to individuals, families, and communities—known as general practice.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medical_specialty">Medical specialty</a></td>
+      <td>A medical specialty is a branch of medical practice that is focused on a defined group of patients, diseases, skills, or philosophy. Examples include children (paediatrics), cancer (oncology), laboratory medicine (pathology), or primary care (family medicine).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Osteopathic_medicine_in_the_United_States">Osteopathic medicine in the United States</a></td>
+      <td>Osteopathic medicine is a branch of the medical profession in the United States that promotes the practice of allopathic medicine with a set of philosophy and principles set by its earlier form, osteopathy. Osteopathic physicians (DOs) are licensed to practice medicine and surgery in all 50 US states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Porter's_five_forces_analysis">Porter's five forces analysis</a></td>
+      <td>Porter's Five Forces Framework is a method of analysing the operating environment of a competition of a business. It draws from industrial organization (IO) economics to derive five forces that determine the competitive intensity and, therefore, the attractiveness (or lack thereof) of an industry in terms of its profitability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NCH_Healthcare_System">NCH Healthcare System</a></td>
+      <td>The NCH Healthcare System (NCH) is a not-for-profit, healthcare system located in Naples, Florida, United States with 4300 employees as of 2021, of which 730 are staff physicians. The healthcare system consists of two hospitals: the Baker Hospital located in downtown Naples and the North Naples campus.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sentara_Healthcare">Sentara Healthcare</a></td>
+      <td>Sentara Healthcare is a not-for-profit healthcare organization serving Virginia and northeastern North Carolina. It is based in Norfolk, Virginia and offers services in 12 acute care hospitals, with 3,739 beds, 853,000 members in its health plan, 10 nursing centers, and three assisted living facilities across the two states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beebe_Healthcare">Beebe Healthcare</a></td>
+      <td>Beebe Healthcare is a healthcare system serving Sussex County in southern Delaware in the United States. Its primary facility is Beebe Medical Center, a hospital in Lewes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_analysis">Profitability analysis</a></td>
+      <td>In cost accounting, profitability analysis is an analysis of the profitability of an organisation's output. Output of an organisation can be grouped into products, customers, locations, channels and/or transactions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Small_Is_Profitable">Small Is Profitable</a></td>
+      <td>Small Is Profitable: The Hidden Economic Benefits of Making Electrical Resources the Right Size is a 2002 book by energy analyst Amory Lovins and others.  The book describes 207 ways in which the size of "electrical resources"—devices that make, save, or store electricity—affects their economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitable_growth">Profitable growth</a></td>
+      <td>Profitable Growth is the combination of profitability and growth, more precisely the combination of Economic Profitability and Growth of Free cash flows. Profitable growth is aimed at seducing the financial community; it emerged in the early 80s when shareholder value creation became firms’ main objective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer profitability (CP) is the profit the firm makes from serving a customer or customer group over a specified period of time, specifically the difference between the revenues earned from and the costs associated with the customer relationship in a specified period. According to Philip Kotler,"a profitable customer is a person, household or a company that overtime, yields a revenue stream that exceeds by an acceptable amount the company's cost stream of attracting, selling and servicing the customer."\nCalculating customer profit is an important step in understanding which customer relationships are better than others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SAP_ERP">SAP ERP</a></td>
+      <td>SAP ERP is an enterprise resource planning software developed by the German company SAP SE. SAP ERP incorporates the key business functions of an organization. The latest version of SAP ERP (V.6.0) was made available in 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Return_on_equity">Return on equity</a></td>
+      <td>The return on equity (ROE) is a measure of the profitability of a business in relation to the equity. Because shareholder's equity can be calculated by taking all assets and subtracting all liabilities, ROE can also be thought of as a return on assets minus liabilities.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AMN HEALTHCARE SERVICES INC      Item 1A <font color="blue">Risk Factors </font>         The <font color="blue">following risk factors should</font> be read <font color="blue">carefully</font> in <font color="blue">connection with</font>     <font color="blue">evaluating us</font> and the forward-looking statements contained in this Annual     Report on Form 10-K Any of the <font color="blue">following risks could <font color="blue">materially</font> <font color="blue">adversely</font></font>     affect our company, operating results, <font color="blue">financial condition</font> and the actual     outcome of <font color="blue">matters as</font> to which forward- looking statements are made in this     <font color="blue">Annual Report </font>on Form 10-K Certain statements in “Risk Factors” <font color="blue">constitute</font>     “forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>” Our actual results <font color="blue">could differ <font color="blue">materially</font></font>     from  those projected in the forward-looking statements as a result of     <font color="blue">certain factors</font> and <font color="blue"><font color="blue">uncertainties</font> set forth</font> below and elsewhere in this     Annual  Report  on Form 10-K See “Item 7</td>
+    </tr>
+    <tr>
+      <td>Management’s Discussion and     Analysis of Financial Condition and Results of Operations—Special Note     Regarding Forward-Looking Statements</td>
+    </tr>
+    <tr>
+      <td>”         If we are unable to continue to recruit and retain <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font>     for our <font color="blue">healthcare staffing</font> business <font color="blue">at reasonable costs</font>, it <font color="blue">could increase</font>     our operating costs and <font color="blue"><font color="blue">negatively</font> impact</font> our business</td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">rely <font color="blue">significant</font>ly on</font> our ability to recruit and retain healthcare     <font color="blue"><font color="blue">professional</font>s</font> who possess the skills, experience and <font color="blue">licenses <font color="blue">necessary</font></font> to     meet the <font color="blue">requirements</font> of our hospital, <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font> and     <font color="blue"><font color="blue">physician practice</font> groups</font></td>
+    </tr>
+    <tr>
+      <td>We compete for <font color="blue">healthcare staffing</font> personnel with     other temporary <font color="blue">healthcare staffing</font> companies and with hospitals, healthcare     <font color="blue">facilities</font> and <font color="blue"><font color="blue">physician practice</font> groups</font> based on the quantity, diversity     and quality of assignments offered, compensation packages and the benefits     that  we provide to our <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font></td>
+    </tr>
+    <tr>
+      <td>We rely on our human     capital   intensive,   relationship-oriented   approach  and  national     <font color="blue">infrastructure</font> to <font color="blue">enable us</font> to compete in the <font color="blue">permanent physician staffing</font>     business</td>
+    </tr>
+    <tr>
+      <td>We  must  <font color="blue">continually evaluate</font> and expand our temporary and     <font color="blue"><font color="blue">permanent healthcare</font> <font color="blue">professional</font> network</font> to keep pace with the needs of our     hospital, <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font> and <font color="blue"><font color="blue">physician practice</font> groups</font></td>
+    </tr>
+    <tr>
+      <td>Currently, there is a shortage of qualified nurses, physicians and certain     allied  healthcare  <font color="blue"><font color="blue">professional</font>s</font>  in  the  United States, <font color="blue">significant</font>     <font color="blue">competition</font> exists for these personnel, and salaries and benefits have     risen</td>
+    </tr>
+    <tr>
+      <td>We may be unable to continue to increase the number of temporary and     permanent <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> that we recruit, <font color="blue">decreasing</font> the potential     for growth of our business</td>
+    </tr>
+    <tr>
+      <td>Our ability to recruit and retain temporary and     permanent <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> <font color="blue">depends on</font> several factors, including our     ability  to  provide our <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> with assignments and     <font color="blue">placements</font>  that  they view <font color="blue">as attractive</font> and to provide our temporary     <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> with <font color="blue">competitive</font> wages and benefits, including     health  insurance  and  housing</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be     successful in any of these areas as the costs of <font color="blue">attracting healthcare</font>     <font color="blue"><font color="blue">professional</font>s</font> and <font color="blue">providing them with attractive benefit packages may</font> be     <font color="blue">higher than</font> we anticipate, or we may be unable to pass these costs on to our     hospital and <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to increase the     rates that we charge our hospital and <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font> to cover     these costs, our <font color="blue"><font color="blue">profitability</font> could decline</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, if we are unable to     <font color="blue">recruit temporary</font> and permanent <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font>, the quality of our     services to our hospital and <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font> may decline and, as     a result, we <font color="blue">could lose clients</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">operations</font> may deteriorate</font> if we are unable to continue to attract,     develop and retain our sales and <font color="blue"><font color="blue">operations</font> personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our success is <font color="blue"><font color="blue">dependent</font> upon</font> the performance of our sales and <font color="blue">operations</font>     personnel</td>
+    </tr>
+    <tr>
+      <td>The number of individuals who meet our <font color="blue"><font color="blue">qualification</font>s</font> for these     positions  is  limited, and we may experience <font color="blue">difficulty</font> in attracting     <font color="blue">qualified candidates</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we commit substantial resources to the     training,  <font color="blue">development</font>  and  support of our personnel</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for     qualified sales personnel in the line of business in which we operate is     strong, and there is a risk that we may not be able to retain our sales     personnel after we have expended the time and expense to recruit and train     them</td>
+    </tr>
+    <tr>
+      <td>12     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>We operate in a <font color="blue">highly <font color="blue">competitive</font> market</font> and our <font color="blue">success <font color="blue">depends on</font></font> our     ability  to  remain  <font color="blue">competitive</font>  in obtaining and retaining hospital,     <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group clients and <font color="blue">demonstrating</font>     the value of our services</td>
+    </tr>
+    <tr>
+      <td>The temporary <font color="blue">healthcare staffing</font> business is highly <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>We compete     in  national,  regional  and  local markets with full-service staffing     companies, specialized <font color="blue">temporary staff</font>ing agencies and <font color="blue">hospital systems</font> that     have  developed  their  own  <font color="blue">interim staffing pools</font></td>
+    </tr>
+    <tr>
+      <td>Some of our large     <font color="blue">competitors</font> in the <font color="blue">temporary nurse</font> and <font color="blue">locum tenens staffing sectors</font> include     Cross Country Healthcare, InteliStaf Healthcare, CHG Healthcare Services,     Inc, On Assignment, and Medical Doctor Associates</td>
+    </tr>
+    <tr>
+      <td>We believe that the primary <font color="blue">competitive</font> factors in obtaining and retaining     hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group clients are     identifying   qualified  healthcare  <font color="blue"><font color="blue">professional</font>s</font>  for  specific  job     <font color="blue">requirements</font>, providing qualified employees in a timely manner, pricing     services  <font color="blue">competitive</font>ly  and  <font color="blue">effectively</font>  monitoring  employees’  job     performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and physician     practice group clients and temporary and permanent <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font>     may increase in the future due to these factors or a shortage of qualified     <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> in the marketplace and, as a result, we may not be     able to remain <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>To the extent <font color="blue">competitors</font> seek to gain or retain     market share by reducing prices or increasing marketing <font color="blue">expenditures</font>, we     could lose revenue or clients and our margins could decline, which could     seriously harm our operating results and cause the price of our stock to     decline</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">development</font> of <font color="blue">alternative <font color="blue">recruitment</font> channels</font>     could  lead our clients to bypass our services, which would also cause     revenue and margins to decline</td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue">depends upon</font> our ability to secure and <font color="blue">fill new <font color="blue">orders from</font></font> our     hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group clients because     our  temporary  healthcare  staffing business does not have long-term,     exclusive or <font color="blue">guaranteed contracts with them</font>, and <font color="blue">economic conditions may</font>     <font color="blue"><font color="blue">adversely</font> impact</font> the number of new orders and contracts we receive</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">generally</font> do not have long-term, exclusive or guaranteed order contracts     for temporary <font color="blue">healthcare staffing</font> with our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and     <font color="blue">physician practice</font> group clients</td>
+    </tr>
+    <tr>
+      <td>The success of our business is <font color="blue">dependent</font>     upon  our  ability to <font color="blue">continually secure new contracts</font> and <font color="blue">orders from</font>     hospitals, healthcare <font color="blue">facilities</font> and <font color="blue"><font color="blue">physician practice</font> groups</font> and to fill     those <font color="blue">orders with</font> our temporary <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font></td>
+    </tr>
+    <tr>
+      <td>Our hospital,     <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group clients are free to award     contracts and place <font color="blue">orders with</font> our <font color="blue">competitors</font> and choose to <font color="blue">use temporary</font>     <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> that our <font color="blue">competitors</font> offer them</td>
+    </tr>
+    <tr>
+      <td>Therefore, we must     maintain positive <font color="blue">relationships with</font> our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and     physician  practice  group  clients</td>
+    </tr>
+    <tr>
+      <td>If  we fail to maintain positive     <font color="blue">relationships with</font> our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font>     group clients or are unable to provide a cost-effective staffing solution,     we may be unable to <font color="blue">generate new <font color="blue">temporary healthcare</font> <font color="blue">professional</font> orders</font>     and our business may be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>Some hospitals and <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font> choose to outsource this     contract  and  order function to <font color="blue">staffing associations</font> owned by member     healthcare <font color="blue">facilities</font> or <font color="blue">companies with vendor <font color="blue">management</font> services</font> that may     act <font color="blue">as intermediaries with</font> our client <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">organizations</font> may</font>     impact our ability to obtain <font color="blue">new clients</font> and maintain our <font color="blue">existing client</font>     <font color="blue">relationships by impeding</font> our ability to access and <font color="blue">contract directly with</font>     healthcare  <font color="blue">facility</font>  clients</td>
+    </tr>
+    <tr>
+      <td>Additionally, we may experience pricing     pressure or <font color="blue">incremental fees from</font> these <font color="blue">organizations</font> that <font color="blue">may <font color="blue">negatively</font></font>     impact our revenue and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depressed </font>economic conditions, such as increasing un<font color="blue">employment</font> rates and low     job growth, could also <font color="blue">negatively</font> influence our ability to <font color="blue">secure new orders</font>     and  contracts  <font color="blue">from clients</font></td>
+    </tr>
+    <tr>
+      <td>In times of economic downturn, permanent     <font color="blue">healthcare <font color="blue">facility</font></font> staff may be more inclined to work overtime and less     likely to leave their positions, resulting in <font color="blue">fewer available vacancies</font> and     less  demand  for  our services</td>
+    </tr>
+    <tr>
+      <td>Fewer placement <font color="blue">opportunities</font> for our     temporary <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> impairs our ability to recruit and place     <font color="blue">both temporary</font> and permanent placement <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> and our     revenues and <font color="blue">profitability</font> may decline as a result of this constricted     demand and supply</td>
+    </tr>
+    <tr>
+      <td>13     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font>The  demand  for  our services, and therefore the <font color="blue">profitability</font> of our     business, may be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> by changes in the staffing needs due to     <font color="blue">fluctuations</font>  in  hospital  <font color="blue">admissions</font>  or <font color="blue">staffing <font color="blue">preferences</font></font> of our     <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font></td>
+    </tr>
+    <tr>
+      <td>Demand for our temporary <font color="blue">healthcare staffing</font> services is     affected by the staffing needs and <font color="blue">preferences</font> of our <font color="blue">healthcare <font color="blue">facility</font></font>     clients, as well as by <font color="blue">fluctuations</font> in patient occupancy at our client     healthcare <font color="blue">facilities</font> due to economic factors and seasonal <font color="blue">fluctuations</font> that     are beyond our control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Hospitals </font>in certain <font color="blue">geographical</font> regions experience <font color="blue">significant</font> seasonal     <font color="blue">fluctuations</font> in <font color="blue">admissions</font>, and must be able to adjust their staffing levels     to <font color="blue">accommodate</font> the change in patient census</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font>     may choose to <font color="blue">use temporary</font> staff, <font color="blue">additional</font> overtime from their permanent     staff or <font color="blue">add new <font color="blue">permanent staff</font></font> in order to <font color="blue">accommodate</font> changes in their     staffing needs</td>
+    </tr>
+    <tr>
+      <td>Many healthcare <font color="blue">facilities</font> will utilize <font color="blue">temporary healthcare</font>     <font color="blue"><font color="blue">professional</font>s</font>  to  <font color="blue">accommodate</font>  an  increase  in  hospital <font color="blue">admissions</font></td>
+    </tr>
+    <tr>
+      <td>Alternatively, if hospital <font color="blue">admissions</font> decrease, the demand for our temporary     healthcare  <font color="blue"><font color="blue">professional</font>s</font>  may  decline as <font color="blue"><font color="blue">healthcare <font color="blue">facility</font></font> clients</font>     <font color="blue">typically will reduce</font> their use of <font color="blue">temporary staff</font> before reducing the     workload or undertaking layoffs of their <font color="blue">regular employees</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we     may experience more <font color="blue">competitive</font> pricing pressure during periods of patient     occupancy and hospital admission downturns, <font color="blue"><font color="blue">negatively</font> impact</font>ing our revenue     and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The ability of our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font>     group clients to retain and increase the <font color="blue">productivity</font> of their permanent     <font color="blue">staff may affect</font> the demand for our services</td>
+    </tr>
+    <tr>
+      <td>If our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group clients     retain and increase the <font color="blue">productivity</font> of their <font color="blue">permanent staff</font>, their need     for our <font color="blue">services may decline</font></td>
+    </tr>
+    <tr>
+      <td>Higher <font color="blue">permanent staff</font> retention rates and     increased <font color="blue">productivity</font> of <font color="blue">permanent staff</font> members could result in increased     efficiencies, thereby reducing the demand for both our <font color="blue">temporary staff</font>ing     and permanent placement services, which could <font color="blue"><font color="blue">negatively</font> impact</font> our revenue     and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We operate in a <font color="blue">regulated industry</font> and changes in <font color="blue">regulations</font> or violations     of <font color="blue">regulations</font> may result in <font color="blue">increased costs</font> or sanctions that <font color="blue">could reduce</font>     revenue and <font color="blue">profitability</font> and may impact our ability to grow and operate our     business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">healthcare industry</font> is subject to extensive and <font color="blue">complex federal</font> and     state laws and <font color="blue">regulations</font> related to <font color="blue">professional</font> licensure, conduct of     <font color="blue">operations</font>, costs and payment for services and payment for referrals</td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">generally</font> not subject to the extensive and <font color="blue">complex laws</font> that     apply to our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group     clients, including laws related to Medicare, Medicaid and other federal and     state  healthcare  programs</td>
+    </tr>
+    <tr>
+      <td>However, these laws and <font color="blue">regulations</font> could     <font color="blue">indirectly</font>  affect the demand or the <font color="blue">prices paid</font> for our services</td>
+    </tr>
+    <tr>
+      <td>For     example, our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group     <font color="blue"><font color="blue">clients could</font> suffer civil</font> and <font color="blue">criminal penalties</font> and be <font color="blue">excluded from</font>     <font color="blue">participating</font> in Medicare, Medicaid and other <font color="blue">healthcare programs</font> if they     fail to <font color="blue">comply with</font> the laws and <font color="blue">regulations</font> applicable to their <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group     <font color="blue">clients could</font> receive <font color="blue">reduced reimbursements</font>, or be <font color="blue">excluded from</font> coverage,     because of a change in the rates or <font color="blue">conditions set by federal</font> or state     <font color="blue">governments</font></td>
+    </tr>
+    <tr>
+      <td>In turn, violations of or changes to these laws and <font color="blue">regulations</font>     that  <font color="blue"><font color="blue">adversely</font> affect</font> our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and physician     practice group <font color="blue">clients could</font> also <font color="blue"><font color="blue">adversely</font> affect</font> the prices and demand for     our services</td>
+    </tr>
+    <tr>
+      <td>For example, legislation in <font color="blue">Massachusetts </font>limited the hourly     rate paid to <font color="blue">temporary nursing agencies</font> for registered nurses, licensed     <font color="blue">practical nurses</font> and <font color="blue">certified nurses aides</font></td>
+    </tr>
+    <tr>
+      <td>While we are <font color="blue">exempt from</font> this     regulation, in part, similar <font color="blue">regulations</font> may be enacted in other states in     which  we operate, and as a result revenue and <font color="blue">margins could decrease</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, third party payers, such as health maintenance <font color="blue">organizations</font>,     <font color="blue">increasingly challenge</font> the <font color="blue">prices charged</font> for <font color="blue">medical care</font></td>
+    </tr>
+    <tr>
+      <td>Failure by     hospitals, healthcare                                           14     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font><font color="blue">facilities</font> and <font color="blue"><font color="blue">physician practice</font> groups</font> to obtain full <font color="blue">reimbursement from</font>     those third party payers <font color="blue">could reduce</font> the demand or the price paid for our     services</td>
+    </tr>
+    <tr>
+      <td>We are also subject to <font color="blue">certain laws</font> and <font color="blue">regulations</font> applicable to healthcare     staffing  agencies  and  general <font color="blue">temporary staff</font>ing services</td>
+    </tr>
+    <tr>
+      <td>Like all     employers, we must also <font color="blue">comply with</font> various laws and <font color="blue">regulations</font> relating to     pay practices, workers compensation and <font color="blue">immigration</font></td>
+    </tr>
+    <tr>
+      <td>As we continue to grow,     we believe that we are more likely to be a target of <font color="blue">challenges</font> to our pay     practices, such as <font color="blue">challenges</font> to our <font color="blue">employee classifications under</font> the Fair     Labor Standards Act</td>
+    </tr>
+    <tr>
+      <td>There is a risk that we could be subject to payment of     <font color="blue">additional</font> wages, insurance and <font color="blue">employment</font> and payroll related taxes if     certain of our corporate employees classified as <font color="blue">exempt from</font> overtime and     minimum wage <font color="blue">requirements</font> are re-classified as non-<font color="blue">exempt from</font> overtime and     minimum wage <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Because of the nature of our business, the impact     of these laws and <font color="blue">regulations</font> may have a more pronounced effect on our     business</td>
+    </tr>
+    <tr>
+      <td>These laws and <font color="blue">regulations</font> may also impede our ability to grow our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">primarily draw</font> our supply of <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> from the United     States, but international supply channels have represented a small but     growing <font color="blue">temporary nurse</font> supply source</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">recruit healthcare</font>     <font color="blue"><font color="blue">professional</font>s</font> through these <font color="blue">foreign supply channels may</font> be <font color="blue">impacted by</font>     <font color="blue">government legislation limiting</font> the number of <font color="blue">immigrant visas</font> that can be     issued</td>
+    </tr>
+    <tr>
+      <td>Additionally, we have incurred and <font color="blue">will continue</font> to <font color="blue">incur <font color="blue">additional</font> legal</font>     and <font color="blue"><font color="blue">accounting</font> expenses</font> related to <font color="blue">compliance with corporate governance</font> and     <font color="blue">disclosure standards implemented by</font> the Sarbanes-Oxley Act of 2002, the     rules <font color="blue">of the New York Stock Exchange </font>and <font color="blue">regulations</font> <font color="blue">of the Securities </font>and     <font color="blue">Exchange Commission</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulations </font>promulgated in <font color="blue">connection with</font> Section 404     of the Sarbanes-Oxley Act of 2002 require an annual and quarterly review by     <font color="blue">management</font> and <font color="blue">evaluation</font> of our <font color="blue">internal control</font> systems, in addition to an     <font color="blue">annual auditor attestation</font> of the <font color="blue">effectiveness</font> of these systems, which     <font color="blue">commenced with</font> our <font color="blue">fiscal year</font> ended on <font color="blue">December </font>31, 2004 (exclusive of our     <font color="blue">recent <font color="blue">acquisition</font></font> of The MHA Group, Inc</td>
+    </tr>
+    <tr>
+      <td>In addition, as of <font color="blue">December </font>31,     2006,  we will need to certify the <font color="blue">sufficiency</font> of the <font color="blue">internal control</font>     systems  of MHA If we fail to <font color="blue">comply with</font> these laws and <font color="blue">regulations</font>,     damages, civil and <font color="blue">criminal penalties</font>, injunctions and cease and desist     orders  may be imposed, which would <font color="blue"><font color="blue">negatively</font> impact</font> our business and     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The increase in <font color="blue">costs necessitated by compliance with</font> the laws     and <font color="blue">regulations</font> affecting our business reduces our overall <font color="blue">profitability</font>,     and  reduces the assets and <font color="blue">resources available</font> for <font color="blue">utilization</font> in the     expansion of our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">profitability</font> is <font color="blue">impacted by</font> our ability to leverage our <font color="blue">cost structure</font></td>
+    </tr>
+    <tr>
+      <td>We have technology, <font color="blue">operations</font> and human capital <font color="blue">infrastructure</font>s to support     our  existing  business and contemplated growth</td>
+    </tr>
+    <tr>
+      <td>In the event that our     business does not grow at the rate that we had anticipated, our <font color="blue">inability</font> to     reduce these costs would impair our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, if we are     not able to <font color="blue">capitalize on</font> this <font color="blue">infrastructure</font> our <font color="blue">earnings growth rate will</font>     be impacted</td>
+    </tr>
+    <tr>
+      <td>The variation in pricing of the <font color="blue">healthcare <font color="blue">facility</font></font> contracts under which we     place  temporary  and  permanent  <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> impacts our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The pricing of our contracts with hospitals, healthcare <font color="blue">facilities</font> and     <font color="blue"><font color="blue">physician practice</font> groups</font> may vary depending on circumstances, including     geographic location, economic conditions and supply and <font color="blue">demand factors</font></td>
+    </tr>
+    <tr>
+      <td>These  pricing  variables  impact our gross margin and could result in     decreased <font color="blue">profitability</font> if we are unable to <font color="blue">renew existing accounts on</font>     <font color="blue">economically</font> favorable terms</td>
+    </tr>
+    <tr>
+      <td>15     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>We  may  not  be  able to <font color="blue">successfully</font> implement our <font color="blue">strategic growth</font>,     <font color="blue">acquisition</font> and <font color="blue">integration strategies</font></td>
+    </tr>
+    <tr>
+      <td>An effective growth <font color="blue">management</font> strategy is <font color="blue">necessary</font> to <font color="blue">organically grow</font> our     current <font color="blue">operations</font>, and if we do not <font color="blue">successfully</font> execute on this growth     strategy, our <font color="blue"><font color="blue">profitability</font> could decline</font></td>
+    </tr>
+    <tr>
+      <td>We continue to <font color="blue">explore strategic</font>     <font color="blue">acquisition</font>  <font color="blue">opportunities</font>  to supplement our <font color="blue">organic growth strategy</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions  </font>involve  <font color="blue">significant</font>  risks and <font color="blue">uncertainties</font>, including     <font color="blue">difficulties <font color="blue">integrating</font></font> acquired personnel and other <font color="blue">corporate cultures</font>     into our business, the <font color="blue">potential loss</font> of <font color="blue">key employees</font> or customers of     acquired companies, the <font color="blue">assumption</font> of <font color="blue">liabilities</font> and exposure to unforeseen     <font color="blue">liabilities</font> of acquired companies and the diversion of <font color="blue">management</font> attention     from  existing  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">fully integrate</font> the     <font color="blue">operations</font> of the acquired <font color="blue">businesses</font> with our own in an <font color="blue">efficient</font> and     cost-effective  manner</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions  </font>may  also  require  <font color="blue">significant</font>     <font color="blue">expenditures</font> of cash and other resources and <font color="blue">assumption</font> of debt that may     ultimately  <font color="blue">negatively</font>  impact  our  <font color="blue">overall financial performance</font></td>
+    </tr>
+    <tr>
+      <td>In     particular,  we are still in the process of <font color="blue">integrating</font> our recent MHA     <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Difficulties </font>in maintaining our <font color="blue">management</font> information and <font color="blue">communications</font>     systems may result in <font color="blue">increased costs</font> that reduce our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to deliver our <font color="blue">staffing services</font> to our hospital, healthcare     <font color="blue">facility</font>  and <font color="blue">physician practice</font> group clients and manage our internal     <font color="blue">systems depends</font> to a large <font color="blue">extent upon</font> our access to and the performance of     our <font color="blue">management</font> information and <font color="blue">communications</font> systems</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">systems also</font>     maintain <font color="blue">accounting</font> and financial information, which we <font color="blue">depend upon</font> to     fulfill  our  financial reporting <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>If these systems do not     <font color="blue">adequately support</font> our <font color="blue">operations</font>, these systems are damaged or if we are     required to incur <font color="blue">significant</font> <font color="blue">additional</font> costs to repair, maintain or expand     these  systems, our business and financial results could be <font color="blue">materially</font>     <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>Although we have <font color="blue">risk mitigation measures</font>, these     systems, and our access to these systems, are not <font color="blue">impervious</font> to floods,     fire,  storms,  or  other  natural  <font color="blue">disasters</font>, and the loss of systems     information could result in <font color="blue">disruption</font> to our business</td>
+    </tr>
+    <tr>
+      <td>The  challenge  to  the  classification  of  certain of our healthcare     <font color="blue"><font color="blue">professional</font>s</font>  as  in<font color="blue">dependent</font>  contractors could <font color="blue"><font color="blue">adversely</font> impact</font> our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Although there is a long-standing industry standard to <font color="blue">treat physicians as</font>     in<font color="blue">dependent</font> contractors, there is a risk we could be subject to <font color="blue">additional</font>     wage and insurance claims, <font color="blue">employment</font> and payroll-related taxes if federal     or  state  taxing  <font color="blue">authorities</font>  re-classify our in<font color="blue">dependent</font> contractor     physicians as employees, which would <font color="blue">significant</font>ly reduce our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In  addition, many states have laws which prohibit non-physician owned     <font color="blue">companies from employing physicians which</font> we refer to as the “corporate     practice  of  medicine</td>
+    </tr>
+    <tr>
+      <td>”  If our in<font color="blue">dependent</font> contractor physicians are     classified  as  employees, we would be in violation of state laws that     prohibit the <font color="blue">corporate practice</font> of medicine, which would have a substantial     <font color="blue">negative impact on</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The impact of <font color="blue">medical malpractice</font> and other claims asserted <font color="blue"><font color="blue">against us</font> could</font>     subject us to substantial <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">recent years</font>, our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font>     group clients are subject to a number of <font color="blue">legal actions</font> alleging malpractice     or related <font color="blue">legal theories</font></td>
+    </tr>
+    <tr>
+      <td>Because our temporary and <font color="blue">permanent healthcare</font>     <font color="blue"><font color="blue">professional</font>s</font> provide <font color="blue">medical care</font> and we <font color="blue">provide credentialing</font> of these     healthcare  <font color="blue"><font color="blue">professional</font>s</font>,  claims  may  be <font color="blue">brought <font color="blue">against us</font></font> and our     <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> relating to the <font color="blue">recruitment</font> and <font color="blue">qualification</font> of     these <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> and the quality of <font color="blue">medical care</font> provided by     our  temporary  healthcare  <font color="blue"><font color="blue">professional</font>s</font> while on assignment or after     <font color="blue">placement at</font> our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font> group     clients</td>
+    </tr>
+    <tr>
+      <td>We and the healthcare <font color="blue">professional</font> are <font color="blue">at times named</font> in these     <font color="blue">lawsuits regardless</font> of our <font color="blue">contractual</font> <font color="blue">obligations</font>, the <font color="blue">competency</font> of the     healthcare <font color="blue">professional</font>, the standard of <font color="blue">care provided by</font> the healthcare     <font color="blue">professional</font> or the quality of service that we provided</td>
+    </tr>
+    <tr>
+      <td>In some instances,     we are required to indemnify hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and physician     practice group <font color="blue">clients <font color="blue">contractual</font>ly against</font> some or all of these potential     <font color="blue">legal actions</font></td>
+    </tr>
+    <tr>
+      <td>Also, because some of our temporary <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font>     are  our employees, we may be subject to various <font color="blue">employment</font> claims and     <font color="blue">contractual</font>  disputes  regarding  the  terms of a <font color="blue">temporary healthcare</font>     <font color="blue">professional</font>’s <font color="blue">employment</font></td>
+    </tr>
+    <tr>
+      <td>16     ______________________________________________________________________    [40]Table of <font color="blue">Contents       </font>Because  we  are  in  the business of placing our <font color="blue">temporary healthcare</font>     <font color="blue"><font color="blue">professional</font>s</font>  in the workplaces of other companies, we are subject to     possible  claims  by  our  temporary <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> alleging     <font color="blue">discrimination</font>,  <font color="blue">sexual harassment</font> and other similar <font color="blue">activities by</font> our     hospital  and  healthcare  <font color="blue">facility</font>  clients</td>
+    </tr>
+    <tr>
+      <td>We maintain a policy for     <font color="blue">employment</font> practices coverage</td>
+    </tr>
+    <tr>
+      <td>However, the cost of defending such claims,     even  if  groundless, could be substantial and the <font color="blue">associated negative</font>     publicity could <font color="blue"><font color="blue">adversely</font> affect</font> our ability to attract, retain and place     <font color="blue">qualified individuals</font> in the future</td>
+    </tr>
+    <tr>
+      <td>We maintain <font color="blue">various types</font> of <font color="blue">insurance coverage</font>, including <font color="blue">professional</font>     liability, workers compensation and <font color="blue">employment</font> practices, through insurance     carriers, and we also self-insure for these claims <font color="blue">through accruals</font> for     <font color="blue">retention reserves</font></td>
+    </tr>
+    <tr>
+      <td>We may experience increased <font color="blue">insurance costs</font> and reserve     accruals and may not be able to pass on all or any portion of increased     <font color="blue">insurance costs</font> to our hospital, <font color="blue">healthcare <font color="blue">facility</font></font> and <font color="blue">physician practice</font>     group clients, thereby reducing our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">insurance coverage</font>     and <font color="blue">reserve <font color="blue">accruals may</font></font> not be sufficient to cover all claims <font color="blue">against us</font>,     and we may be exposed to substantial <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Terrorist </font>threats or <font color="blue">attacks may disrupt</font> or <font color="blue"><font color="blue">adversely</font> affect</font> our business     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue">operations</font> may be <font color="blue">interrupted</font> or <font color="blue"><font color="blue">adversely</font> impact</font>ed in the     <font color="blue">United States </font>and abroad in the event of a <font color="blue">terrorist attack</font> or heightened     <font color="blue">security alerts</font></td>
+    </tr>
+    <tr>
+      <td>Our temporary <font color="blue">healthcare <font color="blue"><font color="blue">professional</font>s</font></font> may become reluctant     to travel and <font color="blue">may decline assignments based upon</font> the perceived risk of     terrorist activity, which would reduce our revenue and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  terrorist  activity or <font color="blue">threats may impede</font> our access to our     <font color="blue">management</font> and information systems resulting in loss of revenue</td>
+    </tr>
+    <tr>
+      <td>We do not     maintain <font color="blue">insurance coverage</font> against <font color="blue">terrorist attack</font>s</td>
+    </tr>
+    <tr>
+      <td>If we are unable to carry out our business strategy our <font color="blue">profitability</font> could     be <font color="blue"><font color="blue">negatively</font> impact</font>ed</td>
+    </tr>
+    <tr>
+      <td>Our success is <font color="blue">dependent</font> on our ability to execute our business strategy,     <font color="blue">which necessarily involves</font> the <font color="blue">successful operation</font> of a number of integral     <font color="blue">components</font> and business <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to execute these business     <font color="blue">objectives</font> is <font color="blue"><font color="blue">dependent</font> upon</font> a <font color="blue">sufficient cash flow</font> and <font color="blue">capital structure</font> to     support the business</td>
+    </tr>
+    <tr>
+      <td>If we are unable to access credit <font color="blue">on commercially</font>     reasonable  terms  or  our  cash  flow  is <font color="blue">significant</font>ly impaired, our     <font color="blue">profitability</font> could be <font color="blue"><font color="blue">negatively</font> impact</font>ed</td>
+    </tr>
+    <tr>
+      <td>The loss of <font color="blue">key officers</font> and <font color="blue">management</font> personnel could <font color="blue"><font color="blue">adversely</font> affect</font> our     ability to remain <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>We believe that the success of our business strategy and our ability to     operate  profitably  <font color="blue">depends on</font> the continued <font color="blue">employment</font> of our senior     <font color="blue">management</font> team</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">employment</font> agreements only with Steven C Francis,     our  Executive  Chairman, Susan R Nowakowski, our President and Chief     Executive Officer, and two non-executive officers</td>
+    </tr>
+    <tr>
+      <td>If these individuals or     members of our senior <font color="blue">management</font> team become unable or unwilling to continue     in their <font color="blue">present positions</font>, our business and financial results could be     <font color="blue">materially</font> <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>We have a substantial amount of goodwill on our <font color="blue">balance sheet</font> that may have     the effect of <font color="blue">decreasing</font> our earnings or increasing our losses in the event     that we are required to recognize an <font color="blue">impairment</font> to goodwill</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had dlra240dtta8 million of <font color="blue">unamortized goodwill on</font>     our <font color="blue">balance sheet</font>, which represents the excess of the <font color="blue">total purchase price</font>     of our <font color="blue">acquisition</font>s over the <font color="blue">fair value</font> of the net assets acquired</td>
+    </tr>
+    <tr>
+      <td>At     <font color="blue">December </font>31, 2005, goodwill represented 38dtta9prca of our <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>SFAS Nodtta 142, <font color="blue">Goodwill and Other Intangible Assets </font>requires that goodwill     not be <font color="blue">amortized but rather</font> that it be <font color="blue">reviewed annually</font> for <font color="blue">impairment</font></td>
+    </tr>
+    <tr>
+      <td>In     the event <font color="blue">impairment</font> is identified, a charge to earnings would be recorded</td>
+    </tr>
+    <tr>
+      <td>Although an <font color="blue">impairment</font> charge to earnings for goodwill would not affect our     cash flow, it would                                           17     ______________________________________________________________________    [41]Table of <font color="blue">Contents       </font>decrease our earnings or increase our losses, as the case may be, and our     <font color="blue">stock price could</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>We have reviewed our goodwill for     <font color="blue">impairment</font> in <font color="blue">accordance with</font> the provisions of SFAS Nodtta 142, and have not     identified any <font color="blue">impairment</font> to goodwill</td>
+    </tr>
+    <tr>
+      <td>We have a substantial accrual for self-insured retentions on our balance     sheet, and any <font color="blue">significant</font> adverse adjustments in these <font color="blue">accruals may</font> have     the effect of <font color="blue">decreasing</font> our earnings or increasing our losses</td>
+    </tr>
+    <tr>
+      <td>We maintain accruals for self-insured retentions for <font color="blue">professional</font> liability,     <font color="blue">health insurance</font> and <font color="blue">workers compensation on</font> our <font color="blue">balance sheet</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>to     these accruals do not <font color="blue">immediately</font> affect our cash flow, but a <font color="blue">significant</font>     increase to these self-insured retention <font color="blue">accruals may</font> decrease our earnings     or increase our losses, as the case may be</td>
+    </tr>
+    <tr>
+      <td>We determine the adequacy of our     self-insured retention accruals by evaluating our historical experience and     trends, related to <font color="blue">both insurance</font> claims and payments, information provided     to us by our <font color="blue">insurance brokers</font> and third party administrators, as well as     industry experience and trends</td>
+    </tr>
+    <tr>
+      <td>If such information indicates that our     accruals are overstated or understated, we reduce or provide for <font color="blue">additional</font>     accruals, as appropriate</td>
+    </tr>
+  </tbody>
+</table>

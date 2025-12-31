@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: second largest provider", fill: "#062a78"},
+{source: "3: second largest provider", target: "3: corporate travel management services", fill: "#062a78"},
+{source: "3: corporate travel management services", target: "3: United States ", fill: "#062a78"},
+{source: "3: United States ", target: "3: based on", fill: "#062a78"},
+{source: "3: based on", target: "3: airline tickets sold", fill: "#062a78"},
+{source: "3: second largest provider", target: "4: provide travel management services", fill: "#704241"},
+{source: "4: provide travel management services", target: "4: corporations government agencies", fill: "#704241"},
+{source: "4: corporations government agencies", target: "4: travel services", fill: "#704241"},
+{source: "4: provide travel management services", target: "5: operations throughout", fill: "#dda0dd"},
+{source: "5: operations throughout", target: "5: United States ", fill: "#dda0dd"},
+{source: "5: United States ", target: "5: territories", fill: "#dda0dd"},
+{source: "5: territories", target: "5: clients travel processes focusing on reducing", fill: "#dda0dd"},
+{source: "5: clients travel processes focusing on reducing", target: "5: travel expenses which", fill: "#dda0dd"},
+{source: "5: travel expenses which", target: "5: largest controllable expenses", fill: "#dda0dd"},
+{source: "5: operations throughout", target: "6: acquisition", fill: "#74c365"},
+{source: "6: acquisition", target: "6: subsidiaries", fill: "#74c365"},
+{source: "6: acquisition", target: "8: SatoTravel ", fill: "#ffffe0"},
+{source: "8: SatoTravel ", target: "8: provide airline travel reservation services", fill: "#ffffe0"},
+{source: "8: provide airline travel reservation services", target: "8: government", fill: "#ffffe0"},
+{source: "8: government", target: "8: organizations", fill: "#ffffe0"},
+{source: "8: SatoTravel ", target: "12: subsidiaries", fill: "#008b8b"},
+{source: "12: subsidiaries", target: "12: consolidated financial statements", fill: "#008b8b"},
+{source: "12: subsidiaries", target: "14: headquartered", fill: "#c0c"},
+{source: "14: headquartered", target: "14: in Minneapolis Northwestern ", fill: "#c0c"},
+{source: "14: in Minneapolis Northwestern ", target: "14: travel management services combining personalized", fill: "#c0c"},
+{source: "14: travel management services combining personalized", target: "14: customer service", fill: "#c0c"},
+{source: "14: customer service", target: "14: Webenabled ", fill: "#c0c"},
+{source: "14: Webenabled ", target: "14: technologies", fill: "#c0c"},
+{source: "14: headquartered", target: "19: agreement", fill: "#c71585"},
+{source: "19: agreement", target: "19: international network", fill: "#c71585"},
+{source: "19: international network", target: "19: providing corporate travel management services", fill: "#c71585"},
+{source: "19: agreement", target: "45: consult with", fill: "#d9603b"},
+{source: "45: consult with", target: "45: corporate clients", fill: "#d9603b"},
+{source: "45: corporate clients", target: "45: structure operation", fill: "#d9603b"},
+{source: "45: structure operation", target: "45: efficiency", fill: "#d9603b"},
+{source: "45: efficiency", target: "45: corporate travel policies", fill: "#d9603b"},
+{source: "45: consult with", target: "66: development expense", fill: "#059033"},
+{source: "66: development expense", target: "66: operations taken as", fill: "#059033"},
+{source: "66: development expense", target: "70: operations", fill: "#f0f"},
+{source: "70: operations", target: "70: typically used by clients with airline expenditures", fill: "#f0f"},
+{source: "70: operations", target: "94: acquisitions", fill: "#8f00ff"},
+{source: "94: acquisitions", target: "94: additional seasonal influences", fill: "#8f00ff"},
+{source: "94: acquisitions", target: "START_HERE", fill: "#8f00ff"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Computer Hardware</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Humanitarian</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Collaborate</td>
+    </tr>
+    <tr>
+      <td>Bombings</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Negotiation</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Corporate_travel_management">Corporate travel management</a></td>
+      <td>Corporate travel management (ASX: CTD) is the function of managing a company’s strategic approach to travel (travel policy), the negotiations with all vendors, day-to-day operation of the corporate travel program, traveler safety and security, credit-card management and travel and expenses ('T&amp;E') data management.\nCTM should not be confused with the work of a traditional travel agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_travel">Business travel</a></td>
+      <td>Business travel is travel undertaken for work or business purposes, as opposed to other types of travel, such as for leisure purposes or regularly commuting between one's home and workplace.  According to a survey, 88% small business owners enjoy business travel.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_agency">Government agency</a></td>
+      <td>A government or state agency, sometimes an appointed commission, is a permanent or semi-permanent organization in the machinery of government that is responsible for the oversight and administration of specific functions, such as an administration. There is a notable variety of agency types.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Travel">Travel</a></td>
+      <td>Trade involves the transfer of goods and services from one person or entity to another, often in exchange for money. Economists refer to a system or network that allows trade as a market.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government">Government</a></td>
+      <td>A government is the system or group of people governing an organized community, generally a state.\nIn the case of its broad associative definition, government normally consists of legislature, executive, and judiciary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Australian_Government">Australian Government</a></td>
+      <td>The Australian Government, also known as the Commonwealth Government, is the national government of Australia, a federal parliamentary constitutional monarchy. Like other Westminster-style systems of government, the Australian Government is made up of three branches: the executive (the prime minister, the ministers, and government departments), the legislative (the Parliament of Australia), and the judicial.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_India">Government of India</a></td>
+      <td>The Government of India (ISO: Bhārat Sarkār) (often abbreviated as GoI; also known as the Central or Union Government), or simply the Centre, is the federal governing authority of the Republic of India created by the Constitution of India as the legislative, executive and judicial authority to govern the union of twenty eight states and eight union territories. The president acts as the head of state and is the highest figure of authority, nominally, of the nation however it is the prime minister who is the chief executive.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_government_of_the_United_States">Federal government of the United States</a></td>
+      <td>The federal government of the United States (U.S. federal government or U.S. government) is the national government of the United States, a federal republic in North America, composed of 50 states, a city within a federal district (the city of Washington in the District of Columbia, where the entire federal government is based), five major self-governing territories and several island possessions. The federal government is composed of three distinct branches: legislative, executive, and judicial, whose powers are vested by the U.S. Constitution in the Congress, the president and the federal courts, respectively.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_(government)">Executive (government)</a></td>
+      <td>The executive (short for executive branch or executive power) is the part of government that enforces law, and has responsibility for the governance of a state.\nIn political systems based on the principle of separation of powers, authority is distributed among several branches (executive, legislative, judicial)—an attempt to prevent the concentration of power in the hands of a single group of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borne_government">Borne government</a></td>
+      <td>The Borne government is the forty-third and current government of the French Fifth Republic, formed on 16 May 2022 and headed by Élisabeth Borne as Prime Minister under the presidency of Emmanuel Macron.\n\n\n== Context ==\n\n\n=== Formation ===\nOn 16 May 2022, Jean Castex tendered the resignation of his government to the President of the Republic.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Local_government">Local government</a></td>
+      <td>Local government is a generic term for the lowest tiers of public administration within a particular sovereign state. This particular usage of the word government refers specifically to a level of administration that is both geographically-localised and has limited powers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Military_government">Military government</a></td>
+      <td>A military government is generally any government that is administered by military forces, whether or not this government is legal under the laws of the jurisdiction at issue, and whether this government is formed by natives or by an occupying power. It is usually carried out by military workers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_Canada">Government of Canada</a></td>
+      <td>The government of Canada (French: gouvernement du Canada) is the body responsible for the federal administration of Canada. A constitutional monarchy, the Crown is the corporation sole, assuming distinct roles: the executive, as the Crown-in-Council; the legislature, as the Crown-in-Parliament; and the courts, as the Crown-on-the-Bench.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology">Technology</a></td>
+      <td>Technology is the result of accumulated knowledge and application of skills, methods, and processes used in industrial production and scientific research. Technology is embedded in the operation of all machines, with or without detailed knowledge of their function, for the intended purpose of an organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology">Information technology</a></td>
+      <td>Information technology (IT) is the use of computers to create, process, store, retrieve, and exchange all kinds of electronic data and information. IT is typically used within the context of business operations as opposed to personal or entertainment technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement">Good Friday Agreement</a></td>
+      <td>The Good Friday Agreement (GFA), or Belfast Agreement (Irish: Comhaontú Aoine an Chéasta or Comhaontú Bhéal Feirste; Ulster-Scots: Guid Friday Greeance or Bilfawst Greeance), is a pair of agreements signed on 10 April 1998 that ended most of the violence of the Troubles, a political conflict in Northern Ireland that had ensued since the late 1960s. It was a major development in the Northern Ireland peace process of the 1990s.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenuptial_agreement">Prenuptial agreement</a></td>
+      <td>A prenuptial agreement, antenuptial agreement, or premarital agreement (commonly referred to as a prenup), is a written contract entered into by a couple prior to marriage or a civil union that enables them to select and control many of the legal rights they acquire upon marrying, and what happens when their marriage eventually ends by death or divorce. Couples enter into a written prenuptial agreement to supersede many of the default marital laws that would otherwise apply in the event of divorce, such as the laws that govern the division of property, retirement benefits, savings, and the right to seek alimony (spousal support) with agreed-upon terms that provide certainty and clarify their marital rights.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/TRIPS_Agreement">TRIPS Agreement</a></td>
+      <td>The Agreement on Trade-Related Aspects of Intellectual Property Rights (TRIPS) is an international legal agreement between all the member nations of the World Trade Organization (WTO). It establishes minimum standards for the regulation by national governments of different forms of intellectual property (IP) as applied to nationals of other WTO member nations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-disclosure_agreement">Non-disclosure agreement</a></td>
+      <td>A non-disclosure agreement (NDA), also known as a confidentiality agreement (CA), confidential disclosure agreement (CDA), proprietary information agreement (PIA), secrecy agreement (SA), or non-disparagement agreement, is a legal contract or part of a contract between at least two parties that outlines confidential material, knowledge, or information that the parties wish to share with one another for certain purposes, but wish to restrict access to. Doctor–patient confidentiality (physician–patient privilege), attorney–client privilege, priest–penitent privilege and bank–client confidentiality agreements are examples of NDAs, which are often not enshrined in a written contract between the parties.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Minsk_agreements">Minsk agreements</a></td>
+      <td>The Minsk agreements were a series of international agreements which sought to end the war in the Donbas region of Ukraine. The first, known as the Minsk Protocol, was drafted in 2014 by the Trilateral Contact Group on Ukraine, consisting of Ukraine, Russia, and the Organization for Security and Co-operation in Europe (OSCE), with mediation by the leaders of France and Germany in the so-called Normandy Format.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_mergers_and_acquisitions_by_Alphabet">List of mergers and acquisitions by Alphabet</a></td>
+      <td>Google is a computer software and a web search engine company that acquired, on average, more than one company per week in 2010 and 2011. The table below is an incomplete list of acquisitions, with each acquisition listed being for the respective company in its entirety, unless otherwise specified.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_mergers_and_acquisitions_by_Meta_Platforms">List of mergers and acquisitions by Meta Platforms</a></td>
+      <td>Meta Platforms (formerly Facebook, Inc.) is a technology company that has acquired 91 other companies, including WhatsApp. The WhatsApp acquisition closed at a steep $16 billion; more than $40 per user of the platform.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_&amp;_Acquisitions">Mergers &amp; Acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_acquisitions_by_Oracle">List of acquisitions by Oracle</a></td>
+      <td>This is a listing of Oracle Corporation's corporate acquisitions, including acquisitions of both companies and individual products.\nOracle's version does not include value of the acquisition.See also Category:Sun Microsystems acquisitions (Sun was acquired by Oracle).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ben_Ashkenazy">Ben Ashkenazy</a></td>
+      <td>Ben Ashkenazy (born 1968/69) is an American billionaire real estate developer. He is the founder, CEO, and majority owner of Ashkenazy Acquisition Corporation, which has a $12 billion property portfolio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bolt-on_acquisition">Bolt-on acquisition</a></td>
+      <td>Bolt-on acquisition refers to the acquisition of smaller companies, usually in the same line of business, that presents strategic value. This is in contrast to primary acquisitions of other companies which are generally in different industries, require larger investments, or are of similar size to the acquiring company.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><font color="blue">NAVIGANT INTERNATIONAL INC      </font>consider the <font color="blue">risks described</font> in Item 1A <font color="blue">Risk Factors </font>and other factors that     may be identified from time to time in our <font color="blue">filings with</font> the <font color="blue">Securities </font>and     Exchange Commission, or the SEC If any of these <font color="blue">risks should actually</font>     occur,   our   actual   results   could  differ  <font color="blue">materially</font>  from  our     forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>BUSINESS          General          We are the <font color="blue">second largest provider</font> of <font color="blue"><font color="blue">corporate travel</font> <font color="blue">management</font> services</font>     in the <font color="blue"><font color="blue">United States</font> </font><font color="blue">based on</font> number of <font color="blue"><font color="blue">airline tickets</font> sold</font> in 2004</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">provide travel <font color="blue">management</font> services</font> to <font color="blue">corporations</font>, <font color="blue">government</font> agencies and     the military and, to a more limited extent, other <font color="blue">travel services</font> to these     customers</td>
+    </tr>
+    <tr>
+      <td>With <font color="blue"><font color="blue">operations</font> <font color="blue">throughout</font></font> the <font color="blue">United States</font>, various US     <font color="blue">territories</font>  and  20  foreign  countries, we manage all aspects of our     clients’ travel processes, focusing on reducing their <font color="blue">travel expenses</font>, which     typically make up one of the <font color="blue">largest controllable expenses</font> in a corporate     budget</td>
+    </tr>
+    <tr>
+      <td>Through our <font color="blue">acquisition</font> of TQ3 Travel Solutions, GmbH and our     <font color="blue">international</font> <font color="blue">subsidiaries</font> we believe that we have expanded our <font color="blue">global reach</font>     and added to our ability to serve the interest of our major customers in key     worldwide markets</td>
+    </tr>
+    <tr>
+      <td>Through Scheduled Airlines Traffic Offices, Inc</td>
+    </tr>
+    <tr>
+      <td>or     SatoTravel^®, we <font color="blue">provide airline travel <font color="blue">reservation</font> services</font> to the US     <font color="blue">government</font>  and  its  employees,  as  well as to large, private sector     <font color="blue"><font color="blue">organization</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Our TQ3 Navigant Performance Group™ <font color="blue">provides expertise</font> in the     areas of incentive programs, meetings and <font color="blue">special events</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also provide</font>     specific group and leisure <font color="blue">travel services</font>, largely to our <font color="blue">corporate clients</font>     and their individual travelers</td>
+    </tr>
+    <tr>
+      <td>In this report, the terms “Company,” “we,”     “us”  or  “our” mean Navigant International, Inc</td>
+    </tr>
+    <tr>
+      <td>and all <font color="blue">subsidiaries</font>     included in our <font color="blue"><font color="blue"><font color="blue">consolidate</font>d</font> <font color="blue">financial statements</font></font></td>
+    </tr>
+    <tr>
+      <td>Founded in 1969 and <font color="blue">headquartered</font> in Minneapolis, <font color="blue">Northwestern </font>    provides  corporate  <font color="blue">travel <font color="blue">management</font> services combining personalized</font>     <font color="blue">customer service</font> and Web-enabled <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>Northwestern, with 23 offices     and 37 client onsite locations, was at the time of the <font color="blue">acquisition</font>, the 12th     <font color="blue">largest travel <font color="blue">management</font> company</font> in the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>Also in 2004, we     acquired two <font color="blue">additional</font> travel <font color="blue">management</font> companies, along with another     meeting and incentive company</td>
+    </tr>
+    <tr>
+      <td>In 2005, we acquired three travel <font color="blue">management</font> companies, including SYNERGI     Travel New Zealand Limited and SYNERGI Travel Australia Pty</td>
+    </tr>
+    <tr>
+      <td>See Note 2 of     the notes to <font color="blue"><font color="blue"><font color="blue">consolidate</font>d</font> <font color="blue">financial statements</font></font> in Item 8 of this Annual     Report</td>
+    </tr>
+    <tr>
+      <td>On  <font color="blue">December </font>29,  2004,  we completed a Global Business Travel Venture     Agreement with TQ3 Travel Solutions Management Holding GmbH Under this     <font color="blue">agreement</font>, we purchased a 50prca interest in TQ3 Travel Solutions GmbH TQ3     Travel  Solutions  GmbH operates an <font color="blue"><font color="blue">international</font> network</font> of licensees     providing <font color="blue"><font color="blue">corporate travel</font> <font color="blue">management</font> services</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On January </font>3, 2006, we     <font color="blue">agreed with</font> TQ3 Travel Solutions Management Holding GmbH to terminate this     joint venture</td>
+    </tr>
+    <tr>
+      <td>As part of that <font color="blue">termination</font>, TQ3 Management Holding GmbH     transferred its 50prca stake in TQ3 Travel Solutions GmbH to us</td>
+    </tr>
+    <tr>
+      <td>TQ3 Travel Solutions GmbH will     retain the <font color="blue">worldwide rights</font> to the TQ3 brand name and trademark</td>
+    </tr>
+    <tr>
+      <td>We operate in one industry segment—air travel and <font color="blue">ancillary products</font> and our     customers  are  <font color="blue">geographically</font>  diverse  with  <font color="blue">no single <font color="blue">customer base</font></font>     <font color="blue">concentrated</font> in a <font color="blue">single industry</font></td>
+    </tr>
+    <tr>
+      <td>Services          Travel Management Services          We provide our <font color="blue">clients with</font> a wide range of travel <font color="blue">management</font> services in     addition to <font color="blue">reservation</font> and ticketing, including:           •   <font color="blue">Developing </font>corporate <font color="blue">travel policies</font>;           •   Managing adherence to <font color="blue">travel policies</font>;           •   <font color="blue">Outsourcing </font>travel <font color="blue">management</font> consulting services;           •   <font color="blue">Designing </font>information and <font color="blue">management</font> reporting systems;                                           2     ______________________________________________________________________    [28]Table of <font color="blue">Contents       </font>  •   Negotiating favorable <font color="blue">pricing with travel suppliers</font>; and           •   Planning and organizing incentive programs, corporate meetings and     <font color="blue">special events</font></td>
+    </tr>
+    <tr>
+      <td>We  book  travel <font color="blue">reservation</font>s for our <font color="blue">clients with</font> a variety of travel     suppliers, including airlines, hotels and <font color="blue">rental <font color="blue">car companies</font></font>, using three     major global <font color="blue">distribution</font> systems—Sabre, Galileo/Apollo and Worldspan</td>
+    </tr>
+    <tr>
+      <td>We     have long-term <font color="blue">agreement</font>s with each of these companies</td>
+    </tr>
+    <tr>
+      <td>After making travel     <font color="blue">reservation</font>s for our clients, we issue tickets, both paper and <font color="blue">electronic</font>,     and  provide  our  customers  with detailed itineraries, which include     <font color="blue">confirmation numbers</font> for airline, hotel and car rental <font color="blue">reservation</font>s</td>
+    </tr>
+    <tr>
+      <td>We can assist our clients in developing <font color="blue">travel policies</font> that <font color="blue">enable each</font>     client to manage its <font color="blue">travel expenses</font></td>
+    </tr>
+    <tr>
+      <td>These policies can mandate the use of     particular  vendors,  set  <font color="blue">parameters</font>  on the class of <font color="blue">service used by</font>     travelers, require <font color="blue">advance purchase</font> of <font color="blue">airline tickets</font> and define the use of     “frequent  flier”  <font color="blue">program benefits</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">policies may also</font> have risk     <font color="blue">management</font> features, <font color="blue">such as limiting</font> the number of officers and employees     who <font color="blue">may travel on</font> the <font color="blue">same flight</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">management</font> reports <font color="blue">provide detailed</font> and <font color="blue">comprehensive</font> information about     each client’s <font color="blue">travel expenses</font> and patterns</td>
+    </tr>
+    <tr>
+      <td>These reports <font color="blue">show savings</font>     achieved  through the use of <font color="blue">preferred vendors</font> and adherence to travel     policies, and analyze destinations, airlines and <font color="blue">hotel usage</font> and rental car     expense</td>
+    </tr>
+    <tr>
+      <td>The information <font color="blue">collected assists us</font> and the client in <font color="blue">negotiating</font>     <font color="blue">discounts</font> and <font color="blue">pricing with vendors</font>, and allows the client to monitor and     enforce its <font color="blue">travel policies</font></td>
+    </tr>
+    <tr>
+      <td>We  operate a 24-hour toll-free telephone service to <font color="blue">provide emergency</font>     assistance to travelers</td>
+    </tr>
+    <tr>
+      <td>Many other travel <font color="blue">management</font> companies contract     with us to use this service and we believe it is one of the best 24-hour     services in the <font color="blue">travel industry</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">provide meetings</font> and <font color="blue">incentive services as</font> TQ3 Navigant Performance     Group, or NPG NPG operates <font color="blue">throughout</font> the <font color="blue">United States</font>, Canada and the     United  Kingdom  and provides innovation and expertise in the areas of     incentive programs, meetings and <font color="blue">special events</font></td>
+    </tr>
+    <tr>
+      <td>Services <font color="blue">provided by</font> NPG     include, but are not limited to, strategic planning, promotion support, site     selection, contract <font color="blue"><font color="blue">negotiation</font>s</font>, program planning, registration, creative     support and on-site <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We derive part of our meetings and incentive     business through our <font color="blue">existing <font color="blue">corporate client base</font></font></td>
+    </tr>
+    <tr>
+      <td>Through  our <font color="blue">multiple call centers</font>, TQ3 Travel Solutions, and advanced     <font color="blue">technology</font>, we provide our <font color="blue">clients with</font> premium service, <font color="blue">flexibility</font> and     cost-saving <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>In  addition to <font color="blue">corporate travel</font> <font color="blue">management</font>, we <font color="blue">provide <font color="blue">leisure travel</font></font>     services to <font color="blue">both individuals</font> and groups as a small portion of our overall     business</td>
+    </tr>
+    <tr>
+      <td>We derive part of our <font color="blue">leisure travel</font> business through our existing     <font color="blue">corporate client base</font></td>
+    </tr>
+    <tr>
+      <td>Use of Technology          We embrace <font color="blue">technology</font> as a key to <font color="blue">future success</font> in the <font color="blue">corporate travel</font>     <font color="blue">management</font> industry</td>
+    </tr>
+    <tr>
+      <td>Our information <font color="blue">technology</font> can provide our clients’     <font color="blue">corporate travel</font> managers, as well as financial officers, with extensive     <font color="blue">data about</font> individual, <font color="blue">departmental</font> and <font color="blue">company <font color="blue">travel activity</font></font> and patterns     on a daily, real-time basis</td>
+    </tr>
+    <tr>
+      <td>We can use this information to <font color="blue">consult with</font> our     <font color="blue">corporate clients</font> regarding the structure, operation and <font color="blue">efficiency</font> of a     variety of corporate <font color="blue">travel policies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we can <font color="blue">provide corporate</font>     <font color="blue">clients with</font> <font color="blue">comprehensive</font> information about cost-saving <font color="blue">opportunities</font> for     the <font color="blue">travel undertaken by</font> their employees</td>
+    </tr>
+    <tr>
+      <td>Our wholly-owned subsidiary, AQUA^® Software Products, Inc, has developed a     fully-automated quality assurance program, AQUAPlatinum^TM, which features     both a <font color="blue">quality auditing system</font> and a <font color="blue"><font color="blue">computerized cost</font> avoidance system</font></td>
+    </tr>
+    <tr>
+      <td>We     have branded our version of this product AQUA AQUA’s Trip Auditor™ module     <font color="blue">checks each travel record</font> for accuracy and <font color="blue">completeness</font> and <font color="blue">repetitively</font>     <font color="blue">searches airline seat maps</font> for each traveler’s                                           3     ______________________________________________________________________    [29]Table of <font color="blue">Contents       </font>preferred  seat assignments, hotel rate comparisons and frequent-flier     upgrade <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>AQUA’s FareBuster™ module is a <font color="blue">computerized cost</font>     <font color="blue">avoidance program</font> that <font color="blue">checks each record</font> for a <font color="blue">lower airline fare</font> and     <font color="blue">continuously checks wait list flights</font> and <font color="blue">flight inventories</font> for discount     fares  that <font color="blue">become available prior</font> to travel</td>
+    </tr>
+    <tr>
+      <td>AQUA <font color="blue">also advises travel</font>     managers of travelers who are not taking advantage of the <font color="blue">lowest fare</font></td>
+    </tr>
+    <tr>
+      <td>Currently, we have the AQUA <font color="blue">system installed</font> to process nearly 100prca of our     <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>Three of the top five travel <font color="blue">management</font> companies in the     <font color="blue"><font color="blue">United States</font> </font><font color="blue">license portions</font> of the AQUA system</td>
+    </tr>
+    <tr>
+      <td>We believe that the Internet has the potential to allow us to provide an     even  higher  level of service to our <font color="blue">corporate clients</font> while reducing     <font color="blue">distribution</font> costs, <font color="blue">especially</font> labor costs</td>
+    </tr>
+    <tr>
+      <td>We have built a user base for     our  proprietary online travel <font color="blue">management</font> solution, Passportal, and we     continue  to  develop  and enhance this tool</td>
+    </tr>
+    <tr>
+      <td>We have also developed a     Web-based Online Profile Management tool, which we launched in May 2004 to     <font color="blue">provide customer creation</font> and <font color="blue">management</font> of <font color="blue">traveler profiles</font> that are     <font color="blue">centrally</font>  managed,  <font color="blue">standardized</font>, and <font color="blue">easily accessible</font></td>
+    </tr>
+    <tr>
+      <td>We serve our     <font color="blue">corporate clients</font> through our <font color="blue"><font color="blue">consolidate</font>d</font> Web site, TQ3Navigant</td>
+    </tr>
+    <tr>
+      <td>Through  Dynamic  Travel  Reports,  the corporate client can view trip     information sorted at every level of corporate <font color="blue">organization</font>, from individual     traveler to department, division or entire company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dynamic Travel Reports     </font>allow <font color="blue">corporate travel</font> managers and other <font color="blue">executives</font> the ability to view     their company’s travel <font color="blue">activities</font> and real-time data 24 hours a day using a     password-protected system</td>
+    </tr>
+    <tr>
+      <td>We have introduced <font color="blue">additional</font> Internet products,     including E-Ticket Tracking, a product designed to help travelers salvage     value from an unused, non-refundable ticket; <font color="blue">Compliance </font>Dashboards, a tool     to organize and monitor valuable travel data in a single, customizable view;     and Automated Policy Management, a policy <font color="blue">management</font>/adherence <font color="blue">application</font>     that allows <font color="blue">corporations</font> to define their corporate <font color="blue">travel policies</font> and apply     these  <font color="blue">definitions</font>  against  invoiced  <font color="blue">transactions</font>, <font color="blue">generating</font> e-mail     <font color="blue">notifications</font>  to the traveler, supervisor and/or other <font color="blue">designates</font> for     non-compliant records communicating what the <font color="blue">appropriate purchasing decision</font>     should have been and <font color="blue">thus improving policy compliance</font> and <font color="blue">driving down</font>     <font color="blue">corporate travel</font> and <font color="blue">entertainment expenses</font></td>
+    </tr>
+    <tr>
+      <td>Although we rely heavily on <font color="blue">technology</font>, the <font color="blue">total funds spent during</font> the     last three fiscal years on company-sponsored research and <font color="blue">development</font> has     not  been  material</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">primarily focus</font> our <font color="blue">technology</font> <font color="blue">development</font> and     implementations on replacing third-party <font color="blue">application</font>s that are <font color="blue">generally</font>     <font color="blue">available within</font> our industry</td>
+    </tr>
+    <tr>
+      <td>As a result, we have spent less than dlra200     thousand in each of the <font color="blue">last three years on research</font> and <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">existing <font color="blue">programmers</font></font> and other IT staff perform research and <font color="blue">development</font> as     an adjunct to their day-to-day duties</td>
+    </tr>
+    <tr>
+      <td>We do not consider, and do not track,     their research and <font color="blue">development</font> time as an <font color="blue">incremental expense</font></td>
+    </tr>
+    <tr>
+      <td>Thus, we     consider our research and <font color="blue">development</font> expense to be not material to our     results of <font color="blue">operations</font>, taken as a whole</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Distribution </font>of Services          We provide <font color="blue"><font color="blue">corporate travel</font> <font color="blue">management</font> services</font> to our <font color="blue">clients through</font>     <font color="blue">several channels</font>, including on-site offices, regional travel <font color="blue">management</font>     offices, call centers and on-site satellite ticket printers, or STPs</td>
+    </tr>
+    <tr>
+      <td>We     believe  this <font color="blue"><font color="blue">regional focus</font> allows us</font> to <font color="blue">provide personal service</font> and     <font color="blue">specialized local market knowledge</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of March </font>3, 2006, we had approximately 600 on-site offices on client     premises, where we <font color="blue">provide customized trip</font> planning and <font color="blue">reservation</font> and     <font color="blue">ticketing services</font> to the employees of corporate and <font color="blue">government</font>al clients</td>
+    </tr>
+    <tr>
+      <td>On-site <font color="blue">operations</font> are typically used by <font color="blue">clients with</font> airline <font color="blue">expenditures</font>     in excess of dlra1dtta0 million per year</td>
+    </tr>
+    <tr>
+      <td>Through an on-site office, we are able     to work one-on-one with the client’s travel manager to meet the client’s     travel needs, including the need for customized travel information and     <font color="blue"><font color="blue">negotiation</font>s</font> with travel suppliers <font color="blue">frequently</font> used by the customer</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of March </font>3, 2006, we had 120 regional and branch offices</td>
+    </tr>
+    <tr>
+      <td>These offices     are typically used by corporate customers with less than dlra1dtta0 million in     <font color="blue"><font color="blue">travel <font color="blue">expenditures</font> per</font> year</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">regional offices provide local companies</font>     with <font color="blue">comprehensive</font> travel <font color="blue">management</font> services, including trip planning,     <font color="blue">reservation</font> and <font color="blue">ticketing services</font>, <font color="blue">accounting</font>, <font color="blue">corporate travel</font> reporting,     <font color="blue"><font color="blue">negotiation</font>s</font> with <font color="blue">frequently</font> used travel suppliers and consulting</td>
+    </tr>
+    <tr>
+      <td>4     ______________________________________________________________________    [30]Table of <font color="blue">Contents       </font>The regional nature of these <font color="blue">offices allows them</font> to leverage their local     <font color="blue">market expertise</font> and to <font color="blue">provide responsive</font> and <font color="blue">personalized service</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, regional offices provide backup to nearby on-site locations</td>
+    </tr>
+    <tr>
+      <td>As  of  March  3, 2006, we operated five call centers, which serve our     large-scale  corporate  clients  and <font color="blue">several military</font> and <font color="blue">government</font>al     customers</td>
+    </tr>
+    <tr>
+      <td>Call centers are typically used by corporate, military and     <font color="blue">government</font> <font color="blue">clients with</font> more than dlra40dtta0 million in <font color="blue">travel <font color="blue">expenditures</font> per</font>     year</td>
+    </tr>
+    <tr>
+      <td>The  call  centers provide <font color="blue">clients with</font> <font color="blue">high level</font>s of service,     <font color="blue">flexibility</font> and cost-saving <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of March </font>3, 2006, we also operated approximately 160 STPs at client     <font color="blue">locations across</font> the country</td>
+    </tr>
+    <tr>
+      <td>We use these printers to <font color="blue">distribute tickets</font>     instantly to <font color="blue">clients whose field locations</font> have <font color="blue">enough volume</font> to justify the     <font color="blue">STP Locations </font><font color="blue">with lower volume</font> can receive <font color="blue">tickets via overnight delivery</font>     services</td>
+    </tr>
+    <tr>
+      <td>We believe that the growth of <font color="blue">electronic</font> ticketing will eventually     eliminate  the  need  for  STPs  and overnight delivery, thus lowering     <font color="blue">distribution</font> costs</td>
+    </tr>
+    <tr>
+      <td>We have entered into <font color="blue">arrangements</font> with third parties pursuant to which we     fulfill travel <font color="blue">reservation</font>s placed on the Internet</td>
+    </tr>
+    <tr>
+      <td>In addition, through our     <font color="blue">Passportal </font>Web site, we <font color="blue">allow clients</font> to, among other things, check flight     times, make <font color="blue">reservation</font>s, access and sort password-protected corporate     travel data, find restaurants and <font color="blue">automatic teller machines</font> and access the     <font color="blue">latest currency <font color="blue">conversion</font> rates</font></td>
+    </tr>
+    <tr>
+      <td>We offer <font color="blue">reservation</font> services to our <font color="blue">clients through</font> the Internet, e-mail     and  facsimile</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">distribution</font> methods offer clients the option of     performing <font color="blue">reservation</font> services directly, while we provide a supporting     role</td>
+    </tr>
+    <tr>
+      <td>Our role includes performing <font color="blue">quality control on</font> the <font color="blue">reservation</font>,     assessing travel policy compliance, assisting the <font color="blue">traveler with</font> the use of     the <font color="blue">reservation</font> system and issuing and delivering <font color="blue">tickets reserved by</font> the     client</td>
+    </tr>
+    <tr>
+      <td>Additionally, we report to <font color="blue">management</font> on matters such as pre- and     post-<font color="blue">travel activity</font>, cost-saving <font color="blue">opportunities</font> and the <font color="blue">development</font> and     <font color="blue">assessment</font> of the client’s travel policy and negotiated rate <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Significant <font color="blue">Customers </font>         We  provide  services to <font color="blue">numerous agencies</font> and entities of the federal     <font color="blue">government</font>  <font color="blue">under various</font> individual contracts, which in the aggregate     account for approximately 17prca of our <font color="blue">total revenues</font> in 2005, 19prca in 2004 and     24prca in 2003</td>
+    </tr>
+    <tr>
+      <td>Individually, these travel service <font color="blue">agreement</font>s contain varying     terms and <font color="blue">conditions</font>, concern <font color="blue">varying volumes</font>, and are <font color="blue">administered by</font>     <font color="blue"><font color="blue">different</font> contracting officers</font></td>
+    </tr>
+    <tr>
+      <td>Seasonality          The business <font color="blue">travel industry</font> is seasonal and our results have fluctuated     because of these <font color="blue">seasonal variations</font></td>
+    </tr>
+    <tr>
+      <td>Revenues and net income for us are     <font color="blue">generally</font> higher in the second and <font color="blue">third calendar quarters</font></td>
+    </tr>
+    <tr>
+      <td>We expect this     <font color="blue">seasonality</font>  to  continue  in  the  future</td>
+    </tr>
+    <tr>
+      <td>As we continue to complete     <font color="blue">acquisition</font>s, we may become subject to <font color="blue">additional</font> seasonal influences</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>         The  <font color="blue">corporate travel</font> <font color="blue">management</font> industry is <font color="blue">extremely <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">compete primarily with</font> other <font color="blue">corporate travel</font> <font color="blue">management</font> companies</td>
+    </tr>
+    <tr>
+      <td>Some of     our  <font color="blue">competitors</font> may have greater brand-name <font color="blue">recognition</font> and financial     resources than we do</td>
+    </tr>
+    <tr>
+      <td>The largest <font color="blue">corporate travel</font> <font color="blue">management</font> company is     <font color="blue"><font color="blue">significant</font>ly larger than us</font> and our other <font color="blue">competitors</font>, and we <font color="blue">compete with</font>     <font color="blue">several companies</font> that are similar in size to us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>within the     <font color="blue">corporate travel</font> <font color="blue">management</font> industry is <font color="blue">increasing as</font> the <font color="blue">industry undergoes</font>     a period of <font color="blue">consolidation</font></td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> are expanding their size     and  financial resources through <font color="blue">consolidation</font></td>
+    </tr>
+    <tr>
+      <td>Some travel <font color="blue">management</font>     <font color="blue">companies may</font> have <font color="blue"><font color="blue">relationships with</font> travel suppliers</font> that <font color="blue">give them access</font>     to favorable <font color="blue">availability</font> of products, including <font color="blue">airplane seats</font> and hotel     rooms, or more <font color="blue"><font color="blue">competitive</font> pricing than</font> that <font color="blue">offered by us</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore,     some  corporate  travel <font color="blue">management</font> companies have a <font color="blue">strong presence</font> in     <font color="blue">particular geographic areas</font> that may make it <font color="blue">difficult</font> for us to attract     clients in those areas</td>
+    </tr>
+    <tr>
+      <td>As a result of <font color="blue">competitive</font> pressures, we may suffer     a loss of clients, and our revenues or margins may decline</td>
+    </tr>
+    <tr>
+      <td>5     ______________________________________________________________________    [31]Table of <font color="blue">Contents       </font>We also <font color="blue">compete with</font> online travel providers as well as travel suppliers,     including  airlines,  hotels  and <font color="blue">rental <font color="blue">car companies</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Innovations </font>in     <font color="blue">technology</font>,  such  as  the Internet and computer online services, have     increased  the  ability of travel suppliers to distribute their travel     products and some services directly to the consumer</td>
+    </tr>
+    <tr>
+      <td>Although corporate     travel <font color="blue">management</font> companies and <font color="blue">travel agencies remain</font> the <font color="blue">primary channel</font>     for travel <font color="blue">distribution</font>, <font color="blue">businesses</font> and consumers can use the Internet to     access information about travel products and services and to <font color="blue">purchase such</font>     products and <font color="blue">services directly from</font> the suppliers, thus bypassing corporate     travel <font color="blue">management</font> companies and <font color="blue">travel agents</font></td>
+    </tr>
+    <tr>
+      <td>We  believe  that we compete for clients based upon service, price and     <font color="blue">specialized knowledge</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we are well-positioned to <font color="blue">compete on</font>     these <font color="blue">bases due</font> to our <font color="blue">combination</font> of size and <font color="blue">regional focus</font></td>
+    </tr>
+    <tr>
+      <td>We use our     size  to achieve operating <font color="blue">efficiencies by <font color="blue">implementing</font> customized</font> and     industry-standard  <font color="blue">technologies</font>  and  by  <font color="blue">consolidating <font color="blue">administrative</font></font>     functions</td>
+    </tr>
+    <tr>
+      <td>Our size <font color="blue">also provide</font>s <font color="blue">opportunities</font> to negotiate favorable     <font color="blue">arrangements</font> with travel suppliers, such as airlines, hotels and rental car     companies</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">regional focus</font>, conversely, fosters personalized customer     service and <font color="blue">specialized local market knowledge</font>, which help improve customer     service, solidify customer relationships and expand our <font color="blue">customer base</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font>Operations          We continue to place <font color="blue">emphasis on <font color="blue">international</font> markets as</font> we look to further     expand the presence of our brands and <font color="blue">businesses</font> abroad, particularly in     Europe, given the large <font color="blue">consumer marketplace</font> for the goods and services that     these brands and <font color="blue"><font color="blue">businesses</font> offer</font></td>
+    </tr>
+    <tr>
+      <td>We believe our interest in TQ3 Travel     Solutions, 50prca originally acquired in <font color="blue">December </font>2004 with the remaining 50prca     acquired in January 2006, has expanded our <font color="blue">global reach</font> and solidified our     ability to <font color="blue">serve major clients</font> in <font color="blue">key markets worldwide</font></td>
+    </tr>
+    <tr>
+      <td>For more information <font color="blue">concerning</font> our <font color="blue">international</font>     <font color="blue">operations</font>  refer  to  Note  12 of the notes to <font color="blue"><font color="blue">consolidate</font>d</font> financial     statements in Item 8 of this <font color="blue">Annual Report</font></td>
+    </tr>
+    <tr>
+      <td>Marketing And Sales          Our <font color="blue">marketing continually targets both new</font> and <font color="blue">existing customers</font></td>
+    </tr>
+    <tr>
+      <td>Our sales     staff identifies <font color="blue">potential clients</font>, and develops <font color="blue">opportunities</font> to provide     <font color="blue">additional</font> <font color="blue">travel services</font> to <font color="blue">existing clients</font></td>
+    </tr>
+    <tr>
+      <td>Over the past few years,     travel policy and travel purchasing <font color="blue">decisions</font> in larger companies have been     <font color="blue">centralized</font> in purchasing <font color="blue">departments</font>, with travel managers, or within the     offices of chief financial officers</td>
+    </tr>
+    <tr>
+      <td>The selection of a <font color="blue">travel agency</font> has     also  become more formal, with larger accounts soliciting bids through     “requests for proposals</td>
+    </tr>
+    <tr>
+      <td>” We have adapted to these changes by relying on a     <font color="blue">sales force specially trained</font> in the business of <font color="blue">corporate travel</font>, supported     by experienced <font color="blue">marketing staff</font></td>
+    </tr>
+    <tr>
+      <td>We have approximately 120 <font color="blue">Associates </font>in our     sales and marketing <font color="blue">departments</font></td>
+    </tr>
+    <tr>
+      <td>Management Information Systems          We use networked <font color="blue">management</font> information systems for financial <font color="blue">management</font>,     reporting and <font color="blue">communication</font></td>
+    </tr>
+    <tr>
+      <td>These systems provide <font color="blue">management</font> with current     financial information from all of our offices, and allow <font color="blue">management</font> to share     that information easily and <font color="blue">quickly with others</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">systems also allow</font>     <font color="blue">management</font>  to  communicate <font color="blue"><font color="blue">efficiently</font> with</font> <font color="blue">Associates </font>and each other     <font color="blue">throughout</font> the business day</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">employ technicians</font> to administer, install     and  maintain  our <font color="blue">computer hardware</font> and software, as well as computer     <font color="blue">programmers</font> to create <font color="blue">software solutions</font> for us and our customers</td>
+    </tr>
+    <tr>
+      <td>We began     <font color="blue">implementing</font>  a single, companywide information <font color="blue">technology</font> platform to     service our <font color="blue">accounting</font> and reporting <font color="blue">requirements</font> in 1999, and with the     exception of <font color="blue">SatoTravel </font>and NPG, 100prca of our <font color="blue">North American </font><font color="blue">transactions</font> are     currently  being  transacted  on the <font color="blue">same platform</font></td>
+    </tr>
+    <tr>
+      <td>We plan to convert     <font color="blue">SatoTravel </font>to our standard system by the end of 2006</td>
+    </tr>
+    <tr>
+      <td>Employees          <font color="blue">As of March </font>3, 2006, we had approximately 5cmam130 full-time Associates, none     of whom are subject to collective bargaining <font color="blue">agreement</font>s</td>
+    </tr>
+    <tr>
+      <td>We believe that we     enjoy good <font color="blue">relations with</font> our Associates</td>
+    </tr>
+    <tr>
+      <td>Here we make available free of charge our Annual     Reports on Form 10-K, <font color="blue">Quarterly Reports </font>on Form 10-Q, <font color="blue">Current Reports </font>on     Form 8-K and all <font color="blue">amendments</font> to those reports filed or furnished pursuant to     Section 13(a) or 15(d) of the <font color="blue">Exchange Act </font><font color="blue">as soon as reasonably practical</font>     after such material is <font color="blue">electronic</font>ally filed with or furnished to the <font color="blue">SEC We     </font>also have available a code of conduct, which can be found on our Web site</td>
+    </tr>
+    <tr>
+      <td>We have not <font color="blue">incorporated by reference</font> the information on our Web site into     this <font color="blue">Annual Report</font> and you should not consider it part of this document</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">public may</font> read and copy any materials we file with the SEC at the     SEC’s Public Reference Room at 100 F Street, NE, Washington, DC 20549</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">public may</font> obtain information on the operation of the <font color="blue">Public Reference Room     </font>by calling the SEC at 1-800-SEC-0330</td>
+    </tr>
+    <tr>
+      <td>The SEC also maintains an <font color="blue">Internet     </font>site that contains reports, proxy and information statements, and other     information regarding issuers that file <font color="blue">electronic</font>ally with the SEC at     www</td>
+    </tr>
+    <tr>
+      <td>ITEM 1A RISK FACTORS          Our <font color="blue"><font color="blue">significant</font> <font color="blue">indebtedness</font></font> and <font color="blue">interest payment <font color="blue">obligations</font> may <font color="blue">adversely</font></font>     affect our ability to obtain <font color="blue">additional</font> financing, repay the Term Loan,     service other existing debt, use our operating <font color="blue">cash flow</font> in other areas of     our business, or <font color="blue">otherwise <font color="blue">adversely</font> affect</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We continue to be <font color="blue"><font color="blue">significant</font>ly leveraged</font></td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>25, 2005, we had     dlra218dtta7 million of <font color="blue"><font color="blue">consolidate</font>d</font> debt outstanding and our <font color="blue"><font color="blue">consolidate</font>d</font> debt as     a  percentage  of  <font color="blue">capitalization</font> was 47dtta0prca</td>
+    </tr>
+    <tr>
+      <td>We may also need to incur     <font color="blue">additional</font>  debt in the future to complete <font color="blue">acquisition</font>s, make earn-out     payments, make <font color="blue">capital <font color="blue">expenditures</font></font> or for working capital, even though our     <font color="blue">Credit Agreement </font>from the Bank of America, NA, as Administrative Agent, or     the <font color="blue">Credit Facility</font>, and other <font color="blue"><font color="blue">indebtedness</font> may impose</font> some <font color="blue">limits on</font> our     ability to do so</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">high level</font> of <font color="blue">indebtedness</font> could have other important     consequences, which include the following:           •   Our ability to obtain <font color="blue">additional</font> financing to fund the repayment of     the dlra10 million term loan <font color="blue">agreement</font> funded on August 29, 2005, or the Term     Loan, debt service <font color="blue">requirements</font>, <font color="blue">capital <font color="blue">expenditures</font></font>, working capital or     other <font color="blue">purposes may</font> be impaired;           •   Our ability to use operating <font color="blue">cash flow</font> in other areas of our business     will be limited because we must dedicate a substantial portion of these     funds to <font color="blue">pay interest</font> and <font color="blue">principal on</font> our debt;           •   <font color="blue">Our <font color="blue">Credit Facility</font> </font>bears interest at variable rates, which could     result in <font color="blue">higher interest expense</font> in the event of increases in interest     rates;           •   We may not be able to <font color="blue">compete with</font> others who are not as highly     leveraged; and           •   Our <font color="blue"><font color="blue">significant</font> leverage may limit</font> our <font color="blue">flexibility</font> to adjust to     changing market <font color="blue">conditions</font>, changes in our industry and <font color="blue">economic downturns</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">pay interest</font> on our <font color="blue">debt <font color="blue">obligations</font></font> and repay the <font color="blue"><font color="blue">Term Loan </font>    </font><font color="blue">will depend upon</font> our future operating performance and our ability to obtain     <font color="blue">additional</font> debt or <font color="blue">equity financing</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Prevailing </font>economic <font color="blue">conditions</font> and     financial, business and other factors, many of which are beyond our control,     will affect our ability to make these payments</td>
+    </tr>
+    <tr>
+      <td>If in the future we cannot     generate sufficient <font color="blue">cash flow</font> from <font color="blue">operations</font> to meet our <font color="blue">obligations</font>, we     will need to refinance, obtain <font color="blue">additional</font> financing or <font color="blue">sell assets</font></td>
+    </tr>
+    <tr>
+      <td>Our     business may not generate <font color="blue">cash flow</font>, or we may not obtain <font color="blue">funding sufficient</font>     to satisfy the repayment of the <font color="blue">Term Loan </font>or our debt service <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>7     ______________________________________________________________________    [33]Table of <font color="blue">Contents       </font><font color="blue">Our <font color="blue">Credit Facility</font> </font>and <font color="blue">Term Loan </font><font color="blue">impose <font color="blue">restrictions</font> which may <font color="blue">adversely</font></font>     affect our ability to finance future <font color="blue">operations</font> or capital needs or engage     in other business <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">restrictions</font> in our existing debt <font color="blue">agreement</font>s, including the Credit     Facility, and any future financing <font color="blue">agreement</font>s may <font color="blue">adversely</font> affect our     ability to finance future <font color="blue">operations</font> or capital needs or to engage in other     business <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">restrictions</font> limit our ability, without <font color="blue">agreement</font>     of our lenders, to:           •   Incur <font color="blue">additional</font> debt or prepay or modify any <font color="blue">additional</font> debt that may     be incurred;           •   Make <font color="blue"><font color="blue">investment</font>s</font>;           •   Pay any dividends or make any <font color="blue">distribution</font>s;           •   <font color="blue">Repurchase </font>our securities;           •   Create liens;           •   Transfer or <font color="blue">sell assets</font>;           •   Enter into <font color="blue">transactions</font> with affiliates;           •   Issue or sell stock of <font color="blue">subsidiaries</font>;           •   Merge or <font color="blue">consolidate</font>; or           •   <font color="blue">Materially </font>change the nature of our business</td>
+    </tr>
+    <tr>
+      <td>In  addition,  our  Credit  Facility  limits our ability to consummate     <font color="blue">acquisition</font>s using <font color="blue">total <font color="blue">consideration</font></font> in excess of dlra10 million without the     consent of the <font color="blue">participating banks</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The November </font>3, 2005 <font color="blue">Credit Facility</font>     Amendment restricted our ability to complete <font color="blue">acquisition</font>s by requiring the     consent of <font color="blue">participating banks</font> for all <font color="blue">acquisition</font>s, including those using     <font color="blue">total <font color="blue">consideration</font></font> of less than dlra10 million, until we meet the original     <font color="blue">financial ratios contained</font> in the <font color="blue">Credit Facility</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">limitations may</font>     reduce our ability to continue our <font color="blue">acquisition</font> program</td>
+    </tr>
+    <tr>
+      <td>Under our <font color="blue">Credit Facility</font> and Term Loan, as amended, we must maintain ratios     of less than the following:                                 For the Quarter Ending     _________________________________________________________________                    Maximum                                  Consolidated                                 Total Leverage                                     Ratio       _________________________________________________________________                                          Maximum                              Consolidated Senior                                    Leverage                                       Ratio       _________________________________________________________________         <font color="blue">December </font>25, 2005                                                             4dtta30:1dtta0    2dtta90:1dtta0                                   March 26, 2006                                                             4dtta00:1dtta0    2dtta65:1dtta0                                   June 25, 2006                                                             3dtta80:1dtta0    2dtta60:1dtta0                                 <font color="blue">September </font>24, 2006                                                             3dtta70:1dtta0    2dtta25:1dtta0                          <font color="blue">December </font>31, 2006 and thereafter                                                             3dtta25:1dtta0    2dtta25:1dtta0         As amended, we must maintain ratios of <font color="blue">greater than</font> the following:                                 For the Quarter Ending     _________________________________________________________________                       Minimum                                  Consolidated                                 Fixed Charges                                 Coverage Ratio       _________________________________________________________________            <font color="blue">December </font>25, 2005                                                                1dtta70:1dtta0                                   March 26, 2006                                                                1dtta70:1dtta0                                   June 25, 2006                                                                1dtta70:1dtta0                                 <font color="blue">September </font>24, 2006                                                                1dtta75:1dtta0                                 <font color="blue">December </font>31, 2006                                                                1dtta80:1dtta0                            April 1, 2007 and thereafter                                                                2dtta00:1dtta0         The <font color="blue">Credit Facility</font> and <font color="blue">Term Loan </font>contain cross-default provisions related     to other <font color="blue">indebtedness</font> over dlra1cmam000cmam000, which is <font color="blue">triggered by</font> our failure to     pay any <font color="blue">such <font color="blue">indebtedness</font></font> or the breach of any other term or condition     beyond  any  grace  period of any <font color="blue">such <font color="blue">indebtedness</font></font></td>
+    </tr>
+    <tr>
+      <td>The effect of the     cross-default provision is to permit the holders of <font color="blue">the <font color="blue">Credit Facility</font> </font>and     <font color="blue">Term Loan </font>to declare those <font color="blue">agreement</font>s in default and <font color="blue">accelerate</font> the                                           8     ______________________________________________________________________    [34]Table of <font color="blue">Contents       </font>maturity or payment of that <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Triggering </font>the cross-default     provision will give rise to <font color="blue">remedies under</font> our <font color="blue">Credit Facility</font> and <font color="blue"><font color="blue">Term Loan </font>    </font>that  lenders  can  exercise  prior  to  any  <font color="blue">remedies under</font> the other     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our <font color="blue">Credit Facility</font> </font>and <font color="blue">Term Loan </font>also require us to timely     deliver our <font color="blue">financial statements</font> to the lenders</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">comply with</font> these <font color="blue">requirements</font> may be <font color="blue">affected by events</font>     beyond  our control</td>
+    </tr>
+    <tr>
+      <td>If we breach any of these covenants in our Credit     Facility and Term Loan, or if we are unable to <font color="blue">comply with</font> the required     financial ratios, we may be in default under our <font color="blue">Credit Facility</font> and Term     Loan or other <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our <font color="blue">indebtedness</font> then     <font color="blue">may become immediately due</font> and payable</td>
+    </tr>
+    <tr>
+      <td>We may not have, or be able to     obtain, <font color="blue">sufficient funds</font> to make these <font color="blue">accelerate</font>d payments</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with     the  covenants  is  also a condition to <font color="blue">continued borrowings under</font> our     <font color="blue">revolving line</font> of credit under our <font color="blue">Credit Facility</font> on which we will rely to     fund our liquidity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our <font color="blue">Credit Facility</font> </font><font color="blue">matures on</font> October 31, 2007 and we may not be able to     refinance it <font color="blue"><font color="blue">on commercially</font> reasonable terms</font>, if at all</td>
+    </tr>
+    <tr>
+      <td>Before  our  <font color="blue">Credit Facility</font> <font color="blue">matures on</font> October 31, 2007, we intend to     refinance  the  Credit  Facility</td>
+    </tr>
+    <tr>
+      <td>With  rising  <font color="blue">interest rates</font> and our     <font color="blue">significant</font>  leverage, we may not be able to refinance, in whole or in     part, our <font color="blue">outstanding balance under</font> our <font color="blue">Credit Facility</font> <font color="blue">on commercially</font>     reasonable  terms,  if  at  all</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">debt service increases under</font> a     refinanced credit <font color="blue">facility</font>, the <font color="blue">increased interest costs could impact</font> our     net income</td>
+    </tr>
+    <tr>
+      <td>If we are unable to refinance our <font color="blue">Credit Facility</font>, in whole or in part, we     do not believe <font color="blue">cash flow</font> from <font color="blue">operations</font> will be sufficient to repay a     <font color="blue">significant</font> portion of the <font color="blue">outstanding balance under</font> our <font color="blue">Credit Facility</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, we may need to <font color="blue">seek alternative financing</font> to <font color="blue">repay amounts</font>     that  are not refinanced</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">alternative financing could</font> include the     issuance of <font color="blue">additional</font> equity, which <font color="blue">would dilute</font> existing shareholders and     could <font color="blue">significant</font>ly decrease our <font color="blue">earnings per</font> share</td>
+    </tr>
+    <tr>
+      <td>We may not be able to     complete an <font color="blue">equity financing</font> <font color="blue"><font color="blue">on commercially</font> reasonable terms</font>, if at all</td>
+    </tr>
+    <tr>
+      <td>If we are unable to refinance our <font color="blue">Credit Facility</font> or complete an equity     financing to repay our <font color="blue">Credit Facility</font>, we may need to <font color="blue">sell assets</font> to repay     the <font color="blue">Credit Facility</font></td>
+    </tr>
+    <tr>
+      <td>If  we  <font color="blue">cannot pay amounts due under</font> our <font color="blue">Credit Facility</font>, we may be in     default,  and our <font color="blue">lenders may</font> be able to exercise all their rights and     <font color="blue">remedies against us</font> and our assets</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Declines </font>or <font color="blue">disruptions</font> in the <font color="blue">travel industry</font>, such as those caused by     terrorism, war or general <font color="blue">economic downturns</font>, could reduce our revenues and     <font color="blue">seriously harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">revenue increases</font> or <font color="blue">decreases with</font> the level of <font color="blue">travel activity</font>,     <font color="blue">particularly with</font> the volume of business travel</td>
+    </tr>
+    <tr>
+      <td>Our revenue is <font color="blue">especially</font>     sensitive to declines or <font color="blue">disruptions</font> in the <font color="blue">travel industry</font>, in particular     those caused by economic <font color="blue">conditions</font> and those events that affect, or are     perceived to degrade, traveler safety</td>
+    </tr>
+    <tr>
+      <td>The financial, political, economic     and other <font color="blue">uncertainties following</font> the <font color="blue">terrorist attacks upon</font> the United     States in <font color="blue">September </font>2001 resulted in a <font color="blue">significant</font> decline in travel, and     many of our <font color="blue">customers became</font> much more cautious regarding their travel     plans</td>
+    </tr>
+    <tr>
+      <td>Future  acts of war, terrorism, military or <font color="blue">civil responses</font> to     terrorism or the fear of <font color="blue">such events</font> occurring, <font color="blue">as well as general health</font>     and safety concerns, could cause <font color="blue">travel volume</font> to <font color="blue">decrease dramatically</font> and     to <font color="blue">remain at lower than</font> anticipated volumes for an <font color="blue">extended period</font> of time</td>
+    </tr>
+    <tr>
+      <td>In addition, travel-related accidents, bad weather, increased fuel prices     and  new security directives, which make travel more expensive or more     <font color="blue">difficult</font>,  may  reduce  demand for <font color="blue">travel services</font></td>
+    </tr>
+    <tr>
+      <td>Negative economic     <font color="blue">conditions</font> may also decrease demand for <font color="blue">travel services</font></td>
+    </tr>
+    <tr>
+      <td>A decrease in demand for <font color="blue">travel services</font>, in particular those services     <font color="blue">associated with</font> business travel, will impact our revenues and <font color="blue">adversely</font>     affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If such a <font color="blue">decrease continued</font> for a long     period of time, our <font color="blue"><font color="blue">financial condition</font> could</font> be <font color="blue">significant</font>ly harmed</td>
+    </tr>
+    <tr>
+      <td>9     ______________________________________________________________________    [35]Table of <font color="blue">Contents       </font>If <font color="blue"><font color="blue">commission</font>s</font>, overrides or <font color="blue">incentives</font> for <font color="blue">reservation</font>s or other revenues     from  vendors or suppliers are decreased or <font color="blue">eliminated altogether</font>, our     <font color="blue">revenue may</font> be reduced</td>
+    </tr>
+    <tr>
+      <td>We  derive part of our revenues from <font color="blue"><font color="blue">commission</font>s</font> paid by <font color="blue">international</font>     airlines,  incentive  override <font color="blue"><font color="blue">commission</font>s</font> paid by the <font color="blue">major airlines</font>,     <font color="blue">incentive payments</font> and other revenues from <font color="blue">distribution</font> system vendors and     <font color="blue"><font color="blue">commission</font>s</font>  from  hotel  and  <font color="blue">car vendors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font>airlines are     eliminating <font color="blue"><font color="blue">commission</font>s</font>, all <font color="blue">airlines may reduce</font> or terminate incentive     override <font color="blue"><font color="blue">commission</font>s</font>, <font color="blue">distribution</font> system vendors may reduce or terminate     <font color="blue">incentive payments</font> or other revenues, hotel and <font color="blue">car vendors</font> may reduce or     terminate  <font color="blue"><font color="blue">commission</font>s</font>  and  we  may not be able to extend our current     <font color="blue">arrangements</font> or enter into new <font color="blue">arrangements</font> that are as favorable as our     current <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td>If any of these events were to occur, our revenue     could  decrease and our <font color="blue"><font color="blue">financial condition</font> could</font> be <font color="blue">seriously harm</font>ed</td>
+    </tr>
+    <tr>
+      <td>Additionally, if, during any period, we fail to meet our <font color="blue">incentive level</font>     thresholds, our <font color="blue">revenues could decrease</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customers either pay</font> for our services under <font color="blue">management</font> <font color="blue">agreement</font>s or     <font color="blue">service fee</font> <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td>Under our <font color="blue">management</font> <font color="blue">agreement</font>s, our customers pay     us fees for <font color="blue">transactions</font>, and a <font color="blue">significant</font> portion of the revenues received     <font color="blue">by us from vendors on account</font> of such <font color="blue">transactions</font> are typically credited     against  the <font color="blue">fees payable by</font> the customer to us</td>
+    </tr>
+    <tr>
+      <td>A reduction in vendor     <font color="blue">revenues would increase</font> the out-of-pocket expenses for our customers and may     cause <font color="blue">such customers</font> to seek a reduction in our fees or to terminate, or to     attempt  to  terminate, their <font color="blue">management</font> <font color="blue">agreement</font>s with us</td>
+    </tr>
+    <tr>
+      <td>For those     <font color="blue">agreement</font>s where we retain a portion of the <font color="blue">vendor revenues</font>, a decrease in     <font color="blue">revenues from vendors would also decrease</font> that portion of those revenues     retained by us under <font color="blue">management</font> <font color="blue">agreement</font>s</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">transactions</font> performed for <font color="blue">customers with whom</font> we have <font color="blue">service fee</font>     <font color="blue">arrangements</font>, we typically retain all <font color="blue">vendor revenues</font> paid on account of     such <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">vendor revenues</font> were to be reduced or eliminated, our     <font color="blue">revenues would decrease</font>, and we may not be able to <font color="blue">recover such reductions</font>     by increasing <font color="blue">service fee</font>s to those customers</td>
+    </tr>
+    <tr>
+      <td>In addition, some of our customers can negotiate and obtain net <font color="blue">agreement</font>s     <font color="blue">directly from vendors</font>, and when this occurs we <font color="blue">typically cease</font> to receive     revenue  from  the vendors for the <font color="blue">travel activity</font> of these customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>we  attempt  to  recapture this <font color="blue">revenue through increased</font> or     <font color="blue">additional</font> fees to the customer, we are not <font color="blue">always able</font> to obtain increased     or <font color="blue">additional</font> fees, and <font color="blue">consequently</font>, our <font color="blue">revenue would decrease</font></td>
+    </tr>
+    <tr>
+      <td>Our industry is <font color="blue">extremely <font color="blue">competitive</font></font>, becoming increasingly <font color="blue"><font color="blue">consolidate</font>d</font>     and subject to new methods of <font color="blue">distribution</font>, all of which may result in loss     of clients or <font color="blue">declining revenues</font> or margins</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">corporate travel</font> <font color="blue">management</font> industry is <font color="blue">extremely <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td>Some of     our <font color="blue">competitors</font> have greater brand-name <font color="blue">recognition</font> and financial resources     than we do</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>within the <font color="blue">corporate travel</font> <font color="blue">management</font> industry is     <font color="blue">increasing as</font> the <font color="blue">industry undergoes</font> a period of <font color="blue">consolidation</font></td>
+    </tr>
+    <tr>
+      <td>Many of our     <font color="blue">competitors</font>  are  expanding their size and financial resources through     <font color="blue">consolidation</font></td>
+    </tr>
+    <tr>
+      <td>Some travel <font color="blue">management</font> <font color="blue">companies may</font> have <font color="blue">relationships with</font>     travel  suppliers  which <font color="blue">give them access</font> to favorable <font color="blue">availability</font> of     products, including <font color="blue">airplane seats</font> and <font color="blue">hotel rooms</font>, or more <font color="blue">competitive</font>     pricing  than  that  offered to us</td>
+    </tr>
+    <tr>
+      <td>Furthermore, some <font color="blue">corporate travel</font>     <font color="blue">management</font> companies have a <font color="blue">strong presence</font> in <font color="blue">particular geographic areas</font>     which may make it <font color="blue">difficult</font> for us to <font color="blue">attract customers</font> in those areas</td>
+    </tr>
+    <tr>
+      <td>As a     result of <font color="blue">competitive</font> pressures, we may suffer a loss of clients, and our     revenues or margins may decline</td>
+    </tr>
+    <tr>
+      <td>We also <font color="blue">compete with</font> travel suppliers, including airlines, hotels and rental     <font color="blue">car companies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Innovations </font>in <font color="blue">technology</font>, such as the Internet and computer     online  services,  have  increased  the ability of travel suppliers to     distribute  their  travel products and services directly to consumers</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">corporate travel</font> <font color="blue">management</font> companies and <font color="blue">travel agencies remain</font>     the <font color="blue">primary channel</font> for travel <font color="blue">distribution</font>, <font color="blue">businesses</font> and consumers can     now  use  the Internet to access information about travel products and     services  and to <font color="blue">purchase such</font> products and <font color="blue">services directly from</font> the     suppliers, thereby bypassing <font color="blue">corporate travel</font> <font color="blue">management</font> companies and     <font color="blue">travel agents</font></td>
+    </tr>
+    <tr>
+      <td>In addition, although we believe the service, knowledge and     skills of our employees and our                                           10     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>incorporation of new, alternative <font color="blue">distribution</font> channels position us to     <font color="blue">compete effectively</font> in the changing industry, there can be no assurance that     we will <font color="blue">compete <font color="blue">successfully</font></font> or that the failure to <font color="blue">compete <font color="blue">successfully</font></font>     will not have a material adverse effect on our <font color="blue">financial condition</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">customers convert</font> to our lower cost, online travel solutions, they often     require that we maintain <font color="blue">current service levels</font> and <font color="blue">staffing configurations</font>,     making it <font color="blue">difficult</font> to reduce our costs in <font color="blue">proportion with</font> the decrease in     revenues</td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue">acquisition</font>s are a component of our strategy and our anticipated     growth</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face risks</font> in continuing to acquire <font color="blue">corporate travel</font> <font color="blue">management</font>     companies</td>
+    </tr>
+    <tr>
+      <td>A  substantial  amount  of  the  growth  of our revenues has come from     <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>One of our strategies is to increase our revenues and the     markets we <font color="blue">serve through</font> the <font color="blue">acquisition</font> of <font color="blue">additional</font> <font color="blue">corporate travel</font>     companies</td>
+    </tr>
+    <tr>
+      <td>In the future, we may not make <font color="blue">acquisition</font>s at the pace we desire     or on favorable terms, if at all</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">consolidation</font> of the     travel <font color="blue">management</font> industry has reduced the number of <font color="blue">companies available</font> for     purchase, which could lead to <font color="blue">higher prices</font> being paid for the <font color="blue">acquisition</font>     of the remaining travel <font color="blue">management</font> companies</td>
+    </tr>
+    <tr>
+      <td>If we are unable to identify     and <font color="blue">successfully</font> negotiate suitable <font color="blue">acquisition</font>s at the pace we desire or at     all, we may not be able to <font color="blue">generate sufficient internal growth</font> to sustain     our <font color="blue">historical growth rate</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The November </font>3, 2005 <font color="blue">Credit Facility</font> Amendment     also  restricted our ability to complete <font color="blue">acquisition</font>s by requiring the     consent  of the <font color="blue">participating banks</font> for all <font color="blue">acquisition</font>s until we meet     <font color="blue">certain financial ratios</font></td>
+    </tr>
+    <tr>
+      <td>The companies we have acquired, or which we may acquire in the future, may     not achieve sales and <font color="blue">profitability</font> that <font color="blue">would justify</font> our <font color="blue">investment</font> in     them</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">acquisition</font>s of <font color="blue">companies outside</font> the <font color="blue"><font color="blue">United States</font> </font>may subject us     to  <font color="blue">risks inherent</font> in conducting business <font color="blue">international</font>ly</td>
+    </tr>
+    <tr>
+      <td>These risks     include <font color="blue">fluctuations</font> in currency exchange rates, new and <font color="blue"><font color="blue">different</font> legal</font> and     regulatory <font color="blue">requirements</font> and <font color="blue">difficult</font>ies in staffing and <font color="blue">managing foreign</font>     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">currently intend</font> to finance our future <font color="blue">acquisition</font>s by using cash,     <font color="blue">borrowed funds</font>, shares of our <font color="blue">common stock</font> or a <font color="blue">combination</font> thereof</td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue">common stock</font> does not maintain a <font color="blue">sufficient market value</font>, if our common     stock  price  is  <font color="blue">highly volatile</font>, or if, for other reasons, potential     <font color="blue">acquisition</font> candidates are unwilling to accept our <font color="blue">common stock</font> as part of     the <font color="blue">consideration</font> for the sale of their <font color="blue">businesses</font>, we may then be required     to  use  more of our <font color="blue">cash resources</font> or more <font color="blue">borrowed funds</font> in order to     maintain our <font color="blue">acquisition</font> program</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our <font color="blue">Credit Facility</font> </font>and <font color="blue">Term Loan </font>limit     our ability to consummate <font color="blue">acquisition</font>s using <font color="blue">total <font color="blue">consideration</font></font> in excess     of dlra10 million without the consent of <font color="blue">participating banks</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The November </font>3,     2005 <font color="blue">Credit Facility</font> Amendment <font color="blue">further restricted</font> our ability to complete     <font color="blue">acquisition</font>s  by  requiring the consent of <font color="blue">participating banks</font> for all     <font color="blue">acquisition</font>s until we meet <font color="blue">certain financial ratios</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to use     <font color="blue">common stock</font> for <font color="blue">acquisition</font>s and we do not have sufficient <font color="blue">cash resources</font>,     our <font color="blue">growth could</font> be limited unless we are able to obtain <font color="blue">additional</font> capital     <font color="blue">through debt</font> or other financing</td>
+    </tr>
+    <tr>
+      <td>We may not be able to obtain <font color="blue">additional</font>     capital, if and when needed, on terms we deem acceptable</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Governmental </font>agencies, which in the aggregate are a material part of our     <font color="blue">customer base</font>, are subject to budget processes, which could limit the demand     for our <font color="blue">travel services</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Governmental </font>agencies, which in the aggregate represent approximately 17prca of     our <font color="blue">total revenues</font> as of the year ended <font color="blue">December </font>25, 2005, are subject to     <font color="blue">budgetary processes</font> and <font color="blue">expenditure constraints</font></td>
+    </tr>
+    <tr>
+      <td>The funding of <font color="blue">government</font>     programs is subject to <font color="blue">legislative appropriation</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Budgetary </font><font color="blue">allocations</font> are     <font color="blue">dependent</font>, in part, upon <font color="blue">government</font>al policies which fluctuate from time to     time in response to political and other factors</td>
+    </tr>
+    <tr>
+      <td>Although we have multi-year     <font color="blue">contracts with</font> our <font color="blue">government</font>al agency customers, <font color="blue">government</font>s <font color="blue">generally</font>     <font color="blue">appropriate funds on</font> a <font color="blue">fiscal year basis even though</font> a <font color="blue">contract may continue</font>     for <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, programs are <font color="blue">often only partially funded</font>     and <font color="blue">additional</font> funds are <font color="blue">committed only upon further appropriations</font></td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue">government</font> agency customers do not receive <font color="blue">legislative appropriation</font>, such     <font color="blue">agencies may reduce</font> their travel, which could reduce our revenue</td>
+    </tr>
+    <tr>
+      <td>11     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font><font color="blue">Governmental </font>agencies have <font color="blue">special contracting abilities</font> and <font color="blue">requirements</font>,     including the <font color="blue">unilateral ability</font> to suspend or <font color="blue">terminate <font color="blue">current contracts</font></font>     at will, to reduce the value of <font color="blue">current contracts</font>, and to <font color="blue">prevent us from</font>     being <font color="blue">awarded new contracts</font></td>
+    </tr>
+    <tr>
+      <td>As a <font color="blue">government</font> <font color="blue">contractor</font>, we are subject to     periodic audits and reviews, which may decrease our revenues or <font color="blue">adversely</font>     impact our margins</td>
+    </tr>
+    <tr>
+      <td>Also as a <font color="blue">government</font> <font color="blue">contractor</font>, we may have to meet     onerous contract <font color="blue">requirements</font>, and our failure to meet these <font color="blue">requirements</font>     may impact our revenues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>contracts typically contain <font color="blue">termination</font> provisions unfavorable to     us and are subject to audit and <font color="blue">modification by</font> the <font color="blue">government</font> at its sole     discretion, which subject us to <font color="blue">additional</font> risks</td>
+    </tr>
+    <tr>
+      <td>These risks include the     ability of the US <font color="blue">government</font> to <font color="blue">unilaterally</font>:           •   Suspend or prevent us for a set period of time from receiving new     contracts or extending existing contracts <font color="blue">based on</font> violations or suspected     violations of laws or <font color="blue">regulations</font>;           •   Terminate our existing contracts;           •   Reduce the scope and value of our existing contracts;           •   Audit and object to our contract-related costs and fees, including     <font color="blue">allocated indirect costs</font>; and           •   Change terms and <font color="blue">conditions</font> in our contracts</td>
+    </tr>
+    <tr>
+      <td>The US <font color="blue">government</font> can terminate any of its <font color="blue">contracts with</font> us either for     its convenience or if we <font color="blue">default by failing</font> to perform in <font color="blue">accordance with</font>     the <font color="blue">contract schedule</font> and terms</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Termination </font>for convenience provisions     <font color="blue">generally</font> enable us to recover only our costs incurred or committed, and     settlement expenses and profit on the work completed prior to <font color="blue">termination</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Termination </font>for default provisions do not permit these <font color="blue">recoveries</font> and make     us liable for excess costs incurred by the US <font color="blue">government</font> in procuring     <font color="blue">undelivered items from</font> another source</td>
+    </tr>
+    <tr>
+      <td>As a <font color="blue">government</font> <font color="blue">contractor</font>, we are subject to periodic audits and reviews</td>
+    </tr>
+    <tr>
+      <td>Based on the results of its audits, the US <font color="blue">government</font> may adjust our     contract-related costs and fees, including <font color="blue">allocated indirect costs</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, under US <font color="blue">government</font> purchasing <font color="blue">regulations</font>, some of our costs     may  not  be <font color="blue">reimbursable</font> or allowed in our <font color="blue">negotiation</font> of fixed-price     contracts</td>
+    </tr>
+    <tr>
+      <td>Further, as a US <font color="blue">government</font> <font color="blue">contractor</font>, we are subject to an     increased  risk  of investigations, criminal prosecution, civil fraud,     <font color="blue">whistleblower lawsuits</font> and other <font color="blue">legal actions</font> and <font color="blue">liabilities</font> to which     <font color="blue">purely private</font> sector companies are not</td>
+    </tr>
+    <tr>
+      <td>In contracting with <font color="blue">government</font>al agencies, we are subject to <font color="blue">government</font>al     agency contract <font color="blue">requirements</font> that <font color="blue">vary from agency</font> to agency</td>
+    </tr>
+    <tr>
+      <td>Future sales     to  <font color="blue">government</font>al agencies will depend, in part, on our ability to meet     <font color="blue">government</font>al agency contract <font color="blue">requirements</font>, which may be onerous or even     impossible for us to satisfy</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Goodwill  </font>comprises much of our <font color="blue">total assets</font>, and if we determine that     goodwill has <font color="blue">become impaired</font> in the future, net income in <font color="blue">such years will</font>     decrease</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>25, 2005, dlra398dtta5 million or 68dtta3prca of our <font color="blue">total assets</font> and     158dtta6prca of our <font color="blue">stockholders</font>’ equity represent goodwill</td>
+    </tr>
+    <tr>
+      <td>Goodwill <font color="blue">represents</font>     the excess of cost over the <font color="blue">fair market value</font> of net assets acquired in     business <font color="blue">combination</font>s accounted for under the <font color="blue">purchase method</font></td>
+    </tr>
+    <tr>
+      <td>We test for     <font color="blue"><font color="blue">impairment</font> annually</font> or more <font color="blue">frequently</font> if events or changes in <font color="blue">circumstances</font>     indicate that the <font color="blue">asset might</font> be impaired</td>
+    </tr>
+    <tr>
+      <td>A write-down or <font color="blue">impairment</font> of     <font color="blue">goodwill would decrease</font> our net income and our shareholders’ equity</td>
+    </tr>
+    <tr>
+      <td>Our customers are not committed to <font color="blue">provide us with</font> a <font color="blue">specific volume</font> of     business and <font color="blue">may terminate</font> their <font color="blue">contracts with</font> us or choose not to renew     <font color="blue">contracts which</font> could <font color="blue">seriously harm</font> our revenues</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">contracts with</font> customers do not commit our customers to <font color="blue">provide us with</font>     a <font color="blue">specific volume</font> of business and many can typically be <font color="blue">terminated by</font> our     customers  with or without cause, with little or no advance notice and     <font color="blue">without penalty</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers </font><font color="blue">may terminate</font> their <font color="blue">agreement</font>s with us for a     variety of reasons, including <font color="blue">acquisition</font> or <font color="blue">consolidation</font>, a change in     <font color="blue">outsourcing strategy</font>, or reactions to pressures, changes or perceived                                           12     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font><font color="blue">advantages</font> in the <font color="blue">travel industry</font> <font color="blue">generally</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers </font><font color="blue">may attempt</font> to use     this leverage to negotiate a reduction in our fees</td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">significant</font> number     of customers elected to terminate their <font color="blue">agreement</font>s with us, or decided to     reduce their travel <font color="blue">expenditures</font>, it could reduce our revenues and harm our     business</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">travel suppliers cancel</font> or modify their <font color="blue">agreement</font>s with us, we may be     subject to changes in our pricing <font color="blue">agreement</font>s, <font color="blue">commission</font> schedules and     incentive override <font color="blue">commission</font> <font color="blue">arrangements</font> and more <font color="blue">restricted access</font> to     travel suppliers’ products and services, which could <font color="blue">seriously harm</font> our     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> upon travel suppliers for access to their products and     services, including <font color="blue">airplane seats</font> and <font color="blue">hotel rooms</font></td>
+    </tr>
+    <tr>
+      <td>Travel <font color="blue">suppliers offer</font>     us pricing that is <font color="blue">preferential</font> to published fares, enabling us to offer     prices  <font color="blue">lower than would</font> be <font color="blue">generally</font> available to travelers and other     <font color="blue">corporate travel</font> <font color="blue">management</font> companies or <font color="blue">travel agents</font></td>
+    </tr>
+    <tr>
+      <td>Travel suppliers can     <font color="blue">generally</font> cancel or modify their <font color="blue">agreement</font>s with us upon relatively short     notice</td>
+    </tr>
+    <tr>
+      <td>If a travel supplier cancels or modifies their <font color="blue">agreement</font> with us, we     may be subject to changes in our pricing <font color="blue">agreement</font>s, <font color="blue">commission</font> schedules     and incentive override <font color="blue">commission</font> <font color="blue">arrangements</font>, and more <font color="blue">restricted access</font>     to travel suppliers’ products and services, which could <font color="blue">seriously harm</font> our     results  of  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In  addition, our <font color="blue">clients may enter into net</font>     <font color="blue">agreement</font>s with travel service providers to directly receive any override     <font color="blue"><font color="blue">commission</font>s</font> in the form of <font color="blue">additional</font> point-of-sale <font color="blue">discounts</font> rather than     <font color="blue">allowing us</font> to receive these <font color="blue"><font color="blue">commission</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">technologies</font> we <font color="blue"><font color="blue">depend on</font> fail</font> or our right to use global <font color="blue">distribution</font>     systems is restricted, we may not be able to process <font color="blue">transactions</font> for our     <font color="blue"><font color="blue">customers as</font> <font color="blue">efficiently</font></font>, if at all, which would <font color="blue">seriously harm</font> the results     of our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  business  is <font color="blue">dependent</font> upon a number of <font color="blue">different</font> information and     tele<font color="blue">communication</font>s <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our ability to quote prices     for <font color="blue">airline tickets</font>, <font color="blue">hotel rooms</font>, rental cars and other travel related     services, make <font color="blue">reservation</font>s, and sell such and other travel related services     is <font color="blue">dependent</font> upon our <font color="blue">contractual</font> right to use, and the performance of,     global <font color="blue">distribution</font> systems operated by Sabre, Galileo/Apollo and Worldspan</td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">technologies</font> or systems fail, or if our access to these systems is     restricted, we may not be able to process <font color="blue">transactions</font> for our <font color="blue">customers as</font>     <font color="blue">efficiently</font>,  if  at  all,  which  would <font color="blue">seriously harm</font> our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Rapid <font color="blue">technological</font> changes and new <font color="blue">distribution</font> channels may <font color="blue">adversely</font>     affect  the  value of our current or future <font color="blue">technologies</font> to us and our     customers, which could cause us to increase <font color="blue">expenditures</font> to upgrade and     protect our <font color="blue">technology</font> or develop and <font color="blue">protect competing offerings</font> in new     <font color="blue">distribution</font> channels</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Distribution </font>channels and <font color="blue">technology</font> in our industry are <font color="blue">evolving rapidly</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to compete and our future results depend in part on our ability     to  make  timely  and cost-effective enhancements and <font color="blue">additions</font> to our     <font color="blue">technology</font>,  to <font color="blue">introduce <font color="blue">new products</font></font> and services that <font color="blue">meet customer</font>     demands and to keep <font color="blue">pace with rapid advancements</font> in <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Maintaining     </font><font color="blue">flexibility</font> to respond to <font color="blue">technological</font> and <font color="blue">market dynamics may</font> require     substantial <font color="blue">expenditures</font> and lead-time</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will     <font color="blue">successfully</font> identify and develop <font color="blue">new products</font> or services in a timely     manner, that offerings, <font color="blue">technologies</font> or services developed <font color="blue">by others will</font>     not  render  our  offerings  obsolete  or  non<font color="blue">competitive</font>, or that the     <font color="blue">technologies</font> in which we focus our <font color="blue"><font color="blue">investment</font>s</font> will achieve <font color="blue">acceptance</font> in     the marketplace and provide a return on our <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Bankruptcies </font>of airlines or other providers of <font color="blue">travel services</font> could result     in us failing to <font color="blue">collect outstanding <font color="blue">receivables</font> from</font> these providers or     having to repay a portion of <font color="blue">collected revenues</font> to the <font color="blue"><font color="blue">bankruptcy</font> trustee</font></td>
+    </tr>
+    <tr>
+      <td>We derive part our revenue from <font color="blue"><font color="blue">commission</font>s</font> paid by <font color="blue">international</font> airlines,     incentive  override <font color="blue"><font color="blue">commission</font>s</font> paid by various airlines and incentive     payments and <font color="blue"><font color="blue">commission</font>s</font> from other providers of <font color="blue">travel services</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font>revenue is <font color="blue">recorded as</font> a <font color="blue">receivable as earned</font> and <font color="blue">collected on</font> a monthly or     <font color="blue">quarterly basis</font></td>
+    </tr>
+    <tr>
+      <td>If an airline or other provider of <font color="blue">travel services</font> were to     declare  <font color="blue">bankruptcy</font>,  we may not receive payment for these outstanding     <font color="blue">receivables</font> in a <font color="blue">timely manner</font>, or at all</td>
+    </tr>
+    <tr>
+      <td>In addition, the debtor or the     <font color="blue"><font color="blue">bankruptcy</font> trustee</font> may claim that any <font color="blue">receivables</font> collected by us during the     90 days prior the <font color="blue">bankruptcy</font> filing were <font color="blue">preference payment</font>s, which may need     to  be disgorged</td>
+    </tr>
+    <tr>
+      <td>If we do not collect this revenue, or have to return     <font color="blue">revenue as</font> a preference                                           13     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>payment, we would become a <font color="blue">general unsecured creditor</font> of the debtor, and we     may not collect any amount of our <font color="blue">outstanding receivable</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to     collect these <font color="blue">receivables</font> or have to disgorge collected <font color="blue">receivables</font> as a     <font color="blue">preference payment</font>, our <font color="blue">revenue would decrease</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conversion </font>of our outstanding 4dtta875prca convertible subordinated <font color="blue">debentures</font> due     2023 into our <font color="blue">common stock</font> <font color="blue">would dilute</font> the <font color="blue">ownership interests</font> of existing     <font color="blue">stockholders</font>,  including  holders  who  had <font color="blue">previously</font> converted their     <font color="blue">debentures</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">conversion</font>  of some or all of our 4dtta875prca convertible subordinated     <font color="blue">debentures</font> due 2023 into our <font color="blue">common stock</font>, including <font color="blue">conversion</font>s following     certain changes of control of Navigant, <font color="blue">would dilute</font> the <font color="blue">ownership interests</font>     of existing <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Any sales in the <font color="blue">public market</font> of the <font color="blue">common stock</font>     issuable upon such <font color="blue">conversion</font> could <font color="blue">adversely</font> affect prevailing market     prices of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the existence of the <font color="blue">debentures</font> may     encourage short <font color="blue">selling by market participants</font> because the <font color="blue">conversion</font> of the     <font color="blue">debentures</font> could depress the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our industry is seasonal, causing <font color="blue">fluctuating</font> results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The domestic and <font color="blue">international</font> travel service industry is seasonal</td>
+    </tr>
+    <tr>
+      <td>Our past     results  have  fluctuated because of <font color="blue">seasonal variations</font> in the travel     <font color="blue">services industry</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">net revenues</font> and net income are <font color="blue">generally</font> higher in     the second and <font color="blue">third calendar quarters</font> and lowest in the <font color="blue">fourth calendar</font>     quarter</td>
+    </tr>
+    <tr>
+      <td>We expect this <font color="blue">seasonality</font> to continue in the future</td>
+    </tr>
+    <tr>
+      <td>Our quarterly     results of <font color="blue">operations</font> may also be subject to <font color="blue">fluctuations</font> as a result of the     timing  and cost of <font color="blue">acquisition</font>s, changes in <font color="blue">relationships with</font> travel     suppliers, changes in the mix of services <font color="blue">offered by us</font>, the timing of the     payment of incentive override <font color="blue"><font color="blue">commission</font>s</font> by travel suppliers, extreme     weather <font color="blue">conditions</font> or other <font color="blue">factors affecting travel</font></td>
+    </tr>
+    <tr>
+      <td>If our agent reporting <font color="blue">agreement</font>s are cancelled, we would be unable to sell     <font color="blue">airline tickets</font> and our <font color="blue">revenues would decrease</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> the ability to sell <font color="blue">airline tickets</font> for a substantial portion     of our revenue</td>
+    </tr>
+    <tr>
+      <td>To sell <font color="blue">airline tickets</font>, we <font color="blue">must enter into</font>, and maintain,     an agent reporting <font color="blue">agreement</font> for each operating <font color="blue">subsidiary with</font> the Airlines     Reporting  Corporation, or ARC, for domestic agencies or with the Bank     Settlement  Plan,  or BSP, for <font color="blue">international</font> agencies</td>
+    </tr>
+    <tr>
+      <td>Agent reporting     <font color="blue">agreement</font>s  impose  numerous financial, operational and <font color="blue">administrative</font>     <font color="blue">obligations</font> on us</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">agreement</font>s allow <font color="blue">ARC or BSP </font>to cancel an agent     reporting <font color="blue">agreement</font> for failure to meet any of these <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>If our     agent reporting <font color="blue">agreement</font>s are <font color="blue">cancelled by</font> ARC or BSP, we would be unable     to sell <font color="blue">airline tickets</font> and our <font color="blue">revenues would decrease</font></td>
+    </tr>
+  </tbody>
+</table>

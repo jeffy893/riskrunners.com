@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: following describes", fill: "#3f00ff"},
+{source: "1: following describes", target: "1: risk factors associated with", fill: "#3f00ff"},
+{source: "1: risk factors associated with", target: "1: financial condition", fill: "#3f00ff"},
+{source: "1: financial condition", target: "1: operations could", fill: "#3f00ff"},
+{source: "1: operations could", target: "1: negatively affected", fill: "#3f00ff"},
+{source: "1: negatively affected", target: "1: growth effectively", fill: "#3f00ff"},
+{source: "1: following describes", target: "2: both loans", fill: "#556b2f"},
+{source: "2: both loans", target: "2: deposits as well as", fill: "#556b2f"},
+{source: "2: deposits as well as", target: "2: operations", fill: "#556b2f"},
+{source: "2: both loans", target: "3: Achieving ", fill: "#d1e231"},
+{source: "3: Achieving ", target: "3: growth targets will", fill: "#d1e231"},
+{source: "3: growth targets will", target: "3: financial institutions", fill: "#d1e231"},
+{source: "3: financial institutions", target: "3: future markets", fill: "#d1e231"},
+{source: "3: Achieving ", target: "10: The Company ", fill: "#0072bb"},
+{source: "10: The Company ", target: "10: operations", fill: "#0072bb"},
+{source: "10: operations", target: "10: fluctuations", fill: "#0072bb"},
+{source: "10: fluctuations", target: "10: interest rates", fill: "#0072bb"},
+{source: "10: interest rates", target: "10: different basis than", fill: "#0072bb"},
+{source: "10: The Company ", target: "11: Companys ", fill: "#b784a7"},
+{source: "11: Companys ", target: "11: increase during times", fill: "#b784a7"},
+{source: "11: increase during times", target: "11: interest rates", fill: "#b784a7"},
+{source: "11: interest rates", target: "11: conversely", fill: "#b784a7"},
+{source: "11: conversely", target: "11: decline during times", fill: "#b784a7"},
+{source: "11: decline during times", target: "11: falling interest", fill: "#b784a7"},
+{source: "11: Companys ", target: "15: addition as", fill: "#ff91a4"},
+{source: "15: addition as", target: "15: expand into", fill: "#ff91a4"},
+{source: "15: expand into", target: "15: United States ", fill: "#ff91a4"},
+{source: "15: United States ", target: "15: become increasingly dependent on", fill: "#ff91a4"},
+{source: "15: become increasingly dependent on", target: "15: local economies", fill: "#ff91a4"},
+{source: "15: local economies", target: "15: markets as", fill: "#ff91a4"},
+{source: "15: addition as", target: "19: continued pace", fill: "#b19cd9"},
+{source: "19: continued pace", target: "19: growth may", fill: "#b19cd9"},
+{source: "19: growth may", target: "19: raise additional capital", fill: "#b19cd9"},
+{source: "19: raise additional capital", target: "19: future but", fill: "#b19cd9"},
+{source: "19: future but", target: "19: capital may", fill: "#b19cd9"},
+{source: "19: continued pace", target: "25: raise additional capital", fill: "#ff6"},
+{source: "25: raise additional capital", target: "25: further expand", fill: "#ff6"},
+{source: "25: further expand", target: "25: operations through internal growth", fill: "#ff6"},
+{source: "25: operations through internal growth", target: "25: acquisitions could", fill: "#ff6"},
+{source: "25: acquisitions could", target: "25: materially", fill: "#ff6"},
+{source: "25: raise additional capital", target: "51: acquisitions", fill: "#ff8f00"},
+{source: "51: acquisitions", target: "51: incurs additional expenses", fill: "#ff8f00"},
+{source: "51: incurs additional expenses", target: "51: them there could", fill: "#ff8f00"},
+{source: "51: them there could", target: "51: adverse effects on", fill: "#ff8f00"},
+{source: "51: adverse effects on", target: "51: Companys ", fill: "#ff8f00"},
+{source: "51: Companys ", target: "51: future consolidated", fill: "#ff8f00"},
+{source: "51: future consolidated", target: "51: operations", fill: "#ff8f00"},
+{source: "51: acquisitions", target: "START_HERE", fill: "#ff8f00"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Systemically_important_financial_institution">Systemically important financial institution</a></td>
+      <td>A systemically important financial institution (SIFI) is a bank, insurance company, or other financial institution whose failure might trigger a financial crisis. They are colloquially referred to as "too big to fail".As the financial crisis of 2007–2008 unfolded, the international community moved to protect the global financial system through preventing the failure of SIFIs, or, if one does fail, limiting the adverse effects of its failure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Company">Company</a></td>
+      <td>A company, abbreviated as co., is a legal entity representing an association of people, whether natural, legal or a mixture of both, with a specific objective. Company members share a common purpose and unite to achieve specific, declared goals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Walt_Disney_Company">The Walt Disney Company</a></td>
+      <td>The Walt Disney Company, commonly known as Disney (), is an American multinational mass media and entertainment conglomerate headquartered at the Walt Disney Studios complex in Burbank, California.\nDisney was originally founded on October 16, 1923, by brothers Walt and Roy O. Disney as the Disney Brothers Cartoon Studio; it also operated under the names the Walt Disney Studio and Walt Disney Productions before changing its name to the Walt Disney Company in 1986.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Estadi_Olímpic_Lluís_Companys">Estadi Olímpic Lluís Companys</a></td>
+      <td>Estadi Olímpic Lluís Companys (Catalan pronunciation: [əsˈtaði uˈlimpiɡ ʎuˈis kumˈpaɲs], formerly known as the Estadi Olímpic de Montjuïc and Estadio de Montjuic) is a stadium in Barcelona, Catalonia, Spain. Originally built in 1927 for the 1929 International Exposition in the city (and Barcelona's bid for the 1936 Summer Olympics, which were awarded to Berlin), it was renovated in 1989 to be the main stadium for the 1992 Summer Olympics and 1992 Summer Paralympics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Companys,_procés_a_Catalunya">Companys, procés a Catalunya</a></td>
+      <td>Companys, procés a Catalunya (Spanish: Companys, proceso a Cataluña) is a 1979 Spanish Catalan drama film directed by Josep Maria Forn, based on the last months of the life of the President of Catalonia, Lluís Companys, in which he shows his detention by the Nazis and his subsequent execution by the Spanish Francoists. It competed in the Un Certain Regard section at the 1979 Cannes Film Festival.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conxita_Julià">Conxita Julià</a></td>
+      <td>Conxita Julià i Farrés (Catalan pronunciation: [kuɲˈʃitə ʒuliˈa j fəˈres]; 11 June 1920 – 9 January 2019), also known as Conxita de Carrasco, was a Catalan woman noted for her dealings with Lluís Companys, President of Catalonia, in the 1930s, and for her poetry. Julià died in January 2019 at the age of 98.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Amazon_(company)">Amazon (company)</a></td>
+      <td>Amazon.com, Inc. ( AM-ə-zon) is an American multinational technology company which focuses on e-commerce, cloud computing, digital streaming, and artificial intelligence.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/El_Tarròs">El Tarròs</a></td>
+      <td>El Tarròs (Spanish: Tarrós) is a small village in Tornabous municipality, in the province of Lleida, in Catalonia, Spain. In 2008 it had 100 inhabitants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Capital_market">Capital market</a></td>
+      <td>A capital market is a financial market in which long-term debt (over a year) or equity-backed securities are bought and sold, in contrast to a money market where short-term debt is bought and sold. Capital markets channel the wealth of savers to those who can put it to long-term productive use, such as companies or governments making long-term investments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/E-Dreams">E-Dreams</a></td>
+      <td>e-Dreams is a 2001 American documentary film directed by Wonsuk Chin portraying the rise and fall of Kozmo.com, an online convenience store that used bike messengers to deliver goods ordered online within an hour.\nThe movie follows Joseph Park and Yong Kang, 28-year-old Korean Americans, whose company started as Park's idea in 1998 and by January 1999 became a reality in a warehouse with a small group of employees and grew to 3,000 employees and an 11-city network within a year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Founder_CEO">Founder CEO</a></td>
+      <td>A founder CEO is an individual who establishes a company and holds its chief executive officer (CEO) position. If the firm's CEO is not a founder or the founder CEO is succeeded, the firm is said to be led by a non-founder CEO or successor CEO. \nResearch has highlighted differences between the founder and non-founder CEOs that influence firm performance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Closed-end_fund">Closed-end fund</a></td>
+      <td>A closed-end fund (CEF) or closed-ended fund is a collective investment model based on issuing a fixed number of shares which are not redeemable from the fund. Unlike open-end funds, new shares in a closed-end fund are not created by managers to meet demand from investors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Standby_Equity_Distribution_Agreement">Standby Equity Distribution Agreement</a></td>
+      <td>In corporate finance, a Standby Equity Distribution Agreement (SEDA) is a type of share allocation agreement between a company and a share purchaser. It is a form of private placement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_mergers_and_acquisitions_by_Alphabet">List of mergers and acquisitions by Alphabet</a></td>
+      <td>Google is a computer software and a web search engine company that acquired, on average, more than one company per week in 2010 and 2011. The table below is an incomplete list of acquisitions, with each acquisition listed being for the respective company in its entirety, unless otherwise specified.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_&amp;_Acquisitions">Mergers &amp; Acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_mergers_and_acquisitions_by_Meta_Platforms">List of mergers and acquisitions by Meta Platforms</a></td>
+      <td>Meta Platforms (formerly Facebook, Inc.) is a technology company that has acquired 91 other companies, including WhatsApp. The WhatsApp acquisition closed at a steep $16 billion; more than $40 per user of the platform.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_acquisitions_by_Oracle">List of acquisitions by Oracle</a></td>
+      <td>This is a listing of Oracle Corporation's corporate acquisitions, including acquisitions of both companies and individual products.\nOracle's version does not include value of the acquisition.See also Category:Sun Microsystems acquisitions (Sun was acquired by Oracle).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bolt-on_acquisition">Bolt-on acquisition</a></td>
+      <td>Bolt-on acquisition refers to the acquisition of smaller companies, usually in the same line of business, that presents strategic value. This is in contrast to primary acquisitions of other companies which are generally in different industries, require larger investments, or are of similar size to the acquiring company.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>UCBH HOLDINGS INC      Item 1A Risk Factors             The <font color="blue">following describes</font> some of the <font color="blue">risk factors <font color="blue">associated with</font></font> the     Company:       Our  business strategy includes the execution of growth plans, and our     <font color="blue">financial condition</font> and results of <font color="blue"><font color="blue">operations</font> could</font> be <font color="blue"><font color="blue">negatively affect</font>ed</font>     if we fail to grow or fail to manage our <font color="blue">growth <font color="blue">effectively</font></font></td>
+    </tr>
+    <tr>
+      <td>We expect to experience growth in <font color="blue">both loans</font> and <font color="blue">deposits as well as</font>     in our level of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Achieving </font>our <font color="blue">growth targets will</font> require us to     attract customers that currently do business at other <font color="blue">financial <font color="blue"><font color="blue">institution</font>s</font></font>     in our existing and <font color="blue">future markets</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">successfully grow will</font>     <font color="blue">depend on</font> a variety of factors, including our ability to attract and retain     experienced  <font color="blue"><font color="blue">management</font> staff</font>, the <font color="blue">continued availability</font> of desirable     business <font color="blue">opportunities</font>, the <font color="blue">competitive responses from</font> other financial     <font color="blue"><font color="blue">institution</font>s</font>  in our markets and our ability to <font color="blue"><font color="blue">effectively</font> manage</font> our     growth</td>
+    </tr>
+    <tr>
+      <td>While we believe we have the <font color="blue"><font color="blue">management</font> resources</font> and internal     systems in place to <font color="blue">successfully manage</font> our <font color="blue">future growth</font>, there can be no     assurance that we will be able to achieve our <font color="blue">growth goals</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changing </font><font color="blue"><font color="blue">interest rates</font> may reduce net interest income</font></td>
+    </tr>
+    <tr>
+      <td>Banking companies’ earnings depend largely on the <font color="blue">relationship between</font>     the cost of funds, primarily deposits, and the <font color="blue">yield on earning assets</font>,     <font color="blue">primarily loans</font> and <font color="blue">investments</font></td>
+    </tr>
+    <tr>
+      <td>This relationship, known as the interest     <font color="blue">rate margin</font>, is subject to <font color="blue">fluctuation</font> and is <font color="blue">affected by economic</font> and     competitive factors, which influence <font color="blue">interest rates</font>, the volume and mix of     interest-earning assets and interest-bearing liabilities, and the level of     <font color="blue">nonperforming assets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in <font color="blue">interest rates</font> will also affect the     customer’s demand for the products and services that we offer</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font><font color="blue">operations</font> are subject to <font color="blue">fluctuation</font>s in <font color="blue">interest rates</font>,     to the degree that its interest-bearing liabilities may reprice or mature     more  slowly  or  more  rapidly  or  on  a  <font color="blue">different basis than</font> their     interest-earning   assets</td>
+    </tr>
+    <tr>
+      <td>Given  our  current  volume  and  mix  of     interest-bearing liabilities and interest-earning assets, <font color="blue">the Company</font>’s net     interest  margin  would be expected to <font color="blue">increase during times</font> of rising     <font color="blue">interest rates</font> and, <font color="blue">conversely</font>, to <font color="blue">decline during times</font> of <font color="blue">falling interest</font>     rates</td>
+    </tr>
+    <tr>
+      <td>As a result, <font color="blue">significant</font> <font color="blue">fluctuation</font>s in <font color="blue">interest rates</font> may have an     adverse effect on <font color="blue">the Company</font>’s <font color="blue">consolidated</font> results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>13       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font>Our business is subject to the success of the <font color="blue">local economies</font> in which we     operate</td>
+    </tr>
+    <tr>
+      <td>Because the majority of our borrowers and <font color="blue">depositors</font> are individuals     and businesses located and doing business in the state of California, our     <font color="blue">success depends on</font> the strength of the <font color="blue">California </font>economy</td>
+    </tr>
+    <tr>
+      <td>In addition, as     we <font color="blue">expand into</font> other areas in the <font color="blue">United States </font>and into China, we will     <font color="blue">become increasingly <font color="blue">dependent on</font></font> the <font color="blue">local economies</font> in those markets, as     well</td>
+    </tr>
+    <tr>
+      <td>Adverse <font color="blue">economic <font color="blue">conditions</font></font> in these <font color="blue">markets could reduce</font> our growth     rate, affect the ability of our customers to repay their loans and <font color="blue">generally</font>     affect our <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Conditions, such     as inflation, recession, unemployment, high <font color="blue">interest rates</font>, short money     supply, scarce natural resources, international disorders, terrorism and     other <font color="blue">factors beyond</font> our control, may <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  any  sustained  period  of <font color="blue">increased payment delinquencies</font>,     <font color="blue">foreclosures</font> or losses caused <font color="blue">by adverse market</font> or <font color="blue">economic <font color="blue">conditions</font></font> in     our  <font color="blue">markets could <font color="blue"><font color="blue">adversely</font> affect</font></font> the value of our assets, revenues,     results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">continued pace</font> of <font color="blue">growth may</font> require us to <font color="blue">raise <font color="blue">additional capital</font></font> in     the future, but that <font color="blue">capital may</font> not be available when it is needed</td>
+    </tr>
+    <tr>
+      <td>We are required <font color="blue">by federal regulatory authorities</font> to maintain adequate     levels of capital to support our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We believe that our capital     resources  <font color="blue">will satisfy</font> these <font color="blue">capital <font color="blue">requirements</font></font> for the foreseeable     future</td>
+    </tr>
+    <tr>
+      <td>However, we may at some point need to <font color="blue">raise <font color="blue">additional capital</font></font> to     support our <font color="blue">continued growth</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">raise <font color="blue">additional capital</font></font>, if     needed, will <font color="blue">depend on</font> <font color="blue">conditions</font> in the <font color="blue">capital markets at</font> that time, which     are outside our control</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we cannot be assured of our ability to     <font color="blue">raise <font color="blue">additional capital</font></font>, if needed, on terms acceptable to us</td>
+    </tr>
+    <tr>
+      <td>If we cannot     <font color="blue">raise <font color="blue">additional capital</font></font> when needed, our ability to <font color="blue">further expand</font> our     <font color="blue">operations</font> through internal growth and <font color="blue"><font color="blue">acquisitions</font> could</font> be <font color="blue">materially</font>     impaired</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">wholesale funding sources may prove</font> insufficient to <font color="blue">replace deposits at</font>     maturity and support our <font color="blue">future growth</font></td>
+    </tr>
+    <tr>
+      <td>We must maintain <font color="blue">sufficient funds</font> to respond to the needs of our     <font color="blue">depositors</font> and borrowers</td>
+    </tr>
+    <tr>
+      <td>As a part of our liquidity <font color="blue">management</font>, we use a     number of funding sources in addition to core deposit growth and <font color="blue">repayments</font>     and maturities of loans and <font color="blue">investments</font></td>
+    </tr>
+    <tr>
+      <td>As we continue to grow, we are     likely to become more <font color="blue">dependent on</font> these sources, which include Federal Home     Loan Bank advances, proceeds from the sale of loans, brokered certificates     of deposit and a line of credit from another <font color="blue">financial <font color="blue">institution</font></font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">financial flexibility could</font> be <font color="blue">severely constrained</font> if we are unable to     maintain our access to funding or if <font color="blue">adequate financing</font> is not available to     accommodate <font color="blue">future growth</font> at acceptable <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>Finally, if we are     required to rely more <font color="blue">heavily on</font> more <font color="blue">expensive funding sources</font> to support     <font color="blue">future growth</font>, our <font color="blue">revenues may</font> not <font color="blue">increase proportionately</font> to cover our     costs</td>
+    </tr>
+    <tr>
+      <td>In this case, our operating margins and <font color="blue">profitability</font> would be     <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>Intense <font color="blue">competition</font> exists for loans and deposits</td>
+    </tr>
+    <tr>
+      <td>The banking and <font color="blue">financial services</font> business is <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitive </font>pressure is increasing as a result of changes in regulation,     changes in <font color="blue">technology</font> and <font color="blue">product delivery systems</font>, and the <font color="blue">accelerating</font>     pace of <font color="blue">consolidation among financial service providers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>must     compete for loans, deposits and <font color="blue">customers with</font> other <font color="blue">commercial banks</font>,     savings and loan associations, securities and brokerage companies, mortgage     companies, insurance companies, finance companies, money market funds,     credit unions and other <font color="blue">nonbank financial service providers</font></td>
+    </tr>
+    <tr>
+      <td>Many of these     <font color="blue">competitors</font> are much larger in total assets and capitalization, have greater     access to capital markets and offer a broader array of <font color="blue">financial services</font>     than we do</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that <font color="blue">the Company</font> will be able to     <font color="blue">compete <font color="blue">effectively</font></font> in its markets and <font color="blue">the Company</font>’s <font color="blue">consolidated</font> results of     <font color="blue"><font color="blue">operations</font> could</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> if <font color="blue">circumstances affecting</font> the nature     or level of <font color="blue">competition</font> change</td>
+    </tr>
+    <tr>
+      <td>Our allowance for <font color="blue">loan losses may prove</font> to be insufficient to <font color="blue">absorb losses</font>     in our <font color="blue">loan portfolio</font></td>
+    </tr>
+    <tr>
+      <td>Like all <font color="blue">financial <font color="blue"><font color="blue">institution</font>s</font></font>, we maintain an allowance for loan     losses to provide for loans in our portfolio that may not be repaid in their     entirety</td>
+    </tr>
+    <tr>
+      <td>We believe that our allowance for loan losses is maintained at a     level  that is adequate to <font color="blue">absorb probable losses inherent</font> in our loan     <font color="blue">portfolio as</font> of the <font color="blue">respective balance sheet date</font></td>
+    </tr>
+    <tr>
+      <td>14       _________________________________________________________________    [62]Table of <font color="blue">Contents       </font>However, our allowance for loan losses may not be sufficient to <font color="blue">cover actual</font>     loan  losses,  and  <font color="blue">future provisions</font> for loan losses could <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>If the value of real estate in our primary market areas were to decline     <font color="blue">materially</font>,  a  <font color="blue">significant</font> portion of our <font color="blue">loan portfolio</font> could become     under-collateralized, which could have a material adverse effect on us</td>
+    </tr>
+    <tr>
+      <td>With  most  of our loans currently concentrated in the state of     California, a decline in local <font color="blue">economic <font color="blue">conditions</font></font> could <font color="blue"><font color="blue">adversely</font> affect</font>     the value of the <font color="blue"><font color="blue">real estate collateral</font> securing</font> our loans</td>
+    </tr>
+    <tr>
+      <td>A decline in     <font color="blue">property values would diminish</font> our ability to <font color="blue">recover on defaulted loans by</font>     selling the <font color="blue">real estate collateral</font>, making it more likely that we would     <font color="blue">suffer losses on defaulted loans</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, a decrease in <font color="blue">asset quality</font>     could require <font color="blue">additions</font> to our allowance for loan losses through increased     provisions for loan losses, which would reduce our future profits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Real     </font><font color="blue">estate values</font> are <font color="blue">affected by various factors</font> in addition to <font color="blue">local economic</font>     <font color="blue">conditions</font>, including, among other things, changes in general or regional     <font color="blue">economic <font color="blue">conditions</font></font>, <font color="blue">government</font>al rules or policies and <font color="blue">natural disasters</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">loan portfolio</font> may not perform as expected</td>
+    </tr>
+    <tr>
+      <td>The Company’s performance and <font color="blue">prospects will depend</font> to a <font color="blue">significant</font>     extent on the performance of its <font color="blue">loan portfolio</font></td>
+    </tr>
+    <tr>
+      <td>There are a number of     factors that <font color="blue">could negatively impact</font> the performance of the <font color="blue">loan portfolio</font>     including, <font color="blue">among others</font>, the <font color="blue">general political</font> and <font color="blue">economic <font color="blue">conditions</font></font> in     <font color="blue">the Company</font>’s markets, <font color="blue">significant</font> changes in the <font color="blue">interest rate environment</font>,     <font color="blue">pressures from products</font> and services from <font color="blue">competitors</font> and on any negative     changes in the <font color="blue">financial condition</font> of the individual borrowers</td>
+    </tr>
+    <tr>
+      <td>In addition,     to  the  extent that <font color="blue">the Company</font> does not retain the customers that it     acquires in its <font color="blue">acquisitions</font> or <font color="blue">incurs additional expenses</font> in retaining     them, there could be <font color="blue">adverse effects on</font> <font color="blue">the Company</font>’s future <font color="blue">consolidated</font>     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue">government</font> regulation and monetary policy may have an unfavorable     <font color="blue">impact on</font> <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">banking industry</font> is subject to extensive federal and state     <font color="blue">supervision</font> and regulation</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">regulations</font> limit</font> the manner in which the     Company conducts its business, undertakes new <font color="blue">investments</font> and <font color="blue">activities</font>,     and obtains financing</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulations</font> have <font color="blue">been designed primarily</font> for     the protection of the <font color="blue">deposit insurance funds</font> and consumers, and not to     benefit  holders  of <font color="blue">the Company</font>’s <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font><font color="blue">institution</font>     regulation has also been the subject of considerable <font color="blue">legislation</font> in recent     years, and may be the subject of further <font color="blue">significant</font> <font color="blue">legislation</font> in the     future, none of which is within our control</td>
+    </tr>
+    <tr>
+      <td>New <font color="blue">legislation</font> or changes in,     or repeal of, <font color="blue">existing laws may</font> cause <font color="blue">the Company</font>’s <font color="blue">consolidated</font> results to     differ <font color="blue">materially</font> from its <font color="blue">historical performance</font></td>
+    </tr>
+    <tr>
+      <td>Further, <font color="blue">federal monetary</font>     policy, particularly as implemented through the Federal Reserve System,     <font color="blue">significant</font>ly  affects  credit  <font color="blue">conditions</font> for <font color="blue">financial <font color="blue"><font color="blue">institution</font>s</font></font>,     primarily  through  open market <font color="blue">operations</font> in <font color="blue">United States </font><font color="blue">government</font>     securities,  the  discount  rate for <font color="blue">bank borrowings</font>, and <font color="blue">bank reserve</font>     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Any material change in these <font color="blue">conditions</font> would likely have a     material <font color="blue">impact on</font> <font color="blue">the Company</font>’s <font color="blue">consolidated</font> results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  may  be  unable to <font color="blue">successfully integrate</font> the <font color="blue">operations</font> of future     <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>We have announced that our <font color="blue">future growth</font> strategy could include     acquiring other <font color="blue">financial service companies</font></td>
+    </tr>
+    <tr>
+      <td>While we have <font color="blue">just successfully</font>     completed the <font color="blue">integration</font> of two <font color="blue">acquisitions</font>, we <font color="blue">could encounter unplanned</font>     <font color="blue">difficulties</font>  associated  with  <font color="blue">integrating</font>  the <font color="blue">operations</font> of any new     <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">difficulties</font>  could include retaining customers,     successful  <font color="blue">conversion</font>  of  systems and processes, combining different     corporate  cultures,  and  retaining  <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">problems with</font>     <font color="blue">integration</font> would negatively impact <font color="blue">the Company</font>’s day-to-day <font color="blue">operations</font> and     increase the <font color="blue">costs <font color="blue">associated with</font></font> the acquisition, which, in turn, could     <font color="blue">negatively affect</font> <font color="blue">the Company</font>’s results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unanticipated </font>costs relating to <font color="blue">the Company</font>’s recent <font color="blue"><font color="blue">acquisitions</font> could</font>     reduce its <font color="blue">future <font color="blue">earnings per</font></font> share</td>
+    </tr>
+    <tr>
+      <td>We believe that we have <font color="blue">reasonably</font> estimated the <font color="blue">likely costs</font> of     <font color="blue">integrating</font> the <font color="blue">operations</font> of our recent <font color="blue">acquisitions</font> into <font color="blue">the Company</font>’s     <font color="blue">operations</font>  and  the  <font color="blue">incremental</font> operating costs that will impact its     <font color="blue">operations</font>                                         15       _________________________________________________________________    [63]Table of <font color="blue">Contents       </font>subsequent to the <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>However, it is possible that unexpected     <font color="blue">transition costs</font> or future operating expenses, as well as other types of     unanticipated developments, could have a material adverse effect on the     Company’s future results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>If costs and     expenses of this type are incurred, <font color="blue">the Company</font>’s <font color="blue">earnings per</font> share could     be <font color="blue">reduced as</font> a result</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>may engage in <font color="blue">further expansion through new</font> branch openings or     <font color="blue">acquisitions</font>, which could <font color="blue"><font color="blue">adversely</font> affect</font> net income</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>has disclosed its intention to take advantage of future     expansion <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">risks <font color="blue">associated with</font> such expansion</font> and,     in particular, expansion through <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>These risks include, among     others, incorrectly assessing the <font color="blue">asset quality</font> of a bank acquired in a     particular acquisition, encountering greater than anticipated costs of     <font color="blue">opening new branches</font> or <font color="blue">integrating</font> acquired businesses, facing resistance     <font color="blue">from customers</font> or employees, and being unable to <font color="blue">profitably deploy assets</font>     acquired <font color="blue">through expansion</font> or in <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>country- and     region-specific risks are <font color="blue">associated with</font> any expansion and <font color="blue">acquisitions</font>     that take place outside the United States, including in China</td>
+    </tr>
+    <tr>
+      <td>To the extent     UCBH <font color="blue">issues capital stock</font> in connection with additional <font color="blue">acquisitions</font>, these     <font color="blue">acquisitions</font> and related <font color="blue">stock issuances may</font> have a dilutive effect on     <font color="blue">earnings per</font> share and share ownership</td>
+    </tr>
+    <tr>
+      <td>UCBH <font color="blue">may issue <font color="blue">additional capital</font> stock</font> in the future</td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">fund internal growth</font> and future <font color="blue">acquisitions</font>, UCBH <font color="blue">may offer shares</font>     of its <font color="blue">common stock</font> to the public and <font color="blue">future acquirees</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such offerings</font>     would have a dilutive effect on <font color="blue">earnings per</font> share and share ownership</td>
+    </tr>
+    <tr>
+      <td>In     addition, there is no assurance that UCBH would be able to <font color="blue">effectively</font>     utilize any <font color="blue">additional capital</font> in the manner that it has done so in the     past</td>
+    </tr>
+    <tr>
+      <td>UCBH does not currently have any <font color="blue">definitive understandings</font> or plans to     <font color="blue">raise <font color="blue">additional capital</font></font></td>
+    </tr>
+  </tbody>
+</table>

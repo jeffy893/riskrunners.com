@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: significant", fill: "#4997d0"},
+{source: "3: significant", target: "3: concentrated among", fill: "#4997d0"},
+{source: "3: concentrated among", target: "3: relatively", fill: "#4997d0"},
+{source: "3: relatively", target: "3: enduser customers", fill: "#4997d0"},
+{source: "3: significant", target: "6: Additionally ", fill: "#f984e5"},
+{source: "6: Additionally ", target: "6: significant", fill: "#f984e5"},
+{source: "6: significant", target: "6: periods between receipt", fill: "#f984e5"},
+{source: "6: periods between receipt", target: "6: significant contracts from", fill: "#f984e5"},
+{source: "6: significant contracts from", target: "6: customers which may", fill: "#f984e5"},
+{source: "6: Additionally ", target: "8: disruption", fill: "#c23b22"},
+{source: "8: disruption", target: "8: termination", fill: "#c23b22"},
+{source: "8: termination", target: "8: distributor relationship could", fill: "#c23b22"},
+{source: "8: distributor relationship could", target: "8: negatively impact", fill: "#c23b22"},
+{source: "8: negatively impact", target: "8: operations", fill: "#c23b22"},
+{source: "8: disruption", target: "13: been forced", fill: "#b76e79"},
+{source: "13: been forced", target: "13: customer due", fill: "#b76e79"},
+{source: "13: customer due", target: "13: government", fill: "#b76e79"},
+{source: "13: government", target: "13: export license", fill: "#b76e79"},
+{source: "13: been forced", target: "20: cannot assure", fill: "#fba0e3"},
+{source: "20: cannot assure", target: "20: incidents will", fill: "#fba0e3"},
+{source: "20: incidents will", target: "20: production delays", fill: "#fba0e3"},
+{source: "20: production delays", target: "20: financial condition", fill: "#fba0e3"},
+{source: "20: financial condition", target: "20: operations", fill: "#fba0e3"},
+{source: "20: cannot assure", target: "33: expectations", fill: "#c72c48"},
+{source: "33: expectations", target: "33: investor community", fill: "#c72c48"},
+{source: "33: investor community", target: "33: trading price", fill: "#c72c48"},
+{source: "33: trading price", target: "33: common stock could significantly decline", fill: "#c72c48"},
+{source: "33: expectations", target: "34: cancellation", fill: "#a76bcf"},
+{source: "34: cancellation", target: "34: rescheduling", fill: "#a76bcf"},
+{source: "34: rescheduling", target: "34: introduce ship", fill: "#a76bcf"},
+{source: "34: introduce ship", target: "34: support new products", fill: "#a76bcf"},
+{source: "34: support new products", target: "34: product enhancements", fill: "#a76bcf"},
+{source: "34: product enhancements", target: "34: manage product transitions announcements", fill: "#a76bcf"},
+{source: "34: manage product transitions announcements", target: "34: product introductions", fill: "#a76bcf"},
+{source: "34: product introductions", target: "34: cost reductions", fill: "#a76bcf"},
+{source: "34: cost reductions", target: "34: production volumes", fill: "#a76bcf"},
+{source: "34: production volumes", target: "34: products sold", fill: "#a76bcf"},
+{source: "34: products sold", target: "34: distribution channels", fill: "#a76bcf"},
+{source: "34: distribution channels", target: "34: through which", fill: "#a76bcf"},
+{source: "34: through which", target: "34: major customers", fill: "#a76bcf"},
+{source: "34: major customers", target: "34: significant reduction", fill: "#a76bcf"},
+{source: "34: significant reduction", target: "34: orders from", fill: "#a76bcf"},
+{source: "34: orders from", target: "34: competitors", fill: "#a76bcf"},
+{source: "34: cancellation", target: "84: excess cash with", fill: "#cb99c9"},
+{source: "84: excess cash with", target: "84: significant cash dividend", fill: "#cb99c9"},
+{source: "84: excess cash with", target: "107: cash dividends on", fill: "#00ff7f"},
+{source: "107: cash dividends on", target: "107: common stock", fill: "#00ff7f"},
+{source: "107: cash dividends on", target: "START_HERE", fill: "#00ff7f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Demonstrate</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contract">Contract</a></td>
+      <td>A contract is a legally enforceable agreement that creates, defines, and governs mutual rights and obligations among its parties. A contract typically involves the transfer of goods, services, money, or a promise to transfer any of those at a future date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government">Government</a></td>
+      <td>A government is the system or group of people governing an organized community, generally a state.\nIn the case of its broad associative definition, government normally consists of legislature, executive, and judiciary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Australian_Government">Australian Government</a></td>
+      <td>The Australian Government, also known as the Commonwealth Government, is the national government of Australia, a federal parliamentary constitutional monarchy. Like other Westminster-style systems of government, the Australian Government is made up of three branches: the executive (the prime minister, the ministers, and government departments), the legislative (the Parliament of Australia), and the judicial.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_India">Government of India</a></td>
+      <td>The Government of India (ISO: Bhārat Sarkār) (often abbreviated as GoI; also known as the Central or Union Government), or simply the Centre, is the federal governing authority of the Republic of India created by the Constitution of India as the legislative, executive and judicial authority to govern the union of twenty eight states and eight union territories. The president acts as the head of state and is the highest figure of authority, nominally, of the nation however it is the prime minister who is the chief executive.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_agency">Government agency</a></td>
+      <td>A government or state agency, sometimes an appointed commission, is a permanent or semi-permanent organization in the machinery of government that is responsible for the oversight and administration of specific functions, such as an administration. There is a notable variety of agency types.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_(government)">Executive (government)</a></td>
+      <td>The executive (short for executive branch or executive power) is the part of government that enforces law, and has responsibility for the governance of a state.\nIn political systems based on the principle of separation of powers, authority is distributed among several branches (executive, legislative, judicial)—an attempt to prevent the concentration of power in the hands of a single group of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Local_government">Local government</a></td>
+      <td>Local government is a generic term for the lowest tiers of public administration within a particular sovereign state. This particular usage of the word government refers specifically to a level of administration that is both geographically-localised and has limited powers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Military_government">Military government</a></td>
+      <td>A military government is generally any government that is administered by military forces, whether or not this government is legal under the laws of the jurisdiction at issue, and whether this government is formed by natives or by an occupying power. It is usually carried out by military workers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borne_government">Borne government</a></td>
+      <td>The Borne government is the forty-third and current government of the French Fifth Republic, formed on 16 May 2022 and headed by Élisabeth Borne as Prime Minister under the presidency of Emmanuel Macron.\n\n\n== Context ==\n\n\n=== Formation ===\nOn 16 May 2022, Jean Castex tendered the resignation of his government to the President of the Republic.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_backlinking">Competitor backlinking</a></td>
+      <td>Competitor backlinking is a search engine optimization strategy that involves analyzing the backlinks of competing websites within a vertical search. The outcome of this activity is designed to increase organic search engine rankings and to gain an understanding of the link building strategies used by business competitors.By analyzing the backlinks to competitor websites, it is possible to gain a benchmark on the number of links and the quality of links that is required for high search engine rankings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_of_athletics">Sport of athletics</a></td>
+      <td>Athletics is a group of sporting events that involves competitive running, jumping, throwing, and walking. The most common types of athletics competitions are track and field, road running, cross country running, and racewalking.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_female_fitness_and_figure_competitors">List of female fitness and figure competitors</a></td>
+      <td>This is a list of female fitness and figure competitors.\n\n\n== A ==\nJelena Abbou\n\n\n== B ==\nLauren Beckham\nAlexandra Béres\nSharon Bruneau\n\n\n== C ==\nNatalie Montgomery-Carroll\nJen Cassetty\nKim Chizevsky\nSusie Curry\n\n\n== D ==\nDebbie Dobbins\nNicole Duncan\n\n\n== E ==\nJamie Eason\nAlexis Ellis\n\n\n== F ==\nAmy Fadhli\nJaime Franklin\n\n\n== G ==\nAdela García \nConnie Garner\nElaine Goodlad\nTracey Greenwood\nOksana Grishina\n\n\n== H ==\nMallory Haldeman\nVanda Hădărean\nJen Hendershott\nSoleivi Hernandez\nApril Hunter\n\n\n== I ==\n\n\n== J ==\nTsianina Joelson\n\n\n== K ==\nAdria Montgomery-Klein\nAshley Kaltwasser\n\n\n== L ==\nLauren Lillo\nMary Elizabeth Lado\nTammie Leady\nJennifer Nicole Lee\nAmber Littlejohn\nJulie Lohre\nJenny Lynn\n\n\n== M ==\nTimea Majorová\nLinda Maxwell\nDavana Medina\nJodi Leigh Miller\nChisato Mishima\n\n\n== N ==\nKim Nielsen\n\n\n== O ==\n\n\n== P ==\nVicky Pratt\nElena Panova\nChristine Pomponio-Pate\nCathy Priest\n\n\n== Q ==\n\n\n== R ==\nMaite Richert\nCharlene Rink\nKelly Ryan\n\n\n== S ==\nErin Stern\nCarol Semple-Marzetta\nKrisztina Sereny\nTrish Stratus (Patricia Anne Stratigias)\n\n\n== T ==\nKristi Tauti\nJennifer Thomas\n\n\n== U ==\n\n\n== V ==\nLisa Marie Varon\n\n\n== W ==\nLatisha Wilder\nTorrie Wilson\nLyen Wong\nJenny Worth\nNicole Wilkins\n\n\n== Y ==\n\n\n== Z ==\nMarietta Žigalová\nMalika Zitouni\n\n\n== See also ==\nList of female bodybuilders\n\n\n== References ==\nThere has been a rise in the number of women wanting to compete as fitness models.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_Group">Competitor Group</a></td>
+      <td>Competitor Group, Inc. (CGI) is a privately held, for-profit, sports marketing and management company based in Mira Mesa, San Diego, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ALLIED DEFENSE GROUP INC      Item 1A <font color="blue">Risk Factors         </font>8     ITEM 1A RISK FACTORS     OUR FINANCIAL RESULTS CONTINUE TO BE LARGELY INFLUENCED BY THE RESULTS OF     MECAR          MECAR continues to provide the principal portion of our revenues</td>
+    </tr>
+    <tr>
+      <td>In     2005, 2004 and 2003, MECAR contributed 60prca, 64prca, and 73prca, respectively, of     our <font color="blue">annual revenue</font></td>
+    </tr>
+    <tr>
+      <td>AT MECAR, OUR REVENUE CONTINUES TO BE CONCENTRATED AMONG A SMALL NUMBER OF     CUSTOMERS          A  <font color="blue">significant</font>  percentage of our revenue is <font color="blue">concentrated among</font> a     <font color="blue">relatively</font> small number of end-user customers</td>
+    </tr>
+    <tr>
+      <td>During the last five calendar     years, two agencies of The <font color="blue">Kingdom of Saudi Arabia </font>and the US Army, via     <font color="blue">direct sales</font> and Foreign Military Sales (FMS), have provided the majority of     our revenues</td>
+    </tr>
+    <tr>
+      <td>The loss of such a <font color="blue">significant</font> customer or a substantial     decrease in sales to such a <font color="blue">customer would</font> have a material adverse effect on     our revenue and operating results</td>
+    </tr>
+    <tr>
+      <td>Additionally, there may be <font color="blue">significant</font>     gaps in time <font color="blue">periods between receipt</font> of <font color="blue">significant</font> contracts from these     <font color="blue">customers which may</font> cause substantial swings in our operating results</td>
+    </tr>
+    <tr>
+      <td>MECAR DEPENDS UPON AN INDEPENDENT DISTRIBUTOR FOR THE SALE OF PRODUCTS AND     ANY DISRUPTION IN THIS RELATIONSHIP COULD ADVERSELY AFFECT US          MECAR  <font color="blue">currently sells</font> and supports its products to its principal     customers in the <font color="blue">Kingdom of Saudi Arabia </font>through an <font color="blue">independent distributor</font></td>
+    </tr>
+    <tr>
+      <td>Any  <font color="blue">disruption</font>  or <font color="blue">termination</font> of this <font color="blue">distributor relationship could</font>     <font color="blue">negatively impact</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>WE DO NOT HAVE LONG-TERM CONTRACTS WITH OUR CUSTOMERS AND OUR CUSTOMERS MAY     CEASE PURCHASING OUR PRODUCTS AT ANY TIME          We <font color="blue">generally</font> do not have long-term contracts with our customers</td>
+    </tr>
+    <tr>
+      <td>As a     result, our <font color="blue">agreements</font> with our customers do not provide any assurance of     future sales</td>
+    </tr>
+    <tr>
+      <td>Accordingly, while we have served our <font color="blue">principal customers</font> for     many years, our customers can <font color="blue">cease purchasing</font> our <font color="blue">products at</font> any time     <font color="blue">without penalty</font></td>
+    </tr>
+    <tr>
+      <td>OUR MARKETS FOR AMMUNITION SALES ARE LIMITED BY THE AVAILABILITY OF BELGIAN     EXPORT LICENSES          Belgian law requires that MECAR obtain a <font color="blue">government</font>-issued export     license to ship its <font color="blue">ammunition products</font> to other countries for each order it     receives</td>
+    </tr>
+    <tr>
+      <td>From time to time, MECAR has <font color="blue">been forced</font> to decline an order from     a <font color="blue">customer due</font> to refusal of the <font color="blue">government</font> to issue the <font color="blue">export license</font></td>
+    </tr>
+    <tr>
+      <td>Such refusals have <font color="blue">been based on actual</font> or perceived <font color="blue">deficiencies</font> of the     recipient country’s <font color="blue">government</font> or for other reasons</td>
+    </tr>
+    <tr>
+      <td>Failure to obtain     export  licenses  for sales to MECAR’s <font color="blue">traditional customer base would</font>     <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">operations</font> and financial results</td>
+    </tr>
+    <tr>
+      <td>OUR SUPPLIERS HAVE FROM TIME TO TIME BEEN LATE IN DELIVERY OF KEY SUPPLIES     WHICH HAS DELAYED OUR PRODUCTION AND HAD A NEGATIVE IMPACT ON OUR FINANCIAL     RESULTS          MECAR’s <font color="blue">operations</font> are <font color="blue">dependent on</font> the ability of <font color="blue">certain suppliers</font> to     deliver <font color="blue">supplies on</font> a <font color="blue">timely basis</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, MECAR has experienced     substantial delays in receipt of needed <font color="blue">supplies which</font> has caused delays in     MECAR’s <font color="blue">production activities</font></td>
+    </tr>
+    <tr>
+      <td>FIRES OR EXPLOSIVE INCIDENTS MAY DISRUPT OUR AMMUNITION &amp; WEAPONS EFFECTS     BUSINESS          MECAR’s <font color="blue">products <font color="blue">frequently</font> involve</font> the <font color="blue">manufacture</font> and/or handling of     a variety of explosive and <font color="blue">flammable materials</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, this     <font color="blue">manufacturing</font>  and/or  handling  has  resulted  in <font color="blue">incidents</font> that have     <font color="blue">temporarily shut down</font> or <font color="blue"><font color="blue">otherwise disrupt</font>ed</font> our <font color="blue">manufacturing</font>, causing     <font color="blue">production delays</font> and resulting in <font color="blue">liability</font> for <font color="blue">workplace injuries</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that we will not experience these types of <font color="blue">incidents</font> in     the future or that these <font color="blue">incidents</font> will not result in <font color="blue">production delays</font> or     otherwise have an adverse effect on our business, <font color="blue">financial condition</font> or     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to negotiate acceptable     terms with the unions could result in strikes or work stoppages or increased     operating  costs as a result of <font color="blue">higher wages</font> or <font color="blue">benefits paid</font> to union     members</td>
+    </tr>
+    <tr>
+      <td>If the unionized workers were to engage in a strike or other work     stoppage, we could experience a <font color="blue">significant</font> <font color="blue">disruption</font> of our <font color="blue">operations</font> or     higher ongoing labor costs, either of <font color="blue">which could</font> <font color="blue"><font color="blue">adversely</font> affect</font> our     business, <font color="blue">financial condition</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">union employees</font>     are  not subject to a <font color="blue">national collective bargaining agreement with</font> an     <font color="blue">established expiration date</font></td>
+    </tr>
+    <tr>
+      <td>8       _________________________________________________________________           WE MAY EXPERIENCE PRODUCT FAILURES, SCHEDULE DELAYS OR OTHER PROBLEMS WITH     EXISTING OR NEW PRODUCTS AND SYSTEMS, ANY OF WHICH COULD ADVERSELY IMPACT     OUR BUSINESS          We may experience product and service failures, schedule delays and     other  problems  in <font color="blue">connection with</font> the <font color="blue">manufacture</font> or delivery of our     products</td>
+    </tr>
+    <tr>
+      <td>In addition to any costs resulting <font color="blue">from product warranties</font>,     <font color="blue">contract performance</font> or required <font color="blue">remedial action</font>, these <font color="blue">failures may</font> result     in <font color="blue">increased costs</font> or loss of <font color="blue">revenues due</font> to <font color="blue">postponement</font> of <font color="blue">subsequently</font>     <font color="blue">scheduled product</font> and <font color="blue">service deliveries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Performance </font><font color="blue">penalties could also</font>     be <font color="blue">imposed should</font> we fail to <font color="blue">meet delivery schedules</font> or other measures of     <font color="blue">contract performance</font></td>
+    </tr>
+    <tr>
+      <td>NEWLY FORMED SUBSIDIARIES MAY NOT PERFORM AS EXPECTED          <font color="blue">MECAR USA </font>was formed to acquire <font color="blue">munitions contracts</font> in the United     States and to serve as an <font color="blue">extended production <font color="blue">facility</font></font> for <font color="blue">MECAR Risks     </font>include the <font color="blue">inability</font> of <font color="blue">MECAR USA </font>to negotiate or win contracts in the     <font color="blue">United States</font>, an <font color="blue">unwillingness</font> by potential customers to contract with a     newly formed company, and/or the <font color="blue">inability</font> to generate enough revenue to     cover operating costs over the long-term</td>
+    </tr>
+    <tr>
+      <td>Nor are there any <font color="blue">guarantees</font> that     MECAR will be able to forward new or <font color="blue">existing orders</font> for fulfillment at     <font color="blue">MECAR USA </font>    LARGE CONTRACT ORDERS MAY NOT BE FULFILLED          Due  in  part  to  a  substantial  Battlefield  Effect  Simulator     (BES) <font color="blue">contract award</font> received in 2005, we expect that Titan will need to     <font color="blue">grow <font color="blue">substantially</font></font> to fulfill <font color="blue">contract demands</font></td>
+    </tr>
+    <tr>
+      <td>Such expected large orders     may not be performed on a <font color="blue">profitable basis as</font> Titan ramps up to meet the     expected <font color="blue">demand due</font> to an <font color="blue">inability</font> to <font color="blue">find key <font color="blue">engineering</font> personnel</font>,     enough production workers, supplier <font color="blue">disruption</font>s, etc     WE ARE NOT ABLE TO GUARANTEE THAT CONTRACT ORDERS INCLUDED IN OUR ESTIMATED     BACKLOG WILL RESULT IN ACTUAL REVENUES IN ANY PARTICULAR FISCAL PERIOD OR     THAT  THE ACTUAL REVENUES FROM SUCH CONTRACTS WILL EQUAL OUR ESTIMATED     BACKLOG          There can be no assurance that any contracts included in our estimated     backlog presented in this <font color="blue">filing will</font> result in <font color="blue">actual revenues</font> in any     <font color="blue">particular period</font> or that the <font color="blue">actual revenues</font> from such contracts will equal     our estimated backlog</td>
+    </tr>
+    <tr>
+      <td>Further, there can be no assurance that any contract     included in our estimated backlog that <font color="blue">generates revenue will</font> be profitable</td>
+    </tr>
+    <tr>
+      <td>OUR BUSINESS IS SUBJECT TO MANY FACTORS THAT COULD CAUSE OUR QUARTERLY OR     ANNUAL OPERATING RESULTS TO FLUCTUATE AND OUR STOCK PRICE TO BE VOLATILE          Our quarterly and annual operating results have fluctuated in the past     and <font color="blue">may fluctuate</font> <font color="blue">significant</font>ly in the future due to a variety of factors,     many  of  which are outside of our control</td>
+    </tr>
+    <tr>
+      <td>If our quarterly or annual     operating results do not meet the <font color="blue">expectations</font> of the <font color="blue">investor community</font>,     the <font color="blue">trading price</font> of our <font color="blue">common stock</font> could <font color="blue">significant</font>ly decline</td>
+    </tr>
+    <tr>
+      <td>Some of     the factors that could affect our quarterly or annual operating results     include:       •   the timing and amount of, or <font color="blue">cancellation</font> or <font color="blue">rescheduling</font> of, orders     for our products;         •   our ability to develop, introduce, ship and <font color="blue">support new products</font> and     <font color="blue">product enhancements</font> and manage product transitions, announcements and new     <font color="blue">product introductions</font>;         •   our ability to achieve <font color="blue">cost reductions</font>;         •   our ability to achieve and maintain <font color="blue">production volumes</font> and quality     levels for our products;         •   the volume of <font color="blue">products sold</font> and the mix of <font color="blue">distribution channels</font>     <font color="blue">through which</font> they are sold;         •   the loss of any one of our <font color="blue">major customers</font> or a <font color="blue">significant</font> reduction     in <font color="blue">orders from</font> those customers; and         •   increased <font color="blue">competition</font>, particularly from larger, better capitalized     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Due to these and other factors, quarterly or <font color="blue">annual revenue</font>, expenses     and  results of <font color="blue">operations</font> could vary <font color="blue">significant</font>ly in the future, and     period-to-period comparisons should not be <font color="blue">relied upon as indications</font> of     <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td>BECAUSE WE SELL SOME OF OUR PRODUCTS IN COUNTRIES OTHER THAN THE UNITED     STATES, WE MAY BE SUBJECT TO POLITICAL, ECONOMIC, AND OTHER CONDITIONS THAT     COULD RESULT IN REDUCED SALES OF OUR PRODUCTS AND WHICH COULD ADVERSELY     AFFECT OUR BUSINESS                                         9       _________________________________________________________________                Sales to customers outside the US has <font color="blue">historically accounted</font> for the     vast majority of our revenue</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we are subject to political,     economic and other <font color="blue">conditions affecting countries</font> or <font color="blue">jurisdictions</font> other     than the US, including the Middle East, Europe and Asia</td>
+    </tr>
+    <tr>
+      <td>Any interruption     or <font color="blue">curtailment</font> of <font color="blue">trade between</font> the countries in which we operate and their     <font color="blue">present trading partners</font>, change in <font color="blue">exchange rates</font>, <font color="blue">significant</font> shift in     <font color="blue">trade policies</font> or a <font color="blue">significant</font> downturn in the political, economic or     <font color="blue">financial condition</font> of these <font color="blue">countries could</font> cause demand for and sales of     our  products  to decrease, cause <font color="blue">disruption</font> of our <font color="blue">supply channels</font> or     <font color="blue">otherwise disrupt</font> our <font color="blue">operations</font>, cause our costs of doing business to     increase, or subject us to <font color="blue">increased regulation</font> including <font color="blue">future import</font> and     <font color="blue">export restrictions</font>, any of <font color="blue">which could</font> <font color="blue"><font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>OUR INTELLECTUAL PROPERTY IS IMPORTANT TO US AND WE RISK LOSS OF A VALUABLE     ASSET IF WE CANNOT ADEQUATELY PROTECT IT          We rely on a <font color="blue">combination</font> of patents, copyrights, trademarks, trade     <font color="blue">secret laws</font> and <font color="blue">contractual <font color="blue">obligations</font></font> to protect our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We cannot     guarantee that these and other <font color="blue">intellectual property protection measures</font>     will be sufficient to <font color="blue">prevent <font color="blue">misappropriation</font></font> of our <font color="blue">technology</font> or that our     <font color="blue">competitors</font>  will  not  <font color="blue">independently</font>  develop  <font color="blue">technologies</font>  that are     <font color="blue"><font color="blue">substantially</font> equivalent</font> or superior to ours</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">legal system</font>s     of many <font color="blue">foreign countries</font> do not <font color="blue">protect intellectual property rights</font> to the     <font color="blue">same extent as</font> the <font color="blue">legal system</font> of the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to     <font color="blue">adequately protect</font> our <font color="blue">proprietary</font> information and <font color="blue">technology</font>, our business,     <font color="blue">financial condition</font> and results of <font color="blue">operations</font> could be <font color="blue"><font color="blue">materially</font> <font color="blue">adversely</font></font>     affected</td>
+    </tr>
+    <tr>
+      <td>WE ARE DEPENDENT UPON KEY PERSONNEL WHO WOULD BE DIFFICULT TO REPLACE AND     WHOSE LOSS COULD IMPEDE OUR DEVELOPMENT          We are highly <font color="blue">dependent on</font> key personnel to manage our <font color="blue">businesses</font>, and     their knowledge of business, <font color="blue"><font color="blue">management</font> skills</font> and <font color="blue">technical expertise would</font>     be <font color="blue">difficult</font> to replace</td>
+    </tr>
+    <tr>
+      <td>The loss of <font color="blue"><font color="blue">key employees</font> <font color="blue">could limit</font></font> or delay our     ability  to  develop  new  products and <font color="blue">adapt existing products</font> to our     customers’ evolving <font color="blue"><font color="blue">requirement</font>s</font> and would also result in lost sales and     diversion of <font color="blue"><font color="blue">management</font> resources</font></td>
+    </tr>
+    <tr>
+      <td>Because of <font color="blue">competition</font> for <font color="blue">additional</font>     <font color="blue">qualified personnel</font>, we may not be able to recruit or retain <font color="blue">necessary</font>     personnel, <font color="blue">which could</font> impede <font color="blue">development</font> or sales of our products</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">growth depends on</font> our ability to attract and retain qualified, experienced     employees</td>
+    </tr>
+    <tr>
+      <td>There is substantial <font color="blue">competition</font> for experienced <font color="blue">engineering</font>,     technical, financial, sales and <font color="blue">marketing personnel</font> in our industry</td>
+    </tr>
+    <tr>
+      <td>If we     are unable to retain our <font color="blue">existing key personnel</font>, or attract and retain     <font color="blue">additional</font>  <font color="blue">qualified personnel</font>, we may, from time to time, experience     inadequate levels of staffing to develop and market our products and perform     services for our customers</td>
+    </tr>
+    <tr>
+      <td>OUR BUSINESS COULD BE ADVERSELY AFFECTED BY SIGNIFICANT CHANGES IN THE     CONTRACTING OR FISCAL POLICIES OF THE US FEDERAL GOVERNMENT          We have begun to derive substantial <font color="blue">revenues from contracts with</font> the     US federal <font color="blue">government</font> and we believe that the success and <font color="blue">development</font> of     our business <font color="blue">will continue</font> to <font color="blue">depend on</font> our <font color="blue">successful participation</font> in US     federal <font color="blue">government</font> contract programs</td>
+    </tr>
+    <tr>
+      <td>Accordingly, changes in US federal     <font color="blue">government</font>  <font color="blue">contracting</font>  policies  <font color="blue">could directly affect</font> our financial     performance</td>
+    </tr>
+    <tr>
+      <td>Among the factors that could <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affect</font> our     US federal <font color="blue">government</font> <font color="blue">contracting</font> business are:       •   <font color="blue">budgetary constraints affecting</font> US federal <font color="blue">government</font> spending     <font color="blue">generally</font>, or <font color="blue">specific departments</font> or agencies in particular, and changes in     <font color="blue">fiscal policies</font> or <font color="blue">available funding</font>;         •   changes in US federal <font color="blue">government</font> programs or <font color="blue"><font color="blue">requirement</font>s</font>;         •   the adoption of new laws or <font color="blue">regulations</font>;         •   technological <font color="blue">development</font>s;         •   US federal <font color="blue">government</font>al shutdowns and other <font color="blue">potential delays</font> in the     <font color="blue">government</font> appropriations process;         •   delays in the payment of our invoices by <font color="blue">government</font> payment officers     due to <font color="blue">problems with</font>, or upgrades to, <font color="blue">government</font> information systems, or for     other reasons;         •   <font color="blue">competition</font> and <font color="blue">consolidation</font> in the <font color="blue">relevant <font color="blue">industries</font></font>; and         •   <font color="blue">general economic conditions</font></td>
+    </tr>
+    <tr>
+      <td>These or other <font color="blue">factors could</font> cause US federal <font color="blue">government</font>al agencies     to  reduce their <font color="blue">purchases under contracts</font>, to exercise their right to     <font color="blue">terminate contracts</font> or not to <font color="blue">exercise options</font> to <font color="blue">renew contracts</font>, any of     <font color="blue">which could</font> have a material adverse effect on our <font color="blue">financial condition</font> and     operating results</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">government</font> contracts may be <font color="blue">terminated at</font> any time prior to their     <font color="blue">completion</font>, and if we do not <font color="blue">replace them</font>, our operating results may be     harmed</td>
+    </tr>
+    <tr>
+      <td>We derive revenues from <font color="blue">government</font> contracts that typically are awarded     <font color="blue">through <font color="blue">competitive</font> processes</font> and span one or more <font color="blue">base years</font> and one or     more <font color="blue">option years</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>agencies <font color="blue">generally</font> have the right not to     exercise these <font color="blue">option periods</font></td>
+    </tr>
+    <tr>
+      <td>10       _________________________________________________________________           In  addition,  many  of  our <font color="blue">contracts contain provisions permitting</font> a     <font color="blue">government</font> client to terminate the <font color="blue">contract on</font> short notice, with or without     cause</td>
+    </tr>
+    <tr>
+      <td>A decision not to exercise <font color="blue">option periods</font> or to <font color="blue">terminate contracts</font>     would reduce the <font color="blue">profitability</font> of these contracts to us</td>
+    </tr>
+    <tr>
+      <td>Upon contract expiration, if the customer requires <font color="blue">further services</font> of     the  type  <font color="blue">provided by</font> the contract, there is <font color="blue">frequently</font> a <font color="blue">competitive</font>     re-bidding  process and there can be no assurance that we will win any     particular  bid, or that we will be able to replace business lost upon     expiration or <font color="blue">completion</font> of a contract</td>
+    </tr>
+    <tr>
+      <td>The unexpected <font color="blue">termination</font> of one or     more  of our <font color="blue">significant</font> <font color="blue">contracts could</font> result in <font color="blue">significant</font> revenue     shortfalls the imposition of fines or damages or our suspension or <font color="blue">debarment</font>     from bidding on <font color="blue">additional</font> <font color="blue">contracts could</font> harm operating results for those     periods</td>
+    </tr>
+    <tr>
+      <td>Most <font color="blue">government</font> <font color="blue">contract award</font>s are subject to protest by <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">protests could also</font> result in a <font color="blue">requirement</font> to <font color="blue">resubmit bids</font> for the     contract or in the <font color="blue">termination</font>, reduction or <font color="blue">modification</font> of the awarded     contract</td>
+    </tr>
+    <tr>
+      <td>In a fixed-price contract, we must fully absorb cost overruns,     <font color="blue">notwithstanding</font> the <font color="blue">difficult</font>y of estimating all of the costs we will incur     in performing these contracts and in projecting the <font color="blue">ultimate level</font> of sales     that we may achieve</td>
+    </tr>
+    <tr>
+      <td>Our failure to anticipate <font color="blue">technical problems</font>, estimate     costs  <font color="blue">accurately</font> or <font color="blue">control costs during performance</font> of a fixed-price     <font color="blue">contract may reduce</font> the <font color="blue">profitability</font> of a fixed-price contract or cause a     loss</td>
+    </tr>
+    <tr>
+      <td>ACQUISITIONS MAY HAVE ADVERSE CONSEQUENCES FOR OUR BUSINESS          In late 2001 and during 2002, we completed the <font color="blue"><font color="blue">acquisition</font>s</font> of NSM,     Titan and SeaSpace</td>
+    </tr>
+    <tr>
+      <td>In 2004, we acquired <font color="blue">CMS Security Systems </font>and in 2005,     we  acquired  Global  Microwave  Systems</td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">will continue</font> to review     <font color="blue">opportunities</font> to acquire and may acquire other <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>However, we     cannot  be  sure  that  we will be able to <font color="blue">locate suitable <font color="blue">acquisition</font></font>     <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">acquisition</font>s</font> that we have completed and which we may     complete in the <font color="blue">future could</font> result in the following, any of <font color="blue">which could</font>     seriously  harm  our  results of <font color="blue">operations</font> or the price of our stock:     (i) issuances  of  equity  securities that <font color="blue">would dilute</font> the percentage     ownership of our current <font color="blue">stockholders</font>; (ii) large one-time write-offs or a     series of operating losses; (iii) the incurrence of debt and <font color="blue">contingent</font>     <font color="blue">liabilities</font>; (iv) <font color="blue">difficult</font>ies in the <font color="blue">assimilation</font> and <font color="blue">integration</font> of the     acquired companies; (v) diversion of <font color="blue">management</font>’s attention from other     business  concerns; (vi) contractual disputes; (vii) risks of entering     geographic and business markets in which we have no or only limited prior     experience;  and  (viii) potential  loss  of <font color="blue">key employees</font> of acquired     <font color="blue">organizations</font></td>
+    </tr>
+    <tr>
+      <td>POTENTIAL UNDISCLOSED LIABILITIES ASSOCIATED WITH ACQUISITIONS – WE MAY BE     SUBJECT TO CERTAIN LIABILITIES ASSUMED IN CONNECTION WITH OUR ACQUISITIONS     THAT COULD HARM OUR OPERATING RESULTS          We <font color="blue">conduct due diligence</font> in <font color="blue">connection with</font> each of our <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font> any of our <font color="blue"><font color="blue">acquisition</font>s</font>, there may be <font color="blue">liabilities</font> that we     fail to discover or that we <font color="blue">improperly assess</font> in our <font color="blue">due diligence efforts</font></td>
+    </tr>
+    <tr>
+      <td>In particular, to the extent that <font color="blue">prior owners</font> of any acquired <font color="blue">businesses</font> or     <font color="blue">properties failed</font> to <font color="blue">comply with</font> or otherwise violated applicable laws or     <font color="blue">regulations</font>, or failed to fulfill their <font color="blue">contractual <font color="blue">obligations</font></font> to the US     federal <font color="blue">government</font> or other customers, we, as the successor owner, may be     <font color="blue">financially responsible</font> for these violations and failures and may suffer     <font color="blue">reputational harm</font> or otherwise be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">discovery</font> of any     material  <font color="blue">liabilities</font>  <font color="blue">associated with</font> our <font color="blue"><font color="blue">acquisition</font>s</font> could harm our     operating results</td>
+    </tr>
+    <tr>
+      <td>WE HAVE DEMANDS ON OUR CASH RESOURCES IN ADDITION TO INTEREST AND PRINCIPAL     PAYMENTS ON OUR DEBT, INCLUDING, AMONG OTHERS, OPERATING EXPENSES OUR LEVEL     OF INDEBTEDNESS AND THESE SIGNIFICANT DEMANDS ON OUR CASH RESOURCES COULD:       •   make it more <font color="blue">difficult</font> for us to satisfy our <font color="blue">obligations</font>,         •   require us to dedicate a substantial portion of our <font color="blue">cash flow</font> from     <font color="blue">operations</font> to <font color="blue">payments on</font> our debt, thereby reducing the amount of <font color="blue">cash flow</font>     available for working capital, capital <font color="blue">expenditure</font>s, <font color="blue"><font color="blue">acquisition</font>s</font> and other     <font color="blue">general corporate purposes</font>,         •   limit our <font color="blue">flexibility</font> in planning for, or reacting to, changes in our     lines of business,         •   place us at a <font color="blue">competitive</font> disadvantage compared to <font color="blue">competitors</font> that     have lower debt service <font color="blue">obligations</font> and <font color="blue">significant</font>ly greater operating and     financing <font color="blue">flexibility</font>,          •   limit, along with the financial and other <font color="blue">restrictive covenants</font>     applicable to our indebtedness, among other things, our ability to borrow     <font color="blue">additional</font> funds,         •   increase our <font color="blue">vulnerability</font> to <font color="blue">general adverse economic</font> and industry     conditions, and                                         11       _________________________________________________________________             •   result in an event of <font color="blue">default upon</font> a failure to <font color="blue">comply with</font> financial     <font color="blue">covenants contained</font> in any existing credit <font color="blue"><font color="blue">facilities</font> which</font>, if not cured or     waived, could have a material adverse effect on our business, financial     condition, or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>•   Should any <font color="blue">significant</font> <font color="blue">combination</font> of these risks <font color="blue">materialize</font>, we     <font color="blue">could run out</font> of <font color="blue">cash as early as</font> Q1 of 2007</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">pay interest on</font> and repay our long-term debt and to     satisfy our other <font color="blue">liabilities</font> will depend upon future operating performance     and  our  ability  to refinance our debt as it <font color="blue">becomes due</font></td>
+    </tr>
+    <tr>
+      <td>Our future     operating  performance  and  ability  to <font color="blue">refinance will</font> be <font color="blue">affected by</font>     <font color="blue">prevailing economic conditions at</font> that time and financial, business and     other factors, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also intend</font> to     obtain a senior credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">encounter unexpected setbacks</font>, we may     be unable to repay these loans</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>may not be able to finalize any of the lines of credit     described in its discussion of <font color="blue">Liquidity and Capital Resources</font></td>
+    </tr>
+    <tr>
+      <td>It may not     receive <font color="blue">significant</font> new <font color="blue">orders from</font> our <font color="blue">key customer</font> in the <font color="blue">Middle East </font>nor     may it be able to <font color="blue">sufficiently trim expenses at</font> its MECAR to ensure a cash     breakeven  operation in 2007</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>may have to continue to fund     <font color="blue">operations</font> at operating units that it had projected to be <font color="blue">cash neutral</font> to     positive in late 2006 and early 2007</td>
+    </tr>
+    <tr>
+      <td>VSK may not have any <font color="blue">excess cash with</font>     which to provide a <font color="blue">significant</font> cash dividend</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>may not be able to     <font color="blue">disposition</font> any of its core or <font color="blue">non strategic assets</font></td>
+    </tr>
+    <tr>
+      <td>Should any <font color="blue">significant</font> <font color="blue">combination</font> of these risks <font color="blue">materialize</font>, the     Company <font color="blue">could run out</font> of <font color="blue">cash as early as</font> Q1 of 2007</td>
+    </tr>
+    <tr>
+      <td>WE  MAY  NEED  TO RAISE ADDITIONAL CAPITAL ON TERMS UNFAVORABLE TO OUR     STOCKHOLDERS          Based on our <font color="blue">current level</font> of <font color="blue">operations</font>, we believe that our <font color="blue">cash flow</font>     from <font color="blue">operations</font>, together with amounts we expect to be able to <font color="blue">borrow under</font>     our <font color="blue">senior secured</font> credit <font color="blue">facility</font>, will be adequate to meet our anticipated     operating,  capital  <font color="blue">expenditure</font> and debt service <font color="blue"><font color="blue">requirement</font>s</font> for the     <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>However, we do not have complete <font color="blue">control over</font> our future     performance  because  it is subject to economic, political, financial,     <font color="blue">competitive</font>, regulatory and other <font color="blue">factors affecting</font> the defense and security     <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>Further, our <font color="blue"><font color="blue">acquisition</font> strategy will likely</font> require <font color="blue">additional</font>     equity or <font color="blue">debt financings</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">financings could also</font> be required to support     our traditional and recently acquired operating units</td>
+    </tr>
+    <tr>
+      <td>There is no assurance     that we will be able to obtain <font color="blue">such financings</font> to fuel our <font color="blue">growth strategy</font>     and support our existing <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>OUR OPERATIONS MAY BE INSUFFICIENT TO PAY FOR OUR INCREASED OVERHEAD          We have experienced increased <font color="blue">overhead costs</font> and if we are successful     in continuing to acquire <font color="blue">additional</font> companies we expect our <font color="blue">overhead costs</font>     to <font color="blue">further increase</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that our operating units will     generate sufficient excess <font color="blue">cash flow</font> to support these <font color="blue">increased overhead</font>     costs</td>
+    </tr>
+    <tr>
+      <td>WE  MAY  NOT BE ABLE TO CONTINUE TO SUCCESSFULLY COMPETE IN THE HIGHLY     COMPETITIVE DEFENSE AND SECURITY SECTORS AGAINST COMPETITORS WITH GREATER     RESOURCES          The defense and security <font color="blue">industries</font> are highly <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>We face     substantial <font color="blue">competition</font> throughout the world</td>
+    </tr>
+    <tr>
+      <td>We believe that to remain     <font color="blue">competitive</font>, we will require <font color="blue">significant</font> financial resources in order to     develop  new products, offer a <font color="blue">broader range</font> of products and invest in     research and <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>Many of our existing and potential <font color="blue">competitors</font>     have <font color="blue">substantially</font> greater financial resources, more extensive <font color="blue">engineering</font>,     <font color="blue">manufacturing</font>, marketing, customer service <font color="blue">capabilities</font> and greater name     <font color="blue">recognition</font></td>
+    </tr>
+    <tr>
+      <td>We expect our <font color="blue">competitors</font> to continue to improve the design and     performance of their <font color="blue">current products</font> and processes and to <font color="blue">introduce new</font>     products and <font color="blue">processes with improved performance characteristics</font></td>
+    </tr>
+    <tr>
+      <td>OUR EMPLOYEES MAY ENGAGE IN IMPROPER ACTIVITIES WITH ADVERSE CONSEQUENCES TO     OUR BUSINESS          As with other <font color="blue">government</font> and other <font color="blue">contractors</font>, we are <font color="blue">faced with</font> the     <font color="blue">possibility</font> that our <font color="blue">employees may</font> engage in misconduct, fraud or other     <font color="blue">improper activities</font> that may have <font color="blue">adverse consequences</font> to our prospects and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Misconduct </font><font color="blue">by employees could</font> include failures to     <font color="blue">comply with</font> US federal <font color="blue">government</font> <font color="blue">regulations</font>, violation of <font color="blue"><font color="blue">requirement</font>s</font>     <font color="blue">concerning</font> the protection of classified information, <font color="blue">improper labor</font> and cost     charging to contracts and <font color="blue">misappropriation</font> of <font color="blue">government</font> or <font color="blue">third party</font>     property and information</td>
+    </tr>
+    <tr>
+      <td>The occurrence of any <font color="blue">such employee activities</font>     could result in our suspension or <font color="blue">debarment</font> from <font color="blue">contracting</font> with the US     federal <font color="blue">government</font>, as well as, the imposition of fines and <font color="blue">penalties which</font>     would cause material harm to our business</td>
+    </tr>
+    <tr>
+      <td>12       _________________________________________________________________           IF WE CANNOT OBTAIN THE NECESSARY SECURITY CLEARANCES, WE MAY NOT BE ABLE TO     PERFORM CLASSIFIED WORK FOR THE US GOVERNMENT AND OUR REVENUES MAY SUFFER          Certain US <font color="blue">government</font> contracts require our <font color="blue">facilities</font> and some of     our employees, to maintain <font color="blue">security clearances</font></td>
+    </tr>
+    <tr>
+      <td>If we lose or are unable to     obtain required <font color="blue">security clearances</font>, the client can terminate the contract     or decide not to renew it upon its expiration</td>
+    </tr>
+    <tr>
+      <td>As a result, to the extent we     cannot obtain the required <font color="blue">security clearances</font> for our employees working on     a <font color="blue">particular contract</font>, we may not derive the revenue anticipated from the     contract, which, if not <font color="blue">replaced with revenue from</font> other contracts, could     <font color="blue">seriously harm</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>CURRENCY FLUCTUATIONS, ESPECIALLY IN THE EUROPEAN EURO, MAY SIGNIFICANTLY     AFFECT OUR RESULTS OF OPERATIONS          The <font color="blue">exchange rates</font> for <font color="blue">local currencies</font> in countries where we operate     <font color="blue">may fluctuate</font> in relation to the US Dollar</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">recent years</font>, this has     allowed  us  to report increased earnings in US Dollars but a future     <font color="blue">strengthening</font> of the US Dollar versus the Euro would result in decreased     reported <font color="blue">earnings which would</font> have a negative effect on our stock price</td>
+    </tr>
+    <tr>
+      <td>SINCE WE DO NOT INTEND TO DECLARE DIVIDENDS ON OUR COMMON STOCK IN THE     FORESEEABLE  FUTURE,  THE  RETURN  ON YOUR INVESTMENT WILL DEPEND UPON     APPRECIATION OF THE MARKET PRICE OF YOUR SHARES          We have never paid any <font color="blue">cash dividends on</font> our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our board of     <font color="blue">directors</font>  does  not  <font color="blue">currently intend</font> to declare any dividends in the     <font color="blue">foreseeable future</font>, but intends to retain all earnings, if any, for use in     our business <font color="blue">operations</font> and for expansion of our portfolio of defense and     security <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>As a result, the return on your investment will depend     upon any <font color="blue">appreciation</font> in the <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>THE PRICE OF OUR COMMON STOCK HAS BEEN VOLATILE          The price of our <font color="blue">common stock</font> is volatile</td>
+    </tr>
+    <tr>
+      <td><font color="blue">From January </font>1, 2006 to     <font color="blue">September </font>29, 2006, the closing price of our <font color="blue">common stock</font> has <font color="blue">ranged from</font> a     high of dlra23dtta45 to a low of dlra16dtta45</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">volatile fluctuations</font> of the market     price are based on (1) the number of shares we may be required to issue in     the  future,  compared  to  the  <font color="blue">market demand</font> for our shares; (2) our     performance and meeting <font color="blue">expectations</font> of our performance, including the     <font color="blue">development</font> and <font color="blue">commercialization</font> of our products and <font color="blue">proposed products</font>;     (3) <font color="blue">market conditions</font> for companies in the small <font color="blue">capitalization sectors</font>; and     (4) general economic and <font color="blue">market conditions</font></td>
+    </tr>
+    <tr>
+      <td>STOCKHOLDERS  WILL  EXPERIENCE  SIGNIFICANT  DILUTION FROM OUR SALE OF     CONVERTIBLE NOTES AND WARRANTS          In  March 2006,  the Company completed a <font color="blue">debt offering</font> and issued     dlra30 million in <font color="blue">convertible with</font> an <font color="blue">exercise price</font> of dlra26dtta46 per share for a     <font color="blue">total potential conversion</font> of approximately 1cmam134cmam000 shares</td>
+    </tr>
+    <tr>
+      <td>In addition,     226cmam800 warrants were <font color="blue">issued with</font> the <font color="blue">debt offering</font></td>
+    </tr>
+    <tr>
+      <td>If all of the warrants     are exercised and the debt is <font color="blue">fully converted</font> to Allied stock, current     <font color="blue"><font color="blue">stockholders</font> will</font> experience a <font color="blue">significant</font> dilution in their ownership of     the Company</td>
+    </tr>
+    <tr>
+      <td>THE PRICE OF OUR SHARES MAY BE ADVERSELY AFFECTED BY THE PUBLIC SALE OF A     SIGNIFICANT NUMBER OF THE SHARES ELIGIBLE FOR FUTURE SALE          All <font color="blue">outstanding shares</font> of our <font color="blue">common stock</font> are <font color="blue">freely transferable</font> or     <font color="blue">transferable under</font> Rule 144</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> number of <font color="blue">additional</font> shares may     be <font color="blue">issued upon conversion</font> of the notes and exercise of the warrants</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Sales     </font>of large amounts of <font color="blue">common stock</font> in the public market could <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely</font> affect</font> the share price</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">sales also may inhibit</font> our ability to     obtain <font color="blue">future equity</font> related <font color="blue">financing on</font> acceptable terms</td>
+    </tr>
+    <tr>
+      <td>BECAUSE  OF THE RIGHTS AGREEMENT AND “ANTI-TAKEOVER” PROVISIONS IN OUR     CERTIFICATE OF INCORPORATION AND BYLAWS, A THIRD PARTY MAY BE DISCOURAGED     FROM MAKING A TAKEOVER OFFER WHICH COULD BE BENEFICIAL TO OUR STOCKHOLDERS          On June 6, 2001, we adopted a <font color="blue">revised <font color="blue">shareholder rights</font></font> plan</td>
+    </tr>
+    <tr>
+      <td>The     effect of this rights plan and of <font color="blue">certain provisions</font> of our Amended and     restated Certificate of Incorporation, Amended and restated By-Laws, and the     anti-takeover provisions of the Delaware General Corporation Law, could     delay or prevent a <font color="blue">third party</font> from acquiring us or <font color="blue">replacing members</font> of our     board of <font color="blue">directors</font>, even if the <font color="blue">acquisition</font> or the <font color="blue">replacements would</font> be     <font color="blue">beneficial</font> to our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">factors could</font> also reduce the price     that <font color="blue">certain investors might</font> be willing to pay for shares of the common     stock and result in the <font color="blue">market price</font> being lower than it would be without     these provisions</td>
+    </tr>
+    <tr>
+      <td>13       _________________________________________________________________                On  June  6  2006,  the <font color="blue">Board of Directors </font>modified the Company’s     <font color="blue">shareholder rights</font> plan to increase the “acquiring person” <font color="blue">threshold from</font>     15prca to 20prca</td>
+    </tr>
+    <tr>
+      <td>BECAUSE OF LIKELY FLUCTUATIONS IN THE PRICE OF OUR STOCK, WE MAY BE SUBJECT     TO CLASS ACTION LITIGATION THAT COULD DISTRACT MANAGEMENT AND RESULT IN     SUBSTANTIAL COSTS          In the past, securities class action <font color="blue">litigation</font> has often been brought     against companies following periods of <font color="blue">volatility</font> in the <font color="blue">market price</font> of     their securities</td>
+    </tr>
+    <tr>
+      <td>We may be the target of similar <font color="blue">litigation</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Securities  </font><font color="blue">litigation</font>  could  result  in substantial costs and divert     <font color="blue">management</font>’s attention and <font color="blue">resources from</font> our <font color="blue">operations</font> and sales of our     products, which would have a <font color="blue">negative impact on</font> our <font color="blue">financial condition</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">AS OF DECEMBER </font>31, 2005, ALLIED HAD MATERIAL WEAKNESSES IN ITS INTERNAL     CONTROLS,  AND  ITS  INTERNAL CONTROL OVER FINANCIAL REPORTING WAS NOT     EFFECTIVE AS OF THAT DATE IF ALLIED FAILS TO MAINTAIN AN EFFECTIVE SYSTEM     OF INTERNAL CONTROLS, IT MAY NOT BE ABLE TO PROVIDE TIMELY AND ACCURATE     FINANCIAL STATEMENTS          As more <font color="blue">fully described</font> in Item 9A, the Company’s <font color="blue"><font color="blue">management</font> assessed</font>     the <font color="blue"><font color="blue">effective</font>ness</font> of the Company’s internal <font color="blue">control over</font> financial reporting     as of <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>In making this <font color="blue">assessment</font>, it used the <font color="blue">criteria set</font>     forth  by  the  Committee  of Sponsoring Organizations of the Treadway     Commission (COSO) in Internal Control – Integrated Framework</td>
+    </tr>
+    <tr>
+      <td>As a result of     <font color="blue">management</font>’s <font color="blue">assessment</font>, <font color="blue">management</font> has concluded that, as of <font color="blue">December </font>31,     2005, Allied did not maintain <font color="blue">effective</font> internal <font color="blue">control over</font> financial     reporting</td>
+    </tr>
+    <tr>
+      <td>Additionally, our auditor, BDO Seidman LLP, issued a <font color="blue">disclaimer</font>     of <font color="blue">opinion with</font> regards to Management’s <font color="blue">assessment</font> of the <font color="blue"><font color="blue">effective</font>ness</font> of     the Company’s internal <font color="blue">control over</font> financial reporting as of <font color="blue">December </font>31,     2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Public Company Accounting Oversight Board </font>has defined a material     <font color="blue">weakness as</font> a <font color="blue">control deficiency</font>, or <font color="blue">combination</font> of control <font color="blue">deficiencies</font>,     that results in more than a <font color="blue">remote likelihood</font> that a material <font color="blue">misstatement</font>     of the annual or <font color="blue">interim statements will</font> not be prevented or detected</td>
+    </tr>
+    <tr>
+      <td>Accordingly, a material weakness increases the risk that the financial     information we report contains material errors</td>
+    </tr>
+    <tr>
+      <td>We have identified control <font color="blue">deficiencies</font> in our internal <font color="blue">control over</font>     financial reporting, and we are <font color="blue">implementing new</font> or <font color="blue">revised controls</font> to     address these matters</td>
+    </tr>
+    <tr>
+      <td>The steps we have taken and are taking to address the     material  <font color="blue">weaknesses</font>  may  not  be  <font color="blue">effective</font>, however</td>
+    </tr>
+    <tr>
+      <td>Any failure to     <font color="blue"><font color="blue">effective</font>ly</font>  address control <font color="blue">deficiencies</font> or implement required new or     <font color="blue">improved controls</font>, or <font color="blue">difficult</font>ies encountered in their <font color="blue">implementation</font>,     <font color="blue">could limit</font> our ability to obtain financing, harm our reputation, disrupt     our  ability to <font color="blue">process key components</font> of our result of <font color="blue">operations</font> and     <font color="blue">financial condition</font> timely and <font color="blue">accurately</font> and cause us to fail to meet our     reporting <font color="blue">obligations</font> under SEC rules and our <font color="blue">various debt arrangements</font></td>
+    </tr>
+    <tr>
+      <td>Any     failure to remediate the material weakness or <font color="blue">significant</font> <font color="blue">deficiencies</font>     identified in our <font color="blue">evaluation</font> of our <font color="blue">internal controls could preclude</font> our     <font color="blue">management</font> from determining our internal <font color="blue">control over</font> financial reporting is     <font color="blue">effective</font> or, otherwise, from issuing in a <font color="blue">timely manner</font> its <font color="blue">management</font>     report in the future</td>
+    </tr>
+  </tbody>
+</table>

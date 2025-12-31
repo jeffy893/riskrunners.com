@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: common stock", fill: "#cf1020"},
+{source: "2: common stock", target: "2: delisted from", fill: "#cf1020"},
+{source: "2: delisted from", target: "2: Nasdaq National Market ", fill: "#cf1020"},
+{source: "2: Nasdaq National Market ", target: "2: effective", fill: "#cf1020"},
+{source: "2: effective", target: "2: common stock will", fill: "#cf1020"},
+{source: "2: common stock", target: "8: completion", fill: "#1e90ff"},
+{source: "8: completion", target: "8: development", fill: "#1e90ff"},
+{source: "8: development", target: "8: significantly", fill: "#1e90ff"},
+{source: "8: completion", target: "10: proposed facilities will", fill: "#6082b6"},
+{source: "10: proposed facilities will", target: "10: completion", fill: "#6082b6"},
+{source: "10: completion", target: "10: construction", fill: "#6082b6"},
+{source: "10: construction", target: "10: sufficient personnel", fill: "#6082b6"},
+{source: "10: sufficient personnel", target: "10: regulatory", fill: "#6082b6"},
+{source: "10: regulatory", target: "10: allocations", fill: "#6082b6"},
+{source: "10: allocations", target: "10: authorizations", fill: "#6082b6"},
+{source: "10: proposed facilities will", target: "21: addition once", fill: "#3b444b"},
+{source: "21: addition once", target: "21: casinos on", fill: "#3b444b"},
+{source: "21: casinos on", target: "21: guests gaming", fill: "#3b444b"},
+{source: "21: guests gaming", target: "21: various operations profitable", fill: "#3b444b"},
+{source: "21: various operations profitable", target: "21: independently", fill: "#3b444b"},
+{source: "21: addition once", target: "24: termination", fill: "#49796b"},
+{source: "24: termination", target: "24: management contracts", fill: "#49796b"},
+{source: "24: management contracts", target: "24: consulting agreements with", fill: "#49796b"},
+{source: "24: consulting agreements with", target: "24: tribes may", fill: "#49796b"},
+{source: "24: tribes may", target: "24: operations", fill: "#49796b"},
+{source: "24: operations", target: "24: financial condition", fill: "#49796b"},
+{source: "24: termination", target: "START_HERE", fill: "#49796b"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Home Entertainment Software</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matrix_completion">Matrix completion</a></td>
+      <td>Matrix completion is the task of filling in the missing entries of a partially observed matrix. A wide range of datasets are naturally organized in matrix form.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Input/output_completion_port">Input/output completion port</a></td>
+      <td>Input/output completion port (IOCP) is an API for performing multiple simultaneous asynchronous input/output operations in Windows NT versions 3.5 and later, AIX and on Solaris 10 and later. An input/output completion port object is created and associated with a number of sockets or file handles.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ultraviolet_completion">Ultraviolet completion</a></td>
+      <td>In theoretical physics, ultraviolet completion, or UV completion, of a quantum field theory is the passing from a lower energy quantum field theory to a more general quantum field theory above a threshold value known as the cutoff.  In particular, the more general high energy theory must be well-defined at arbitrarily high energies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Completion_of_a_ring">Completion of a ring</a></td>
+      <td>In abstract algebra, a completion is any of several related functors on rings and modules that result in complete topological rings and modules. Completion is similar  to localization, and together they are among the most basic tools in analysing commutative rings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Run_to_completion_scheduling">Run to completion scheduling</a></td>
+      <td>Run-to-completion scheduling or nonpreemptive scheduling is a scheduling model in which each task runs until it either finishes, or explicitly yields control back to the scheduler. Run to completion systems typically have an event queue which is serviced either in strict order of admission by an event loop, or by an admission scheduler which is capable of scheduling events out of order, based on other constraints such as deadlines.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Completion_guarantee">Completion guarantee</a></td>
+      <td>In filmmaking, a completion guarantee (sometimes referred to as a completion bond) is a form of insurance offered by a completion guarantor company (in return for a percentage fee based on the budget) that is often used in independently financed films to guarantee that the producer will complete and deliver the film (based on an agreed script, cast and budget) to the distributor(s) thereby triggering the payment of minimum distribution guarantees to the producer (but received by the bank/investor who has cash flowed the guarantee (at a discount) to the producer to trigger production).The producer will agree to deliver a film (based on an agreed script/cast/budget) to a distributor in respect of certain territories in consideration (inter alia) for payment of a "minimum distribution guarantee" payable at the point in time when the producer has delivered the completed film. The producer obviously requires such funds upfront to finance the film so the producer takes the signed distribution contract to a bank/financier and will effectively use it as collateral against a production loan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Autocomplete">Autocomplete</a></td>
+      <td>Autocomplete, or word completion, is a feature in which an application predicts the rest of a word a user is typing. In Android and iOS smartphones, this is called predictive text.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development_hell">Development hell</a></td>
+      <td>Development hell, development purgatory, and development limbo are media and software industry jargon for a project, concept, or idea that remains in development for an especially long time, often moving between different crews, scripts, game engines, or studios before it progresses to production, if it ever does. Projects in development hell are usually not released until development has reached a satisfying state worthy of being released, ready for production.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_development">Professional development</a></td>
+      <td>Professional development is learning to earn or maintain professional credentials such as academic degrees to formal coursework, attending conferences, and informal learning opportunities situated in practice. It has been described as intensive and collaborative, ideally incorporating an evaluative stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction">Construction</a></td>
+      <td>Construction is a general term meaning the art and science to form objects, systems, or organizations, and comes from Latin constructio (from com- "together" and struere "to pile up") and Old French construction. To construct is the verb: the act of building, and the noun is construction: how something is built, the nature of its structure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_foreman">Construction foreman</a></td>
+      <td>A construction foreman or construction forewoman is the worker or skilled tradesperson who is in charge of a construction crew. This role is generally assumed by a senior worker.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_grammar">Construction grammar</a></td>
+      <td>Construction grammar (often abbreviated CxG) is a family of theories within the field of cognitive linguistics which posit that constructions, or learned pairings of linguistic patterns with meanings, are the fundamental building blocks of human language. Constructions include words (aardvark, avocado), morphemes (anti-, -ing), fixed expressions and idioms (by and large, jog X's memory), and abstract grammatical rules such as the passive voice (The cat was hit by a car) or the ditransitive (Mary gave Alex the ball).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_engineering">Construction engineering</a></td>
+      <td>Construction engineering is a professional discipline that deals with the designing, planning, construction and management of infrastructures such as roads, tunnels, bridges, airports, railroads, facilities, buildings, dams, utilities and other projects.\nCivil engineering is a related field that deals more with the practical aspects of projects.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Social_constructionism">Social constructionism</a></td>
+      <td>Social constructionism is a theory in sociology, social ontology, and communication theory which proposes that there are certain kinds of facts which, rather than depending on physical reality, instead depend on the shared ways of thinking about and representing the world that groups of people develop collaboratively. The theory centers on the notion that meanings are developed in coordination with others rather than separately by each individual.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PCL_Construction">PCL Construction</a></td>
+      <td>The PCL family of companies is a group of independent general contracting construction companies in Canada, the United States, Australia and the Caribbean. PCL has headquarters in Edmonton, Alberta, Canada, with the United States head office in Denver, Colorado.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Granite_Construction">Granite Construction</a></td>
+      <td>Granite Construction Inc. is a member of the S&amp;P 600 Index based in Watsonville, California, and is the parent corporation of Granite Construction Company, a heavy civil general contractor and construction material producer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LAKES ENTERTAINMENT INC      ITEM 1A RISK FACTORS             In addition to <font color="blue">factors discussed elsewhere</font> in this <font color="blue">Annual Report </font>on     Form 10-K, the following are <font color="blue">important factors</font> that could cause actual     results  or  events  to  <font color="blue">differ materially from</font> those contained in any     forward-looking statement made by or on behalf of us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">common stock</font> was <font color="blue">delisted from</font> the <font color="blue">Nasdaq National Market </font><font color="blue">effective</font>     August 10, 2005 and there is no assurance that our <font color="blue">common stock</font> will be     re-listed</td>
+    </tr>
+    <tr>
+      <td>We received a <font color="blue">Nasdaq Staff </font>De<font color="blue">termination</font> letter on April 20, 2005,     indicating that we were not <font color="blue">compliant with</font> Nasdaq <font color="blue">listing standards</font> because     we did not <font color="blue">timely file</font> our <font color="blue">Annual Report </font>on Form 10-K for the year ended     <font color="blue">January  </font>2,  2005 and our <font color="blue">Quarterly Report </font>on Form 10-Q for the fiscal     quarter ended April 3, 2005 with the <font color="blue">United States </font>Securities and Exchange     Commission,  referred to as the SEC As a result, our <font color="blue">common stock</font> was     subject  to  delisting  from <font color="blue">the Nasdaq National Market</font></td>
+    </tr>
+    <tr>
+      <td>The delisting     <font color="blue">notification</font> is standard procedure when a Nasdaq <font color="blue">listed company fails</font> to     complete  a  required filing in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>On August 9, 2005, we     received  notice  from  the Nasdaq Stock Market Listing Qualifications     Department that the <font color="blue">Nasdaq Listing Qualifications Panel </font>determined to delist     our <font color="blue">common stock</font> from the <font color="blue">Nasdaq National Market </font><font color="blue">effective</font> as of the opening     of business on August 10, 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On December </font>22, 2005, we applied for re-listing of our <font color="blue">common stock</font>     with the Nasdaq Stock Market Listing Qualifications Department as we are now     <font color="blue">current with</font> the Nasdaq Marketplace Rule Nodtta 4310(c)(14)</td>
+    </tr>
+    <tr>
+      <td>There can be no     assurance that the <font color="blue">Nasdaq Staff </font>will grant our request for re-listing</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">completion</font> of our planned Indian and non-Indian casino <font color="blue">development</font>     projects may be <font color="blue"><font color="blue">significant</font>ly</font> delayed or prevented due to a variety of     factors, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>Although we have experience developing and <font color="blue">managing casinos</font> owned by     Indian  tribes and <font color="blue">located on</font> Indian land, neither we nor any of these     <font color="blue">individuals</font> has developed or managed a casino in the States of California,     Michigan, or Oklahoma</td>
+    </tr>
+    <tr>
+      <td>The opening of each of our <font color="blue">proposed <font color="blue">facilities will</font></font>     be contingent upon, among other things, the <font color="blue">completion</font> of <font color="blue">construction</font>,     hiring and training of <font color="blue">sufficient personnel</font> and receipt of all <font color="blue">regulatory</font>     licenses,  permits,  <font color="blue">allocations</font>  and <font color="blue">authorizations</font></td>
+    </tr>
+    <tr>
+      <td>The scope of the     approvals required to construct and open these <font color="blue">facilities will</font> be extensive,     and  the  failure  to obtain <font color="blue">such approvals could prevent</font> or delay the     <font color="blue">completion</font> of <font color="blue">construction</font> or opening of all or part of <font color="blue">such facilities</font> or     <font color="blue">otherwise affect</font> the design and features of the <font color="blue">proposed casinos</font></td>
+    </tr>
+    <tr>
+      <td>No assurances can be given that once a schedule for such <font color="blue">construction</font>     and <font color="blue">development</font> <font color="blue">activities</font> is established, such <font color="blue">development</font> <font color="blue">activities</font> will     begin or will be completed on time, or any other time, or that the budget     for these projects will not be exceeded</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">regulatory</font> approvals necessary for the <font color="blue">construction</font>     and operation of casinos are <font color="blue">often challenged</font> in <font color="blue"><font color="blue">litigation</font> brought by</font>     government entities, citizens groups and other <font color="blue">organizations</font> and                                         18       _________________________________________________________________           <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">litigation</font> can <font color="blue"><font color="blue">significant</font>ly</font> delay the <font color="blue">construction</font> and     opening of casinos</td>
+    </tr>
+    <tr>
+      <td>Certain of our casino projects have been <font color="blue"><font color="blue">significant</font>ly</font>     delayed as a result of such <font color="blue">litigation</font>, and there is no assurance that the     <font color="blue">litigation</font> can be <font color="blue">successfully</font> resolved or that our casino projects will not     experience further <font color="blue">significant</font> delays before resolution</td>
+    </tr>
+    <tr>
+      <td>Major <font color="blue">construction</font> projects entail <font color="blue">significant</font> risks, including     shortages  of  materials  or  skilled  labor,  <font color="blue">unforeseen engineering</font>,     <font color="blue">environmental</font>  and/or  geological  problems,  work  stoppages, weather     <font color="blue">interference</font>,  <font color="blue">unanticipated</font>  cost  increases  and non-availability of     <font color="blue">construction</font> equipment</td>
+    </tr>
+    <tr>
+      <td>These factors or delays or <font color="blue"><font color="blue">difficult</font>ies</font> in obtaining     any of the requisite licenses, permits, <font color="blue">allocations</font> and <font color="blue">authorizations</font> from     <font color="blue">regulatory</font> authorities could increase the total cost, delay or prevent the     <font color="blue">construction</font> or opening of any of these planned casino <font color="blue">development</font>s or     <font color="blue">otherwise affect</font> their design</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> delay in, or non-<font color="blue">completion</font> of, our planned Indian and     non-Indian casino <font color="blue">development</font> projects could have a material adverse effect     on our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Since the expiration of our <font color="blue">management</font> contract for Grand Casino     Coushatta  (the  last  remaining Indian-owned casino managed by us) on     January 16,  2002,  we  have <font color="blue">generated minimal revenue from</font> our casino     <font color="blue">management</font> <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>We have had minimal current casino <font color="blue">management</font>-related     operating <font color="blue">revenue with which</font> to offset the <font color="blue"><font color="blue">investment</font> costs associated with</font>     our current or future casino <font color="blue">development</font> projects, delays in the <font color="blue">completion</font>     of our current <font color="blue">development</font> projects, or the failure of such projects to be     completed at all, may cause our operating results to fluctuate <font color="blue"><font color="blue">significant</font>ly</font>     and <font color="blue">may <font color="blue">adversely affect</font></font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In addition, once developed, no     assurances can be given that we will be able to manage these <font color="blue">casinos on</font> a     profitable  basis  or to attract a sufficient number of guests, gaming     customers and other visitors to make the <font color="blue">various <font color="blue">operations</font> profitable</font>     <font color="blue">independently</font></td>
+    </tr>
+    <tr>
+      <td>With  each project we are subject to the risk that our     <font color="blue"><font color="blue">investment</font> may</font> be lost if the project cannot obtain <font color="blue">adequate financing</font> to     complete <font color="blue">development</font> and open the casino <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>In some cases, we may     be forced to provide more <font color="blue">financing than</font> we <font color="blue">originally</font> planned in order to     complete <font color="blue">development</font>, increasing the risk to us in the event of a <font color="blue">default by</font>     the casiNodtta In addition, because our <font color="blue">future growth</font> in revenues and our     ability to <font color="blue">generate profits will depend</font> to a large extent on our ability to     increase  the  number  of  our <font color="blue">managed casinos</font> or develop new business     <font color="blue">opportunities</font>, the delays in the <font color="blue">completion</font> or the non-<font color="blue">completion</font> of our     current <font color="blue">development</font> projects <font color="blue">may <font color="blue">adversely affect</font></font> our ability to realize     <font color="blue">future growth</font> in revenues and <font color="blue">future profits</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">termination</font> of our <font color="blue">management</font> contracts and <font color="blue">consulting <font color="blue">agreement</font>s with</font>     Indian <font color="blue">tribes may</font> have a material adverse effect on our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The  terms  of  our current <font color="blue">management</font> contracts and consulting     <font color="blue"><font color="blue">agreement</font>s provide</font> that <font color="blue">such contracts may</font> be <font color="blue">terminated under certain</font>     <font color="blue">circumstances</font>, including without limitation, upon the failure to obtain NIGC     approval for the project, the loss of <font color="blue">requisite gaming licenses</font>, or an     <font color="blue">exercise by</font> an Indian tribe of its <font color="blue">buyout option</font></td>
+    </tr>
+    <tr>
+      <td>Without the <font color="blue">realization</font> of     new  business  <font color="blue">opportunities</font> or new <font color="blue">management</font> contracts or consulting     <font color="blue">agreement</font>s, <font color="blue">management</font> contract or consulting <font color="blue">agreement</font> <font color="blue">termination</font>s could     have a material adverse effect on our results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>If our current casino <font color="blue">development</font> projects are not completed or fail to     <font color="blue">successfully</font> compete once completed, we may lack the funds to compete for     and develop <font color="blue">future gaming</font> or other business <font color="blue">opportunities</font> which may have a     material adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">gaming industry</font> is <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td>Gaming <font color="blue">activities</font> include     traditional land-based casinos; river boat and dockside gaming; casino     gaming  on  Indian  land; state-sponsored lotteries and <font color="blue">video poker</font> in     restaurants, bars and hotels; pari-mutuel betting on horse racing and dog     racing; sports bookmaking; and <font color="blue">card rooms</font></td>
+    </tr>
+    <tr>
+      <td>The casinos to be managed or     owned <font color="blue">by us compete</font>, and will in the future compete, with all these forms of     gaming, and <font color="blue">will compete with</font> any new forms of gaming that may be legalized     in <font color="blue">additional</font> <font color="blue">jurisdictions</font>, as well as with other types of <font color="blue">entertainment</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also compete with</font> other <font color="blue">gaming companies</font> for <font color="blue">opportunities</font> to     acquire <font color="blue">legal gaming sites</font> in emerging and <font color="blue">established gaming <font color="blue">jurisdictions</font></font>     and for the <font color="blue">opportunity</font> to manage <font color="blue">casinos on</font> Indian land</td>
+    </tr>
+    <tr>
+      <td>Many of our                                         19       _________________________________________________________________           <font color="blue">competitors</font> have more personnel and may have greater financial and other     <font color="blue">resources than us</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">competition</font> in the <font color="blue">gaming industry</font> could adversely     affect our ability to <font color="blue">attract customers which would <font color="blue">adversely affect</font></font> our     operating  results</td>
+    </tr>
+    <tr>
+      <td>In addition, further expansion of <font color="blue">gaming into new</font>     <font color="blue">jurisdictions</font>  could  also  <font color="blue">adversely affect</font> our business <font color="blue">by diverting</font>     customers  from  our  planned  managed  casinos to <font color="blue">competitors</font> in such     <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td>We could be <font color="blue">prevented from</font> completing our current casino <font color="blue">development</font>     projects or pursuing future <font color="blue">development</font> projects due to changes in the laws,     <font color="blue">regulations</font> and ordinances (including tribal or <font color="blue">local laws</font>) that apply to     <font color="blue">gaming facilities</font> or the <font color="blue">inability</font> of us or our key personnel, <font color="blue">significant</font>     <font color="blue">shareholders</font> or <font color="blue">joint venture partners</font> to obtain or retain gaming <font color="blue">regulatory</font>     licenses</td>
+    </tr>
+    <tr>
+      <td>The ownership, <font color="blue">management</font> and operation of <font color="blue">gaming facilities</font> are     subject to extensive federal, state, provincial, tribal and/or <font color="blue">local laws</font>,     <font color="blue">regulations</font>  and  ordinances,  which  are <font color="blue">administered by</font> the relevant     <font color="blue">regulatory</font> agency or agencies in <font color="blue">each jurisdiction</font></td>
+    </tr>
+    <tr>
+      <td>These laws, <font color="blue">regulations</font>     and ordinances vary from jurisdiction to jurisdiction, but generally concern     the responsibility, financial stability and character of the owners and     managers of gaming <font color="blue">operations</font> as well as persons financially interested or     involved in gaming <font color="blue">operations</font>, and often require <font color="blue">such parties</font> to obtain     certain licenses, permits and approvals</td>
+    </tr>
+    <tr>
+      <td>The rapidly-changing political and <font color="blue">regulatory</font> environment governing     the <font color="blue">gaming industry</font> (including gaming <font color="blue">operations</font> which are <font color="blue">conducted on</font>     Indian land) makes it impossible for us to <font color="blue">accurately predict</font> the effects     that  an  adoption  of  or changes in the gaming laws, <font color="blue">regulations</font> and     <font color="blue">ordinances will</font> have on us</td>
+    </tr>
+    <tr>
+      <td>However, the failure of us, or any of our key     personnel, <font color="blue">significant</font> <font color="blue">shareholders</font> or <font color="blue">joint venture partners</font>, to obtain or     retain required gaming <font color="blue">regulatory</font> licenses could prevent us from expanding     into  new  markets,  prohibit  us  <font color="blue">from generating revenues</font> in certain     <font color="blue">jurisdictions</font>, and subject us to sanctions and fines</td>
+    </tr>
+    <tr>
+      <td>The  political  and <font color="blue">regulatory</font> environment in which we operate,     including <font color="blue">with respect</font> to gaming <font color="blue">activities</font> on Indian land, is discussed in     greater  detail  in  this <font color="blue">Annual Report </font>on Form 10-K under the caption     “Business-Regulation” in Item 1</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If <font color="blue">the NIGC </font></font>elects to modify the terms of our <font color="blue">management</font> contracts with     Indian tribes or <font color="blue"><font color="blue">void such contracts</font> <font color="blue">altogether</font></font>, our <font color="blue">revenues from</font>     <font color="blue">management</font> contracts may be reduced or eliminated</td>
+    </tr>
+    <tr>
+      <td>The NIGC has the power to require <font color="blue"><font color="blue">modification</font>s</font> to Indian <font color="blue">management</font>     contracts under certain <font color="blue">circumstances</font> or to <font color="blue">void such contracts</font> or <font color="blue">ancillary</font>     <font color="blue">agreement</font>s including loan <font color="blue">agreement</font>s if the <font color="blue">management</font> company fails to     obtain  requisite  approvals  or  to  comply  <font color="blue">with applicable laws</font> and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>The NIGC has the right to <font color="blue">review each contract</font> and has the     authority to reduce the term of a <font color="blue">management</font> contract or the <font color="blue">management</font> fee     or otherwise require <font color="blue">modification</font> of the contract, which could have an     adverse  effect  on us</td>
+    </tr>
+    <tr>
+      <td>Currently, only the <font color="blue">Shingle Springs </font><font color="blue">management</font>     contract has <font color="blue">been approved by</font> <font color="blue">the NIGC </font>The other <font color="blue">management</font> contracts have     not received final approval by <font color="blue">the NIGC </font>and may require <font color="blue">modification</font> prior     to receiving approval</td>
+    </tr>
+    <tr>
+      <td>If Indian <font color="blue">tribes default on</font> their <font color="blue">repayment <font color="blue">obligations</font></font> or wrongfully     terminate their <font color="blue">management</font> contracts with us, we may be unable to collect     the <font color="blue">amounts due</font></td>
+    </tr>
+    <tr>
+      <td>We have made, and may make, substantial loans to Indian tribes for the     <font color="blue">construction</font>, <font color="blue">development</font>, equipment and <font color="blue">operations</font> of casinos to be managed     by us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">only recourse</font> for <font color="blue">collection</font> of <font color="blue"><font color="blue">indebtedness</font> from</font> an Indian tribe     or <font color="blue">money damages</font> for breach or wrongful <font color="blue">termination</font> of a <font color="blue">management</font> contract     is <font color="blue">from revenues</font>, if any, from casino <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have subordinated, and     may in the <font color="blue">future subordinate</font>, the repayment of loans made to an Indian     tribe and other <font color="blue">distributions due from</font> an Indian tribe (including <font color="blue">management</font>     fees) in favor of other <font color="blue">obligations</font> of the Indian tribe to other parties     related to the casino <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, in the event of a <font color="blue">default by</font>     an Indian tribe under such <font color="blue">obligations</font>, our loans and other claims against     the Indian tribe will not be <font color="blue">repaid until such default</font> has <font color="blue">been cured</font> or the     Indian tribe’s senior casino-related creditors have <font color="blue">been repaid</font> in full</td>
+    </tr>
+    <tr>
+      <td>20       _________________________________________________________________           A <font color="blue">deterioration</font> of our <font color="blue">relationship with</font> an Indian tribe could cause delays     in the <font color="blue">completion</font> of a casino <font color="blue">development</font> project with that Indian tribe or     <font color="blue">even force us</font> to abandon a casino <font color="blue">development</font> project <font color="blue">altogether</font> and prevent     or <font color="blue"><font color="blue">significant</font>ly</font> impede recovery of our <font color="blue"><font color="blue">investment</font> therein</font></td>
+    </tr>
+    <tr>
+      <td>Good personal and <font color="blue">professional relationships with</font> Indian tribes and     their officials are critical to our proposed and future Indian-related     gaming <font color="blue">operations</font> and <font color="blue">activities</font>, including our ability to obtain, develop     and effectuate <font color="blue">management</font> and other <font color="blue">agreement</font>s</td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">sovereign nations</font>, Indian     <font color="blue">tribes establish</font> their own <font color="blue">governmental systems under which tribal officials</font>     or <font color="blue">bodies <font color="blue">representing</font></font> an Indian tribe may be <font color="blue">replaced by appointment</font> or     election or become subject to policy changes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Replacements of Indian </font>tribe     officials or <font color="blue">administrations</font>, changes in policies to which an Indian tribe     is subject, or other factors that may lead to the <font color="blue">deterioration</font> of our     <font color="blue">relationship with</font> an Indian tribe may cause delays in the <font color="blue">completion</font> of a     <font color="blue">development</font>  project  with  that Indian tribe or prevent the project’s     <font color="blue">completion</font> <font color="blue">altogether</font>, which may have an adverse effect on the results of     our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">funds from</font> our <font color="blue">operations</font> are insufficient to support our cash     <font color="blue">requirements</font> and we are unable to obtain <font color="blue"><font color="blue">additional</font> financing</font> in order to     satisfy these <font color="blue">requirements</font> we may be forced to delay, scale back or     eliminate some of our expansion and <font color="blue">development</font> goals, or cease our     <font color="blue">operations</font> entirely</td>
+    </tr>
+    <tr>
+      <td>We will require <font color="blue"><font color="blue">additional</font> capital through either public</font> or private     <font color="blue">financings</font> to meet operating expenses during 2006 and we are currently     considering <font color="blue">various financing alternatives</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On <font color="blue">February </font></font>15, 2006 we closed     on a dlra50 million financing <font color="blue">facility</font> with an affiliate of <font color="blue">Prentice Capital </font>    Management, LP An <font color="blue">initial draw</font> of dlra25 million was made under the <font color="blue">facility</font>,     another dlra10 million is <font color="blue"><font color="blue">immediately</font> available under</font> the <font color="blue">facility</font> and the     remaining dlra15 million can be drawn in dlra5 million increments subject to the     <font color="blue">satisfaction</font>  of  certain  <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>See Note 18 to the Consolidated     Financial Statements included in Item 8 of this <font color="blue">Annual Report </font>on Form 10-K             Even with this financing <font color="blue">facility</font> in place, <font color="blue">as previously</font> announced,     we <font color="blue">will continue</font> to explore <font color="blue"><font color="blue">additional</font> financing</font> alternatives to fund our     <font color="blue">future operational</font> and <font color="blue">development</font> needs, including financing to meet our     <font color="blue">obligations</font> related to our casino projects as soon as <font color="blue">regulatory</font> approvals     are  received  and  <font color="blue">construction</font> can begin</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">financings</font> may not be     available when needed on terms acceptable to us or at all</td>
+    </tr>
+    <tr>
+      <td>Moreover, any     <font color="blue">additional</font> equity or debt <font color="blue">financings</font> may be dilutive to our <font color="blue">shareholders</font>,     and any debt financing may involve <font color="blue">additional</font> restrictive covenants</td>
+    </tr>
+    <tr>
+      <td>An     <font color="blue">inability</font> to <font color="blue">raise such funds</font> when needed might require us to delay, scale     back or eliminate some of our expansion and <font color="blue">development</font> goals, or might     require us to cease our <font color="blue">operations</font> entirely</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">financial condition</font> and     resources are discussed in greater detail in Item 7 “Management’s Discussion     and Analysis of Financial Condition and Results of Operations” of this     <font color="blue">Annual Report </font>on Form 10-K             In addition, the <font color="blue">construction</font> of our Indian casino projects may depend     on the ability of the Indian tribes to obtain financing for the projects</td>
+    </tr>
+    <tr>
+      <td>In order to assist the Indian tribes,     we  may  be required to guarantee the Indian tribes’ debt financing or     <font color="blue">otherwise provide support</font> for the Indian tribes’ <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">guarantees</font>     by us or similar off-balance sheet li<font color="blue">abilities</font>, if any, <font color="blue">will increase</font> our     <font color="blue">potential exposure</font> in the event of a <font color="blue">default by</font> any of these Indian tribes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">For the Pokagon Casino </font>project, we have agreed to finance all phases     of the project <font color="blue">entirely from</font> our own funds if <font color="blue">financing at</font> an <font color="blue">interest rate</font>     of 13prca or less is not <font color="blue">available from</font> the <font color="blue">capital markets</font></td>
+    </tr>
+    <tr>
+      <td>If this occurs and     we  are required to provide all financing, this would be an <font color="blue">additional</font>     <font color="blue">commitment</font> of up to <font color="blue">approximately</font> dlra54 million</td>
+    </tr>
+    <tr>
+      <td>While it currently appears     that third-party financing will be available for this project, there can be     no assurance third-party financing will be available and that we will not be     required to provide this <font color="blue"><font color="blue">additional</font> financing</font></td>
+    </tr>
+    <tr>
+      <td>If one or more of our Indian casino projects fail to open, the recorded     assets related to those projects will be impaired and <font color="blue">there will</font> be a     material <font color="blue">adverse impact on</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">record assets</font> related to Indian casino projects on our <font color="blue">consolidated</font>     balance sheet as long-term assets related to Indian casino projects</td>
+    </tr>
+    <tr>
+      <td>The     majority of our long-term assets related to Indian casino projects are in                                         21       _________________________________________________________________           the form of loans to the Indian <font color="blue">tribes pursuant</font> to our financing <font color="blue">agreement</font>s     <font color="blue">with <font color="blue">varying degrees</font></font> of <font color="blue">collection</font> risk, and <font color="blue">with repayment often dependent</font>     on  the operating performance of <font color="blue">each gaming property</font></td>
+    </tr>
+    <tr>
+      <td>These loans are     included as notes <font color="blue">receivable on</font> the <font color="blue">consolidated</font> balance sheet, under the     category “long-term assets related to Indian casino projects”</td>
+    </tr>
+    <tr>
+      <td><font color="blue">At January </font>1,     2006, we had dlra152dtta8 million in long-term assets related to Indian casino     projects, of which dlra87dtta1 million was in the form of notes receivable, which     are <font color="blue">recorded at fair value on</font> the <font color="blue">consolidated</font> balance sheet</td>
+    </tr>
+    <tr>
+      <td>The notes     receivable represented <font color="blue">approximately</font> 38prca of our <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>See Note 4 to     the <font color="blue">Consolidated Financial Statements </font>included in Item 8 of this Annual     Report  on  Form 10-K  The  loans  are  made  to  Indian  tribes  for     pre-<font color="blue">construction</font> financing related to <font color="blue">gaming properties</font> being developed by     us</td>
+    </tr>
+    <tr>
+      <td>All of the loans are subject to <font color="blue">varying degrees</font> of <font color="blue">collection</font> risk and     there is <font color="blue">no established market</font></td>
+    </tr>
+    <tr>
+      <td>For the loans <font color="blue">representing</font> <font color="blue">indebtedness</font> of     Indian tribes, the <font color="blue">repayment terms</font> are specific to each Indian tribe and are     <font color="blue">largely dependent upon</font> the operating performance of <font color="blue">each gaming property</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Repayments </font>of such loans are required to be made only if <font color="blue">distributable</font>     profits are <font color="blue">available from</font> the operation of the related casinos</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Repayments </font>    are also the subject of <font color="blue">certain distribution priorities specified</font> in the     <font color="blue">management</font> contracts</td>
+    </tr>
+    <tr>
+      <td>In addition, repayment to us of the loans and the     manager’s fees under our <font color="blue">management</font> contracts are subordinated to certain     other financial <font color="blue">obligations</font> of the respective Indian tribes</td>
+    </tr>
+    <tr>
+      <td>Included in long-term assets related to Indian casino projects are     <font color="blue">intangible assets</font> related to the <font color="blue">acquisition</font> of the <font color="blue">management</font> contract,     land  held for <font color="blue">development</font> and other <font color="blue">costs incurred</font> in <font color="blue">connection with</font>     opening  the  casino of dlra46dtta1 million, dlra16dtta2 million and dlra3dtta4 million,     respectively, at January 1, 2006</td>
+    </tr>
+    <tr>
+      <td>It is possible that one or more of our     Indian casino projects will fail to open, which will render the majority of     the assets related to the failed Indian casino project impaired</td>
+    </tr>
+    <tr>
+      <td>See our     <font color="blue">accounting policy within</font> Note 1 of the <font color="blue">Consolidated Financial Statements </font>    included in Item 8 of the <font color="blue">Annual Report </font>on Form 10-K       <font color="blue">During September </font>2005, <font color="blue">legislation</font> was proposed to amend the Gambling     Devices Act of 1962 which could <font color="blue">negatively</font> affect projected     <font color="blue">management</font>/consulting fees from the <font color="blue">Shingle Springs </font>and Jamul Casino     projects</td>
+    </tr>
+    <tr>
+      <td><font color="blue">During September </font>2005, the <font color="blue">Department of Justice </font><font color="blue">proposed <font color="blue">legislation</font></font>     that would amend the <font color="blue">Gambling Devices Act </font>of 1962 (commonly referred to as     <font color="blue">the Johnson Act</font>)</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">proposal seeks</font> to clarify the <font color="blue">difference between</font>     <font color="blue"><font color="blue">Class II </font>and Class III </font>machines</td>
+    </tr>
+    <tr>
+      <td>It prohibits Indian <font color="blue">tribes from</font> operating     games  that <font color="blue">resemble slot machines without</font> a tribal-state compact</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue"><font color="blue">legislation</font> proposes</font> to amend <font color="blue">the Johnson Act</font> in three <font color="blue">significant</font> ways</td>
+    </tr>
+    <tr>
+      <td>First, the <font color="blue">definition</font> of “gaming device” <font color="blue">in Section </font>1171 of <font color="blue">the Johnson Act</font>     would be amended to <font color="blue">clarify how</font> the element of chance can be provided in a     gaming device</td>
+    </tr>
+    <tr>
+      <td>Second, Section 1172 of <font color="blue">the Johnson Act</font> would be amended to     clarify that certain “qualifying” technologic aids could be transported and     used  in  Indian  country</td>
+    </tr>
+    <tr>
+      <td>Third, a new Section (d) would be added to     Section 1175 of <font color="blue">the Johnson Act</font> to provide an express exception to allow     <font color="blue">technological</font> devices to be used <font color="blue">in <font color="blue">Class II </font></font>gaming</td>
+    </tr>
+    <tr>
+      <td>This is only <font color="blue">proposed <font color="blue">legislation</font></font>, but if passed it <font color="blue">could affect</font> our     planned casino <font color="blue">operations</font> for the <font color="blue">Shingle Springs </font>Tribe and the Jamul Tribe     and <font color="blue">distributable</font> <font color="blue">management</font> fees to us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Class II </font>machines are currently     planned  to  be  used at the <font color="blue">Shingle Springs </font>and Jamul Casinos</td>
+    </tr>
+    <tr>
+      <td>If the     <font color="blue">legislation</font> were passed there is no assurance that substitute allowable     <font color="blue">Class II </font><font color="blue">machines would</font> result in the same projected operating results as     the  <font color="blue">Class II </font> <font color="blue">machines currently</font> planned to be used and in use by the     above-mentioned projects</td>
+    </tr>
+    <tr>
+      <td>If this were to occur it could have a material     adverse effect on our results of <font color="blue">operations</font> and <font color="blue">financial condition</font>s</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">entry into <font color="blue">new businesses</font> may</font> result in <font color="blue">future losses</font></td>
+    </tr>
+    <tr>
+      <td>We have announced that part of our <font color="blue">strategy involves diversifying into</font>     other  <font color="blue">businesses such as</font> developing and owning our own casino and the     <font color="blue">development</font> and marketing of our own <font color="blue">table games</font></td>
+    </tr>
+    <tr>
+      <td>Such businesses involve     business <font color="blue">risks separate from</font> the <font color="blue">risks involved</font> in casino <font color="blue">development</font> and     these <font color="blue"><font color="blue">investment</font>s may</font> result in <font color="blue">future losses</font> to us</td>
+    </tr>
+    <tr>
+      <td>These risks include but     are not limited to negative cash flow, initial high <font color="blue">development</font> costs of new     products and/or services without corresponding sales pending receipt of     corporate and <font color="blue">regulatory</font> approvals, market introduction and <font color="blue">acceptance</font> of     <font color="blue">new products</font> and/or services, and obtaining <font color="blue">regulatory</font> approvals required to     conduct the <font color="blue">new businesses</font></td>
+    </tr>
+    <tr>
+      <td>There is no assurance that <font color="blue">diversification</font>     <font color="blue">activities</font> will <font color="blue">successfully</font> add to our <font color="blue">future revenues</font> and income</td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________           We <font color="blue">cannot guarantee</font> the financial results of the expansion of the World     Poker Tour business, which may <font color="blue">negatively</font> impact our financial results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of January </font>1, 2006, we, through our subsidiary Lakes Poker Tour,     LLC,  owned  <font color="blue">approximately</font>  62prca of the outstanding <font color="blue">common stock</font> of WPT     Enterprises,  Inc, referred to as WPTE As a result, our <font color="blue">consolidated</font>     results include WPTE <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In fiscal 2004, our <font color="blue">consolidated</font> revenues     of dlra17dtta6 million, were derived <font color="blue">entirely from</font> the WPTE business, <font color="blue">mainly from</font>     <font color="blue">license fees</font> for <font color="blue">United States </font>telecast of <font color="blue">World Poker Tour </font><font color="blue">television</font>     episodes</td>
+    </tr>
+    <tr>
+      <td>In fiscal 2005 the majority of our <font color="blue">consolidated</font> revenues of     dlra18dtta2 million were <font color="blue">derived from</font> WPTE WPTE has an <font color="blue">agreement</font> for a third     <font color="blue">season with</font> the TRV, for broadcast of the <font color="blue">World Poker Tour </font><font color="blue">series on cable</font>     <font color="blue">television</font> which began airing in the <font color="blue">fourth quarter</font> of 2004 and continued     airing in 2005</td>
+    </tr>
+    <tr>
+      <td>TRV exercised its option for <font color="blue"><font color="blue">Season Four </font>in March </font>2005 and     has options for three <font color="blue">additional</font> seasons</td>
+    </tr>
+    <tr>
+      <td>WPTE’s revenues were dlra18dtta1 million     for fiscal 2005 from the delivery of 13 <font color="blue">Season Three </font>episodes and five     <font color="blue">Season Four </font>episodes, international <font color="blue">television</font> licensing of the World Poker     Tour’s  Season One and Two and product licensing fees</td>
+    </tr>
+    <tr>
+      <td>However, we can     <font color="blue">provide no assurance</font> that WPTE will achieve its <font color="blue">forecasted revenues</font>, that     WPTE will be able to expand its business, or that WPTE’s <font color="blue">operations</font> will     <font color="blue">positively impact</font> our financial results because WPTE’s business is subject     to many risks and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>The risks include, but are not limited to,     WPTE’s short operating history, WPTE’s <font color="blue">dependence on</font> its <font color="blue">agreement</font>s with     TRV, continued public <font color="blue">acceptance</font> of the <font color="blue">World Poker Tour </font>programming and     brand, protection of WPTE’s <font color="blue">intellectual property rights</font>, and WPTE’s ability     to  <font color="blue">successfully</font> expand into new and <font color="blue">complementary</font> business, including     <font color="blue">internet gaming</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> the <font color="blue">ongoing services</font> of our <font color="blue">Chairman </font>and Chief Executive     Officer, Lyle Berman, and the loss of his <font color="blue">services could</font> have a <font color="blue">detrimental</font>     effect on the pursuit of our business objectives, <font color="blue">profitability</font> and the     price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success will depend largely on</font> the efforts and <font color="blue">abilities</font> of our     senior corporate <font color="blue">management</font>, particularly Lyle Berman, our <font color="blue">Chairman </font>and     <font color="blue">Chief Executive Officer</font></td>
+    </tr>
+    <tr>
+      <td>Berman or other     members of senior corporate <font color="blue">management</font> could have a material adverse effect     on  us</td>
+    </tr>
+    <tr>
+      <td>We are in the process of obtaining a dlra20 million key man life     <font color="blue">insurance policy on him</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Our Articles of Incorporation </font>and Bylaws </font><font color="blue"><font color="blue">may discourage</font> lawsuits</font> and other     claims against our <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Our Articles of Incorporation </font>and Bylaws </font>provide, to the fullest     <font color="blue">extent permitted by</font> <font color="blue">Minnesota </font>law, that our <font color="blue">directors</font> shall have no personal     <font color="blue">liability</font> for breaches of their <font color="blue">fiduciary duties</font> to us</td>
+    </tr>
+    <tr>
+      <td>In addition, our     Bylaws provide for <font color="blue">mandatory indemnification</font> of <font color="blue">directors</font> and officers to     the fullest <font color="blue">extent permitted by</font> <font color="blue">Minnesota </font>law</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">provisions reduce</font> the     likelihood of derivative <font color="blue">litigation</font> against our <font color="blue">directors</font> and <font color="blue">may discourage</font>     <font color="blue">shareholders</font> from bringing a lawsuit against <font color="blue">directors</font> for a breach of their     duty</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Articles of Incorporation </font><font color="blue">contain provisions</font> that <font color="blue">could discourage</font> or     prevent a potential takeover, even if the <font color="blue">transaction would</font> be <font color="blue">beneficial</font> to     our <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Articles of Incorporation </font>authorize our <font color="blue">Board of Directors </font>to     issue up to 200 million shares of capital stock, the terms of which may be     determined  at the time of issuance by the Board of Directors, without     <font color="blue">further action by</font> our <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Board of Directors </font>may authorize     <font color="blue">additional</font> classes or series of shares that may include <font color="blue">voting rights</font>,     <font color="blue">preferences as</font> to dividends and liquidation, <font color="blue">conversion</font> and <font color="blue">redemptive</font>     rights and <font color="blue">sinking fund provisions</font> that could <font color="blue">adversely affect</font> the rights of     holders of our <font color="blue">common stock</font> and reduce the value of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>In     <font color="blue">connection with</font> closing on a dlra50 million financing <font color="blue">facility</font> in <font color="blue"><font color="blue">February </font>    </font>2006, our <font color="blue">Board of Directors </font>authorized the creation of class of Series A     Convertible Preferred Stock <font color="blue">with contingent <font color="blue">conversion</font> rights</font> and limited     voting  rights, and we issued an aggregate of 4cmam451cmam751 shares of such     <font color="blue">preferred stock</font> to an affiliate of the lender</td>
+    </tr>
+    <tr>
+      <td>The Series A Convertible     Preferred  Stock  and  any  other class of <font color="blue">preferred stock</font> that may be     authorized by our <font color="blue">Board of Directors </font>for issuance in the <font color="blue">future could</font> make     it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire us, even if a majority of our     holders of <font color="blue">common stock</font> approved of such <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>23       _________________________________________________________________           The price of our <font color="blue">common stock</font> may be <font color="blue">adversely affect</font>ed by <font color="blue">significant</font> price     <font color="blue"><font color="blue">fluctuations</font> due</font> to a number of factors, many of which are beyond our     control</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our <font color="blue">common stock</font> has experienced <font color="blue">significant</font>     <font color="blue">fluctuations</font> and <font color="blue">may continue</font> to fluctuate in the future</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font>     of  our  common  stock  may be <font color="blue"><font color="blue">significant</font>ly</font> affected by many factors,     including:         •  obtaining all necessary <font color="blue">regulatory</font> approvals for our casino <font color="blue">development</font>     projects;         •  <font color="blue">litigation</font> surrounding one or more of our casino <font color="blue">development</font>s;         •  changes in <font color="blue">requirements</font> or demands for our services or WPTE’s products;         •  the <font color="blue">announcement</font> of <font color="blue">new products</font> or <font color="blue">product enhancements by us</font> or our     <font color="blue">competitors</font>;         •  <font color="blue">technological</font> innovations by us or our <font color="blue">competitors</font>;         •  <font color="blue">quarterly variations</font> in our or our <font color="blue">competitors</font>’ operating results;         •  changes in prices of our or our <font color="blue">competitors</font>’ products and services;         •  changes in our revenue and <font color="blue">revenue growth rates</font>;         •  changes in earnings or (loss) per share estimates <font color="blue">by market analysts</font> or     <font color="blue">speculation</font> in the press or <font color="blue">analyst community</font>; and         •  general market <font color="blue">conditions</font> or market <font color="blue">conditions</font> specific to particular     <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">issued numerous options</font> and warrants to acquire our <font color="blue">common stock</font>     that could have a dilutive effect on our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>As  of  January 1,  2006, we had <font color="blue">options outstanding</font> to acquire     5dtta3 million shares of our <font color="blue">common stock</font>, exercisable at prices ranging from     dlra3dtta25  to  dlra18dtta16 per share, with a <font color="blue">weighted average exercise price</font> of     <font color="blue">approximately</font> dlra6dtta03 per share and <font color="blue">warrants outstanding</font> to acquire up to     2 million shares of <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The warrants were cancelled <font color="blue">effective</font>     <font color="blue">February </font>15, 2006</td>
+    </tr>
+    <tr>
+      <td>During the terms of these options, the holders will have     the <font color="blue">opportunity</font> to profit from an increase in the <font color="blue">market price</font> of our common     stock with resulting dilution to the holders of shares who <font color="blue">purchased shares</font>     for a <font color="blue">price higher than</font> the <font color="blue">respective exercise</font> or <font color="blue"><font color="blue">conversion</font> price</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, the increase in the <font color="blue">outstanding shares</font> of our <font color="blue">common stock</font> as a     result of the exercise or <font color="blue">conversion</font> of these <font color="blue">options could</font> result in a     <font color="blue">significant</font> decrease in the <font color="blue">percentage ownership</font> of our <font color="blue">common stock</font> by the     purchasers of its <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On <font color="blue">February </font></font>15, 2006, we closed on a dlra50 million financing <font color="blue">facility</font>     with an affiliate of <font color="blue">Prentice Capital </font>Management, LP As <font color="blue">consideration</font> for     the financing, we issued to an affiliate of <font color="blue">Prentice Capital </font>warrants to     purchase 1dtta25 million  shares  of <font color="blue">common stock</font> that can be <font color="blue">immediately</font>     exercised  at  dlra7dtta50 per  share</td>
+    </tr>
+    <tr>
+      <td>The warrants are subject to customary     anti-dilution protections</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">additional</font> 1dtta25 million warrants to purchase     <font color="blue">common stock</font> are exercisable at dlra7dtta50 per share as <font color="blue">additional</font> draws under     the <font color="blue">facility</font> are made</td>
+    </tr>
+    <tr>
+      <td>Up to an <font color="blue">additional</font> 1dtta96 million warrants to purchase     <font color="blue">common stock</font> can be exercised at dlra7dtta50 per share upon the occurrence of     <font color="blue">certain events</font> relating to <font color="blue">loan collateral</font></td>
+    </tr>
+    <tr>
+      <td>All warrants expire in <font color="blue"><font color="blue">February </font>    </font>2013</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our <font color="blue">common stock</font> may be <font color="blue">reduced by future sales</font> of our     <font color="blue">common stock</font> in the <font color="blue">public market</font></td>
+    </tr>
+    <tr>
+      <td>Sales of substantial amounts of our <font color="blue">common stock</font> in the <font color="blue">public market</font>     that are not <font color="blue">currently freely tradable</font>, or even the potential for such     sales, could have an adverse effect on the <font color="blue">market price</font> for shares of our     <font color="blue">common stock</font> and <font color="blue">could impair</font> the ability of purchasers of our <font color="blue">common stock</font>     to recoup their <font color="blue">investment</font> or make a profit</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of January </font>1, 2006, these     <font color="blue">shares consist</font> of <font color="blue">approximately</font> 8dtta0 million shares <font color="blue">beneficial</font>ly owned by our     <font color="blue">executive officers</font> and <font color="blue">directors</font></td>
+    </tr>
+  </tbody>
+</table>

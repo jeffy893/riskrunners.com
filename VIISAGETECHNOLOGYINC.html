@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: based on current expectations", fill: "#faebd7"},
+{source: "2: based on current expectations", target: "2: projections about", fill: "#faebd7"},
+{source: "2: projections about", target: "2: managements beliefs", fill: "#faebd7"},
+{source: "2: managements beliefs", target: "2: assumptions", fill: "#faebd7"},
+{source: "2: based on current expectations", target: "3: contained herein", fill: "#4f666a"},
+{source: "3: contained herein", target: "3: without limitation statements", fill: "#4f666a"},
+{source: "3: without limitation statements", target: "3: management", fill: "#4f666a"},
+{source: "3: management", target: "3: expressions", fill: "#4f666a"},
+{source: "3: expressions", target: "3: forwardlooking", fill: "#4f666a"},
+{source: "3: forwardlooking", target: "3: conjunction with", fill: "#4f666a"},
+{source: "3: conjunction with", target: "3: consolidated", fill: "#4f666a"},
+{source: "3: consolidated", target: "3: financial statements", fill: "#4f666a"},
+{source: "3: financial statements", target: "3: consolidated financial", fill: "#4f666a"},
+{source: "3: contained herein", target: "4: guarantees", fill: "#6f00ff"},
+{source: "4: guarantees", target: "4: future performance", fill: "#6f00ff"},
+{source: "4: future performance", target: "4: involve certain risks uncertainties", fill: "#6f00ff"},
+{source: "4: involve certain risks uncertainties", target: "4: assumptions", fill: "#6f00ff"},
+{source: "4: assumptions", target: "4: difficult", fill: "#6f00ff"},
+{source: "4: guarantees", target: "15: Accordingly ", fill: "#cd9575"},
+{source: "15: Accordingly ", target: "15: cannot predict", fill: "#cd9575"},
+{source: "15: cannot predict", target: "15: profitability on", fill: "#cd9575"},
+{source: "15: profitability on", target: "15: annual basis", fill: "#cd9575"},
+{source: "15: Accordingly ", target: "16: revenue from government contracts which", fill: "#0073cf"},
+{source: "16: revenue from government contracts which", target: "16: nonstandard involve competitive bidding may", fill: "#0073cf"},
+{source: "16: nonstandard involve competitive bidding may", target: "16: cancellation", fill: "#0073cf"},
+{source: "16: cancellation", target: "16: without penalty", fill: "#0073cf"},
+{source: "16: without penalty", target: "16: volatility", fill: "#0073cf"},
+{source: "16: revenue from government contracts which", target: "18: Obtaining ", fill: "#808080"},
+{source: "18: Obtaining ", target: "18: government", fill: "#808080"},
+{source: "18: government", target: "18: challenging", fill: "#808080"},
+{source: "18: challenging", target: "18: commercial transactions", fill: "#808080"},
+{source: "18: Obtaining ", target: "29: December ", fill: "#dda0dd"},
+{source: "29: December ", target: "29: US Department ", fill: "#dda0dd"},
+{source: "29: December ", target: "39: registration statement on", fill: "#5218fa"},
+{source: "39: registration statement on", target: "39: conditions", fill: "#5218fa"},
+{source: "39: registration statement on", target: "40: registration statement until", fill: "#f0f"},
+{source: "40: registration statement until", target: "40: complexity", fill: "#f0f"},
+{source: "40: complexity", target: "40: raise funds", fill: "#f0f"},
+{source: "40: raise funds", target: "40: public markets", fill: "#f0f"},
+{source: "40: public markets", target: "40: stock as consideration", fill: "#f0f"},
+{source: "40: stock as consideration", target: "40: acquisitions", fill: "#f0f"},
+{source: "40: acquisitions", target: "40: one year period", fill: "#f0f"},
+{source: "40: registration statement until", target: "START_HERE", fill: "#f0f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Defy norms</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Accuse</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Management">Management</a></td>
+      <td>Management (or managing) is the administration of an organization, whether it is a business, a non-profit organization, or a government body. It is the art and science of managing resources of the business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agile_management">Agile management</a></td>
+      <td>Agile management is the application of the principles of Agile software development to various management processes, particularly project management. Following the appearance of the Manifesto for Agile Software Development in 2001, Agile techniques started to spread into other areas of activity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Women_Management">Women Management</a></td>
+      <td>Women Management is a modeling agency based in New York. Founded by Paul Rowland in 1988,  Women also has two sister agencies, Supreme Management and Women 360 Management, which is also part of the Women International Agency Chain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_management">Sport management</a></td>
+      <td>Sport management is the field of business dealing with sports and recreation. Sports management involves any combination of skills that correspond with planning, organizing, directing, controlling, budgeting, leading, or evaluating of any organization or business within the sports field.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_management">Emergency management</a></td>
+      <td>Emergency management, also called emergency response or disaster management, is the organization and management of the resources and responsibilities for dealing with all humanitarian aspects of emergencies (prevention, preparedness, response, mitigation, and recovery). The aim is to prevent and reduce the harmful effects of all hazards, including disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contract">Contract</a></td>
+      <td>A contract is a legally enforceable agreement that creates, defines, and governs mutual rights and obligations among its parties. A contract typically involves the transfer of goods, services, money, or a promise to transfer any of those at a future date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second-language_acquisition">Second-language acquisition</a></td>
+      <td>Second-language acquisition (SLA), sometimes called second-language learning — otherwise referred to as L2 (language 2) acquisition, is the process by which people learn a second language. Second-language acquisition is also the scientific discipline devoted to studying that process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_index">Profitability index</a></td>
+      <td>Profitability index (PI), also known as profit investment ratio (PIR) and value investment ratio (VIR), is the ratio of payoff to investment of a proposed project. It is a useful tool for ranking projects because it allows you to quantify the amount of value created per unit of investment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_Profitability_Analysis">Customer Profitability Analysis</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer profitability (CP) is the profit the firm makes from serving a customer or customer group over a specified period of time, specifically the difference between the revenues earned from and the costs associated with the customer relationship in a specified period. According to Philip Kotler,"a profitable customer is a person, household or a company that overtime, yields a revenue stream that exceeds by an acceptable amount the company's cost stream of attracting, selling and servicing the customer."\nCalculating customer profit is an important step in understanding which customer relationships are better than others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitable_growth">Profitable growth</a></td>
+      <td>Profitable Growth is the combination of profitability and growth, more precisely the combination of Economic Profitability and Growth of Free cash flows. Profitable growth is aimed at seducing the financial community; it emerged in the early 80s when shareholder value creation became firms’ main objective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SAP_ERP">SAP ERP</a></td>
+      <td>SAP ERP is an enterprise resource planning software developed by the German company SAP SE. SAP ERP incorporates the key business functions of an organization. The latest version of SAP ERP (V.6.0) was made available in 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Porter's_five_forces_analysis">Porter's five forces analysis</a></td>
+      <td>Porter's Five Forces Framework is a method of analysing the operating environment of a competition of a business. It draws from industrial organization (IO) economics to derive five forces that determine the competitive intensity and, therefore, the attractiveness (or lack thereof) of an industry in terms of its profitability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cancellation_property">Cancellation property</a></td>
+      <td>In mathematics, the notion of cancellative is a generalization of the notion of invertible.\nAn element a in a magma (M, ∗) has the left cancellation property (or is left-cancellative) if for all b and c in M, a ∗ b = a ∗ c always implies that b = c.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Catastrophic_cancellation">Catastrophic cancellation</a></td>
+      <td>In numerical analysis, catastrophic cancellation is the phenomenon that subtracting good approximations to two nearby numbers may yield a very bad approximation to the difference of the original numbers.\nFor example, if there are two studs, one \n  \n    \n      \n        \n          L\n          \n            1\n          \n        \n        =\n        254.5\n        \n        \n          cm\n        \n      \n    \n    {\displaystyle L_{1}=254.5\,{\text{cm}}}\n   long and the other \n  \n    \n      \n        \n          L\n          \n            2\n          \n        \n        =\n        253.5\n        \n        \n          cm\n        \n      \n    \n    {\displaystyle L_{2}=253.5\,{\text{cm}}}\n   long, and they are measured with a ruler that is good only to the centimeter, then the approximations will be \n  \n    \n      \n        \n          \n            \n              \n                L\n                ~\n              \n            \n          \n          \n            1\n          \n        \n        =\n        255\n        \n        \n          cm\n        \n      \n    \n    {\displaystyle {\tilde {L}}_{1}=255\,{\text{cm}}}\n   and \n  \n    \n      \n        \n          \n            \n              \n                L\n                ~\n              \n            \n          \n          \n            2\n          \n        \n        =\n        253\n        \n        \n          cm\n        \n      \n    \n    {\displaystyle {\tilde {L}}_{2}=253\,{\text{cm}}}\n  .</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cancellation_(mail)">Cancellation (mail)</a></td>
+      <td>A cancellation (or cancel for short; French: oblitération) is a postal marking applied on a postage stamp or postal stationery to deface the stamp and to prevent its reuse. Cancellations come in a huge variety of designs, shapes, sizes, and colors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Reservation_against_Cancellation">Reservation against Cancellation</a></td>
+      <td>A Reservation Against Cancellation (RAC) is a type of ticket that can be sold for travel on the Indian Railways. Although it ensures certainty of travel, it does not guarantee a berth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Active_noise_control">Active noise control</a></td>
+      <td>Active noise control (ANC), also known as noise cancellation (NC), or active noise reduction (ANR), is a method for reducing unwanted sound by the addition of a second sound specifically designed to cancel the first. The concept was first developed in the late 1930s; later developmental work that began in the 1950s eventually resulted in commercial airline headsets with the technology becoming available in the late 1980s.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cancellation_(insurance)">Cancellation (insurance)</a></td>
+      <td>An insurance policy may be canceled before the end of the policy period.  This has the effect of ending the policy coverage on the date of the policy cancellation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Modified_discrete_cosine_transform">Modified discrete cosine transform</a></td>
+      <td>The modified discrete cosine transform (MDCT) is a transform based on the type-IV discrete cosine transform (DCT-IV), with the additional property of being lapped: it is designed to be performed on consecutive blocks of a larger dataset, where subsequent blocks are overlapped so that the last half of one block coincides with the first half of the next block. This overlapping, in addition to the energy-compaction qualities of the DCT, makes the MDCT especially attractive for signal compression applications, since it helps to avoid artifacts stemming from the block boundaries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government">Government</a></td>
+      <td>A government is the system or group of people governing an organized community, generally a state.\nIn the case of its broad associative definition, government normally consists of legislature, executive, and judiciary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Australian_Government">Australian Government</a></td>
+      <td>The Australian Government, also known as the Commonwealth Government, is the national government of Australia, a federal parliamentary constitutional monarchy. Like other Westminster-style systems of government, the Australian Government is made up of three branches: the executive (the prime minister, the ministers, and government departments), the legislative (the Parliament of Australia), and the judicial.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_India">Government of India</a></td>
+      <td>The Government of India (ISO: Bhārat Sarkār) (often abbreviated as GoI; also known as the Central or Union Government), or simply the Centre, is the federal governing authority of the Republic of India created by the Constitution of India as the legislative, executive and judicial authority to govern the union of twenty eight states and eight union territories. The president acts as the head of state and is the highest figure of authority, nominally, of the nation however it is the prime minister who is the chief executive.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_government_of_the_United_States">Federal government of the United States</a></td>
+      <td>The federal government of the United States (U.S. federal government or U.S. government) is the national government of the United States, a federal republic in North America, composed of 50 states, a city within a federal district (the city of Washington in the District of Columbia, where the entire federal government is based), five major self-governing territories and several island possessions. The federal government is composed of three distinct branches: legislative, executive, and judicial, whose powers are vested by the U.S. Constitution in the Congress, the president and the federal courts, respectively.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_agency">Government agency</a></td>
+      <td>A government or state agency, sometimes an appointed commission, is a permanent or semi-permanent organization in the machinery of government that is responsible for the oversight and administration of specific functions, such as an administration. There is a notable variety of agency types.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_(government)">Executive (government)</a></td>
+      <td>The executive (short for executive branch or executive power) is the part of government that enforces law, and has responsibility for the governance of a state.\nIn political systems based on the principle of separation of powers, authority is distributed among several branches (executive, legislative, judicial)—an attempt to prevent the concentration of power in the hands of a single group of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borne_government">Borne government</a></td>
+      <td>The Borne government is the forty-third and current government of the French Fifth Republic, formed on 16 May 2022 and headed by Élisabeth Borne as Prime Minister under the presidency of Emmanuel Macron.\n\n\n== Context ==\n\n\n=== Formation ===\nOn 16 May 2022, Jean Castex tendered the resignation of his government to the President of the Republic.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Military_government">Military government</a></td>
+      <td>A military government is generally any government that is administered by military forces, whether or not this government is legal under the laws of the jurisdiction at issue, and whether this government is formed by natives or by an occupying power. It is usually carried out by military workers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December">December</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_17">December 17</a></td>
+      <td>December 17 is the 351st day of the year (352nd in leap years) in the Gregorian calendar;  14 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n497 BC – The first Saturnalia festival was celebrated in ancient Rome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1924_German_federal_election">December 1924 German federal election</a></td>
+      <td>Federal elections were held in Germany on 7 December 1924, the second that year after the Reichstag had been dissolved on 20 October. The Social Democratic Party remained the largest party in the Reichstag, receiving an increased share of the vote and winning 131 of the 493 seats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1">December 1</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_12">December 12</a></td>
+      <td>December 12 is the 346th day of the year (347th in leap years) in the Gregorian calendar;  19 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n627 – Battle of Nineveh: A Byzantine army under Emperor Heraclius defeats Emperor Khosrau II's Persian forces, commanded by General Rhahzadh.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Initial_public_offering">Initial public offering</a></td>
+      <td>An initial public offering (IPO) or stock launch is a public offering in which shares of a company are sold to institutional investors and usually also to retail (individual) investors. An IPO is typically underwritten by one or more investment banks, who also arrange for the shares to be listed on one or more stock exchanges.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>VIISAGE TECHNOLOGY INC      Item 1A Risk Factors          This  Annual  Report on Form 10-K contains or <font color="blue">incorporates</font> a number of     forward-looking  statements  within  the meaning of Section 27A of the     <font color="blue"><font color="blue">Securities Act</font> </font>of 1933 <font color="blue">and Section </font>21E of the <font color="blue">Securities Exchange Act </font>of     1934</td>
+    </tr>
+    <tr>
+      <td>These forward-looking statements are <font color="blue">based on current expectations</font>,     estimates, forecasts and <font color="blue">projections about</font> the industry and markets in which     we  operate  and  <font color="blue">management</font>’s beliefs and <font color="blue">assumptions</font></td>
+    </tr>
+    <tr>
+      <td>Any statements     <font color="blue">contained herein</font> (including <font color="blue"><font color="blue">without limitation</font> statements</font> to the effect that     we or our <font color="blue">management</font> “believe”, “expect”, “anticipate”, “plan” and similar     <font color="blue">expressions</font>) that are not statements of historical fact should be considered     forward-looking  statements and should be read in <font color="blue">conjunction with</font> our     <font color="blue">consolidated</font>  <font color="blue">financial statements</font> and notes to <font color="blue">consolidated</font> financial     statements included in this report</td>
+    </tr>
+    <tr>
+      <td>These statements are not <font color="blue">guarantees</font> of     <font color="blue">future performance</font> and involve certain risks, <font color="blue">uncertainties</font> and <font color="blue">assumptions</font>     that are <font color="blue">difficult</font> to predict</td>
+    </tr>
+    <tr>
+      <td>There are a number of <font color="blue">important factors</font> that     could cause our actual results to <font color="blue">differ materially from</font> those <font color="blue">indicated by</font>     such forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>These factors include, <font color="blue">without limitation</font>,     those set forth below</td>
+    </tr>
+    <tr>
+      <td>The risks and <font color="blue"><font color="blue">uncertainties</font> described</font> below are not     the only ones we face</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and <font color="blue">uncertainties</font>, including those     not <font color="blue">presently known</font> to us or that we currently deem immaterial, may also     impair our business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">expressly disclaim</font> any <font color="blue">obligation</font> to update any     forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue">operations began</font> in 1993     and, except for fiscal years 1996 and 2000, have resulted in net losses in     each  fiscal  year,  including  a net loss of dlra7dtta4 million in 2005</td>
+    </tr>
+    <tr>
+      <td>At     <font color="blue">December </font>31, 2005, we had an <font color="blue">accumulated deficit</font> of approximately dlra56dtta4     million</td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">will continue</font> to invest in the <font color="blue">development</font> of our secure     <font color="blue">credential</font> and <font color="blue">biometric technologies</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we <font color="blue">cannot predict</font> when     or if we will ever achieve <font color="blue"><font color="blue">profitability</font> on</font> an <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>We derive over 90prca of our <font color="blue">revenue from</font> <font color="blue">government</font> contracts, which are often     non-standard, involve <font color="blue">competitive bidding</font>, may be subject to <font color="blue">cancellation</font>     with or <font color="blue">without penalty</font> and may produce <font color="blue">volatility</font> in earnings and revenue</td>
+    </tr>
+    <tr>
+      <td>More than 90prca of our business <font color="blue">involves providing products</font> and <font color="blue">services under</font>     <font color="blue">contracts with</font> US federal, state, local and <font color="blue">foreign <font color="blue">government</font> agencies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Obtaining </font>contracts from <font color="blue">government</font> agencies is <font color="blue">challenging</font> and <font color="blue">government</font>     contracts  often  include  provisions that are not standard in private     <font color="blue">commercial transactions</font></td>
+    </tr>
+    <tr>
+      <td>For example, <font color="blue">government</font> contracts may:           •   include provisions that allow the <font color="blue">government</font> agency to terminate the     contract <font color="blue">without penalty</font> under some <font color="blue">circumstances</font>;           •   be subject to <font color="blue">purchasing <font color="blue">decisions</font></font> of agencies that are subject to     <font color="blue">political influence</font>;           •   include <font color="blue">bonding requirements</font>;           •   <font color="blue">contain onerous procurement procedures</font>; and           •   be subject to <font color="blue">cancellation</font> or reduction if <font color="blue">government</font> funding becomes     unavailable or is cut back</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Securing  </font><font color="blue">government</font>  contracts  can be a <font color="blue">protracted process involving</font>     <font color="blue">competitive bidding</font></td>
+    </tr>
+    <tr>
+      <td>In many cases, unsuccessful bidders may challenge     contract awards, which can lead to increased costs, delays and <font color="blue">possible loss</font>     of  the contract for the <font color="blue">winning bidder</font></td>
+    </tr>
+    <tr>
+      <td>Protests, and similar delays,     regarding any future <font color="blue">government</font> contracts of a material nature that may be     awarded to us could result in materially adverse revenue <font color="blue">volatility</font>, making     <font color="blue">management</font>  of  inventory  levels, cash flow and <font color="blue">profitability</font> or loss     inherently <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>Outright loss of any material <font color="blue">government</font> contract     through the <font color="blue">protest process</font> or otherwise, could have a material adverse     effect on the combined company’s financial results and stock price</td>
+    </tr>
+    <tr>
+      <td>Similar to federal <font color="blue">government</font> contracts, state and local <font color="blue">government</font> agency     contracts  may  be <font color="blue">contingent</font> upon <font color="blue">availability</font> of matching funds from     federal, state or local entities</td>
+    </tr>
+    <tr>
+      <td>State and local law <font color="blue">enforcement</font> and                                           17     ______________________________________________________________________    [43]Table <font color="blue">of <font color="blue">Contents       </font></font>other <font color="blue">government</font> agencies are subject to political, <font color="blue">budgetary</font>, purchasing     and delivery <font color="blue">constraints</font> which may continue to result in quarterly and     annual revenues and operating results that may be irregular and <font color="blue">difficult</font> to     predict</td>
+    </tr>
+    <tr>
+      <td>Such revenue <font color="blue">volatility</font> makes <font color="blue">management</font> of inventory levels, cash     flow  and  <font color="blue">profitability</font>  inherently <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if we are     successful in winning <font color="blue">such procurements</font>, there may be unevenness in shipping     schedules,  as  well  <font color="blue">as potential delays</font> and changes in the timing of     <font color="blue">deliveries</font> and <font color="blue">recognition</font> of revenue, or <font color="blue">cancellation</font> of <font color="blue">such procurements</font></td>
+    </tr>
+    <tr>
+      <td>We derive a <font color="blue">significant</font> portion of our <font color="blue">revenue from</font> a <font color="blue">few customers</font>, the     loss of <font color="blue">which could</font> have an adverse effect on our revenues</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31, 2005, one customer, <font color="blue">US Department </font>of     State, accounted for 27dtta5prca of our revenue</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31,     2004, two customers, Telos Corporation (<font color="blue">US Department </font>of Defense) and US     Department  of State <font color="blue">each accounted</font> for over 10prca of our revenue and an     aggregate of 31dtta0prca of our revenue</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31, 2003, two     customers, Pennsylvania Department of Transportation and Illinois Secretary     of State, <font color="blue">each accounted</font> for over 10prca of our revenues and an aggregate of     26dtta6prca of our revenue</td>
+    </tr>
+    <tr>
+      <td>The loss of any of our <font color="blue">significant</font> customers would     cause revenue to decline and could have a material adverse effect on our     business</td>
+    </tr>
+    <tr>
+      <td>We derive <font color="blue">revenue from</font> only a limited number of products and services and we     do not have a <font color="blue">diversified product</font> or <font color="blue">service base</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of our revenues are <font color="blue">derived from</font> the sale of products and     <font color="blue">services comprising</font> our <font color="blue">identity solutions</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate that <font color="blue">substantially</font>     all of the growth in our revenue, if any, will also be <font color="blue">derived from</font> these     sources</td>
+    </tr>
+    <tr>
+      <td>If  for any reason our sale of these products or services is     impeded, and we have not diversified our product and <font color="blue">service offerings</font>, our     business and results <font color="blue">from operations could</font> be harmed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could face <font color="blue">adverse consequences</font> as</font> a result of our late SEC filings</td>
+    </tr>
+    <tr>
+      <td>We failed to timely file our <font color="blue">Annual Report </font>on Form 10-K for the year ended     <font color="blue">December </font>31, 2004 and our Form 10-Q for the <font color="blue">fiscal quarter</font> ended April 3,     2005 in order to <font color="blue">provide additional</font> time for Viisage, Viisage’s <font color="blue">independent</font>     auditors and Viisage’s <font color="blue">outside counsel</font> to complete a review of <font color="blue">litigation</font>     involving Viisage and to assess its effect, if any, on Viisage’s financial     statements for the year ended <font color="blue">December </font>31, 2004</td>
+    </tr>
+    <tr>
+      <td>As a result, we will not be     eligible to use a “short form” <font color="blue"><font color="blue">registration</font> statement on</font> Form S-3 until     June 30, 2006, and may not be eligible to use a short form <font color="blue">registration</font>     statement  if  we  fail to satisfy the <font color="blue">conditions</font> required to use such     <font color="blue"><font color="blue">registration</font> statement on</font> or after such date</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to use a short     form <font color="blue"><font color="blue">registration</font> statement until</font> June 30, 2006 or thereafter may impair our     ability or increase the costs and <font color="blue">complexity</font> of our efforts, to <font color="blue">raise funds</font>     in the <font color="blue">public markets</font> or use our <font color="blue">stock as <font color="blue">consideration</font></font> in <font color="blue">acquisitions</font>     should we desire to do so during this <font color="blue">one year period</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if we     are unable to <font color="blue">remain current</font> in our <font color="blue">future filings</font>, we <font color="blue">may face additional</font>     <font color="blue">adverse consequences</font>, including (1) an <font color="blue">inability</font> to have a <font color="blue">registration</font>     <font color="blue">statement under</font> the <font color="blue"><font color="blue">Securities Act</font> </font>of 1933 covering a public offering of     securities declared <font color="blue">effective</font> by the SEC, (2) an <font color="blue">inability</font> to make offerings     pursuant  to  existing <font color="blue">registration</font> statements (including <font color="blue">registration</font>     <font color="blue">statements on</font> Form S-8 <font color="blue">covering employee stock</font> plans) or pursuant to certain     “private placement” rules of the SEC under <font color="blue">Regulation D </font>to any purchasers     not qualifying as “accredited investors,” (3) the <font color="blue">possible delisting</font> of our     <font color="blue"><font color="blue">common stock</font> from</font> the NASDAQ National Market, and (4) <font color="blue">limitations</font> on the     ability of our <font color="blue">affiliates</font> to sell our securities pursuant to Rule 144 under     the <font color="blue">Securities Act</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">restrictions may adversely affect</font> our ability to     attract and retain <font color="blue">key employees</font> and <font color="blue">may further impair</font> our ability to raise     funds in the <font color="blue">public markets</font> should we desire to do so or use our stock as     <font color="blue">consideration</font> in <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">future success depends largely upon</font> the support of our     customers, suppliers and investors</td>
+    </tr>
+    <tr>
+      <td>The late SEC filings have resulted in     <font color="blue">negative publicity</font> and may have a <font color="blue">negative impact on</font> the <font color="blue">market price</font> of our     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The effects of the late SEC <font color="blue">filings could</font> cause some of our     customers  or  <font color="blue">potential customers</font> to <font color="blue">refrain from purchasing</font> or defer     <font color="blue">decisions</font> to purchase our products and services</td>
+    </tr>
+    <tr>
+      <td>Additionally, current or     potential suppliers may re-examine their <font color="blue">willingness</font> to do business with us,     to develop <font color="blue">critical interfaces</font> to our                                           18     ______________________________________________________________________    [44]Table <font color="blue">of <font color="blue">Contents       </font></font>products or to <font color="blue">supply products</font> and services if they <font color="blue">lose confidence</font> in our     ability  to  fulfill our <font color="blue">commitments</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">been named as</font> a <font color="blue">defendant</font> in a putative class <font color="blue">action lawsuit</font>, an     adverse  outcome  in <font color="blue">which could</font> have a material adverse effect on our     business,  financial  condition and results of <font color="blue">operations by adversely</font>     <font color="blue">affecting</font> our <font color="blue">cash position</font></td>
+    </tr>
+  </tbody>
+</table>

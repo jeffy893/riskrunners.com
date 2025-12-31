@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: could differ materially from", fill: "#cba135"},
+{source: "1: could differ materially from", target: "1: uncertainties", fill: "#cba135"},
+{source: "1: could differ materially from", target: "8: losses from", fill: "#7b68ee"},
+{source: "8: losses from", target: "8: operations", fill: "#7b68ee"},
+{source: "8: losses from", target: "10: will continue", fill: "#0070ff"},
+{source: "10: will continue", target: "10: generate losses", fill: "#0070ff"},
+{source: "10: generate losses", target: "10: next several years", fill: "#0070ff"},
+{source: "10: will continue", target: "11: approved by", fill: "#0000cd"},
+{source: "11: approved by", target: "11: analogous", fill: "#0000cd"},
+{source: "11: analogous", target: "11: regulatory", fill: "#0000cd"},
+{source: "11: regulatory", target: "11: authorities", fill: "#0000cd"},
+{source: "11: authorities", target: "11: profitable operations", fill: "#0000cd"},
+{source: "11: approved by", target: "23: If Hemopure ", fill: "#c32148"},
+{source: "23: If Hemopure ", target: "23: approved by", fill: "#c32148"},
+{source: "23: approved by", target: "23: analogous", fill: "#c32148"},
+{source: "23: analogous", target: "23: regulatory authorities", fill: "#c32148"},
+{source: "23: regulatory authorities", target: "23: manufacturing capacity", fill: "#c32148"},
+{source: "23: manufacturing capacity", target: "23: significant additional funding", fill: "#c32148"},
+{source: "23: If Hemopure ", target: "43: pursuing both", fill: "#b3446c"},
+{source: "43: pursuing both", target: "43: indication", fill: "#b3446c"},
+{source: "43: indication", target: "43: prerequisite", fill: "#b3446c"},
+{source: "43: prerequisite", target: "43: further clinical trials", fill: "#b3446c"},
+{source: "43: further clinical trials", target: "43: Hemopure in the United States ", fill: "#b3446c"},
+{source: "43: Hemopure in the United States ", target: "43: must address", fill: "#b3446c"},
+{source: "43: pursuing both", target: "49: adequately address", fill: "#bb3385"},
+{source: "49: adequately address", target: "49: acceptance", fill: "#bb3385"},
+{source: "49: acceptance", target: "49: human clinical", fill: "#bb3385"},
+{source: "49: human clinical", target: "49: indications", fill: "#bb3385"},
+{source: "49: adequately address", target: "START_HERE", fill: "#bb3385"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty">Uncertainty</a></td>
+      <td>Uncertainty refers to epistemic situations involving imperfect or unknown information. It applies to predictions of future events, to physical measurements that are already made, or to the unknown.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Propagation_of_uncertainty">Propagation of uncertainty</a></td>
+      <td>In statistics, propagation of uncertainty (or propagation of error) is the effect of variables' uncertainties (or errors, more specifically random errors) on the uncertainty of a function based on them. When the variables are the values of experimental measurements they have uncertainties due to measurement limitations (e.g., instrument precision) which propagate due to the combination of variables in the function.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt">Fear, uncertainty, and doubt</a></td>
+      <td>Fear, uncertainty, and doubt (often shortened to FUD) is a propaganda tactic used in sales, marketing, public relations, politics, polling and cults. FUD is generally a strategy to influence perception by disseminating negative and dubious or false information and a manifestation of the appeal to fear.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_principle">Uncertainty principle</a></td>
+      <td>In quantum mechanics, the uncertainty principle (also known as Heisenberg's uncertainty principle) is any of a variety of mathematical inequalities asserting a fundamental limit to the accuracy with which the values for certain pairs of physical quantities of a particle, such as position, x, and momentum, p, can be predicted from initial conditions.\nSuch variable pairs are known as complementary variables or canonically conjugate variables; and, depending on interpretation, the uncertainty principle limits to what extent such conjugate properties maintain their approximate meaning, as the mathematical framework of quantum physics does not support the notion of simultaneously well-defined conjugate properties expressed by a single value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_quantification">Uncertainty quantification</a></td>
+      <td>Uncertainty quantification (UQ) is the science of quantitative characterization and reduction of uncertainties in both computational and real world applications. It tries to determine how likely certain outcomes are if some aspects of the system are not exactly known.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knightian_uncertainty">Knightian uncertainty</a></td>
+      <td>In economics, Knightian uncertainty is a lack of any quantifiable knowledge about some possible occurrence, as opposed to the presence of quantifiable risk (e.g., that in statistical noise or a parameter's confidence interval). The concept acknowledges some fundamental degree of ignorance, a limit to knowledge, and an essential unpredictability of future events.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cone_of_Uncertainty">Cone of Uncertainty</a></td>
+      <td>In project management, the Cone of Uncertainty describes the evolution of the amount of best case uncertainty during a project. At the beginning of a project, comparatively little is known about the product or work results, and so estimates are subject to large uncertainty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_parameter">Uncertainty parameter</a></td>
+      <td>The uncertainty parameter U is a parameter introduced by the Minor Planet Center (MPC) to quantify concisely the uncertainty of a perturbed orbital solution for a minor planet. The parameter is a logarithmic scale from 0 to 9 that measures the anticipated longitudinal uncertainty in the minor planet's mean anomaly after 10 years.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Continued_fraction">Continued fraction</a></td>
+      <td>In mathematics, a continued fraction is an expression obtained through an iterative process of representing a number as the sum of its integer part and the reciprocal of another number, then writing this other number as the sum of its integer part and another reciprocal, and so on. In a finite continued fraction (or terminated continued fraction), the iteration/recursion is terminated after finitely many steps by using an integer in lieu of another continued fraction.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/...Continued">...Continued</a></td>
+      <td>...Continued is the second album released by Tony Joe White. It was released on Monument Records and contained the single Roosevelt and Ira Lee It was recorded at Monument Studios, Nashville and Lyn-Lou Studios, Memphis in 1969.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beyond_(band)">Beyond (band)</a></td>
+      <td>Beyond was a Hong Kong rock band formed in 1983. The band became prominent in Hong Kong, Taiwan, Japan, Singapore, Malaysia, Mainland China, and Overseas Chinese communities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Star_Tours_–_The_Adventures_Continue">Star Tours – The Adventures Continue</a></td>
+      <td>Star Tours – The Adventures Continue is an attraction located at Disney's Hollywood Studios, Disneyland, Tokyo Disneyland, and Disneyland Paris. Set in the Star Wars universe, Star Tours – The Adventures Continue takes passengers on a turbulent trip across the galaxy, as droids C-3PO and R2-D2 attempt to safely return a spy to the Rebel Alliance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_agency">Regulatory agency</a></td>
+      <td>A regulatory agency (regulatory body, regulator) or independent agency (independent regulatory agency) is a government authority that is responsible for exercising autonomous dominion over some area of human activity in a licensing and regulating capacity.\nThese are customarily set up to strengthen safety and standards, and/or to protect consumers in markets where there is a lack of effective competition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capitalism">Regulatory capitalism</a></td>
+      <td>Regulatory capitalism suggests that the operation maintenance and development of the international political economy increasingly depends on administrative rules outside the legislatures and the courts. In other words, it tells us that capitalism is a regulatory institution – one that is being constituted, shaped, constrained and expanded as a historically woven patchwork of regulatory institutions, strategies, and functions.Although this patchwork varies widely across regions, nations, regimes, sectors, issues, and arenas, the general trend despite and beyond the process of liberalization is that of growth rather than decline of the role regulation in shaping policy and politics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sign">Regulatory sign</a></td>
+      <td>A regulatory sign is used to indicate or reinforce traffic laws, regulations or requirements which apply either at all times or at specified times or places upon a street or highway, the disregard of which may constitute a violation, or a sign in general that regulates public behavior in places open to the public.  The FHWA defines regulatory sign as "a sign that gives notice to road users of traffic laws or regulations".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Blood_substitute">Blood substitute</a></td>
+      <td>A blood substitute (also called artificial blood or blood surrogate) is a substance used to mimic and fulfill some functions of biological blood. It aims to provide an alternative to blood transfusion, which is transferring blood or blood-based products from one person into another.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jehovah's_Witnesses">Jehovah's Witnesses</a></td>
+      <td>Jehovah's Witnesses is a millenarian restorationist Christian denomination with nontrinitarian beliefs distinct from mainstream Christianity. The group reports a worldwide membership of approximately 8.7 million adherents involved in evangelism and an annual Memorial attendance of over 21 million.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Blood_transfusion">Blood transfusion</a></td>
+      <td>Blood transfusion is the process of transferring blood products into a person's circulation intravenously. Transfusions are used for various medical conditions to replace lost components of the blood.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jehovah's_Witnesses_and_blood_transfusions">Jehovah's Witnesses and blood transfusions</a></td>
+      <td>Jehovah's Witnesses believe that the Bible prohibits Christians from accepting blood transfusions. Their literature states that, "'abstaining from ...</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_geographical_indications_in_India">List of geographical indications in India</a></td>
+      <td>A geographical indication (GI) is a name or sign used on certain products which corresponds to a specific geographical location or origin (e.g., a town, region, or country). India, as a member of the World Trade Organization (WTO), enacted the Geographical Indications of Goods (Registration and Protection) Act, 1999 has come into force with effect from 15 September 2003.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Indication_(medicine)">Indication (medicine)</a></td>
+      <td>In medicine, an indication is a valid reason to use a certain test, medication, procedure, or surgery. There can be multiple indications to use a procedure or medication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Empirical_evidence">Empirical evidence</a></td>
+      <td>Empirical evidence for a proposition is evidence, i.e. what supports or counters this proposition, that is constituted by or accessible to sense experience or experimental procedure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contraindication">Contraindication</a></td>
+      <td>In medicine, a contraindication is a condition that serves as a reason not to take a certain medical treatment due to the harm that it would cause the patient.  Contraindication is the opposite of indication, which is a reason to use a certain treatment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medical_test">Medical test</a></td>
+      <td>A medical test is a  medical procedure performed to detect, diagnose, or monitor diseases, disease processes, susceptibility, or to determine a course of treatment. Medical tests such as, physical and visual exams, diagnostic imaging, genetic testing, chemical and cellular analysis, relating to clinical chemistry and molecular diagnostics, are typically performed in a medical setting.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Clinical_trial">Clinical trial</a></td>
+      <td>Clinical trials are experiments or observations done in clinical research. Such prospective biomedical or behavioral research studies on human participants are designed to answer specific questions about biomedical or behavioral interventions, including new treatments (such as novel vaccines, drugs, dietary choices, dietary supplements, and medical devices) and known interventions that warrant further study and comparison.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Phases_of_clinical_research">Phases of clinical research</a></td>
+      <td>The phases of clinical research are the stages in which scientists conduct experiments with a health intervention to obtain sufficient evidence for a process considered effective as a medical treatment. For drug development, the clinical phases start with testing for safety in a few human subjects, then expand to many study participants (potentially tens of thousands) to determine if the treatment is effective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adaptive_clinical_trial">Adaptive clinical trial</a></td>
+      <td>An adaptive clinical trial is a dynamic clinical trial that evaluates a medical device or treatment by observing participant outcomes (and possibly other measures, such as side-effects) on a prescribed schedule, and, uniquely, modifying parameters of the trial protocol in accord with those observations. This is in contrast to traditional randomized clinical trials (RCTs) that are static in their protocol and do not modify any parameters until the trial is completed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Randomized_controlled_trial">Randomized controlled trial</a></td>
+      <td>A randomized controlled trial (or randomized control trial; RCT) is a form of scientific experiment used to control factors not under direct experimental control. Examples of RCTs are clinical trials that compare the effects of drugs, surgical techniques, medical devices, diagnostic procedures or other medical treatments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Durand_Jones_&amp;_The_Indications">Durand Jones &amp; The Indications</a></td>
+      <td>Durand Jones &amp; The Indications is an American contemporary R&amp;B and soul group founded by the core songwriting trio of singer Durand Jones, singer/drummer Aaron Frazer, and guitarist Blake Rhein. Formed in 2012, the band came to prominence as part of the soul revivalist movement around the time of the reissue of their debut album in 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Geographical_indications_and_traditional_specialities_in_the_European_Union">Geographical indications and traditional specialities in the European Union</a></td>
+      <td>Three European Union schemes of geographical indications and traditional specialties, known as protected designation of origin (PDO), protected geographical indication (PGI), and traditional specialities guaranteed (TSG), promote and protect names of agricultural products and foodstuffs. Products registered under one of the three schemes may be marked with the logo for that scheme to help identify those products.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BIOPURE CORP      Item 1A   Risk Factors       Our  future operating results <font color="blue">could differ <font color="blue">materially from</font></font> the results     described in this report due to the risks and <font color="blue">uncertainties</font> related to our     business,  including those discussed below</td>
+    </tr>
+    <tr>
+      <td>Furthermore, these factors     <font color="blue">represent risks</font> and <font color="blue">uncertainties</font> that could cause actual results to differ     <font color="blue">materially from</font> those implied by forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>These risks and <font color="blue">uncertainties</font> are not the only ones we face</td>
+    </tr>
+    <tr>
+      <td>Others  that we do not know about now, or that we do not now think are     important, may impair our business or the <font color="blue">trading price</font> of our securities</td>
+    </tr>
+    <tr>
+      <td>Company Risks       We have a history of losses and expect <font color="blue">future losses</font></td>
+    </tr>
+    <tr>
+      <td>We have had <font color="blue">annual <font color="blue">losses from</font> <font color="blue">operations</font> since</font> our inception in 1984</td>
+    </tr>
+    <tr>
+      <td>In     the <font color="blue">fiscal year</font>s ended October 31, 2003, 2004 and 2005, we had <font color="blue">losses from</font>     <font color="blue">operations</font>  of  dlra47cmam312cmam000,  dlra41cmam832cmam000  and  dlra29cmam143cmam000</td>
+    </tr>
+    <tr>
+      <td>We had an     <font color="blue">accumulated deficit</font> of dlra499cmam009cmam000 as of October 31, 2005</td>
+    </tr>
+    <tr>
+      <td>We anticipate     that we <font color="blue">will continue</font> to <font color="blue">generate losses</font> for the <font color="blue">next several years</font></td>
+    </tr>
+    <tr>
+      <td>Even if     Hemopure were to be <font color="blue">approved by</font> the FDA or <font color="blue">analogous</font> European <font color="blue">regulatory</font>     <font color="blue">authorities</font>, we might not be able to achieve profitable <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We require <font color="blue"><font color="blue">significant</font> funding</font> in order to continue to operate</td>
+    </tr>
+    <tr>
+      <td>We expect that our <font color="blue">cash on hand at</font> October 31, 2005 together with funds     raised in <font color="blue">December </font>2005 and January 2006 will fund <font color="blue">operations</font> through <font color="blue">August     </font>2006</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Sufficient </font>funds may not be available to us thereafter or on terms     that we deem acceptable, if they are <font color="blue">available at</font> all</td>
+    </tr>
+    <tr>
+      <td>Our auditors have     modified their report for our <font color="blue">fiscal year</font> ended                                         17       _________________________________________________________________    [69]Table of <font color="blue">Contents       </font>October 31, 2005 with respect to our ability to <font color="blue">continue as</font> a going concern</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue"><font color="blue">modification</font> may negatively impact</font> our <font color="blue">capital raising efforts</font></td>
+    </tr>
+    <tr>
+      <td>We are required under the Nasdaq Stock Market’s Marketplace Rules to obtain     <font color="blue">stockholder approval</font> for any issuance of <font color="blue"><font color="blue">additional</font> equity securities</font> that     <font color="blue">would comprise</font> more than 20 percent of our <font color="blue">total shares</font> of <font color="blue">common stock</font>     outstanding before the issuance of the <font color="blue">securities at</font> a discount to the     greater of book or <font color="blue">market value</font> in an offering that is not deemed to be a     “public offering” by Nasdaq</td>
+    </tr>
+    <tr>
+      <td>Funding of our <font color="blue">operations</font> in the <font color="blue">future may</font>     require <font color="blue">stockholder approval</font> for purposes of <font color="blue">complying with</font> the Nasdaq     Marketplace  Rules</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will not require such     approval  to  <font color="blue">raise <font color="blue">additional</font> funds</font> or that we would be successful in     obtaining any such required <font color="blue">stockholder approval</font></td>
+    </tr>
+    <tr>
+      <td>Failure to raise sufficient <font color="blue">additional</font> funds will <font color="blue"><font color="blue">significant</font>ly</font> impair or     possibly cause us to cease the <font color="blue">development</font>, <font color="blue">manufacture</font> and sale of our     products and our ability to operate</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">development</font> and <font color="blue">regulatory</font> processes for seeking and obtaining approval     to market <font color="blue"><font color="blue">Hemopure in the United States</font> </font>and <font color="blue">the European Union</font> have been and     <font color="blue">will continue</font> to be costly</td>
+    </tr>
+    <tr>
+      <td>We will require substantial working capital to     develop, <font color="blue">manufacture</font> and sell Hemopure and to finance our <font color="blue">operations</font> until     such time, if ever, as we can generate positive <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">If Hemopure </font>is     <font color="blue">approved by</font> the FDA or the <font color="blue">analogous</font> European <font color="blue">regulatory</font> <font color="blue">authorities</font>, we     expect that we will need to increase our <font color="blue">manufacturing capacity</font>, for which     we will require <font color="blue">significant</font> <font color="blue">additional</font> funding</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">additional</font> financing is     not available when needed or is not <font color="blue">available on</font> acceptable terms, we may be     unable to <font color="blue">successfully</font> develop or <font color="blue">commercialize</font> Hemopure or to continue to     operate</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">sustained period</font> in <font color="blue">which financing</font> is not <font color="blue">available could force</font>     us to go out of business</td>
+    </tr>
+    <tr>
+      <td>Our  auditors  have  modified  their  report for our <font color="blue">fiscal year</font> ended     October 31, 2005 with respect to our ability to <font color="blue">continue as</font> a going concern</td>
+    </tr>
+    <tr>
+      <td>Our funds on hand, amounts raised subsequent to year-end and forecasted     sales for fiscal 2006 at October 31, 2005 are not sufficient to fund our     planned  <font color="blue">operations</font> through the <font color="blue">first quarter</font> of fiscal 2007 and, as a     result, the audit report of Ernst &amp; Young LLP, our in<font color="blue">dependent</font> auditor, on     our fiscal 2005 <font color="blue"><font color="blue">consolidated</font> financial statements</font> includes a going concern     <font color="blue">modification</font></td>
+    </tr>
+    <tr>
+      <td>This type of <font color="blue">modification</font> typically would indicate that our     recurring <font color="blue">losses from</font> <font color="blue">operations</font> and <font color="blue">current lack</font> of <font color="blue">sufficient funds</font> to     sustain <font color="blue">operations</font> through the end of fiscal 2006 raise substantial doubt     about our ability to <font color="blue">continue as</font> a going concern</td>
+    </tr>
+    <tr>
+      <td>To remain a going concern we require <font color="blue"><font color="blue">significant</font> funding</font></td>
+    </tr>
+    <tr>
+      <td>We believe that     our cash and <font color="blue">cash equivalents on hand</font> of approximately dlra10dtta5 million as of     October 31, 2005, together with our other <font color="blue">current assets as</font> of October 31,     2005 and the <font color="blue">proceeds from offering</font> of securities in <font color="blue">December </font>2005 and     January 2006, are sufficient to fund our <font color="blue">operations</font> through August 2006</td>
+    </tr>
+    <tr>
+      <td>The     inclusion of a going concern <font color="blue">modification</font> in Ernst &amp; Young LLP’s audit     <font color="blue">opinion may materially</font> and <font color="blue"><font color="blue">adversely</font> affect</font> our stock price and our ability     to <font color="blue">raise new capital</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">consolidated</font> financial statements</font> have been prepared on the basis of a     going  concern,  which  contemplates the <font color="blue">realization</font> of assets and the     <font color="blue">satisfaction</font> of <font color="blue">liabilities</font> in the <font color="blue">normal course</font> of business</td>
+    </tr>
+    <tr>
+      <td>If we became     unable to <font color="blue">continue as</font> a going concern, we would have to liquidate our assets     and we might receive <font color="blue"><font color="blue">significant</font>ly</font> less than the <font color="blue">values at which</font> they are     carried on our <font color="blue"><font color="blue">consolidated</font> financial statements</font></td>
+    </tr>
+    <tr>
+      <td>Any shortfall in the     proceeds  from the <font color="blue">liquidation</font> of our <font color="blue">assets would directly reduce</font> the     amounts,  if  any,  that  holders of our <font color="blue">common stock</font> could receive in     <font color="blue">liquidation</font></td>
+    </tr>
+    <tr>
+      <td>If  we  cannot  retain  the  personnel  we  need,  our <font color="blue">costs will rise</font>     <font color="blue"><font color="blue">significant</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot hire</font> or retain the best people, our <font color="blue">operations</font>     will suffer</td>
+    </tr>
+    <tr>
+      <td>We may experience the loss of personnel, including <font color="blue">executives</font> and other     employees, as a result of attrition, which we have <font color="blue">previously</font> experienced</td>
+    </tr>
+    <tr>
+      <td>We expect that in the future we will need to recruit and retain personnel     for <font color="blue">important positions</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to do so, in particular if we are     unable to raise <font color="blue">additional</font> capital</td>
+    </tr>
+    <tr>
+      <td>18       _________________________________________________________________    [70]Table of <font color="blue">Contents       </font>We may fail to obtain FDA approval for Hemopure, in which event we cannot     market <font color="blue">Hemopure in the United States</font>, <font color="blue">which would</font> have <font color="blue">negative consequences</font>     for the Company</td>
+    </tr>
+    <tr>
+      <td>We will not be able to market <font color="blue"><font color="blue">Hemopure in the United States</font> </font>unless and until     we  receive  FDA  approval</td>
+    </tr>
+    <tr>
+      <td>In  <font color="blue">pursuing both</font> the ischemia and trauma     <font color="blue">indication</font>s for Hemopure, as a <font color="blue">prerequisite</font> to <font color="blue">further <font color="blue">clinical trial</font>s</font> for     <font color="blue">Hemopure in the United States</font>, we <font color="blue">must address</font> the FDA’s safety and other     relevant  questions arising out of our <font color="blue">previously</font>-submitted BLA for an     orthopedic  surgery  <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Addressing  </font>these questions requires     considerable data gathering and analysis</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must rely on contractors</font> to     complete  some of the work</td>
+    </tr>
+    <tr>
+      <td>We have been delayed, and could be further     delayed, in responding <font color="blue">either by</font> the contractors’ failure or <font color="blue">inability</font> to     timely  complete  their  tasks,  or  by  other <font color="blue">unanticipated delays</font> or     <font color="blue">difficulties</font> and lack of resources</td>
+    </tr>
+    <tr>
+      <td>The FDA may find that responses we may     give  do  not <font color="blue">adequately address</font> its questions and that the results of     <font color="blue">preclinical animal studies</font> the FDA has asked for do not <font color="blue">adequately address</font>     its concerns</td>
+    </tr>
+    <tr>
+      <td>In turn, we would be indefinitely unable to pursue <font color="blue">development</font>     of <font color="blue">Hemopure in the United States</font>, a very large, key market</td>
+    </tr>
+    <tr>
+      <td>Moreover, even if we <font color="blue">adequately address</font> the FDA’s questions, we will need to     obtain FDA <font color="blue">acceptance</font> of the protocols for, and to complete, <font color="blue">human clinical</font>     trials  to  obtain  FDA  approval for Hemopure for ischemia and trauma     <font color="blue">indication</font>s</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> when or whether we <font color="blue">will submit</font> an IND for an     ischemia <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, we do not know whether or when we will be     able  to  commence  a  US <font color="blue">clinical trial</font> of Hemopure for an ischemia     <font color="blue">indication</font>, or that we will be able to conduct or <font color="blue">satisfactorily</font> conclude     <font color="blue">additional</font> <font color="blue">clinical trial</font>s required to obtain FDA <font color="blue">marketing <font color="blue">authorization</font></font>     for this <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td>In the case of the trauma <font color="blue">indication</font>, the NMRC has     primary  <font color="blue">responsibility</font>  for designing and seeking FDA <font color="blue">acceptance</font> of a     two-stage Phase 2/3 clinical protocol for trauma in the out-of-hospital     setting and is expected to be <font color="blue">principally responsible</font> for conducting the     trial</td>
+    </tr>
+    <tr>
+      <td>The NMRC has filed an IND, and the FDA has put the <font color="blue">proposed trauma</font>     <font color="blue">protocol on clinical</font> hold</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the FDA </font>ultimately grants <font color="blue">acceptance</font> and the     trial is commenced and concluded, the results of the trial may not lead to     <font color="blue">authorization</font> for marketing Hemopure for the <font color="blue">proposed trauma</font> <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td>In  addition, future or <font color="blue">existing governmental action</font> or changes in FDA     policies or <font color="blue">precedents may</font> result in delays or rejection of an <font color="blue">application</font>     for <font color="blue">marketing approval</font></td>
+    </tr>
+    <tr>
+      <td>The FDA has considerable <font color="blue">discretion</font> in determining     whether  to grant <font color="blue">marketing approval</font> for a drug, and may delay or deny     <font color="blue">approval even</font> in <font color="blue">circumstances</font> where the applicant’s <font color="blue">clinical trial</font>s have     proceeded in <font color="blue">compliance with</font> FDA procedures and <font color="blue">regulations</font> and have met the     established end points of the trials</td>
+    </tr>
+    <tr>
+      <td>Despite all of our efforts, the FDA     <font color="blue">could refuse</font> to grant <font color="blue">marketing <font color="blue">authorization</font></font> for Hemopure</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Challenges to FDA </font><font color="blue">de<font color="blue">termination</font>s</font> are <font color="blue">generally</font> time consuming and costly,     and  rarely  succeed</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">give no assurance</font> that we will obtain FDA     <font color="blue">marketing <font color="blue">authorization</font></font> for Hemopure for any <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td>The failure to     obtain any <font color="blue">approval would</font> have severe <font color="blue">negative consequences</font> for our company</td>
+    </tr>
+    <tr>
+      <td>If we fail to obtain <font color="blue">regulatory</font> approvals in <font color="blue">foreign <font color="blue"><font color="blue">jurisdiction</font>s</font></font>, we will     not be able to market Hemopure abroad</td>
+    </tr>
+    <tr>
+      <td>We  also  intend  to seek to market Hemopure in <font color="blue">international</font> markets,     including <font color="blue">the European Union</font></td>
+    </tr>
+    <tr>
+      <td>Whether or not FDA <font color="blue">marketing <font color="blue">authorization</font></font> has     been obtained, we must obtain separate <font color="blue">regulatory</font> approvals in order to     market  our  products  in  the  European  Union and many other foreign     <font color="blue"><font color="blue">jurisdiction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">regulatory</font>  approval processes differ among these     <font color="blue"><font color="blue">jurisdiction</font>s</font>, and the time needed to secure <font color="blue">marketing approval</font>s may be even     <font color="blue">longer than</font> that required for FDA approval</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">application</font>s may require     the <font color="blue">completion</font> of <font color="blue">additional</font> preclinical and <font color="blue">clinical studies</font></td>
+    </tr>
+    <tr>
+      <td>Approval in     any one <font color="blue">jurisdiction</font> does not ensure approval in a different <font color="blue">jurisdiction</font></td>
+    </tr>
+    <tr>
+      <td>As  a  result,  obtaining  foreign  approvals  will require <font color="blue">additional</font>     <font color="blue"><font color="blue">expenditure</font>s</font> and <font color="blue">significant</font> amounts of time</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">give no assurance</font> that     we  will  obtain  marketing  <font color="blue">authorization</font> for Hemopure in any foreign     <font color="blue">jurisdiction</font> other than that already obtained in South Africa</td>
+    </tr>
+    <tr>
+      <td>Clinical trials are <font color="blue">extremely costly</font> and subject to <font color="blue">numerous risks</font> and     <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>To gain <font color="blue">regulatory</font> approval from the FDA and <font color="blue">analogous</font> European <font color="blue">regulatory</font>     <font color="blue">authorities</font> for the <font color="blue">commercial sale</font> of any product, including Hemopure, we     must  <font color="blue">demonstrate</font>  in <font color="blue">clinical trial</font>s, and satisfy the FDA and foreign     <font color="blue">regulatory</font>  <font color="blue">authorities</font> as to, the safety and efficacy of the product</td>
+    </tr>
+    <tr>
+      <td>Clinical trials are expensive and time-consuming, as is the <font color="blue">regulatory</font>     <font color="blue">review process</font></td>
+    </tr>
+    <tr>
+      <td>Clinical trials are also subject to <font color="blue">numerous risks</font> and     <font color="blue">uncertainties</font> not within our                                         19       _________________________________________________________________    [71]Table of <font color="blue">Contents       </font>control</td>
+    </tr>
+    <tr>
+      <td>For example, data we obtain <font color="blue">from preclinical</font> and <font color="blue">clinical studies</font>     are susceptible to <font color="blue">varying interpretations</font> that could impede <font color="blue">regulatory</font>     approval</td>
+    </tr>
+    <tr>
+      <td>Further, some patients in our <font color="blue">clinical trial</font>s may have a high risk     of death, age-related disease or other <font color="blue">adverse medical events</font> that may not     be related to our product</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">events may affect</font> the <font color="blue">statistical analysis</font>     of  the  safety  and  efficacy  of our product</td>
+    </tr>
+    <tr>
+      <td>If we obtain marketing     <font color="blue">authorization</font>  for a product, the <font color="blue">authorization</font> will be limited to the     <font color="blue">indication</font> approved</td>
+    </tr>
+    <tr>
+      <td>In addition, many <font color="blue">factors could delay</font> or result in <font color="blue">termination</font> of ongoing or     future <font color="blue">clinical trial</font>s</td>
+    </tr>
+    <tr>
+      <td>Results <font color="blue">from ongoing</font> or completed preclinical or     clinical  studies  or <font color="blue">analyses could raise concerns over</font> the safety or     efficacy of a <font color="blue">product candidate</font></td>
+    </tr>
+    <tr>
+      <td>For example, in April 2003 the FDA placed a     proposed Phase 2 <font color="blue">clinical trial</font> of Hemopure for the treatment of trauma in     the in-hospital setting on clinical hold <font color="blue">citing safety concerns based on</font> a     review  of data from our Phase 3 <font color="blue">clinical trial</font> in <font color="blue">patients undergoing</font>     surgery</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Recently </font>it placed a clinical hold on a <font color="blue">trauma trial proposed by</font>     the NMRC We <font color="blue">cannot assure</font> investors that the FDA will not place other     <font color="blue">clinical trial</font>s we sponsor or <font color="blue">others may sponsor on</font> hold in the future</td>
+    </tr>
+    <tr>
+      <td>A     <font color="blue">clinical trial</font> may also experience <font color="blue">slow <font color="blue">patient <font color="blue">enrollment</font></font></font></td>
+    </tr>
+    <tr>
+      <td>The rate of     <font color="blue">completion</font> of our <font color="blue">clinical trial</font>s is <font color="blue">dependent</font> in large part on the rate of     <font color="blue">patient <font color="blue">enrollment</font></font></td>
+    </tr>
+    <tr>
+      <td>There may be limited <font color="blue">availability</font> of patients who meet     the  criteria  for  certain <font color="blue">clinical trial</font>s</td>
+    </tr>
+    <tr>
+      <td>Delays in planned patient     <font color="blue">enrollment</font>  can  result  in  increased <font color="blue">development</font> costs and delays in     <font color="blue">regulatory</font> approvals</td>
+    </tr>
+    <tr>
+      <td>Further, we <font color="blue">rely on investigating physicians</font> and the     <font color="blue">hospital trial sites</font> to <font color="blue">enroll patients</font></td>
+    </tr>
+    <tr>
+      <td>At our <font color="blue">recommendation</font>, the South     African hospital that is the sole site for our <font color="blue">trauma trial interrupted</font>     <font color="blue">enrollment</font> in late 2004 to <font color="blue">address site procedures</font>, not product related     issues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Enrollment </font>at that <font color="blue">site continues</font> to be slow</td>
+    </tr>
+    <tr>
+      <td>In addition, patients     may experience <font color="blue">adverse medical events</font> or side effects resulting in delays,     whether or not the events or the side effects relate to the study material,     and there may be a real or perceived lack of <font color="blue">effectiveness</font> of, or safety     <font color="blue">issues associated with</font>, the product we are testing</td>
+    </tr>
+    <tr>
+      <td>We experienced one such     delay in our now completed European <font color="blue">coronary angioplasty trial</font></td>
+    </tr>
+    <tr>
+      <td>If we do not have the <font color="blue">financial resources</font> to <font color="blue">fund trials</font> required to develop     Hemopure for multiple potential <font color="blue">indication</font>s, our success as a company will     be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot sell</font> Hemopure for any <font color="blue">indication</font> unless we receive <font color="blue">regulatory</font>     approval for that <font color="blue">indication</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font><font color="blue">authorities</font> <font color="blue">generally</font> require a     separate <font color="blue">marketing approval</font> for each proposed <font color="blue">indication</font> for the use of     <font color="blue">Hemopure in the United States</font></td>
+    </tr>
+    <tr>
+      <td>In order to market Hemopure for more than one     <font color="blue">indication</font>, we will have to design <font color="blue">additional</font> <font color="blue">clinical trial</font>s, submit the     trial designs to applicable <font color="blue">regulatory</font> <font color="blue">authorities</font> for review and complete     those trials <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>If any applicable <font color="blue">regulatory</font> authority approves     <font color="blue">Hemopure  </font>for an <font color="blue">indication</font>, it may require a <font color="blue">label cautioning against</font>     Hemopure’s use for <font color="blue">indication</font>s for which it has not <font color="blue">been approved</font></td>
+    </tr>
+    <tr>
+      <td>We may     not have <font color="blue">funds available</font> to try to exploit Hemopure for all of its potential     <font color="blue">indication</font>s</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">potential revenues will</font> be <font color="blue">impaired by limitations on</font>     Hemopure’s use</td>
+    </tr>
+    <tr>
+      <td>The  Securities  and  <font color="blue">Exchange Commission </font>has filed a <font color="blue">civil injunctive</font>     proceeding against us, two of our <font color="blue">former officers</font> and one of our current     officers</td>
+    </tr>
+    <tr>
+      <td>We and several of our former and current officers and <font color="blue">directors</font>     are subject to <font color="blue">consolidated</font> class action lawsuits, and we and several of our     former  and current <font color="blue">directors</font> and officers are subject to <font color="blue">consolidated</font>     <font color="blue">derivative</font> actions</td>
+    </tr>
+    <tr>
+      <td>As discussed in detail above, in <font color="blue">September </font>2005, the SEC filed a civil     proceeding  against  us, two <font color="blue">former officers</font>, and <font color="blue">one current officer</font>,     following  an  <font color="blue">investigation</font>  that began in 2003</td>
+    </tr>
+    <tr>
+      <td>The SEC is seeking a     <font color="blue">permanent injunction restraining</font> and enjoining the <font color="blue">defendants</font> from violating     or  aiding and <font color="blue">abetting violations</font> of Federal <font color="blue">securities laws</font>, a civil     <font color="blue">monetary penalty from each</font> of the <font color="blue">defendants</font>, and an order barring the     former and current officer <font color="blue">defendants</font> from serving as officers or <font color="blue">directors</font>     of any publicly-traded company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following </font>our <font color="blue">first announcement</font> of the SEC     <font color="blue">investigation</font>, a number of lawsuits were <font color="blue">filed against us</font> and several of our     former and current <font color="blue">directors</font> and officers</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">provide no assurance as</font> to the outcome of any of these <font color="blue">proceedings</font></td>
+    </tr>
+    <tr>
+      <td>Members of our board of <font color="blue">directors</font> and <font color="blue">management</font> may spend considerable time     and effort defending against any class action lawsuits, the action brought     by the SEC and <font color="blue">derivative</font> actions</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">expenditure</font> of time and <font color="blue">effort may</font>     <font color="blue">adversely</font>  affect  our  business,  results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>We  may  incur  substantial costs in <font color="blue">connection with</font> these     <font color="blue">proceedings</font>, lawsuits and <font color="blue">derivative</font> actions, including <font color="blue">significant</font> legal     expenses, fines, judgments or <font color="blue">settlements</font> that exceed the amount of, or are     not <font color="blue">covered by</font>, our <font color="blue">insurance policies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">uncertainty about</font>     the possible effect of                                         20       _________________________________________________________________    [72]Table of <font color="blue">Contents       </font>these  <font color="blue">matters on</font> our <font color="blue">financial position</font> and results of <font color="blue">operations</font> may     <font color="blue"><font color="blue">adversely</font> affect</font> our stock price and our ability to <font color="blue">raise capital</font></td>
+    </tr>
+  </tbody>
+</table>

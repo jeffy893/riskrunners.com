@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: factors affecting", fill: "#e08d3c"},
+{source: "2: factors affecting", target: "2: operations", fill: "#e08d3c"},
+{source: "2: operations", target: "2: operations elsewhere", fill: "#e08d3c"},
+{source: "2: operations elsewhere", target: "2: Annual Report ", fill: "#e08d3c"},
+{source: "2: Annual Report ", target: "2: immaterial based on", fill: "#e08d3c"},
+{source: "2: immaterial based on", target: "2: later prove", fill: "#e08d3c"},
+{source: "2: factors affecting", target: "4: financial performance", fill: "#ed9121"},
+{source: "4: financial performance", target: "4: line with investor expectations", fill: "#ed9121"},
+{source: "4: line with investor expectations", target: "4: common stock will suffer", fill: "#ed9121"},
+{source: "4: common stock will suffer", target: "4: future capital may", fill: "#ed9121"},
+{source: "4: financial performance", target: "5: net loss from continuing operations", fill: "#dea5a4"},
+{source: "5: net loss from continuing operations", target: "5: December ", fill: "#dea5a4"},
+{source: "5: net loss from continuing operations", target: "28: components", fill: "#fae7b5"},
+{source: "28: components", target: "28: challenging", fill: "#fae7b5"},
+{source: "28: components", target: "47: proprietary rights", fill: "#bc987e"},
+{source: "47: proprietary rights", target: "47: third parties which may expose us", fill: "#bc987e"},
+{source: "47: third parties which may expose us", target: "47: litigation", fill: "#bc987e"},
+{source: "47: proprietary rights", target: "51: thirdparty", fill: "#ff007f"},
+{source: "51: thirdparty", target: "51: additional", fill: "#ff007f"},
+{source: "51: thirdparty", target: "55: manufacture", fill: "#01796f"},
+{source: "55: manufacture", target: "55: facility", fill: "#01796f"},
+{source: "55: facility", target: "55: Shenzhen China ", fill: "#01796f"},
+{source: "55: Shenzhen China ", target: "55: but also rely on thirdparty manufacturers", fill: "#01796f"},
+{source: "55: but also rely on thirdparty manufacturers", target: "55: assemble certain", fill: "#01796f"},
+{source: "55: manufacture", target: "START_HERE", fill: "#01796f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Met_Operations">Met Operations</a></td>
+      <td>Met Operations, also known as Met Ops, is one of the four business groups which forms the Metropolitan Police Service. It was created during the 2018-19 restructuring of the service, amalgamating many of its functions from the Operations side of the Specialist Crime &amp; Operations Directorate formed in 2012, with the Specialist Crime side of that Directorate placed under the new Frontline Policing Directorate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_statement">Income statement</a></td>
+      <td>An income statement or profit and loss account (also referred to as a profit and loss statement (P&amp;L), statement of profit or loss, revenue statement, statement of financial performance, earnings statement, statement of earnings, operating statement, or statement of operations) is one of the financial statements of a company and shows the company's revenues and expenses during a particular period.It indicates how the revenues (also known as the “top line”) are transformed into the net income or net profit (the result after all revenues and expenses have been accounted for). The purpose of the income statement is to show managers and investors whether the company made money (profit) or lost money (loss) during the period being reported.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December">December</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2016_in_aviation">2016 in aviation</a></td>
+      <td>This is a list of aviation-related events from 2016.\n\n\n== Events ==\n\n\n=== January ===\nThe Government of Italy permitted United States unmanned aerial vehicles (UAVs or drones) to fly strike missions from Naval Air Station Sigonella in Sicily where the US has operated unarmed surveillance UAVs since 2001 against Islamic State targets in Libya, but only if they are "defensive," protecting U.S. forces or rescuers retrieving downed pilots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_31">December 31</a></td>
+      <td>December 3 is the 337th day of the year (338th in leap years) in the Gregorian calendar;  28 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n915 – Pope John X crowns Berengar I of Italy as Holy Roman Emperor (probable date).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/RS_Components">RS Components</a></td>
+      <td>RS Components is a trading brand of RS Group. The company supplies industrial products, electronic components; electrical, automation and control, and test and measurement equipment; and engineering tools, and consumables via e-commerce, telephone and RS Local stores.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Symmetrical_components">Symmetrical components</a></td>
+      <td>In electrical engineering, the method of symmetrical components simplifies analysis of unbalanced three-phase power systems under both normal and abnormal conditions. The basic idea is that an asymmetrical set of N phasors can be expressed as a linear combination of N symmetrical sets of phasors by means of a complex linear transformation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Principal_component_analysis">Principal component analysis</a></td>
+      <td>The principal components of a collection of points in a real coordinate space are a sequence of \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n   unit vectors, where the \n  \n    \n      \n        i\n      \n    \n    {\displaystyle i}\n  -th vector is the direction of a line that best fits the data while being orthogonal to the first \n  \n    \n      \n        i\n        −\n        1\n      \n    \n    {\displaystyle i-1}\n   vectors. Here, a best-fitting line is defined as one that minimizes the average squared distance from the points to the line.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Web_Components">Web Components</a></td>
+      <td>Web Components are a set of features that provide a standard component model for the Web allowing for encapsulation and interoperability of individual HTML elements.\nPrimary technologies used to create them include:\nCustom Elements: APIs to define new HTML elements\nShadow DOM: encapsulated DOM and styling, with composition\nHTML Templates: HTML fragments that are not rendered, but stored until instantiated via JavaScript\n\n\n== Features ==\n\n\n=== Custom Elements ===\nThere are two parts to Custom Elements: autonomous custom elements and customized built-in elements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Component-based_software_engineering">Component-based software engineering</a></td>
+      <td>Component-based software engineering (CBSE), also called component-based development (CBD), is a branch of software engineering that emphasizes the separation of concerns with respect to the wide-ranging functionality available throughout a given software system. It is a reuse-based approach to defining, implementing and composing loosely coupled independent components into systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ontology_components">Ontology components</a></td>
+      <td>Contemporary ontologies share many structural similarities, regardless of the ontology language in which they are expressed. Most ontologies describe individuals (instances), classes (concepts), attributes, and relations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_S&amp;P_500_companies">List of S&amp;P 500 companies</a></td>
+      <td>The S&amp;P 500 stock market index is maintained by S&amp;P Dow Jones Indices. It comprises 504 common stocks which are issued by 500 large-cap companies traded on American stock exchanges (including the 30 companies that compose the Dow Jones Industrial Average).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/HTML_Components">HTML Components</a></td>
+      <td>HTML Components (HTCs) are a legacy technology used to implement components in script as Dynamic HTML (DHTML) "behaviors" in the Microsoft Internet Explorer web browser. Such files typically use an .htc extension and the "text/x-component" MIME type.An HTC is typically an HTML file (with JScript / VBScript) and a set of elements that define the component.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Strategic_litigation">Strategic litigation</a></td>
+      <td>Strategic litigation, also known as impact litigation, is the practice of bringing lawsuits intended to effect societal change. Impact litigation cases may be class action lawsuits or individual claims with broader significance, and may rely on statutory law arguments or on constitutional claims.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Settlement_(litigation)">Settlement (litigation)</a></td>
+      <td>In law, a settlement is a resolution between disputing parties about a legal case, reached either before or after court action begins. A collective settlement is a settlement of multiple similar legal cases.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vexatious_litigation">Vexatious litigation</a></td>
+      <td>Vexatious litigation is legal action which is brought  solely to harass or subdue an adversary. It may take the form of a primary frivolous lawsuit or may be the repetitive, burdensome, and unwarranted filing of meritless motions in a matter which is otherwise a meritorious cause of action.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Multidistrict_litigation">Multidistrict litigation</a></td>
+      <td>In United States law, multidistrict litigation (MDL) refers to a special federal legal procedure designed to speed the process of handling complex cases, such as air disaster litigation or complex product liability suits.\n\n\n== Description ==\nMDL cases occur when "civil actions involving one or more common questions of fact are pending in different districts." In order to efficiently process cases that could involve hundreds (or thousands) of plaintiffs in dozens of different federal courts that all share common issues, the Judicial Panel on Multidistrict Litigation (JPML) decides whether cases should be consolidated under MDL, and if so, where the cases should be transferred.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_litigation">International litigation</a></td>
+      <td>International litigation, sometimes called transnational litigation, is the practice of litigation in connection with disputes among businesses or individuals residing or based in different countries.\nThe main difference between international litigation and domestic litigation is that, in the former, certain issues are more likely to be of significance — such as personal jurisdiction, service of process, evidence from abroad, and enforcement of judgments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_interest_law">Public interest law</a></td>
+      <td>Public interest law refers to legal practices undertaken to help poor, marginalized, or under-represented people, or to effect change in social policies in the public interest, on 'not for profit' terms (pro bono publico), often in the fields of civil rights, civil liberties, religious liberty, human rights, women's rights, consumer rights, environmental protection, and so on.In a celebrated 1905 speech, Louis Brandeis decried the legal profession, complaining that "able lawyers have to a large extent allowed themselves to become adjuncts of great corporations and have neglected their obligation to use their powers for the protection of the people."In the tradition thus exemplified, a common ethic for public-interest lawyers in a growing number of countries remains "fighting for the little guy".\n\n\n== By jurisdiction ==\n\n\n=== Central and Eastern Europe ===\nAt the end of the communist period in the early 1990s, the national legal systems of Central and Eastern Europe were still in a formative stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Review_of_Litigation">The Review of Litigation</a></td>
+      <td>The Review of Litigation (TROL) is a law journal established in 1980 at the University of Texas School of Law to serve as "a national forum of interchange of academic and practical discussion of various aspects of litigation." The journal publishes articles on "topics related to procedure, evidence, trial and appellate advocacy, alternative dispute resolution, and often-litigated substantive law."The journal publishes four issues annually, one of which is a symposium issue published in collaboration with the litigation section of American Association of Law Schools. Past topics have included mass torts and conflicts of interest.The journal is often cited in published court opinions, and is the most cited law journal in the category "Civil Litigation and Dispute Resolution" in the Washington &amp; Lee Law School law journal rankings as of 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Abdullahi_v._Pfizer,_Inc.">Abdullahi v. Pfizer, Inc.</a></td>
+      <td>The Kano trovafloxacin trial litigation arose out of a clinical trial conducted by the pharmaceutical company Pfizer in 1996 in Kano, Nigeria, during an epidemic of meningococcal meningitis. To test its new antibiotic, trovafloxacin (Trovan), Pfizer gave 100 children trovafloxacin, while another 100 received the gold-standard anti-meningitis treatment, ceftriaxone, a cephalosporin antibiotic.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Monobjc">Monobjc</a></td>
+      <td>Monobjc is a bridge API for Mac OS X to allow applications that run on Mono runtime to access various Mac OS X API.\nIt brings to .NET developers the ability to use in a totally transparent manner and with no native code, most of the Mac OS X API and especially Cocoa. This means that developer can leverage the power of .NET and its libraries and produce applications that provides a native UI look and feel under Mac OS X.\nThe Monobjc's key points are:\n\nSimple access to every major Mac OS X frameworks (Cocoa, WebKit, QuickTime, AddressBook, etc.)\nSimple Access to thirdparty frameworks (Sparkle, Growl, CorePlot, SM2DGraphView)\nWorks on both 32 and 64 bits systems\nComplete API documentation for an easy use in the IDE\nApplications can be submitted and redistributed on the Mac App Store.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Digital_Millennium_Copyright_Act">Digital Millennium Copyright Act</a></td>
+      <td>The Digital Millennium Copyright Act (DMCA) is a 1998 United States copyright law that implements two 1996 treaties of the World Intellectual Property Organization (WIPO). It criminalizes production and dissemination of technology, devices, or services intended to circumvent measures that control access to copyrighted works (commonly known as digital rights management or DRM).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortal_Kombat_(1992_video_game)">Mortal Kombat (1992 video game)</a></td>
+      <td>Mortal Kombat is an arcade fighting game developed and published by Midway in 1992. It is the first entry in the Mortal Kombat series and subsequently was released by Acclaim Entertainment for nearly every home platform of the time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Another_World_(video_game)">Another World (video game)</a></td>
+      <td>Another World is a 1991 cinematic platformer action-adventure game designed by Éric Chahi and published by Delphine Software. The game tells a story of Lester, a young scientist who, as a result of an experiment gone wrong, finds himself on a dangerous alien world where he is forced to fight for his survival.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alone_in_the_Dark_(1992_video_game)">Alone in the Dark (1992 video game)</a></td>
+      <td>Alone in the Dark is a survival horror video game designed by Frédérick Raynal and developed and published by Infogrames for the PC. Alone in the Dark was released for MS-DOS in 1992, ported for the 3DO by Krisalis in 1994, and ported for iOS by Atari, Inc. in 2014.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/OpenFOAM">OpenFOAM</a></td>
+      <td>OpenFOAM (for "Open-source Field Operation And Manipulation") is a C++ toolbox for the development of customized numerical solvers, and pre-/post-processing utilities for the solution of continuum mechanics problems, most prominently including computational fluid dynamics (CFD).\nThere are three main variants of OpenFOAM software that are released as free and open-source software under the GNU General Public License Version 3.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HYPERCOM CORP      Item 1A      Risk Factors             The <font color="blue">risks set forth</font> below <font color="blue">may <font color="blue">adversely</font> affect</font> our business, financial     condition  and  operating  results  and cause actual results to differ     <font color="blue"><font color="blue">materially</font> from</font> the results contemplated by the forward-looking statements     contained  in  this <font color="blue">Annual Report </font>on Form 10-K or elsewhere in our SEC     filings</td>
+    </tr>
+    <tr>
+      <td>In addition to the <font color="blue">risks set forth</font> below, and the <font color="blue">factors affecting</font>     specific  business <font color="blue">operations</font> identified with the description of these     business <font color="blue">operations</font> elsewhere in this <font color="blue">Annual Report </font>on 10-K, there may also     be risks of which we are currently aware, or that we currently regard as     <font color="blue">immaterial based on</font> the information available to us, that <font color="blue">later prove</font> to be     material</td>
+    </tr>
+    <tr>
+      <td>Risks Related To Our Business            We have <font color="blue">incurred <font color="blue">significant</font> losses</font> in the past and our results of     <font color="blue">operations</font> have and <font color="blue">may continue</font> to <font color="blue">vary from quarter</font> to <font color="blue">quarter impacted</font> in     <font color="blue">particular by continued</font> business reviews performed <font color="blue">by <font color="blue">management</font></font></td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue">financial performance</font> is not in <font color="blue">line with investor <font color="blue">expectations</font></font>, the price     of our <font color="blue"><font color="blue">common stock</font> will suffer</font> and our access to <font color="blue">future capital may</font> be     impaired</td>
+    </tr>
+    <tr>
+      <td>We had a net loss from continuing <font color="blue">operations</font> of dlra30dtta2 million for the     year ended <font color="blue">December </font>31, 2005 and a net loss from continuing <font color="blue">operations</font> of     dlra12dtta5 million for the year ended <font color="blue">December </font>31, 2004</td>
+    </tr>
+    <tr>
+      <td>If the results of our     continuing efforts to improve <font color="blue">profitability</font>, increase our cash flow and     strengthen our balance sheet do not meet or exceed the <font color="blue">expectations</font> of     <font color="blue">securities analysts</font> or investors, the price of our <font color="blue"><font color="blue">common stock</font> will suffer</font></td>
+    </tr>
+    <tr>
+      <td>Further,  given  the <font color="blue">variability</font> in our revenues, our quarterly     financial results have <font color="blue">fluctuated <font color="blue">significant</font>ly</font> in the past and are likely     to  do so in the future</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we believe that period-to-period     <font color="blue">comparisons</font>  of  our  results  of <font color="blue">operations</font> may be misleading and not     <font color="blue">indicative</font> of <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">quarterly financial</font> results fall     below the <font color="blue">expectations</font> of <font color="blue">securities analysts</font> or investors, the price of our     <font color="blue"><font color="blue">common stock</font> may suffer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Quarterly </font>revenue and operating results can <font color="blue">vary depending on</font> a number of     factors, including:         •  <font color="blue">variations</font> in product mix, timing and size of fulfilled orders as a     result of <font color="blue">customer deferral</font> of purchases and/or delays in the delivery of     our products and services;          •  <font color="blue">accomplishment</font> of <font color="blue">certain performance parameters embedded</font> in our     <font color="blue">service level agreements</font>;         •  the market’s demand for <font color="blue">new <font color="blue">product offerings</font></font>;         •  delays in the delivery of our products and services;         •  <font color="blue">product returns</font> and warranty claims;          •  <font color="blue">incremental costs incurred as</font> a result of product quality and/or     <font color="blue">performance issues</font>;         •  write-off of <font color="blue">doubtful accounts receivable</font>;         •  <font color="blue">inventory obsolescence</font> and write-downs related to <font color="blue">product life cycles</font>;         •  write-offs of research and <font color="blue">development</font> expenses;         •  <font color="blue">variations</font> in operating expenses, including research and <font color="blue">development</font>,     selling, and general and <font color="blue">administrative expenses</font>;         •  <font color="blue"><font color="blue">lease portfolio</font> risk adjustments</font> and <font color="blue">loss provisions</font>;         •  <font color="blue">restructuring activities</font>;         •  <font color="blue">employment</font> and <font color="blue">severance agreement charges</font>;         •  <font color="blue">foreign currency exchange rate <font color="blue">fluctuations</font></font>;                                         14       _________________________________________________________________    [64]Table of <font color="blue">Contents       </font>  •  <font color="blue">availability</font> and cost of financing;         •  <font color="blue">variations</font> in <font color="blue">income tax as</font> a function of <font color="blue">income recognition by tax</font>     <font color="blue">jurisdiction</font>; and         •  industry and <font color="blue">economic conditions</font>, including competition, industry     standards, product certification requirements, trade restrictions and other     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>The loss of one or more of our <font color="blue">key customers could <font color="blue">significant</font>ly reduce</font> our     revenues and profits</td>
+    </tr>
+    <tr>
+      <td>We  have derived, and believe that we <font color="blue">may continue</font> to derive, a     <font color="blue">significant</font>  portion  of  our  <font color="blue">revenues from</font> a limited number of large     customers</td>
+    </tr>
+    <tr>
+      <td>For the fiscal year ended <font color="blue">December </font>31, 2005, our <font color="blue">largest customer</font>     accounted for 12dtta1prca of our revenue, and our five <font color="blue">largest customer</font>s accounted     for 31dtta6prca of our revenue</td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">largest customer</font> does substantial     business with some of our most <font color="blue">significant</font> competitors</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customers may</font>     buy less of our products or <font color="blue">services depending on</font> their own <font color="blue">technological</font>     <font color="blue">development</font>s, end-user demand for our products and <font color="blue">internal budget cycles</font></td>
+    </tr>
+    <tr>
+      <td>A     <font color="blue">major customer</font> in <font color="blue">one year may</font> not purchase any of our products or services     in another year, which may <font color="blue">negatively affect</font> our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>If     any of our large customers <font color="blue">significant</font>ly reduces or <font color="blue">delays purchases from us</font>     or  if  we  are required to <font color="blue">sell products</font> to <font color="blue">them at reduced prices</font> or     <font color="blue">unfavorable terms</font>, our results of <font color="blue">operations</font> and <font color="blue">revenue could</font> be <font color="blue">materially</font>     <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>Our  products  may contain defects that may be <font color="blue">difficult</font> or even     impossible  to  correct</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Product  </font><font color="blue">defects could</font> result in lost sales,     <font color="blue"><font color="blue">additional</font> costs</font> and <font color="blue">customer erosion</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">offer technically complex products which</font>, when <font color="blue">first introduced</font> or     released in new versions, may contain software or <font color="blue">hardware defects</font> that are     <font color="blue">difficult</font> to detect and correct</td>
+    </tr>
+    <tr>
+      <td>The existence of defects and delays in     correcting  them  could result in <font color="blue">negative consequences</font>, including the     following:         •  delays in <font color="blue">shipping products</font>;         •  <font color="blue">cancellation</font> of orders;         •  <font color="blue"><font color="blue">additional</font> warranty expense</font>;         •  delays in the <font color="blue">collection</font> of <font color="blue">receivables</font>;         •  <font color="blue">product returns</font>;         •  the loss of <font color="blue">market acceptance</font> of our products;         •  diversion of research and <font color="blue">development</font> resources from new product     <font color="blue">development</font>; and         •  inventory write-downs</td>
+    </tr>
+    <tr>
+      <td>Even though we test all of our products, defects <font color="blue">may continue</font> to be     identified after products are shipped</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">past periods</font>, we have experienced     <font color="blue">various issues</font> in <font color="blue"><font color="blue">connection with</font> product launches</font>, including the need to     <font color="blue">rework certain products</font> and <font color="blue">stabilize product designs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Correcting </font>defects     can be a time-consuming and <font color="blue">difficult</font> task</td>
+    </tr>
+    <tr>
+      <td>Software <font color="blue">errors may</font> take several     months to correct, and hardware <font color="blue">errors may</font> take <font color="blue">even longer</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may <font color="blue">accumulate excess</font></font> or <font color="blue">obsolete inventory</font> that could result in     <font color="blue">unanticipated price reductions</font> and <font color="blue">write downs</font> and <font color="blue">adversely</font> affect our     financial results</td>
+    </tr>
+    <tr>
+      <td>Managing the proper <font color="blue">inventory levels</font> for <font color="blue">components</font> and finished     products is <font color="blue">challenging</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">formulating</font> our <font color="blue">product offerings</font>, we have     focused our <font color="blue">efforts on providing</font> to our <font color="blue">customers products with greater</font>     <font color="blue">capability</font> and <font color="blue">functionality</font>, which requires us to develop and <font color="blue">incorporate</font>     the  <font color="blue">most current <font color="blue">technologies</font></font> in our products</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">approach tends</font> to     increase the risk of obsolescence for products and <font color="blue">components</font> we hold in     inventory and <font color="blue">may compound</font> the <font color="blue">difficult</font>ies posed by other factors that     affect our <font color="blue">inventory levels</font>, including the following:         •  the need to maintain <font color="blue">significant</font> inventory of <font color="blue">components</font> that are in     limited supply;         •  buying <font color="blue">components</font> in bulk for the <font color="blue">best pricing</font>;                                         15       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>  •  responding to the <font color="blue">unpredictable demand</font> for products;         •  responding to <font color="blue">customer requests</font> for short lead-time <font color="blue">delivery schedules</font>;         •  failure of customers to take delivery of <font color="blue">ordered products</font>; and         •  <font color="blue">product returns</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">accumulate excess</font> or <font color="blue">obsolete inventory</font>, price reductions and     inventory write-downs may result, <font color="blue">which could</font> <font color="blue">adversely</font> affect our results     of operation and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Security is vital to our customers and therefore breaches in the     security of <font color="blue">transactions involving</font> our products or services could <font color="blue">adversely</font>     affect our reputation and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Protection </font><font color="blue">against fraud</font> is of <font color="blue">key importance</font> to the purchasers and     end-users  of our solutions</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">incorporate</font> security features, such as     <font color="blue">encryption software</font> and secure hardware, into our solutions to protect     <font color="blue">against fraud</font> in <font color="blue">electronic payment transactions</font> and to ensure the privacy     and integrity of <font color="blue">consumer data</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">solutions may</font> be vulnerable to breaches     in <font color="blue">security due</font> to defects in the <font color="blue">security mechanisms</font>, the operating system     and <font color="blue">applications</font> or the <font color="blue">hardware platform</font></td>
+    </tr>
+    <tr>
+      <td>Security <font color="blue">vulnerabilities could</font>     <font color="blue">jeopardize</font> the security of information transmitted or <font color="blue">stored using</font> our     solutions</td>
+    </tr>
+    <tr>
+      <td>In general, liability associated with security breaches of a     <font color="blue">certified electronic payment system belongs</font> to the <font color="blue">institution</font> that acquires     the <font color="blue">financial transaction</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we have not experienced any material     <font color="blue">security breaches affecting</font> our business</td>
+    </tr>
+    <tr>
+      <td>However, if the security of our     solutions is <font color="blue">compromised</font>, our reputation and <font color="blue">marketplace acceptance</font> of our     <font color="blue">solutions will</font> be <font color="blue">adversely</font> affected, which would <font color="blue">adversely</font> affect our     results of <font color="blue">operations</font>, and subject us to <font color="blue">potential liability</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">adequately protect</font> our <font color="blue"><font color="blue">proprietary</font> <font color="blue">technology</font></font>,     our <font color="blue">competitors may</font> develop products <font color="blue">substantially</font> similar to our products     and use similar <font color="blue">technologies</font>, which may result in the loss of customers</td>
+    </tr>
+    <tr>
+      <td>We rely on patent, copyright, trademark and trade secret laws, as well     as  <font color="blue">confidentiality</font>,  licensing and other <font color="blue">contractual arrangements</font>, to     establish and protect the <font color="blue"><font color="blue">proprietary</font> aspects</font> of our products</td>
+    </tr>
+    <tr>
+      <td>Our efforts     may result in only limited protection, and our <font color="blue">competitors may</font> develop,     market  and <font color="blue">sell products</font> <font color="blue">substantially</font> equivalent to our products, or     utilize  <font color="blue">technologies</font> similar to those <font color="blue">used by us</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to     <font color="blue">adequately protect</font> our <font color="blue"><font color="blue">proprietary</font> <font color="blue">technology</font></font>, these <font color="blue">third parties may</font> be     able to compete more <font color="blue">effective</font>ly <font color="blue">against us</font>, <font color="blue">which could</font> result in the loss     of customers and <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">legal system</font>s of many <font color="blue">foreign countries</font> do not     protect or <font color="blue">honor <font color="blue">intellectual property rights</font></font> to the <font color="blue">same extent as</font> the     <font color="blue">legal system</font> of the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>For example, in China, the <font color="blue">legal system</font>     in general, and the <font color="blue">intellectual property regime</font> in particular, is still in     the <font color="blue">development</font> stage</td>
+    </tr>
+    <tr>
+      <td>It may be very <font color="blue">difficult</font>, time-consuming and costly     for us to attempt to enforce our <font color="blue">intellectual property rights</font> in these     <font color="blue">jurisdiction</font>s</td>
+    </tr>
+    <tr>
+      <td>Our  products  and  other <font color="blue"><font color="blue">proprietary</font> rights</font> may infringe on the     <font color="blue"><font color="blue">proprietary</font> rights</font> of third parties, which may expose us to claims and     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe that our products do not infringe on any third     party’s patents, from time to time we have <font color="blue">become involved</font> in claims and     <font color="blue">litigation</font> involving patents or <font color="blue"><font color="blue">proprietary</font> rights</font></td>
+    </tr>
+    <tr>
+      <td>Patent and <font color="blue">proprietary</font>     rights <font color="blue">litigation</font> entails substantial legal and other costs, and diverts the     attention of our <font color="blue"><font color="blue">management</font> resources</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that we     will have the <font color="blue">necessary financial resources</font> to <font color="blue">appropriately defend</font> or     prosecute our rights in <font color="blue">connection with</font> any such <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>In the past we have received third-party claims and may receive     <font color="blue">additional</font> notices of such claims of infringement in the future</td>
+    </tr>
+    <tr>
+      <td>To date,     <font color="blue">such activities</font> have not had a material adverse effect on our business and     we  have  either  prevailed  in  all <font color="blue">litigation</font>, obtained a <font color="blue">license on</font>     <font color="blue">commercially</font> acceptable terms or <font color="blue">otherwise been able</font> to modify any affected     products or <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>However, there can be no assurance that we will     continue to prevail in any <font color="blue">such actions</font> or that any license required under     any <font color="blue">such patent</font> or other <font color="blue">intellectual property would</font> be made <font color="blue">available on</font>     <font color="blue">commercially</font> acceptable terms, if at all</td>
+    </tr>
+    <tr>
+      <td>16       _________________________________________________________________    [66]Table of <font color="blue"><font color="blue">Contents       </font>    </font>  A  <font color="blue">disruption</font>  in our <font color="blue">manufacturing capabilities</font> or those of our     third-party <font color="blue">manufacture</font>rs or <font color="blue">suppliers would negatively impact</font> our ability     to <font color="blue">meet customer requirements</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">manufacture</font> the majority of our products at our <font color="blue">facility</font> in     Shenzhen, China but also rely on third-party <font color="blue">manufacture</font>rs to <font color="blue">manufacture</font>     and  <font color="blue">assemble certain</font> of our products</td>
+    </tr>
+    <tr>
+      <td>We also depend upon third-party     suppliers to deliver <font color="blue">components</font> that are free from defects, competitive in     <font color="blue">functionality</font>  and cost, and in <font color="blue">compliance with</font> our <font color="blue">specifications</font> and     <font color="blue">delivery schedules</font></td>
+    </tr>
+    <tr>
+      <td>Since we <font color="blue">generally</font> do not maintain large <font color="blue">inventories</font> of     our products or <font color="blue">components</font>, any <font color="blue">termination</font> of, or <font color="blue">significant</font> <font color="blue">disruption</font>     in, our manufacturing <font color="blue">capability</font> or our <font color="blue">relationship with</font> our third-party     <font color="blue">manufacture</font>rs or <font color="blue">suppliers may prevent us from filling customer orders</font> in a     <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">occasionally</font> experienced, and may in the future experience,     delays in delivery of products and delivery of products of inferior quality     from  third-party  <font color="blue">manufacture</font>rs</td>
+    </tr>
+    <tr>
+      <td>Although alternate <font color="blue">manufacture</font>rs and     suppliers  are <font color="blue">generally</font> available to produce our products and product     <font color="blue">components</font>, the number of <font color="blue">manufacture</font>rs or suppliers of some of our products     and <font color="blue">components</font> is limited, and qualifying a replacement <font color="blue">manufacture</font>r or     <font color="blue">supplier could</font> take <font color="blue">several months</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our use of third-party     <font color="blue">manufacture</font>rs reduces our direct control over product quality, manufacturing     timing, yields and costs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Disruption </font>of the <font color="blue">manufacture</font> or supply of our     products and <font color="blue">components</font>, or a third-party <font color="blue">manufacture</font>r’s or supplier’s     failure to <font color="blue">remain competitive</font> in <font color="blue">functionality</font>, quality or price, could     delay or interrupt our ability to <font color="blue">manufacture</font> or deliver our products to     <font color="blue">customers on</font> a timely basis, which would have a material adverse effect on     our business and <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font><font color="blue">operations</font> pose <font color="blue">additional</font> challenges and risks that if     not properly managed could <font color="blue">adversely</font> affect our financial results</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31, 2005, we derived approximately 61prca of     our  <font color="blue">total revenues outside</font> of the <font color="blue">United States</font>, <font color="blue">principally</font> in Latin     America and Europe</td>
+    </tr>
+    <tr>
+      <td>We expect that <font color="blue">international</font> sales will continue to     account for a <font color="blue">significant</font> percentage of our net income in the foreseeable     future</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">substantially</font> all of our manufacturing <font color="blue">operations</font> are     <font color="blue">located outside</font> of the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we <font color="blue">face numerous risks</font>     associated with conducting <font color="blue">international</font> <font color="blue">operations</font>, any of <font color="blue">which could</font>     <font color="blue">negatively affect</font> our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>risks include the following:         •  changes in <font color="blue">foreign country regulatory requirements</font>;         •  various import/export restrictions and the <font color="blue">availability</font> of required     import/export licenses;         •  imposition of <font color="blue">foreign tariffs</font> and other <font color="blue">trade barriers</font>;         •  political and <font color="blue">economic instability</font>;         •  <font color="blue">foreign currency exchange rate <font color="blue">fluctuations</font></font>;         •  <font color="blue">extended payment terms</font> and the ability to <font color="blue">collect accounts receivable</font>;         •  the ability to <font color="blue">repatriate funds</font>;          •  <font color="blue">complicated tax</font> and regulatory schemes, such as in Brazil, where     failure to <font color="blue">comply may</font> result in fines, penalties or <font color="blue">litigation</font>;         •  complications associated with enforcing legal agreements in certain     <font color="blue">foreign countries</font>, including Brazil, China and in developing countries; and         •  <font color="blue">availability</font> of qualified and <font color="blue">affordable staff with which</font> to manage our     foreign <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, we are subject to the Foreign Corrupt Practices Act,     which may place us at a <font color="blue">competitive disadvantage</font> to <font color="blue">foreign companies</font> that     are not subject to similar <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [67]Table of <font color="blue"><font color="blue">Contents       </font>    </font>  Our failure to sell our UK lease business where we provide our POS     <font color="blue">products directly</font> to end-user merchants under sales-type leases that are     subject to <font color="blue">governmental regulation</font> and involve a risk of <font color="blue">default may</font> result     in us having to take a <font color="blue">further write down</font> of the value of this business or     result in <font color="blue">higher than</font> anticipated <font color="blue">lease <font color="blue">defaults</font></font> that, if excessive, could     impair our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our subsidiary in the <font color="blue">United Kingdom </font>provides POS <font color="blue">equipment directly</font>     to end-user merchants under lease arrangements</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Currently </font>this business owns     and manages over 30cmam000 leases</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">customer base</font> of this leasing business     is <font color="blue">characterized by higher incidences</font> of <font color="blue">delinquencies</font> and <font color="blue">defaults</font> and is     <font color="blue">distinctly different from</font> our usual <font color="blue">customer base</font> of large domestic and     <font color="blue">international</font>  financial  <font color="blue">institution</font>s, electronic payment processors,     independent sales organizations, distributors and resellers</td>
+    </tr>
+    <tr>
+      <td>We maintain an     allowance for estimated uncollectible sales-type lease <font color="blue">receivables</font> at an     amount that we believe is sufficient to <font color="blue">provide adequate protection against</font>     losses  in  our  sales-type  lease  <font color="blue">portfolio based on historical loss</font>     experience</td>
+    </tr>
+    <tr>
+      <td>The  value of this <font color="blue"><font color="blue">lease portfolio</font> could</font> be <font color="blue">substantially</font>     impaired if our <font color="blue">existing lease loss reserves prove</font> inadequate due to a     <font color="blue">default rate greater than</font> that for which we have <font color="blue">established reserves</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font>business  activity is also subject to <font color="blue">governmental consumer protection</font>     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>A failure to comply with such <font color="blue">regulations</font> could <font color="blue">adversely</font>     affect our ability to enforce the leases, <font color="blue">which could</font> negatively impact the     <font color="blue">net realizable value</font> of the leases</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">currently pursuing</font> a <font color="blue">potential sale</font> of our UK leasing business     and we have <font color="blue">written down</font> the book value of the <font color="blue">lease assets</font> to estimated     fair value, however a sale may result in a <font color="blue">financial loss</font> if total sale     proceeds turn out to be less than this estimated value</td>
+    </tr>
+    <tr>
+      <td>Furthermore, at this     time, a <font color="blue">sale agreement</font> has not <font color="blue">been reached with</font> any buyer and a failure to     do so in the <font color="blue">future may</font> result in us having to liquidate the <font color="blue">lease portfolio</font>     over time</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">liquidation</font> of the <font color="blue">leases over</font> time may result in a financial     loss if total <font color="blue">collection</font>s are less than the current estimated value due to     <font color="blue">higher than</font> anticipated <font color="blue">lease <font color="blue">defaults</font></font> and/or lower lease renewal income in     the future due to changed economic or <font color="blue">competitive conditions</font></td>
+    </tr>
+    <tr>
+      <td>Additionally,     if  we  continue  to  operate this lease business, <font color="blue">significant</font> capital     <font color="blue">investments may</font> have to be incurred to enhance the <font color="blue">management</font> reporting     <font color="blue">systems used</font> to manage and monitor the leases</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations  </font>in <font color="blue">currency <font color="blue">exchange rates</font></font> <font color="blue">may <font color="blue">adversely</font> affect</font> our     financial results</td>
+    </tr>
+    <tr>
+      <td>A  substantial  part  of our business consists of sales made to     <font color="blue">international</font> customers</td>
+    </tr>
+    <tr>
+      <td>A portion of revenues and expenses related to our     <font color="blue">international</font>  <font color="blue">operations</font> are <font color="blue">denominated</font> in currencies other than the     US dollar</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">adverse currency exchange rate</font>     <font color="blue"><font color="blue">fluctuations</font> will</font> not have a material impact in the future</td>
+    </tr>
+    <tr>
+      <td>In addition, our     balance sheet reflects non-US dollar <font color="blue">denominated</font> assets and <font color="blue">liabilities</font>     which can be <font color="blue">adversely</font> affected by <font color="blue">fluctuations</font> in <font color="blue">currency <font color="blue">exchange rates</font></font></td>
+    </tr>
+    <tr>
+      <td>Prior to 2002, we did not hedge our exposure to these <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">More     </font>recently, we have entered into foreign currency forward contracts intended     to  hedge  our  exposure  to  adverse  <font color="blue">fluctuations</font> in <font color="blue">exchange rates</font></td>
+    </tr>
+    <tr>
+      <td>Nevertheless,  these <font color="blue">hedging arrangements may</font> not always be <font color="blue">effective</font>,     <font color="blue">particularly</font> in the event of <font color="blue">imprecise forecasts</font> of non-US  <font color="blue">denominated</font>     assets and <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>Further, we are not able to <font color="blue">hedge against</font> our entire     <font color="blue">foreign currency risk</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, if there is an <font color="blue">adverse movement</font> in     exchange  rates, we might suffer <font color="blue">significant</font> losses</td>
+    </tr>
+    <tr>
+      <td>In the year ended     <font color="blue">December </font>31, 2005, we <font color="blue">incurred foreign currency expense</font> of dlra1dtta3 million net     of <font color="blue">foreign currency transaction gains</font> or losses</td>
+    </tr>
+    <tr>
+      <td>Adverse resolution of <font color="blue">litigation</font>, including <font color="blue">litigation</font> arising out of     the <font color="blue">restatement</font> of our consolidated <font color="blue">financial statements</font>, may <font color="blue">adversely</font>     affect our business or financial results</td>
+    </tr>
+    <tr>
+      <td>We are party to <font color="blue">litigation</font> in the <font color="blue">normal course</font> of our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>can be expensive, lengthy and <font color="blue">disruptive</font> to normal business     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, the results of complex legal <font color="blue">proceedings</font> are <font color="blue">difficult</font>     to predict</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">unfavorable resolution</font> of a <font color="blue">particular lawsuit could</font> have a     material adverse effect on our business, operating results, or financial     condition</td>
+    </tr>
+    <tr>
+      <td>In  <font color="blue">February </font> and March, 2005, various <font color="blue">shareholder</font> class action     <font color="blue">complaints</font> were filed in the <font color="blue">United States</font> District Court, District of     Arizona, <font color="blue">against us</font> and certain of our <font color="blue">executive officers</font> and members of our     board of <font color="blue">directors</font>, on behalf of a class of purchasers of our <font color="blue">common stock</font>     in  the <font color="blue">period from</font> April 30, 2004 to <font color="blue">February </font>3, 2005</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">complaints</font>     alleged that we, and certain of our executive <font color="blue">management</font>, violated the     <font color="blue">Securities Exchange Act </font>of 1934 based on our <font color="blue">February </font>2005 announcement that     <font color="blue">certain leases</font> in the <font color="blue">United Kingdom </font>had <font color="blue">been incorrectly accounted</font> for as     sales-type leases, rather than operating leases, and that                                         18       _________________________________________________________________    [68]Table of <font color="blue">Contents       </font>we <font color="blue">would restate</font> our <font color="blue">financial statements</font> for the <font color="blue">first three quarters</font> of     2004</td>
+    </tr>
+    <tr>
+      <td>In May 2005, these class actions were <font color="blue">consolidated into one action</font> and     the <font color="blue">designated lead plaintiff filed</font> a <font color="blue">consolidated amended</font> class action     compliant</td>
+    </tr>
+    <tr>
+      <td><font color="blue">In January </font>2006, the <font color="blue">court dismissed</font> the <font color="blue">consolidated amended</font>     class <font color="blue">action complaint</font>, and in <font color="blue">February </font>2006, the <font color="blue">plaintiffs filed</font> a second     <font color="blue">consolidated amended</font> class <font color="blue">action complaint</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Also in March and April </font>2005,     two  <font color="blue"><font color="blue">shareholder</font>s</font>’  <font color="blue"><font color="blue">derivative</font> actions</font> were filed in the <font color="blue">United States</font>     District Court, District of Arizona and Superior Court of Maricopa County,     Arizona, <font color="blue">against us</font> and certain of our <font color="blue">executive officers</font>, our board of     <font color="blue">directors</font> and a <font color="blue">former director</font>, alleging breach of fiduciary duties, among     other matters</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigating </font>the class action and the <font color="blue">shareholder</font> <font color="blue"><font color="blue">derivative</font> actions</font>     relating to the <font color="blue">restatement</font> of our consolidated <font color="blue">financial statements</font> will     likely  require <font color="blue">significant</font> attention and resources of <font color="blue">management</font> and,     <font color="blue">regardless</font> of the outcome, result in <font color="blue">significant</font> legal expenses</td>
+    </tr>
+    <tr>
+      <td>In the case     of  the  securities  class  action,  if  our  defenses were ultimately     <font color="blue">unsuccessful</font>, or if we were unable to achieve a favorable settlement, we     could be liable for large damages awards that could seriously harm our     business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional</font>     information  regarding  the  securities  class action, the <font color="blue">shareholder</font>     <font color="blue">derivative</font>  actions and other <font color="blue">litigation</font> in which we are involved</td>
+    </tr>
+  </tbody>
+</table>

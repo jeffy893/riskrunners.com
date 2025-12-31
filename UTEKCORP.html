@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: investment", fill: "#cd853f"},
+{source: "2: investment", target: "5: investment portfolio", fill: "#6f00ff"},
+{source: "5: investment portfolio", target: "5: highly concentrated", fill: "#6f00ff"},
+{source: "5: highly concentrated", target: "5: largely dependent upon", fill: "#6f00ff"},
+{source: "5: largely dependent upon", target: "5: significant investments", fill: "#6f00ff"},
+{source: "5: investment portfolio", target: "7: investments", fill: "#8e4585"},
+{source: "7: investments", target: "7: fair value at", fill: "#8e4585"},
+{source: "7: fair value at", target: "7: December ", fill: "#8e4585"},
+{source: "7: investments", target: "14: highly speculative", fill: "#aa4069"},
+{source: "14: highly speculative", target: "14: investments", fill: "#aa4069"},
+{source: "14: investments", target: "14: new development stage companies", fill: "#aa4069"},
+{source: "14: new development stage companies", target: "14: new untested technology", fill: "#aa4069"},
+{source: "14: highly speculative", target: "16: portfolio companies", fill: "#e97451"},
+{source: "16: portfolio companies", target: "16: development stage companies dependent upon", fill: "#e97451"},
+{source: "16: development stage companies dependent upon", target: "16: successful commercialization", fill: "#e97451"},
+{source: "16: successful commercialization", target: "16: new technologies", fill: "#e97451"},
+{source: "16: portfolio companies", target: "21: technologies", fill: "#a32638"},
+{source: "21: technologies", target: "21: commercialized may", fill: "#a32638"},
+{source: "21: commercialized may", target: "21: become obsolete", fill: "#a32638"},
+{source: "21: technologies", target: "49: of the SEC ", fill: "#a52a2a"},
+{source: "49: of the SEC ", target: "49: private company", fill: "#a52a2a"},
+{source: "49: private company", target: "49: outstanding debt", fill: "#a52a2a"},
+{source: "49: outstanding debt", target: "49: securities would qualify as", fill: "#a52a2a"},
+{source: "49: securities would qualify as", target: "49: eligible portfolio company under", fill: "#a52a2a"},
+{source: "49: of the SEC ", target: "70: new companies", fill: "#555d50"},
+{source: "70: new companies", target: "70: new technologies", fill: "#555d50"},
+{source: "70: new companies", target: "START_HERE", fill: "#555d50"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment">Investment</a></td>
+      <td>Investment is the dedication of an asset to attain an increase in value over a period of time. Investment requires a sacrifice of some present asset, such as time, money, or effort.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_banking">Investment banking</a></td>
+      <td>Investment banking denotes certain activities of a financial services company or a corporate division that consist in advisory-based financial transactions on behalf of individuals, corporations, and governments. Traditionally associated with corporate finance, such a bank might assist in raising financial capital by underwriting or acting as the client's agent in the issuance of debt or equity securities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Foreign_direct_investment">Foreign direct investment</a></td>
+      <td>A foreign direct investment (FDI) is an investment in the form of a controlling ownership in a business in one country by an entity based in another country. It is thus distinguished from a foreign portfolio investment by a notion of direct control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fidelity_Investments">Fidelity Investments</a></td>
+      <td>Fidelity Investments Inc., commonly referred to as Fidelity, earlier as Fidelity Management &amp; Research or FMR, is an American multinational financial services corporation based in Boston, Massachusetts. The company was established in 1946 and is one of the largest asset managers in the world with $4.5 trillion in assets under management, now as of December 2021 their assets under administration amounts to $11.8 trillion.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fisher_Investments">Fisher Investments</a></td>
+      <td>Fisher Investments is an independent money management firm headquartered in Camas, Washington.\n\n\n== History ==\nKen Fisher founded the firm in 1979, incorporated in 1986, then served as CEO until July 2016, when he was succeeded by long-time Fisher Investments employee Damian Ornani.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mapletree_Investments">Mapletree Investments</a></td>
+      <td>Mapletree Investments Pte Ltd is a real estate development, investment, capital and property management company headquartered in Singapore. The Group currently manages four Singapore-listed real estate investment trusts (REITs) and seven private equity real estate funds, which comprise a diverse portfolio of assets in Asia Pacific, Europe, the United Kingdom (UK) and the United States (US).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Russell_Investments">Russell Investments</a></td>
+      <td>Russell Investments is an investment firm headquartered in Seattle, Washington.\n\n\n== Corporate overview ==\nAccording to American Banker, Russell Investments has approximately $300 billion of assets under management, as of September 2019.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_biotech_and_pharmaceutical_companies_in_the_New_York_metropolitan_area">List of biotech and pharmaceutical companies in the New York metropolitan area</a></td>
+      <td>Biotech and pharmaceutical companies in the New York metropolitan area represent a significant and growing economic component of the New York metropolitan area, the most populous combined statistical area in the United States and one of the most populous megacities in the world.The biotechnology sector is growing in the New York City area, based upon the region's strength in academic scientific research and public and commercial financial support. By mid-2014, Accelerator, a biotech investment firm, had raised more than US$30 million from investors, including Eli Lilly and Company, Pfizer, and Johnson &amp; Johnson, for initial funding to create biotechnology startups at the Alexandria Center for Life Science, which encompasses more than 700,000 square feet (65,000 m2) on East 29th Street and promotes collaboration among scientists and entrepreneurs at the center and with nearby academic, medical, and research institutions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Segregated_portfolio_company">Segregated portfolio company</a></td>
+      <td>A segregated portfolio company (or SPC), sometimes referred to as a protected cell company, is a company which segregates the assets and liabilities of different classes (or sometimes series) of shares from each other and from the general assets of the SPC.\nSegregated portfolio assets comprise assets representing share capital, retained earnings, capital reserves, share premiums and all other assets attributable to or held within the segregated portfolio. The protected cell company allows for more security and flexibility for international investment structuring.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Private-equity_fund">Private-equity fund</a></td>
+      <td>A private-equity fund is a collective investment scheme used for making investments in various equity (and to a lesser extent debt) securities according to one of the investment strategies associated with private equity.\nPrivate equity funds are typically limited partnerships with a fixed term of 10 years (often with annual extensions).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Company">Company</a></td>
+      <td>A company, abbreviated as co., is a legal entity representing an association of people, whether natural, legal or a mixture of both, with a specific objective. Company members share a common purpose and unite to achieve specific, declared goals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Grab_(company)">Grab (company)</a></td>
+      <td>Grab Holdings Inc., commonly known as Grab, is a Southeast Asian technology company. It is incorporated in the Cayman Islands and headquartered in Singapore and Indonesia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/WeWork">WeWork</a></td>
+      <td>WeWork Inc. (stylized in lowercase) is a provider of coworking spaces, including physical and virtual shared spaces, headquartered in New York City.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PVH_(company)">PVH (company)</a></td>
+      <td>PVH Corp., formerly known as the Phillips-Van Heusen Corporation, is an American clothing company which owns brands such as Tommy Hilfiger, Calvin Klein, Warner's, Olga and True &amp; Co. The company also licenses brands such as Kenneth Cole New York and Michael Kors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emerging_technologies">Emerging technologies</a></td>
+      <td>Emerging technologies are technologies whose development, practical applications, or both are still largely unrealized, such that they are figuratively emerging into prominence from a background of nonexistence or obscurity. These technologies are generally new but also include older technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Here_Technologies">Here Technologies</a></td>
+      <td>HERE Technologies (trading as HERE) is a multinational group dealing with mapping, location data and related automotive services to individuals and companies. It is majority-owned by a consortium of German automotive companies (namely Audi, BMW, the Mercedes-Benz Group) and American semiconductor company Intel whilst other companies also own minority stakes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Space_technology">Space technology</a></td>
+      <td>Space technology is technology for use in outer space, in travel (astronautics) or other activities beyond Earth's atmosphere, for purposes such as spaceflight, space exploration, and Earth observation. Space technology includes space vehicles such as spacecraft, satellites, space stations and orbital launch vehicles; deep-space communication; in-space propulsion; and a wide variety of other technologies including support infrastructure equipment, and procedures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_Technology_Train">New Technology Train</a></td>
+      <td>New Technology Train (NTT) is the collective term for the modern passenger fleet of the New York City Subway that has entered service since the turn of the 21st century. This includes the current R142, R142A, R143, R160, R179, and R188 models, along with the R211 model which is currently being delivered, and the planned R262 model.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/BioNTech">BioNTech</a></td>
+      <td>Biotechnology is "the integration of natural sciences and engineering sciences in order to achieve the application of organisms, cells, parts thereof and molecular analogues for products and services". The term biotechnology was first used by Károly Ereky in 1919, meaning the production of products from raw materials with the aid of living organisms.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ethics_of_technology">Ethics of technology</a></td>
+      <td>The ethics of technology is a sub-field of ethics addressing the ethical questions specific to the Technology Age, the transitional shift in society wherein personal computers and subsequent devices provide for the quick and easy transfer of information. Technology ethics is the application of ethical thinking to the growing concerns of technology as new technologies continue to rise in prominence[1].</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Teledyne_Technologies">Teledyne Technologies</a></td>
+      <td>Teledyne Technologies Incorporated is an American industrial conglomerate. It was founded in 1960, as Teledyne, Inc., by Henry Singleton and George Kozmetsky.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Newer_Technology">Newer Technology</a></td>
+      <td>Newer Technology is an American technology company headquartered in Woodstock, Illinois, that designs and manufactures accessories primarily for Apple, Inc. products.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/HCL_Technologies">HCL Technologies</a></td>
+      <td>HCL Technologies (Hindustan Computers Limited) is an Indian multinational information technology (IT) services and consulting company headquartered in Noida. It is a subsidiary of HCL Enterprise.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Renaissance_Technologies">Renaissance Technologies</a></td>
+      <td>Renaissance Technologies LLC, also known as RenTech or RenTec, is an American hedge fund based in East Setauket, New York, on Long Island, which specializes in systematic trading using quantitative models derived from mathematical and statistical analysis. Their signature Medallion fund is famed for the best record in investing history.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_Technologies">United Technologies</a></td>
+      <td>United Technologies Corporation (UTC) was an American multinational conglomerate headquartered in Farmington, Connecticut.  It researched, developed, and manufactured products in numerous areas, including aircraft engines, aerospace systems, HVAC, elevators and escalators, fire and security, building automation, and industrial products, among others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Raytheon_Technologies">Raytheon Technologies</a></td>
+      <td>Raytheon Technologies Corporation is an American multinational aerospace and defense conglomerate headquartered in Waltham, Massachusetts. It is one of the largest aerospace, intelligence services providers, and defense manufacturers in the world by revenue and market capitalization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lumen_Technologies">Lumen Technologies</a></td>
+      <td>Lumen Technologies, Inc. (formerly CenturyLink) is an American \ntelecommunications company headquartered in Monroe, Louisiana, that offers communications, network services, security, cloud solutions, voice, and managed services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology">Information technology</a></td>
+      <td>Information technology (IT) is the use of computers to create, process, store, retrieve, and exchange all kinds of electronic data and information. IT is typically used within the context of business operations as opposed to personal or entertainment technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_company">Limited company</a></td>
+      <td>In a limited company, the liability of members or subscribers of the company is limited to what they have invested or guaranteed to the company. Limited companies may be limited by shares or by guarantee.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Companies_Act_2013">Companies Act 2013</a></td>
+      <td>The Companies Act 2013 is an Act of the Parliament of India on Indian company law which regulates incorporation of a company, responsibilities of a company, directors, dissolution of a company. The 2013 Act is divided into 29 chapters containing 470 sections as against 658 Sections in the Companies Act, 1956 and has 7 schedules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Livery_company">Livery company</a></td>
+      <td>There are 110 livery companies, comprising London's ancient and modern trade associations and guilds, almost all of which are styled the 'Worshipful Company of...' their respective craft, trade or profession. These livery companies play a significant part in the life of the City of London (i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_Zealand_Company">New Zealand Company</a></td>
+      <td>The New Zealand Company, chartered in the United Kingdom, was a company that existed in the first half of the 19th century on a business model focused on the systematic colonisation of New Zealand. The company was formed to carry out the principles devised by Edward Gibbon Wakefield, who envisaged the creation of a new-model English society in the southern hemisphere.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_tech_companies_in_the_New_York_metropolitan_area">List of tech companies in the New York metropolitan area</a></td>
+      <td>Technology companies in the New York City metropolitan area represent a significant and growing economic component of the New York metropolitan area, the most populous combined statistical area in the United States and one of the most populous urban agglomerations in the world. In the region's Silicon Alley, new establishments include those of Israeli companies in New York City, at a rate of ten new startups per month, and the technology sector has been claiming a greater share of New York City's economy since 2010.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_&amp;_Company">New York &amp; Company</a></td>
+      <td>New York &amp; Company, Inc. (NY&amp;C) is an American workwear retailer for women.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>As a result,     there can be no assurance that we will achieve our <font color="blue">investment</font> objective</td>
+    </tr>
+    <tr>
+      <td>You     should consider <font color="blue">carefully</font> the <font color="blue">risks described</font> below</td>
+    </tr>
+    <tr>
+      <td>In addition to the risk     factors described below, other factors that could cause actual results to     <font color="blue">differ <font color="blue">materially</font></font> include:         •   changes in the economy;         •   <font color="blue">risk associated with possible disruption</font> in our <font color="blue"><font color="blue">operations</font> due</font> to     terrorism;         •   <font color="blue">future <font color="blue">regulatory</font> actions</font> and <font color="blue">conditions</font> in our operating areas; and         •   other risks and <font color="blue">uncertainties as may</font> be <font color="blue">detailed from</font> time to time in     our <font color="blue">public announcements</font> and SEC filings</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">investment</font> portfolio is <font color="blue">highly <font color="blue">concentrated</font></font> and, as a result, our     financial results are <font color="blue">largely <font color="blue"><font color="blue">dependent</font> upon</font></font> the performance of certain     <font color="blue">significant</font> <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">investment</font> portfolio is <font color="blue">highly <font color="blue">concentrated</font></font> and, as a result, our     financial results are <font color="blue">largely <font color="blue"><font color="blue">dependent</font> upon</font></font> the performance of certain     <font color="blue">significant</font> <font color="blue">investment</font>s; principally, Xethanol Corp, KP Renewables, plc,     Industrial  Bio<font color="blue">technology</font> Corp, UTEK Real Estate Holdings, Inc, Trio     Industries  Group,  Inc,  and  Fuel  FX International, Inc</td>
+    </tr>
+    <tr>
+      <td>These six     <font color="blue">investment</font>s  totaled dlra19dtta7 million in <font color="blue"><font color="blue">fair value</font> at</font> <font color="blue">December </font>31, 2005,     representing 51prca of our <font color="blue">investment</font>s and 44prca of net assets</td>
+    </tr>
+    <tr>
+      <td>As a result, if     our  <font color="blue">investment</font>  in one or more of these companies fails to perform as     expected, our financial results could be <font color="blue">negatively</font> affected</td>
+    </tr>
+    <tr>
+      <td>Our quarterly and annual results <font color="blue">could fluctuate <font color="blue">significant</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>Our quarterly and annual operating results <font color="blue">could fluctuate <font color="blue">significant</font>ly</font> due     to a number of factors</td>
+    </tr>
+    <tr>
+      <td>These factors include the small number and range of     values of the <font color="blue"><font color="blue">transaction</font>s</font> that are completed each quarter, <font color="blue">fluctuations</font> in     the values of our <font color="blue">investment</font>s, the timing of the <font color="blue">recognition</font> of unrealized     gains  and losses, the degree to which we <font color="blue">encounter competition</font> in our     markets, the <font color="blue">volatility</font> of the <font color="blue">stock market</font> and its <font color="blue">impact on</font> our unrealized     gains and losses, as well as other <font color="blue">general economic</font> <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>As a result     of  these  factors,  quarterly  and annual results are not <font color="blue">necessarily</font>     indicative of our performance in future quarters and years</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investment</font> model is <font color="blue">highly speculative</font> in nature</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">investment</font> model is <font color="blue">highly speculative</font> because it involves making     <font color="blue">investment</font>s in <font color="blue">new <font color="blue"><font color="blue">development</font> stage companies</font></font> and having those companies     invest in new, untested <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that our <font color="blue">investment</font>     <font color="blue">model will</font> be successful or that any of our <font color="blue">investment</font>s will be successful</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">portfolio companies</font> are <font color="blue"><font color="blue"><font color="blue">development</font> stage companies</font> <font color="blue"><font color="blue">dependent</font> upon</font></font> the     <font color="blue">successful commercialization</font> of <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>Each of our <font color="blue">investment</font>s in     <font color="blue">portfolio companies</font> is subject to a high degree of risk, and we may lose all     of our <font color="blue">investment</font> in a <font color="blue">portfolio company</font> if it is not successful</td>
+    </tr>
+    <tr>
+      <td>We invest in <font color="blue"><font color="blue">development</font> stage companies</font> that our <font color="blue">management</font> believes can     benefit  from  our expertise in <font color="blue"><font color="blue">technology</font> transfer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Development </font>stage     companies are subject to all of the <font color="blue"><font color="blue">risks associated</font> with new businesses</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, our <font color="blue">portfolio companies</font> are also subject to the <font color="blue">risks associated</font>     with research and <font color="blue">development</font> of <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>These risks include the     risk   that  new  <font color="blue">technologies</font>  cannot  be  identified,  developed  or     commercialized, may not work, or <font color="blue">become obsolete</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">portfolio companies</font>     <font color="blue">must successfully</font> acquire licenses to <font color="blue">new <font color="blue">technologies</font></font>, and in some cases     further develop <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font>                                           8     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font>you  that  any  of  our <font color="blue">investment</font>s in our <font color="blue">portfolio companies</font> will be     successful</td>
+    </tr>
+    <tr>
+      <td>Our  portfolio  companies  will be <font color="blue">competing with larger</font>,     <font color="blue">established companies with greater access</font> to, and resources for, further     <font color="blue">development</font> of these <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>We may lose our entire <font color="blue">investment</font> in     any or all of our <font color="blue">portfolio companies</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">portfolio companies</font> depend upon the research and <font color="blue">development</font> <font color="blue">activities</font>     of <font color="blue">universities</font>, <font color="blue">medical research centers</font> and <font color="blue">federal research laboratories</font>,     <font color="blue">over which neither</font> our <font color="blue">portfolio companies</font> nor we have any control</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">portfolio companies</font> depend upon the <font color="blue">research <font color="blue">activities</font></font> of <font color="blue">universities</font>,     <font color="blue">medical research centers</font> and <font color="blue">federal research laboratories</font></td>
+    </tr>
+    <tr>
+      <td>Neither we, nor     our <font color="blue">portfolio companies</font>, have any <font color="blue">control over</font> the <font color="blue">research <font color="blue">activities</font></font> of     <font color="blue">universities</font>, <font color="blue">medical research centers</font> and <font color="blue">federal research laboratories</font></td>
+    </tr>
+    <tr>
+      <td>As     neither  we  nor  our  portfolio  <font color="blue">companies provide supervision</font> of any     <font color="blue">universities</font>, <font color="blue">medical research centers</font> and <font color="blue">federal research laboratories</font>, we     <font color="blue">cannot ensure</font> that the <font color="blue">research will</font> be <font color="blue">done properly</font> and that the results,     which we may license, will be reproducible</td>
+    </tr>
+    <tr>
+      <td>In addition, we have no control     over what types of <font color="blue">technologies</font> are presented to us by <font color="blue">universities</font>, medical     research  centers and <font color="blue">federal research laboratories</font> for <font color="blue">evaluation</font> and     commercial <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>Further, the licenses to <font color="blue">technologies</font> that our     <font color="blue">portfolio companies</font> obtain may be non-exclusive</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technologies </font>acquired by our <font color="blue">portfolio companies</font> may <font color="blue">become obsolete</font> before     we can sell their securities</td>
+    </tr>
+    <tr>
+      <td>Neither our <font color="blue">portfolio companies</font> nor we have any <font color="blue">control over</font> the pace of     <font color="blue">technology</font> <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>There is a <font color="blue"><font color="blue">significant</font> risk</font> that a <font color="blue">portfolio company</font>     could  acquire  the  rights  to  a  <font color="blue">technology</font> that is currently or is     <font color="blue">subsequently</font> made <font color="blue">obsolete by</font> other technological <font color="blue">development</font>s</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">patents on</font> the <font color="blue">technologies</font> that our <font color="blue">portfolio companies</font> license may     <font color="blue">infringe upon</font> the rights of others, and <font color="blue">patent applications</font> that have been     <font color="blue">submitted may</font> not be granted</td>
+    </tr>
+    <tr>
+      <td>Many  of  our  portfolio  companies  rely  upon patents to protect the     <font color="blue">technologies</font> that they license</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">patents on</font> <font color="blue">technologies</font> that they     license are found to <font color="blue">infringe upon</font> the rights of others, or are held to be     invalid, then the licenses to such <font color="blue">technologies</font> will have little or no value     to  our  <font color="blue">portfolio companies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if a patent to a <font color="blue">technology</font>     <font color="blue">licensed by</font> a <font color="blue">portfolio company</font> is found to <font color="blue">infringe upon</font> the rights of     others,  the <font color="blue">portfolio company</font> may be liable for <font color="blue">monetary damages</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">portfolio companies</font> are <font color="blue"><font color="blue">dependent</font> upon</font> the <font color="blue">universities</font>, medical centers or     <font color="blue">government</font>  <font color="blue">research facilities</font> to file, secure and protect <font color="blue">patents on</font>     licensed <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>In the event that a patent is challenged or violated,     our <font color="blue">portfolio companies</font> may not have the financial resources to defend the     patent  either in the <font color="blue">preliminary stages</font> of <font color="blue">litigation</font> or in court</td>
+    </tr>
+    <tr>
+      <td>In     addition, if our <font color="blue">portfolio companies</font> acquire licenses to <font color="blue">technologies</font> with     <font color="blue">patents pending</font>, we <font color="blue">cannot assure</font> you that <font color="blue">such patents will</font> be granted</td>
+    </tr>
+    <tr>
+      <td>If our primary <font color="blue">investment</font>s are deemed not to be <font color="blue">qualifying assets</font>, we could     be <font color="blue">precluded from investing</font> in the <font color="blue">manner described</font> in this <font color="blue">Annual Report </font>on     Form 10-K or deemed to be in violation of the 1940 Act</td>
+    </tr>
+    <tr>
+      <td>As a BDC, we must not acquire any assets other than “<font color="blue">qualifying assets</font>”     unless, at the time of and after giving effect to such <font color="blue">acquisition</font>, at least     70prca of our <font color="blue">total assets</font> are <font color="blue">qualifying assets</font></td>
+    </tr>
+    <tr>
+      <td>For a discussion of the     <font color="blue">principal categories</font> of “<font color="blue">qualifying assets</font>,” see “Business - Regulation as a     Business <font color="blue">Development </font>Company</td>
+    </tr>
+    <tr>
+      <td>” Currently, if we acquire debt or equity     <font color="blue">securities from</font> an issuer that has <font color="blue"><font color="blue">outstanding marginable securities</font> at</font> the     time we make an <font color="blue">investment</font>, these acquired <font color="blue">assets cannot</font> be <font color="blue">treated as</font>     <font color="blue">qualifying assets</font></td>
+    </tr>
+    <tr>
+      <td>This result is <font color="blue">dictated by</font> the <font color="blue">definition</font> of “eligible     <font color="blue">portfolio company</font>” under the 1940 Act, which in part looks to whether a     company has <font color="blue">outstanding marginable securities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Amendments  </font>promulgated  in  1998  by the <font color="blue">Federal Reserve </font>expanded the     <font color="blue">definition</font> of <font color="blue">marginable securities under</font> the Federal Reserve’s <font color="blue">margin rules</font>     to include any non-equity security</td>
+    </tr>
+    <tr>
+      <td>Thus, any debt securities issued by any     entity are <font color="blue">marginable securities under</font> the Federal Reserve’s <font color="blue">current margin</font>     rules</td>
+    </tr>
+    <tr>
+      <td>As a result, the staff <font color="blue">of the SEC </font>has raised the question to the BDC     industry  as  to  whether  a <font color="blue">private company</font> that has <font color="blue">outstanding debt</font>     <font color="blue">securities would qualify as</font> an “eligible <font color="blue">portfolio company</font>” under the 1940     Act</td>
+    </tr>
+    <tr>
+      <td>The SEC <font color="blue">issued proposed rules which would define</font> an <font color="blue">eligible portfolio</font>     company as any company that does not have <font color="blue">securities listed on</font> a national     <font color="blue">securities exchange</font> or <font color="blue">association</font></td>
+    </tr>
+    <tr>
+      <td>If adopted, the effect of these rules     would be to <font color="blue">eliminate confusion</font> regarding whether a privately-owned company     that <font color="blue">issued debt would qualify as</font> an “eligible <font color="blue">portfolio company</font></td>
+    </tr>
+    <tr>
+      <td>”         Unless and until the proposed rules described above are adopted by the SEC,     if there were a <font color="blue">court ruling</font> or <font color="blue"><font color="blue">regulatory</font> decision</font> that provided that a     privately-owned company that has <font color="blue">outstanding debt</font> securities (none of which     is listed on a national <font color="blue">securities exchange</font> or <font color="blue">association</font>) was not an     eligible <font color="blue">portfolio company</font>, we could be <font color="blue">precluded from investing</font> in the     <font color="blue">manner described</font> in this <font color="blue">Annual Report </font>on Form 10-K or deemed to be in     violation of the 1940 Act</td>
+    </tr>
+    <tr>
+      <td>9     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font><font color="blue">Technologies </font>that have been developed <font color="blue">with funding from</font> the US <font color="blue">government</font>     may have <font color="blue">limits on</font> their use, which could affect the value of the <font color="blue">technology</font>     to a <font color="blue">portfolio company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technologies </font>developed <font color="blue">with funds provided by</font> the US <font color="blue">government</font> have     <font color="blue"><font color="blue">restriction</font>s</font>  regarding  where  they  may  be  sold and have <font color="blue">limits on</font>     <font color="blue">exclusivity</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">portfolio company</font> that acquires a <font color="blue">technology</font> developed with     <font color="blue">federal funding may</font> be limited as to where it can sell the <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">technology</font> may only be allowed to be sold or <font color="blue">manufactured within</font> the US In     addition, the US <font color="blue">government</font> has the right to use <font color="blue">technologies</font> that it has     <font color="blue">funded regardless</font> of whether the <font color="blue">technology</font> has <font color="blue">been licensed</font> to a third     party</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">regulations</font> may limit</font> the <font color="blue">marketability</font> of a <font color="blue">technology</font> and     <font color="blue">therefore reduce</font> the value of the <font color="blue">technology</font> to our <font color="blue">portfolio companies</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable or decide not to make <font color="blue">additional</font> cash <font color="blue">investment</font>s in our     <font color="blue">portfolio companies</font> which could result in our losing our initial <font color="blue">investment</font>     if the <font color="blue">portfolio company</font> fails</td>
+    </tr>
+    <tr>
+      <td>We may have to make <font color="blue">additional</font> cash <font color="blue">investment</font>s in our <font color="blue">portfolio companies</font>     to protect our overall <font color="blue">investment</font> value in the <font color="blue">particular company</font></td>
+    </tr>
+    <tr>
+      <td>We retain     the  <font color="blue">discretion</font>  to  make any <font color="blue">additional</font> <font color="blue">investment</font>s as our <font color="blue">management</font>     determines</td>
+    </tr>
+    <tr>
+      <td>The failure to make such <font color="blue">additional</font> <font color="blue">investment</font>s may jeopardize     the  continued  viability of a <font color="blue">portfolio company</font>, and our initial (and     subsequent) <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>Moreover, <font color="blue">additional</font> <font color="blue">investment</font>s may limit the     number of companies in which we can make initial <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>We have no     <font color="blue">established criteria</font> in determining whether to make an <font color="blue">additional</font> <font color="blue">investment</font>     except that our <font color="blue">management</font> will exercise its business judgment and apply     criteria similar to those used when making the initial <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>We cannot     assure  you  that  we will have <font color="blue">sufficient funds</font> to make any <font color="blue">necessary</font>     <font color="blue">additional</font> <font color="blue">investment</font>s, which could <font color="blue">adversely</font> affect our success and result     in the loss of a substantial portion or all of our <font color="blue">investment</font> in a portfolio     company</td>
+    </tr>
+    <tr>
+      <td>The securities we hold in our <font color="blue">portfolio companies</font> are subject to <font color="blue">restriction</font>     on resale, and we may not be able to sell the securities we hold for amounts     equal to their <font color="blue">recorded value</font>, if at all</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">portfolio companies</font> are <font color="blue">mainly thinly traded public companies</font> or private     companies, and we acquire securities in our <font color="blue">portfolio companies</font> in private     <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As a result, <font color="blue">substantially</font> all of the securities we hold in     our  portfolio  companies are subject to legal <font color="blue"><font color="blue">restriction</font>s</font> on resale</td>
+    </tr>
+    <tr>
+      <td>Furthermore, our ability to sell the securities in our <font color="blue">portfolio may</font> be     limited by, and subject to, the lack of or limited nature of a trading     market for <font color="blue">such securities</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, we <font color="blue">cannot assure</font> you that we will be     able to sell our <font color="blue">portfolio company</font> securities for amounts equal to the     values that we have ascribed to them or at the time we desire to sell</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> on sales <font color="blue"><font color="blue">transaction</font>s</font>, <font color="blue">structured as</font> tax-free exchanges, to     sell the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>A change in the     <font color="blue"><font color="blue">Internal Revenue Code</font> </font>affecting tax-free exchanges could reduce our ability     to <font color="blue">sell such companies</font></td>
+    </tr>
+    <tr>
+      <td>We do not anticipate selling any of the <font color="blue">new companies</font> we form to acquire new     <font color="blue">technologies</font> except in connection with merger <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate     that most, if not all, of such merger <font color="blue"><font color="blue">transaction</font>s</font> will be <font color="blue">structured as</font>     tax-free  <font color="blue">exchanges under</font> Section 368 of the <font color="blue">Internal Revenue Code</font></td>
+    </tr>
+    <tr>
+      <td>If     Section 368 were to be amended so that we were <font color="blue">no longer able</font> to structure     our merger <font color="blue"><font color="blue">transaction</font>s</font> as tax-free exchanges, we may not be able to sell     such  companies  <font color="blue">on commercially reasonable terms</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to     <font color="blue">successfully sell</font> the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font> in a     merger <font color="blue">transaction</font> <font color="blue">structured as</font> a tax-free exchange, we may be required to     <font color="blue"><font color="blue">significant</font>ly alter</font> the use of our U2B^® <font color="blue">investment</font> process</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreements</font> we have with <font color="blue">universities</font>, <font color="blue">medical research centers</font> and     <font color="blue">federal research laboratories</font> do not guarantee that <font color="blue">such entities will grant</font>     licenses to us or other companies</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreements</font> that we have entered into with <font color="blue">universities</font>, medical research     centers and <font color="blue">federal research laboratories</font> <font color="blue">provide us with</font> the ability to     evaluate the <font color="blue">commercial potential</font> for <font color="blue">technologies</font> at an <font color="blue">early stage</font> of     <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">agreements</font>, however, do not <font color="blue">provide us with</font> any guarantee     that following our <font color="blue">evaluation</font>, the university, medical research center or     <font color="blue">federal research laboratory will grant</font> a license to us or other companies</td>
+    </tr>
+    <tr>
+      <td>As a result, we may expend time and resources evaluating a <font color="blue">technology</font> and     not be able to secure a license to such <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We  are  <font color="blue"><font color="blue">dependent</font> upon</font> our <font color="blue">management</font>’s ability to identify portfolio     companies to acquire the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investment</font> strategy is <font color="blue">based upon selling</font> the <font color="blue">new companies</font> we form to     acquire <font color="blue">new <font color="blue">technologies</font></font> in stock for <font color="blue">stock exchanges</font> to companies that wish     to acquire the <font color="blue">technologies</font> owned by our <font color="blue">newly <font color="blue">formed companies</font> but which</font>     may be neither operating <font color="blue">nor established</font></td>
+    </tr>
+    <tr>
+      <td>We do not expect to sell any     securities of the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font> to the     public</td>
+    </tr>
+    <tr>
+      <td>Therefore, if we fail to identify a company to acquire our newly     <font color="blue">formed companies</font>, our entire <font color="blue">investment</font> could be lost</td>
+    </tr>
+    <tr>
+      <td>10     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>We are <font color="blue"><font color="blue">dependent</font> upon</font> and have little or no <font color="blue">control over</font> the efforts of     <font color="blue">portfolio companies</font> to <font color="blue">successfully commercialize</font> the acquired <font color="blue">technologies</font>     or to retain the licenses to such <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>We receive <font color="blue"><font color="blue">common stock</font> from</font> the <font color="blue">portfolio company</font> based upon the mutually     <font color="blue">agreed upon values</font> of the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font>,     its licensed <font color="blue">technology</font> and the <font color="blue">portfolio company</font></td>
+    </tr>
+    <tr>
+      <td>We then intend to sell     the securities that we acquire in exchange for the <font color="blue">new companies</font> we form to     acquire <font color="blue">new <font color="blue">technologies</font></font> at some time in the future</td>
+    </tr>
+    <tr>
+      <td>Therefore, our ability     to <font color="blue">profit from</font> an <font color="blue">investment</font> is ultimately <font color="blue"><font color="blue">dependent</font> upon</font> the price we     receive  for  the  shares of the <font color="blue">portfolio company</font></td>
+    </tr>
+    <tr>
+      <td>In most cases, the     companies that acquire the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font>     will be <font color="blue"><font color="blue">dependent</font> upon</font> successfully commercializing the <font color="blue">technologies</font> they     acquire</td>
+    </tr>
+    <tr>
+      <td>We do not have <font color="blue">control over</font> the <font color="blue">portfolio companies</font> that acquire     the <font color="blue">new companies</font> we form to acquire <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>These portfolio     <font color="blue">companies may face intense competition</font>, including <font color="blue">competition from companies</font>     <font color="blue">with greater financial resources</font>, more extensive research and <font color="blue">development</font>,     manufacturing, marketing and <font color="blue">service capabilities</font> and a greater number of     qualified and experienced managerial and <font color="blue">technical personnel</font></td>
+    </tr>
+    <tr>
+      <td>They may need     <font color="blue"><font color="blue">additional</font> financing which</font> they are unable to secure and which we are unable     or unwilling to provide, or they may be subject to adverse <font color="blue">development</font>s     unrelated to the <font color="blue">technologies</font> they acquire</td>
+    </tr>
+    <tr>
+      <td>They may lose the <font color="blue">rights granted</font>     to them for the <font color="blue">technology</font> for failure to <font color="blue">comply with</font> the <font color="blue">license agreement</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that any of the <font color="blue">portfolio companies</font> will be successful     or that we will be able to sell the securities we receive at a profit or for     <font color="blue">sufficient amounts</font> to <font color="blue">even recover</font> our initial <font color="blue">investment</font> in the portfolio     companies or that our <font color="blue">portfolio companies</font> will not take actions that could     be <font color="blue">detrimental</font> to our <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investment</font>s in our <font color="blue">portfolio companies</font> may be <font color="blue">concentrated</font> in one or     more <font color="blue">industries</font>, and if these <font color="blue">industries</font> should decline or fail to develop     as expected our <font color="blue">investment</font>s will be lost</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investment</font>s in our <font color="blue">portfolio companies</font> may be <font color="blue">concentrated</font> in one or     more <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue"><font color="blue">concentration</font> will mean</font> that our <font color="blue">investment</font>s will be     <font color="blue">particularly</font>  <font color="blue">dependent</font>  on  the  <font color="blue">development</font> and performance of those     <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our <font color="blue">investment</font>s may not benefit from any <font color="blue">advantages</font>     which might be obtained <font color="blue">with greater <font color="blue">diversification</font></font> of the <font color="blue">industries</font> in     which our <font color="blue">portfolio companies</font> operate</td>
+    </tr>
+    <tr>
+      <td>If those <font color="blue">industries</font> should decline or     fail to develop as expected, our <font color="blue">investment</font>s in our <font color="blue">portfolio companies</font> in     those <font color="blue">industries</font> will be subject to loss</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of our portfolio <font color="blue">investment</font>s are <font color="blue">recorded at <font color="blue">fair value</font> as</font>     determined in good faith by our board of <font color="blue">directors</font>, and as a result, there     is <font color="blue">uncertainty</font> regarding the value of our portfolio <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005 and <font color="blue">December </font>31, 2004, <font color="blue">investment</font>s amounting to dlra26dtta4     million or 59dtta4prca of our net assets and dlra14dtta0 million or 60dtta5prca of our net     assets, respectively, have <font color="blue">been valued at <font color="blue">fair value</font> as</font> determined by our     board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Pursuant to the <font color="blue">requirements</font> of the 1940 Act, our board     of <font color="blue">directors</font> is responsible for determining in good faith the <font color="blue">fair value</font> of     our <font color="blue">investment</font>s for <font color="blue">which market quotations</font> are not <font color="blue">readily available</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because  </font>there  is typically no <font color="blue">readily available</font> <font color="blue">market value</font> for the     <font color="blue">investment</font>s in our portfolio, our board of <font color="blue">directors</font> determines in good     faith the <font color="blue">fair value</font> of these <font color="blue">investment</font>s pursuant to a <font color="blue">valuation policy</font> and     a <font color="blue"><font color="blue">consistently applied valuation</font> process</font></td>
+    </tr>
+    <tr>
+      <td>There is no single standard for     determining <font color="blue">fair value</font> in good faith</td>
+    </tr>
+    <tr>
+      <td>As a result, determining <font color="blue">fair value</font>     requires that judgment be applied to the <font color="blue">specific facts</font> and <font color="blue">circumstances</font> of     each portfolio <font color="blue">investment</font> while employing a <font color="blue">consistently applied valuation</font>     process for the types of <font color="blue">investment</font>s we make</td>
+    </tr>
+    <tr>
+      <td>If we were required to sell     any of such <font color="blue">investment</font>s, there is no assurance that the <font color="blue">fair value</font>, as     determined by the board of <font color="blue">directors</font>, would be obtained</td>
+    </tr>
+    <tr>
+      <td>If we were unable     to obtain <font color="blue">fair value</font> for such <font color="blue">investment</font>s, there would be an adverse effect     on our <font color="blue">net asset value</font> and on the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">adjust quarterly</font> the valuation of our portfolio to reflect the board of     <font color="blue">directors</font>’  <font color="blue">determination</font>  of the <font color="blue">fair value</font> of each <font color="blue">investment</font> in our     portfolio</td>
+    </tr>
+    <tr>
+      <td>Any changes in <font color="blue">fair value</font> are recorded in our statement of     <font color="blue"><font color="blue">operations</font> as</font> “Change in net unrealized <font color="blue">appreciation</font> (<font color="blue">depreciation</font>) of     <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>”         Our business <font color="blue">depends on <font color="blue">key personnel</font></font></td>
+    </tr>
+    <tr>
+      <td>We  rely on, and <font color="blue">will continue</font> to be <font color="blue">substantially</font> <font color="blue"><font color="blue">dependent</font> upon</font>, the     continued  services of our <font color="blue">management</font>, principally our Chief Executive     Officer and Chairman, Clifford M Gross</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">management</font> team is responsible     for the review of potential <font color="blue">investment</font>s by and the provision of advice to     companies regarding the <font color="blue">acquisition</font> of <font color="blue">technologies</font> and <font color="blue"><font color="blue">additional</font> research</font>     and <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also depend upon</font> our <font color="blue">management</font>’s key contacts with     <font color="blue">universities</font>, <font color="blue">medical research centers</font> and <font color="blue">federal research laboratories</font> to     maintain our access to <font color="blue">new <font color="blue">technologies</font></font> and our <font color="blue">relationships with companies</font>     in the private sector in order to <font color="blue">effectuate</font> the sale of the <font color="blue">new companies</font>     we form to acquire <font color="blue">new <font color="blue">technologies</font></font></td>
+    </tr>
+    <tr>
+      <td>11     ______________________________________________________________________    [40]Table of <font color="blue">Contents       </font>We have a limited amount of <font color="blue">funds available</font> for <font color="blue">investment</font> in portfolio     companies, and as a result, our <font color="blue">investment</font>s will lack <font color="blue">diversification</font></td>
+    </tr>
+    <tr>
+      <td>Based on the amount of our <font color="blue">existing available funds</font>, it is unlikely that we     will be able to commit our funds to <font color="blue">investment</font>s in, and the <font color="blue">acquisition</font> of,     securities of a large number of companies</td>
+    </tr>
+    <tr>
+      <td>Our current <font color="blue">investment</font>s are not, and in the <font color="blue">future may</font> not be, <font color="blue">substantially</font>     diversified</td>
+    </tr>
+    <tr>
+      <td>We  will  not  be  able  to  achieve  the  same level of     <font color="blue">diversification</font>  <font color="blue">as larger entities</font> engaged in similar <font color="blue">venture capital</font>     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, our <font color="blue">assets may</font> be subject to <font color="blue">greater risk</font> of loss     than if they were more <font color="blue">widely diversified</font>, because the failure of one or     more of our limited number of <font color="blue">investment</font>s would have a material adverse     effect on our <font color="blue">financial condition</font> and the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">portfolio companies</font> fail to <font color="blue">comply with</font> the <font color="blue">requirements</font> of the forum     in which their securities are quoted or the <font color="blue">trading market on which</font> their     securities are listed, the liquidity and prices of our <font color="blue">investment</font>s would be     <font color="blue"><font color="blue">materially</font> <font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, dlra22dtta9 million or 47prca of our <font color="blue">total assets</font> consisted of     <font color="blue">investment</font>s at value in <font color="blue">companies whose securities</font> are quoted on the OTC     Bulletin Board or are listed on <font color="blue">the American Stock Exchange </font>or other similar     markets</td>
+    </tr>
+    <tr>
+      <td>In order for the securities of our <font color="blue">portfolio companies</font> to be     eligible for <font color="blue">continued listing on</font> those markets or <font color="blue"><font color="blue">quotation system</font>s</font>, our     portfolio  companies  must  remain  in <font color="blue"><font color="blue">compliance with</font> certain listing</font>     standards</td>
+    </tr>
+    <tr>
+      <td>Among other things, these standards require that our portfolio     companies remain current in their filings with the SEC and <font color="blue">comply with</font>     certain  of  the  provisions of the Sarbanes-Oxley Act of 2002</td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue">portfolio companies</font> are no longer in <font color="blue">compliance with</font> these and other related     <font color="blue">requirements</font>, there would be no forum or market for the quotation or listing     of  the securities of our <font color="blue">portfolio companies</font></td>
+    </tr>
+    <tr>
+      <td>Without such a forum or     market, the liquidity and prices of our <font color="blue">investment</font>s would be <font color="blue">materially</font>     <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">cannot give</font> any assurance that our portfolio     <font color="blue">companies will remain</font> in <font color="blue">compliance with</font> the <font color="blue">requirements</font> to be quoted on     the <font color="blue">OTC Bulletin Board </font>or listed on <font color="blue">the American Stock Exchange </font>or any other     market or <font color="blue">quotation system</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the law or <font color="blue">regulations</font> that <font color="blue">govern us could</font> have a material     <font color="blue">impact on</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Any change in the law or <font color="blue">regulations</font> that govern our business could have a     material <font color="blue">impact on</font> us or on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Laws and <font color="blue">regulations</font> may be     changed from time to time, and the <font color="blue">interpretations</font> of the <font color="blue">relevant laws</font> and     <font color="blue">regulations</font> also are subject to change</td>
+    </tr>
+    <tr>
+      <td>We are subject to certain <font color="blue">risks associated</font> with our foreign <font color="blue">operations</font> and     <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">operations</font> in the <font color="blue">United Kingdom and Israel </font>and make <font color="blue">investment</font>s in     foreign companies</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, <font color="blue">approximately</font> 7dtta7prca of our assets     were comprised of assets in foreign <font color="blue">operations</font> and <font color="blue">investment</font>s in foreign     companies</td>
+    </tr>
+    <tr>
+      <td>Certain risks are inherent in foreign <font color="blue">operations</font>, including:           •   <font color="blue">difficulties</font> in enforcing <font color="blue">agreements</font> and <font color="blue">collecting receivables</font>     <font color="blue">through certain foreign legal systems</font>;           •   <font color="blue">foreign customers may</font> have <font color="blue">longer payment cycles than customers</font> in the     US;           •   tax rates in <font color="blue">certain foreign countries may exceed</font> those in the US,     and foreign earnings may be subject to withholding <font color="blue">requirements</font>, exchange     controls or other <font color="blue"><font color="blue">restriction</font>s</font>;           •   <font color="blue">general economic</font> and political <font color="blue">conditions</font> in countries where we     operate may have an adverse effect on our <font color="blue">operations</font>;           •   exposure to <font color="blue">risks associated</font> with changes in <font color="blue">foreign exchange rates</font>;           •   <font color="blue">difficulties</font> associated with managing a large <font color="blue">organization spread</font>     <font color="blue">throughout various countries</font>;           •   <font color="blue">difficulties</font> in <font color="blue">enforcing intellectual property rights</font>; and           •   required <font color="blue">compliance with</font> a variety of <font color="blue">foreign laws</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investing  </font>in  foreign companies may expose us to <font color="blue">additional</font> risks not     typically associated with investing in US companies</td>
+    </tr>
+    <tr>
+      <td>These risks include     changes in <font color="blue">foreign exchange rates</font>, exchange control <font color="blue">regulations</font>, political     and social instability, expropriation, imposition of foreign taxes, less     <font color="blue">liquid markets</font> and <font color="blue">less available</font> information than is <font color="blue">generally</font> the case in     the United States, higher <font color="blue">transaction</font> costs, less <font color="blue">government</font> supervision of     exchanges, brokers and issuers, less developed bankruptcy laws, difficulty     in  enforcing  contractual obligations, lack of <font color="blue">uniform accounting</font> and     <font color="blue">auditing standards</font> and greater price <font color="blue">volatility</font></td>
+    </tr>
+    <tr>
+      <td>12     ______________________________________________________________________    [41]Table of <font color="blue">Contents       </font>As we continue to expand our business globally, our <font color="blue">success will depend</font>, in     part, on our ability to anticipate and <font color="blue">effectively manage</font> these and other     risks</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that these and other <font color="blue">factors will</font> not have a     material adverse effect on our international <font color="blue">operations</font> or our business as a     whole</td>
+    </tr>
+    <tr>
+      <td>One  of  our  current  <font color="blue">stockholders</font> has <font color="blue">significant</font> influence over our     <font color="blue">management</font> and affairs</td>
+    </tr>
+    <tr>
+      <td>Clifford M Gross, our Chief Executive Officer and Chairman, <font color="blue">beneficially</font>     owns  <font color="blue">approximately</font>  25prca  of our <font color="blue">common stock</font> as of <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Therefore, Dr</td>
+    </tr>
+    <tr>
+      <td>Gross may be able to <font color="blue">exert influence over</font> our <font color="blue">management</font> and     policies</td>
+    </tr>
+    <tr>
+      <td>Gross may acquire <font color="blue">additional</font> equity in our company in the     future</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">concentration</font> of <font color="blue">ownership may also</font> have the effect of delaying,     preventing or deterring a change of control of our company, could deprive     our <font color="blue">stockholders</font> of an <font color="blue">opportunity</font> to receive a premium for their common     stock as part of the sale of our company and <font color="blue">might ultimately affect</font> the     <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>We may need <font color="blue">additional</font> capital in the future, and it may not be <font color="blue">available on</font>     acceptable terms</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">historically relied on outside financing</font> and <font color="blue">cash flow from</font> the sale     of  our  <font color="blue">investment</font>s  to fund our <font color="blue">operations</font>, capital expenditures and     expansion</td>
+    </tr>
+    <tr>
+      <td>However, we may require <font color="blue">additional</font> capital in the future to fund     our <font color="blue">operations</font>, finance our <font color="blue">investment</font>s in <font color="blue">portfolio companies</font>, or respond     to <font color="blue"><font color="blue">competitive</font> pressures</font> or <font color="blue">strategic opportunities</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you     that <font color="blue">additional</font> financing will be <font color="blue">available on</font> terms favorable to us, or at     all</td>
+    </tr>
+    <tr>
+      <td>In addition, the terms of <font color="blue">available financing may</font> place <font color="blue">limits on</font> our     financial and operating <font color="blue">flexibility</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain sufficient     capital in the future, we may:           •   be forced to reduce our <font color="blue">operations</font>;           •   not be able to expand or acquire <font color="blue">complementary businesses</font>; and           •   not be able to develop <font color="blue">new services</font> or otherwise respond to changing     business <font color="blue">conditions</font> or <font color="blue"><font color="blue">competitive</font> pressures</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulations </font>governing our <font color="blue">operation as</font> a business <font color="blue">development</font> company will     affect our ability to, and the way in which we, raise <font color="blue">additional</font> capital</td>
+    </tr>
+    <tr>
+      <td>We may require <font color="blue">additional</font> capital in the future to fund our <font color="blue">operations</font>,     finance our <font color="blue">investment</font>s in <font color="blue">portfolio companies</font>, or respond to <font color="blue">competitive</font>     pressures or <font color="blue">strategic opportunities</font></td>
+    </tr>
+    <tr>
+      <td>We may acquire <font color="blue">additional</font> capital from     the <font color="blue">following sources</font>:         <font color="blue">Senior Securities and Other Indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may issue debt securities</font> or     preferred  stock  and/or  borrow  money  from banks or other financial     institutions, which we refer to collectively as <font color="blue">senior securities</font>, up to the     <font color="blue">maximum amount permitted by</font> the 1940 Act</td>
+    </tr>
+    <tr>
+      <td>If we issue <font color="blue">senior securities</font>,     including debt or <font color="blue">preferred stock</font>, we will be exposed to <font color="blue">additional</font> risks,     including the following:           •   Under the provisions of the 1940 Act, we will be permitted, as a BDC,     to issue <font color="blue">senior securities</font> only in amounts such that our asset coverage, as     defined in the 1940 Act, equals at least 200prca after <font color="blue">each issuance</font> of senior     securities</td>
+    </tr>
+    <tr>
+      <td>If that happens, we may be required to sell a portion of our     <font color="blue">investment</font>s and, <font color="blue">depending on</font> the nature of our leverage, repay a portion of     our debt at a time when such sales and/or repayments may be <font color="blue">disadvantageous</font></td>
+    </tr>
+    <tr>
+      <td>•   It is likely that any <font color="blue">senior securities</font> or other <font color="blue">indebtedness</font> we issue     will be <font color="blue">governed by</font> an indenture or other instrument <font color="blue">containing covenants</font>     restricting our operating <font color="blue">flexibility</font></td>
+    </tr>
+    <tr>
+      <td>•   We and, <font color="blue">indirectly</font>, our <font color="blue">stockholders</font> will bear the cost of issuing and     servicing <font color="blue">such securities</font> and other <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Preferred </font>stock or any convertible or <font color="blue">exchangeable securities</font> that we     issue in the <font color="blue">future may</font> have rights, preferences and privileges more     favorable than those of our <font color="blue">common stock</font>, including <font color="blue">separate voting rights</font>     and <font color="blue">could delay</font> or prevent a <font color="blue">transaction</font> or a change in control to the     detriment of the holders of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional Common Stock</font></td>
+    </tr>
+    <tr>
+      <td>We are not <font color="blue">generally</font> able to issue and sell our     common  stock  at a price below our <font color="blue">net asset value</font> per share</td>
+    </tr>
+    <tr>
+      <td>We may,     however, sell our <font color="blue">common stock</font>, warrants, options or rights to acquire our     <font color="blue">common stock</font>, at a price below our <font color="blue">net asset value</font> of the <font color="blue">common stock</font> if     our board of <font color="blue">directors</font> determines that such sale is in our <font color="blue">best interests</font>     and that of our <font color="blue">stockholders</font>, and our <font color="blue">stockholders</font> approve such sale</td>
+    </tr>
+    <tr>
+      <td>In any     such case, the price at which our securities are to be issued and sold may     not  be  less than a price which, in the <font color="blue">determination</font> of our board of     <font color="blue">directors</font>, closely approximates the <font color="blue">market value</font> of <font color="blue">such securities</font> (less     any <font color="blue">distributing commission</font> or discount)</td>
+    </tr>
+    <tr>
+      <td>We may also make <font color="blue">rights offerings</font>     to our <font color="blue">stockholders</font> at prices per share less than the <font color="blue">net asset value</font> per     share, subject to applicable <font color="blue">requirements</font> of the 1940 Act</td>
+    </tr>
+    <tr>
+      <td>If we raise     <font color="blue">additional</font> funds                                           13     ______________________________________________________________________    [42]Table of <font color="blue">Contents       </font>by issuing more <font color="blue">common stock</font> or <font color="blue">senior securities</font> convertible into, or     exchangeable  for,  our  <font color="blue">common stock</font>, the <font color="blue">percentage ownership</font> of our     <font color="blue">stockholders</font> at that time <font color="blue">would decrease</font> and they may experience dilution</td>
+    </tr>
+    <tr>
+      <td>Moreover, we can <font color="blue">offer no assurance</font> that we will be able to issue and sell     <font color="blue">additional</font> equity securities in the future, on favorable terms or at all</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">common stock</font> price may be volatile</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of our <font color="blue">common stock</font> may fluctuate <font color="blue">substantially</font>, depending     on  many  factors, some of which are beyond our control and may not be     directly  related  to operating performance</td>
+    </tr>
+    <tr>
+      <td>These factors include the     following:           •   price and <font color="blue">volume <font color="blue">fluctuations</font></font> in the overall <font color="blue">stock market</font> from time to     time;           •   <font color="blue">significant</font> <font color="blue">volatility</font> in the <font color="blue">market price</font> and <font color="blue">trading volume</font> of     securities of BDCs or <font color="blue">technology</font>-transfer companies;           •   changes in <font color="blue">regulatory</font> policies or tax <font color="blue">guidelines</font> with respect <font color="blue">to BDCs     </font>or <font color="blue">technology</font>-transfer companies;           •   actual or anticipated changes in our earnings or <font color="blue">fluctuations</font> in our     operating results;           •   <font color="blue">general economic</font> <font color="blue">conditions</font> and trends;           •   loss of a <font color="blue">major funding source</font>; or           •   <font color="blue">departures</font> of <font color="blue">key personnel</font></td>
+    </tr>
+  </tbody>
+</table>

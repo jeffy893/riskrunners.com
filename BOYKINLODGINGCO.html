@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: following risks", fill: "#d40000"},
+{source: "1: following risks", target: "1: financial condition", fill: "#d40000"},
+{source: "1: financial condition", target: "1: cash flows could", fill: "#d40000"},
+{source: "1: cash flows could", target: "1: materially adversely affected", fill: "#d40000"},
+{source: "1: following risks", target: "2: Additional ", fill: "#7cfc00"},
+{source: "2: Additional ", target: "2: uncertainties", fill: "#7cfc00"},
+{source: "2: uncertainties", target: "2: discussed herein may also impair", fill: "#7cfc00"},
+{source: "2: discussed herein may also impair", target: "2: operations", fill: "#7cfc00"},
+{source: "2: Additional ", target: "3: military action could affect", fill: "#e62020"},
+{source: "3: military action could affect", target: "3: cash flow", fill: "#e62020"},
+{source: "3: military action could affect", target: "14: investments", fill: "#126180"},
+{source: "14: investments", target: "14: generally cannot", fill: "#126180"},
+{source: "14: generally cannot", target: "14: sold quickly", fill: "#126180"},
+{source: "14: investments", target: "25: degree on", fill: "#f3e5ab"},
+{source: "25: degree on", target: "25: BMC Changes ", fill: "#f3e5ab"},
+{source: "25: BMC Changes ", target: "25: management", fill: "#f3e5ab"},
+{source: "25: management", target: "25: future could", fill: "#f3e5ab"},
+{source: "25: future could", target: "25: temporary service disruptions", fill: "#f3e5ab"},
+{source: "25: temporary service disruptions", target: "25: affected hotels which could", fill: "#f3e5ab"},
+{source: "25: affected hotels which could", target: "25: financial performance", fill: "#f3e5ab"},
+{source: "25: degree on", target: "30: connection", fill: "#01796f"},
+{source: "30: connection", target: "30: transaction", fill: "#01796f"},
+{source: "30: transaction", target: "30: management", fill: "#01796f"},
+{source: "30: management", target: "30: agreements", fill: "#01796f"},
+{source: "30: agreements", target: "30: conflicts on renewal", fill: "#01796f"},
+{source: "30: conflicts on renewal", target: "30: connection with future management agreements", fill: "#01796f"},
+{source: "30: connection with future management agreements", target: "30: transactions", fill: "#01796f"},
+{source: "30: transactions", target: "30: BMC Conflicts ", fill: "#01796f"},
+{source: "30: connection", target: "37: shareholders", fill: "#a9ba9d"},
+{source: "37: shareholders", target: "37: financially", fill: "#a9ba9d"},
+{source: "37: financially", target: "37: advantageous", fill: "#a9ba9d"},
+{source: "37: shareholders", target: "41: facility", fill: "#ffbf00"},
+{source: "41: facility", target: "41: minimum net worth", fill: "#ffbf00"},
+{source: "41: minimum net worth", target: "41: of EBITDA ", fill: "#ffbf00"},
+{source: "41: of EBITDA ", target: "41: maximum leverage", fill: "#ffbf00"},
+{source: "41: maximum leverage", target: "41: places limitations on", fill: "#ffbf00"},
+{source: "41: places limitations on", target: "41: distributions", fill: "#ffbf00"},
+{source: "41: facility", target: "75: laws impose on", fill: "#fddde6"},
+{source: "75: laws impose on", target: "75: requirements", fill: "#fddde6"},
+{source: "75: requirements", target: "75: conditions", fill: "#fddde6"},
+{source: "75: conditions", target: "75: activities", fill: "#fddde6"},
+{source: "75: activities", target: "75: may affect human health", fill: "#fddde6"},
+{source: "75: may affect human health", target: "75: environment", fill: "#fddde6"},
+{source: "75: laws impose on", target: "START_HERE", fill: "#fddde6"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Provide shelter</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Defy norms</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Risk_management">Risk management</a></td>
+      <td>Risk management is the identification, evaluation, and prioritization of risks (defined in ISO 31000 as the effect of uncertainty on objectives) followed by coordinated and economical application of resources to minimize, monitor, and control the probability or impact of unfortunate events or to maximize the realization of opportunities.\nRisks can come from various sources including uncertainty in international markets, threats from project failures (at any phase in design, development, production, or sustaining of life-cycles), legal liabilities, credit risk, accidents, natural causes and disasters, deliberate attack from an adversary, or events of uncertain or unpredictable root-cause.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_present_value">Net present value</a></td>
+      <td>The net present value (NPV) or net present worth (NPW) applies to a series of cash flows occurring at different times. The present value of a cash flow depends on the interval of time between now and the cash flow.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_member_system">Additional member system</a></td>
+      <td>The additional member system (AMS) is a mixed electoral system under which most representatives are elected in single-member districts (SMDs), and the other "additional members" are elected to make the seat distribution in the chamber more proportional to the way votes are cast for party lists. It is distinct from parallel voting (also known as the supplementary member system) in that the "additional member" seats are awarded to parties taking into account seats won in SMDs (referred to as compensation or "top-up"), which is not done under parallel voting (a non-compensatory method).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_director_general_of_police">Additional director general of police</a></td>
+      <td>Additional Director General of Police (ADGP) is an Indian Police Service rank. Though having the maximum possible 3-star police rank just like Director General of Police,  ADGP's are considered same to DGP's.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Latin_Extended_Additional">Latin Extended Additional</a></td>
+      <td>Latin Extended Additional is a Unicode block.\nThe characters in this block are mostly precomposed combinations of Latin letters with one or more general diacritical marks.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additionality">Additionality</a></td>
+      <td>Additionality is the property of an activity being additional by adding something new to the context. It is a determination of whether an intervention has an effect when  compared to a baseline.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_secretary_to_the_Government_of_India">Additional secretary to the Government of India</a></td>
+      <td>Additional Secretary (often abbreviated as AS, GoI or Union Additional Secretary or Additional Secretary to Government of India) is a post and a rank under the Central Staffing Scheme of the Government of India. The authority for creation of this post solely rests with Cabinet of India.Additional secretary is mostly a career civil servant, generally from the Indian Administrative Service, and is a government official of high seniority.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operating_cash_flow">Operating cash flow</a></td>
+      <td>In financial accounting, operating cash flow (OCF), cash flow provided by operations, cash flow from operating activities (CFO) or free cash flow from operations (FCFO), refers to the amount of cash a company generates from the revenues it brings in, excluding costs associated with long-term investment on capital items or investment in securities. Operating activities include any spending or sources of cash that’s involved in a company’s day-to-day business activities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Free_cash_flow_to_equity">Free cash flow to equity</a></td>
+      <td>In corporate finance, free cash flow to equity (FCFE) is a metric of how much cash can be distributed to the equity shareholders of the company as dividends or stock buybacks—after all expenses, reinvestments, and debt repayments are taken care of. It is also referred to as the levered free cash flow or the flow to equity (FTE).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_flow_forecasting">Cash flow forecasting</a></td>
+      <td>Cash flow forecasting  is the process of obtaining an estimate or forecast of a company's future financial position; the cash flow forecast is typically based on anticipated payments and receivables.\nSee Financial forecast for general discussion re methodology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_flow_loan">Cash flow loan</a></td>
+      <td>A cash flow loan is a type of debt financing, in which a bank lends funds, generally for working capital, using the expected cash flows that a borrowing company generates as collateral for the loan. Cashflow loans are usually senior term loans or subordinated debt, being used for funding growth or financing an acquisition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder">Shareholder</a></td>
+      <td>A shareholder (in the United States often referred to as stockholder) of a corporation is an individual or legal entity (such as another corporation, a body politic, a trust or partnership) that is registered by the corporation as the legal owner of shares of the share capital of a public or private corporation. Shareholders may be referred to as members of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agile_management">Agile management</a></td>
+      <td>Agile management is the application of the principles of Agile software development to various management processes, particularly project management. Following the appearance of the Manifesto for Agile Software Development in 2001, Agile techniques started to spread into other areas of activity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_management">Sport management</a></td>
+      <td>Sport management is the field of business dealing with sports and recreation. Sports management involves any combination of skills that correspond with planning, organizing, directing, controlling, budgeting, leading, or evaluating of any organization or business within the sports field.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement">Good Friday Agreement</a></td>
+      <td>The Good Friday Agreement (GFA), or Belfast Agreement (Irish: Comhaontú Aoine an Chéasta or Comhaontú Bhéal Feirste; Ulster-Scots: Guid Friday Greeance or Bilfawst Greeance), is a pair of agreements signed on 10 April 1998 that ended most of the violence of the Troubles, a political conflict in Northern Ireland that had ensued since the late 1960s. It was a major development in the Northern Ireland peace process of the 1990s.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholders'_agreement">Shareholders' agreement</a></td>
+      <td>A shareholders' agreement (sometimes referred to in the U.S. as a stockholders' agreement) (SHA) is an agreement amongst the shareholders or members of a company. In practical effect, it is analogous to a partnership agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder_loan">Shareholder loan</a></td>
+      <td>Shareholder loan is a debt-like form of financing provided by shareholders. Usually, it is the most junior debt in the company's debt portfolio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Berkshire_Hathaway">Berkshire Hathaway</a></td>
+      <td>Berkshire Hathaway Inc. () is an American multinational conglomerate holding company headquartered in Omaha, Nebraska, United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Annual_general_meeting">Annual general meeting</a></td>
+      <td>An annual general meeting (AGM, also known as the annual meeting) is a meeting of the general membership of an organization.\nThese organizations include membership associations and companies with shareholders.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder_oppression">Shareholder oppression</a></td>
+      <td>Shareholder oppression occurs when the majority shareholders in a corporation take action that unfairly prejudices the minority.  It most commonly occurs in non-publicly traded companies, because the lack of a public market for shares leaves minority shareholders particularly vulnerable, since minority shareholders cannot escape mistreatment by selling their stock and exiting the corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stockholder_of_record">Stockholder of record</a></td>
+      <td>Stockholder of record is the name of an individual or entity shareholder that an issuer carries in its shareholder register as the registered holder (not necessarily the beneficial owner) of the issuer's securities. Dividends and other distributions are paid only to shareholders of record.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirement">Requirement</a></td>
+      <td>In product development and process optimization, a requirement is a singular documented physical or functional need that a particular design, product or process aims to satisfy. It is commonly used in a formal sense in engineering design, including for example in systems engineering, software engineering, or enterprise engineering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-functional_requirement">Non-functional requirement</a></td>
+      <td>In systems engineering and requirements engineering, a non-functional requirement (NFR) is a requirement that specifies criteria that can be used to judge the operation of a system, rather than specific behaviours. They are contrasted with functional requirements that define specific behavior or functions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_analysis">Requirements analysis</a></td>
+      <td>In systems engineering and software engineering, requirements analysis focuses on the tasks that determine the needs or conditions to meet the new or altered product or project, taking account of the possibly conflicting requirements of the various stakeholders, analyzing, documenting, validating and managing software or system requirements.Requirements analysis is critical to the success or failure of a systems or software project. The requirements should be documented, actionable, measurable, testable, traceable, related to identified business needs or opportunities, and defined to a level of detail sufficient for system design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_engineering">Requirements engineering</a></td>
+      <td>Requirements engineering (RE) is the process of defining, documenting, and maintaining requirements in the engineering design process. It is a common role in systems engineering and software engineering.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BOYKIN LODGING CO      Item 1A Risk Factors       If any of the <font color="blue">following risks</font> occur, our business, <font color="blue">financial condition</font>,     operating results and <font color="blue"><font color="blue">cash flow</font>s could</font> be <font color="blue">materially <font color="blue">adversely affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and <font color="blue">uncertainties</font> not <font color="blue">discussed herein may also impair</font> our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to the Hotel Industry       Public reaction to acts of terrorism or <font color="blue">military action could affect</font> our     <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">disruptions</font> in the <font color="blue">lodging industry</font> that would     likely result from terrorist attacks (actual or threatened) or military     <font color="blue">action affecting</font> the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">uncertainty</font> that would result from     these <font color="blue">events would likely increase</font> the public’s reluctance to travel, which     <font color="blue">could <font color="blue">adversely affect</font></font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Competition, <font color="blue">economic <font color="blue">conditions</font></font> and similar <font color="blue">factors affecting us</font> and the     hotel  <font color="blue">industry <font color="blue">generally</font> could affect</font> our performance</td>
+    </tr>
+    <tr>
+      <td>Our hotels are     subject to all operating <font color="blue">risks common</font> to the <font color="blue">hotel industry</font></td>
+    </tr>
+    <tr>
+      <td>These risks     include:         •  <font color="blue">Competition </font>for guests from other hotels based upon brand <font color="blue">affiliations</font>,     room rates offered including those via internet <font color="blue">wholesalers</font> and     <font color="blue">distributors</font>, customer service, location and the condition and upkeep of     <font color="blue">each hotel</font> in general and in relation to other hotels in their <font color="blue">local market</font>;         •  Adverse effects of general and local <font color="blue">economic <font color="blue">conditions</font></font>;         •  <font color="blue">Dependence </font><font color="blue">on demand from</font> business and leisure travelers, which may     fluctuate and be seasonal;         •  <font color="blue">Increases </font>in energy costs, airline fares, and other expenses related to     travel, which may deter travel;         •  Weather-related issues;         •  Impact of financial <font color="blue"><font color="blue">difficult</font>ies</font> of the <font color="blue">airline industry</font> and potential     reduction in <font color="blue">airline service on</font> the demand for our <font color="blue">hotel rooms</font> and the     <font color="blue">collectibility</font> of our <font color="blue">outstanding receivables from</font> the airlines;          •  <font color="blue">Increases </font>in operating costs <font color="blue">attributable</font> to inflation and other     factors, such as energy and <font color="blue">labor costs at</font> the hotels; and         •  Overbuilding in the <font color="blue">hotel industry</font>, especially in individual markets</td>
+    </tr>
+    <tr>
+      <td>Hotels  require  ongoing  <font color="blue">renovations</font>  and  other capital     <font color="blue">improvements</font>, including <font color="blue">periodic replacement</font> or <font color="blue">refurbishment</font> of furniture,     fixtures  and  equipment</td>
+    </tr>
+    <tr>
+      <td>If  <font color="blue">necessary</font>  capital  <font color="blue"><font color="blue">expenditure</font>s exceed</font>     expectations, there can be no assurance that <font color="blue">sufficient sources</font> of financing     will be available to <font color="blue">fund such <font color="blue">expenditure</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We may also acquire hotels in     the future that require <font color="blue">significant renovation</font></td>
+    </tr>
+    <tr>
+      <td>Hotel <font color="blue"><font color="blue">investment</font>s</font> are <font color="blue"><font color="blue">generally</font> illiquid</font>, and we may not be able to sell our     hotels when it is <font color="blue"><font color="blue">economically</font> <font color="blue">advantageous</font></font> to do so</td>
+    </tr>
+    <tr>
+      <td>Hotel <font color="blue"><font color="blue">investment</font>s</font>     <font color="blue"><font color="blue">generally</font> cannot</font> be <font color="blue">sold quickly</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to vary our portfolio     promptly in <font color="blue">accordance with</font> our strategies or in response to economic or     other <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>In addition, provisions of the <font color="blue">Internal Revenue Code </font>of     1986, as amended, limit a REIT’s ability to sell its properties in some     situations when it may be <font color="blue"><font color="blue">economically</font> <font color="blue">advantageous</font></font> to do so</td>
+    </tr>
+    <tr>
+      <td>6       _________________________________________________________________                Risks Related to Our Operations       The <font color="blue">profitability</font> of our hotels depends on the performance of the hotel     <font color="blue"><font color="blue">management</font> companies</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">profitability</font> of our hotels depends largely upon     the ability of the <font color="blue"><font color="blue">management</font> companies</font> to <font color="blue">generate revenues at</font> our hotels     in  excess  of their operating expenses</td>
+    </tr>
+    <tr>
+      <td>The failure of the <font color="blue">management</font>     companies to manage the <font color="blue">hotels <font color="blue">effectively</font> would <font color="blue">adversely affect</font></font> our cash     flow received from hotel <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Before January </font>1, 2002, our <font color="blue">cash flow</font>     <font color="blue">consisted primarily</font> of <font color="blue">lease payments from lessees</font></td>
+    </tr>
+    <tr>
+      <td>Our lessees were legally     bound to make <font color="blue"><font color="blue">minimum lease payments</font> even</font> when <font color="blue">such payments exceeded</font> the     <font color="blue">cash flow</font> from the hotel</td>
+    </tr>
+    <tr>
+      <td>Since <font color="blue">implementing</font> our taxable REIT subsidiary     (“TRS”)  structure  on  January 1,  2002, the <font color="blue">responsibility</font> and risks     <font color="blue">associated with</font> making the <font color="blue">minimum lease payments</font> has shifted to lessees     owned by the Partnership</td>
+    </tr>
+    <tr>
+      <td>Therefore, we have <font color="blue">effectively</font> assumed the risks     <font color="blue">associated with</font> operating <font color="blue">shortfalls at</font> our hotels</td>
+    </tr>
+    <tr>
+      <td>Our performance is <font color="blue">dependent upon</font> the performance of BMC BMC currently     manages 20 of our hotels</td>
+    </tr>
+    <tr>
+      <td>We are therefore dependent to a large <font color="blue">degree on</font>     the operating performance of <font color="blue">BMC Changes </font>in <font color="blue">management</font> at these hotels or     at other hotels in the <font color="blue">future could</font> result in temporary service <font color="blue">disruptions</font>     at the <font color="blue">affected hotel</font>s, <font color="blue">which could</font> in turn affect their operating and     <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to conflicts of <font color="blue">interest involving</font> our Chairman and Chief     Executive Officer</td>
+    </tr>
+    <tr>
+      <td>Our Chairman and Chief Executive Officer, Robert W     Boykin,  and his brother, John E Boykin, own BMC and therefore derive     benefits from BMC’s <font color="blue">management</font> of 20 of our hotels</td>
+    </tr>
+    <tr>
+      <td>Accordingly, Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Boykin     </font>has  and  will  continue to have conflicts of <font color="blue">interest with us</font></td>
+    </tr>
+    <tr>
+      <td>He had     conflicts of interest in <font color="blue">connection</font> with our January 2002 TRS <font color="blue">transaction</font>     and in <font color="blue">connection</font> with the structuring of the <font color="blue">management</font> <font color="blue"><font color="blue">agreement</font>s</font> for the     hotels currently managed by BMC He will have similar <font color="blue">conflicts on renewal</font>     of those <font color="blue"><font color="blue">agreement</font>s</font> and in <font color="blue">connection</font> with future <font color="blue">management</font> <font color="blue"><font color="blue">agreement</font>s</font> and     other <font color="blue">transaction</font>s that we <font color="blue">may enter into</font> with <font color="blue">BMC Conflicts </font>of interest     may also arise in <font color="blue">connection</font> with BMC’s <font color="blue">management</font> of our hotels</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under     </font>certain <font color="blue">circumstances</font>, actions taken and <font color="blue">decisions</font> made by BMC to maximize     its profits will not <font color="blue">necessarily</font> benefit us</td>
+    </tr>
+    <tr>
+      <td>Additionally, a subsidiary of     BMC <font color="blue">provides <font color="blue">design services</font></font> to us for a fee and also receives a portion of     the fees we pay to an <font color="blue">independent purchasing agent</font></td>
+    </tr>
+    <tr>
+      <td>Boykin may have     conflicts of <font color="blue">interest with respect</font> to our <font color="blue">procurement</font> of <font color="blue">design services</font> and     capital goods</td>
+    </tr>
+    <tr>
+      <td>Another subsidiary of BMC <font color="blue">provides purchasing</font> to us for a     fee</td>
+    </tr>
+    <tr>
+      <td>Additionally, the sale of certain of our hotels may result in <font color="blue">different</font>     and more adverse tax <font color="blue">consequences</font> to Mr</td>
+    </tr>
+    <tr>
+      <td>Boykin than would be experienced by     Boykin and our public <font color="blue">shareholders</font>, and he could seek to influence us not to     sell  a  hotel  even  though  that sale might otherwise be <font color="blue">financially</font>     <font color="blue">advantageous</font>  to  us  and  our  public  <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>Our articles of     <font color="blue">incorporation</font>  provide  that our <font color="blue">independent <font color="blue">directors</font></font> are to make all     <font color="blue"><font color="blue">determination</font>s</font> to be made on our <font color="blue">behalf with respect</font> to the <font color="blue">relationships</font> or     <font color="blue">opportunities</font> that represent a conflict of interest for any of our officers     or <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>The covenants in our credit <font color="blue"><font color="blue">agreement</font>s</font> may restrict our range of operating     <font color="blue">activities</font>,  and we are subject to <font color="blue">refinancing risks</font></td>
+    </tr>
+    <tr>
+      <td>We have a senior     secured credit <font color="blue">facility</font> that <font color="blue">enables us</font> to <font color="blue">borrow up</font> to dlra100dtta0 million,     <font color="blue">based upon borrowing base <font color="blue">availability</font></font>, and a <font color="blue">term loan with</font> an original     balance  of  dlra130dtta0 million  which  is <font color="blue">secured by certain</font> of our hotel     properties</td>
+    </tr>
+    <tr>
+      <td>Our secured credit <font color="blue">facility</font> requires us, among other things, to     maintain a <font color="blue">minimum net worth</font>, a coverage ratio <font color="blue">of EBITDA </font>to debt service,     coverage <font color="blue">of EBITDA </font>to debt service and fixed charges, and a <font color="blue">maximum leverage</font>     ratio and <font color="blue">places limitations on</font> our common share <font color="blue"><font color="blue">distribution</font>s</font></td>
+    </tr>
+    <tr>
+      <td>There is no     assurance that we will be able to continue to meet the <font color="blue">financial covenants</font>     of the secured credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">secured term loan limits</font>     our ability to <font color="blue">sell certain hotel properties</font></td>
+    </tr>
+    <tr>
+      <td>These credit <font color="blue">arrangements may</font>     limit  our  ability  to <font color="blue">sell certain hotels whose disposition might</font> be     desirable for strategic or <font color="blue">financial purposes</font></td>
+    </tr>
+    <tr>
+      <td>There  can  be  no  assurance that we will be able to renew our credit     <font color="blue">arrangements upon maturity on</font> favorable terms or at all</td>
+    </tr>
+    <tr>
+      <td>Further, if we are     unable to make <font color="blue">payments on</font> or to <font color="blue">refinance <font color="blue">indebtedness</font> secured by</font> our     properties, the <font color="blue">properties could</font> be <font color="blue">foreclosed upon with</font> a <font color="blue">consequent loss</font>     to us of income and <font color="blue">asset value</font></td>
+    </tr>
+    <tr>
+      <td>A portion of our <font color="blue">borrowings bear interest at</font> a variable rate, as may other     <font color="blue">indebtedness</font>  we incur in the future</td>
+    </tr>
+    <tr>
+      <td>Accordingly, increases in market     <font color="blue">interest rates could increase</font> our debt service <font color="blue"><font color="blue">requirement</font>s</font>, <font color="blue">which could</font>     <font color="blue">adversely affect</font> our <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to risks <font color="blue">associated with</font> <font color="blue">development</font>, re<font color="blue">development</font> and     <font color="blue">acquisitions</font> of hotels</td>
+    </tr>
+    <tr>
+      <td>New and continued <font color="blue">development</font> projects and hotel     <font color="blue">acquisitions</font> are subject to a number of risks, including:         •  the <font color="blue">availability</font> of acceptable financing;         •  <font color="blue">competition with</font> other entities for <font color="blue">investment</font> <font color="blue">opportunities</font>;         •  acquired properties’ failure to achieve anticipated operating results;         •  <font color="blue">construction</font> costs of a <font color="blue">property exceeding original</font> estimates;                                         7       _________________________________________________________________             •  delays in <font color="blue">construction</font> and renovation projects;         •  <font color="blue">overruns with respect</font> to the cost of <font color="blue">improvements</font> to bring acquired     properties to the <font color="blue">requisite standards</font>; and         •  the <font color="blue">expenditure</font> of funds on, and the devotion of <font color="blue">management</font> time to,     <font color="blue">transaction</font>s that may not come to fruition</td>
+    </tr>
+    <tr>
+      <td>We are subject to the risks <font color="blue">associated with</font> <font color="blue"><font color="blue">investment</font>s</font> through our joint     ventures</td>
+    </tr>
+    <tr>
+      <td>Any  joint  venture  <font color="blue">investment</font>  <font color="blue">involves risks such as</font> the     <font color="blue">possibility</font> that the co-venturer may seek relief under federal or state     <font color="blue">insolvency laws</font>, or have economic or business interests or goals that are     <font color="blue">inconsistent with</font> our business interests or goals</td>
+    </tr>
+    <tr>
+      <td>While the <font color="blue">bankruptcy</font> or     insolvency of our co-venturer <font color="blue">generally</font> should not disrupt the <font color="blue">operations</font> of     the <font color="blue">joint venture</font>, we could be forced to purchase the co-venturer’s interest     in  the  <font color="blue">joint venture</font> or the <font color="blue">interest could</font> be sold to a <font color="blue">third party</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, we have a <font color="blue">joint venture</font> in which we have a non-controlling     interest and we <font color="blue">may enter into</font> similar <font color="blue">joint venture</font>s in the future</td>
+    </tr>
+    <tr>
+      <td>If we     do not have <font color="blue">control over</font> a <font color="blue">joint venture</font>, the value of our <font color="blue">investment</font> may be     affected  <font color="blue">adversely by</font> a <font color="blue">third party</font> that may have <font color="blue">different</font> goals and     <font color="blue">capabilities than ours</font></td>
+    </tr>
+    <tr>
+      <td>It may also be <font color="blue">difficult</font> for us to exit a joint     venture  that we do not control after an impasse</td>
+    </tr>
+    <tr>
+      <td>In addition, a joint     <font color="blue">venture partner may</font> be unable to meet its economic or other <font color="blue">obligations</font> and     we may be required to or find it <font color="blue">necessary</font> to fulfill those <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Obligations </font><font color="blue">imposed by</font> our franchise <font color="blue"><font color="blue">agreement</font>s</font> could affect us adversely</td>
+    </tr>
+    <tr>
+      <td>Most of our hotels are subject to franchise or license <font color="blue"><font color="blue">agreement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">continuation</font> of a franchise or <font color="blue">license <font color="blue">agreement</font></font> is <font color="blue">generally</font> subject to     specified operating standards</td>
+    </tr>
+    <tr>
+      <td>Action or inaction on our part or by any of     our <font color="blue">hotel managers could</font> result in our failure to meet those standards,     <font color="blue">which could</font> result in the loss of the franchise</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">franchisor</font> also could</font>     condition the <font color="blue">continuation</font> of a <font color="blue">franchise on</font> the <font color="blue">completion</font> of capital     <font color="blue">improvements</font> that we determine are <font color="blue">too expensive</font> or <font color="blue">otherwise unwarranted</font> in     light of general <font color="blue">economic <font color="blue">conditions</font></font> or the operating results or prospects     of the <font color="blue">affected hotel</font></td>
+    </tr>
+    <tr>
+      <td>In that event, we may elect to allow the franchise     <font color="blue">agreement</font> to lapse</td>
+    </tr>
+    <tr>
+      <td>In any case, the loss of a franchise <font color="blue">agreement</font> could     have a material adverse effect upon the <font color="blue">operations</font> or the <font color="blue">underlying value</font>     of the <font color="blue">hotel covered by</font> the <font color="blue">agreement</font> because of the loss of <font color="blue">associated name</font>     recognition, marketing support and <font color="blue">centralized reservation systems provided</font>     by the <font color="blue">franchisor</font>, or because of <font color="blue">penalties payable upon early termination</font> of     the <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, the franchise <font color="blue"><font color="blue">agreement</font>s</font> may place <font color="blue"><font color="blue">restriction</font>s</font>     on  the  transfer  or  sale  of assets or make such transfers or sales     <font color="blue">economically</font> infeasible</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">insurance may</font> not be adequate to <font color="blue">cover certain risks</font></td>
+    </tr>
+    <tr>
+      <td>We continue to     carry  comprehensive <font color="blue">liability</font>, fire, flood, earthquake, terrorism and     business <font color="blue">interruption policies</font> that <font color="blue">insure us against losses within policy</font>     <font color="blue">specification</font> and <font color="blue">insurance limits</font> that we believe are reasonable</td>
+    </tr>
+    <tr>
+      <td>There are     <font color="blue">certain types</font> of risks, <font color="blue">generally</font> of a <font color="blue">catastrophic</font> nature, that may be     uninsurable or are not <font color="blue">economically</font> insurable or <font color="blue">certain coverages</font> that we     currently carry <font color="blue">may become uneconomical</font> or unavailable in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Should     </font>an uninsured loss or a loss in excess of <font color="blue">insured limits</font> occur, we <font color="blue">could lose</font>     our <font color="blue">investment</font> in the <font color="blue">affected hotel</font> as well as the anticipated <font color="blue">future cash</font>     flow  from  that  hotel,  while  remaining  obligated for any mortgage     <font color="blue">indebtedness</font> or other financial <font color="blue">obligations</font> related to that hotel</td>
+    </tr>
+    <tr>
+      <td>The costs of <font color="blue">complying with laws</font> and <font color="blue">regulations</font> <font color="blue">could <font color="blue">adversely affect</font></font> our     <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">hotels must comply with</font> <font color="blue">Title III of the Americans </font>with     Disabilities  Act  (the  “ADA”)  to  the  extent that they are ”public     <font color="blue">accommodations</font>”  or  ”commercial  <font color="blue">facilities</font>”  as  defined in the ADA     Noncompliance with the ADA could result in the imposition of fines or an     award of damages to <font color="blue">private litigants</font></td>
+    </tr>
+    <tr>
+      <td>If changes in these <font color="blue">laws involve</font>     substantial <font color="blue">expenditure</font>s or must be made on an <font color="blue">accelerated basis</font>, our cash     flow could be <font color="blue">adversely affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>Under <font color="blue">various federal</font>, state and <font color="blue">local laws</font>, an owner or operator of real     <font color="blue">estate may</font> be liable for the costs of removal or <font color="blue">remediation</font> of certain     <font color="blue">hazardous</font> or <font color="blue">toxic substances</font> on, under, or in the property</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">liability</font>     may be <font color="blue">imposed without</font> regard to whether the owner or operator knew of, or     was responsible for, the presence of the substances</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">laws impose on</font>     owners  and  operators  certain  <font color="blue"><font color="blue">requirement</font>s</font> regarding <font color="blue">conditions</font> and     <font color="blue">activities</font> that <font color="blue">may affect human health</font> or the <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Failure to     comply with applicable <font color="blue"><font color="blue">requirement</font>s</font> could complicate our ability to operate     or sell an affected property and could subject us to monetary penalties,     costs  required to achieve compliance and potential <font color="blue">liability</font> to third     parties</td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">potentially liable</font> for <font color="blue">such costs</font> or claims in <font color="blue">connection</font>     with the ownership and operation of our <font color="blue">current hotels</font> and hotels we may     acquire  in  the future</td>
+    </tr>
+    <tr>
+      <td>We have not <font color="blue">been notified by</font> any <font color="blue">governmental</font>     authority of, nor are we aware of, any material noncompliance, <font color="blue">liability</font> or     claim relating to <font color="blue">hazardous</font> or <font color="blue">toxic substances</font> or other <font color="blue">environment</font>al     matters in <font color="blue">connection</font> with any of our hotels</td>
+    </tr>
+    <tr>
+      <td>Nonetheless, it is possible     that material <font color="blue">environment</font>al contamination or <font color="blue">conditions</font> exist, or could     arise  in the future, in the hotels or on the <font color="blue">land upon which</font> they are     located</td>
+    </tr>
+    <tr>
+      <td>8       _________________________________________________________________           We have and <font color="blue">will continue</font> to <font color="blue">incur costs</font> for systems, staffing and third     <font color="blue">party services</font> in maintaining <font color="blue">compliance with federal laws</font> and <font color="blue">regulations</font>     <font color="blue">addressing corporate governance issues</font>, including the Sarbanes-Oxley Act of     2002, and with the listing <font color="blue"><font color="blue">requirement</font>s</font> <font color="blue">of the New York Stock Exchange</font></td>
+    </tr>
+    <tr>
+      <td>We bear the risk of the timely <font color="blue">completion</font> of the <font color="blue">Captiva Villas </font>project</td>
+    </tr>
+    <tr>
+      <td>In     <font color="blue">each <font color="blue">sales contract</font></font> for the sale of a <font color="blue">Captiva Villas </font>unit, <font color="blue">Captiva Villas </font>    Development LLC, our <font color="blue">consolidated subsidiary</font> and the developer of Captiva     Villas, <font color="blue">guarantees</font> that it will complete <font color="blue">construction</font> of the <font color="blue">condominium</font>     unit <font color="blue">within two years following</font> the date of the <font color="blue"><font color="blue">sales contract</font> unless such</font>     failure is due to <font color="blue"><font color="blue">circumstances</font> beyond</font> the control of the <font color="blue">developer which</font>     constitute im<font color="blue">possibility</font> of <font color="blue">performance under</font> Florida law</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">first sales</font>     contract  for  a <font color="blue">Captiva Villas </font>unit was <font color="blue">entered into</font> in July of 2004</td>
+    </tr>
+    <tr>
+      <td>Twenty-one of the <font color="blue">outstanding contracts</font> were <font color="blue">entered into</font> in 2004 and six     were <font color="blue">entered into</font> in the <font color="blue">first quarter</font> of 2005</td>
+    </tr>
+    <tr>
+      <td>Currently, the developer     anticipates that the project will be <font color="blue">substantially</font> complete in the first     quarter of 2007</td>
+    </tr>
+    <tr>
+      <td>The developer has potential <font color="blue">liability</font> to <font color="blue">purchasers whose</font>     units are not completed within the two year time period</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">purchaser could</font>     make a claim for damages and <font color="blue">rescission</font> of their <font color="blue">sales contract</font></td>
+    </tr>
+    <tr>
+      <td>We may fail to <font color="blue">qualify as</font> a REIT and we may incur tax <font color="blue">liability</font> as a result</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Commencing </font>with our <font color="blue">taxable year</font> ended <font color="blue">December </font>31, 1996, we have operated     as a REIT under the Code</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">federal income tax</font> laws governing</font> REITs are     complex</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">determination</font> of various factual matters and <font color="blue">circumstances</font> not     <font color="blue">entirely within</font> our <font color="blue">control may affect</font> our ability to continue to <font color="blue">qualify as</font>     a  REIT  In  addition,  no  assurance  can be given that <font color="blue">legislation</font>,     <font color="blue">regulations</font>, administrative interpretations or court <font color="blue">decisions</font> will not     <font color="blue">significantly</font>  change  the  <font color="blue">rules applicable</font> to <font color="blue">us with respect</font> to our     <font color="blue">qualification</font> as a REIT or the <font color="blue">federal income tax</font> <font color="blue">consequences</font> of such     <font color="blue">qualification</font></td>
+    </tr>
+    <tr>
+      <td>If we were to fail to <font color="blue">qualify as</font> a REIT in any <font color="blue">taxable year</font>, we would not be     allowed a <font color="blue">deduction</font> for <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">shareholders</font> in computing our     <font color="blue">taxable income</font> and would be subject to <font color="blue">federal income tax</font> (including any     applicable  <font color="blue">alternative</font>  minimum tax) on our <font color="blue">taxable income</font> at regular     corporate  rates</td>
+    </tr>
+    <tr>
+      <td>Unless we are entitled to <font color="blue">relief under certain</font> <font color="blue">Code     </font>provisions, we also would be <font color="blue">disqualified from treatment as</font> a REIT for the     four <font color="blue">taxable year</font>s following the <font color="blue">year during which</font> REIT <font color="blue">qualification</font> was     lost</td>
+    </tr>
+    <tr>
+      <td>As a result, the <font color="blue">cash available</font> for <font color="blue">distribution</font> to <font color="blue">shareholders</font>,     including the holders of <font color="blue">preferred shares</font>, could be reduced or eliminated     for each of the <font color="blue">years involved</font></td>
+    </tr>
+    <tr>
+      <td>We may be subject to the adverse effect of REIT <font color="blue">distribution</font> <font color="blue"><font color="blue">requirement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We intend to continue to make <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">shareholders</font> to comply     with the <font color="blue">requirement</font> that we distribute to our <font color="blue">shareholders</font> each year at     least 90prca of our net <font color="blue">taxable income</font> (excluding any <font color="blue">net capital gain</font>)</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">cash available</font> for <font color="blue">distribution</font> consists primarily of cash <font color="blue"><font color="blue">distribution</font>s</font>     from the Partnership</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Differences </font>in timing between <font color="blue">taxable income</font> and     receipt of <font color="blue">cash available</font> for <font color="blue">distribution</font> and the <font color="blue">seasonality</font> of our hotels     could require us, through the Partnership, to borrow funds on a short-term     basis  in  order  to meet the <font color="blue">distribution</font> <font color="blue">requirement</font> or to liquidate     <font color="blue"><font color="blue">investment</font>s</font> on dis<font color="blue">advantageous</font> terms</td>
+    </tr>
+    <tr>
+      <td>In certain cases, dividends paid     during the <font color="blue">immediately subsequent year may</font> be applied to the prior year’s     dividends paid <font color="blue">deduction</font>; however, an <font color="blue">excise tax may</font> be <font color="blue">applicable based on</font>     the timing of such <font color="blue"><font color="blue">distribution</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">ownership limit may discourage takeover attempts</font></td>
+    </tr>
+    <tr>
+      <td>In order to maintain     our REIT status our articles of <font color="blue">incorporation</font> limit ownership of our common     shares and <font color="blue">preferred shares</font></td>
+    </tr>
+    <tr>
+      <td>In order for us to maintain our <font color="blue">qualification</font>     as a REIT, not more than 50prca in value of our <font color="blue">outstanding shares may</font> be     owned, directly or indirectly, by five or <font color="blue">fewer individuals</font></td>
+    </tr>
+    <tr>
+      <td>Our articles     <font color="blue">prohibit ownership</font> of more than 9prca of the <font color="blue">common shares</font> and ownership of     more than 9prca of any class of <font color="blue">preferred shares</font> by any <font color="blue">single shareholder</font>,     <font color="blue">with certain exceptions</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, a holder of <font color="blue">depositary</font> shares may be     prohibited from increasing his or her holdings of <font color="blue">depositary</font> shares to the     <font color="blue">extent such shares represent</font> more than 9prca of the <font color="blue">preferred shares</font></td>
+    </tr>
+    <tr>
+      <td>Our Board     of Directors may waive this <font color="blue">restriction</font> if evidence satisfactory to it and     to our tax counsel is <font color="blue">presented showing</font> that ownership in excess of this     limit will not <font color="blue">jeopardize</font> our status as a REIT Generally, prohibiting any     <font color="blue">shareholder from</font> owning more than 9prca of the <font color="blue">common shares</font> or of any class of     <font color="blue">preferred shares</font> may discourage a change in control of our company or limit     the <font color="blue">opportunity</font> for <font color="blue">shareholders</font> to receive a premium for their shares that     <font color="blue">may otherwise</font> exist</td>
+    </tr>
+    <tr>
+      <td>We also have a <font color="blue">shareholder rights</font> plan that may have     the <font color="blue">same effects</font></td>
+    </tr>
+  </tbody>
+</table>

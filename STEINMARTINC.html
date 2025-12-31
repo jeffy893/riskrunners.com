@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: operations", fill: "#6a5acd"},
+{source: "1: operations", target: "1: financial condition", fill: "#6a5acd"},
+{source: "1: financial condition", target: "1: adversely affected", fill: "#6a5acd"},
+{source: "1: adversely affected", target: "1: by numerous risks", fill: "#6a5acd"},
+{source: "1: by numerous risks", target: "1: uncertainties", fill: "#6a5acd"},
+{source: "1: operations", target: "10: Accordingly ", fill: "#ff4500"},
+{source: "10: Accordingly ", target: "10: may face periods", fill: "#ff4500"},
+{source: "10: may face periods", target: "10: intense competition", fill: "#ff4500"},
+{source: "10: intense competition", target: "10: profitability", fill: "#ff4500"},
+{source: "10: profitability", target: "10: operations", fill: "#ff4500"},
+{source: "10: Accordingly ", target: "11: open new stores", fill: "#1034a6"},
+{source: "11: open new stores", target: "11: costeffective", fill: "#1034a6"},
+{source: "11: costeffective", target: "11: timely manner", fill: "#1034a6"},
+{source: "11: open new stores", target: "15: demographic", fill: "#e0b0ff"},
+{source: "15: demographic", target: "15: marketing data", fill: "#e0b0ff"},
+{source: "15: marketing data", target: "15: stores cannot predict future consumer", fill: "#e0b0ff"},
+{source: "15: stores cannot predict future consumer", target: "15: preferences", fill: "#e0b0ff"},
+{source: "15: preferences", target: "15: buying trends with", fill: "#e0b0ff"},
+{source: "15: demographic", target: "27: Furthermore ", fill: "#79443b"},
+{source: "27: Furthermore ", target: "27: threat thereof could negatively impact", fill: "#79443b"},
+{source: "27: threat thereof could negatively impact", target: "27: by interfering with", fill: "#79443b"},
+{source: "27: by interfering with", target: "27: merchandise from vendors", fill: "#79443b"},
+{source: "27: Furthermore ", target: "29: Unanticipated ", fill: "#ffdab9"},
+{source: "29: Unanticipated ", target: "29: fashion trends", fill: "#ffdab9"},
+{source: "29: fashion trends", target: "29: consumer preferences", fill: "#ffdab9"},
+{source: "29: Unanticipated ", target: "START_HERE", fill: "#ffdab9"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Consumer Discretionary</td>
+    </tr>
+    <tr>
+      <td>General Merchandise Stores</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Met_Operations">Met Operations</a></td>
+      <td>Met Operations, also known as Met Ops, is one of the four business groups which forms the Metropolitan Police Service. It was created during the 2018-19 restructuring of the service, amalgamating many of its functions from the Operations side of the Specialist Crime &amp; Operations Directorate formed in 2012, with the Specialist Crime side of that Directorate placed under the new Frontline Policing Directorate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_RTO_districts_in_Kerala">List of RTO districts in Kerala</a></td>
+      <td>\n== Regional Transport Offices ==\n\n\n== Sub Regional Transport Offices ==\n\n\n== Future Sub Regional Transport Offices ==\nGovernment of Kerala has repeatedly intimated multiple legislative members that there are no plans to setup any new RTOs/SRTOs in Kerala unless the financial condition of Kerala improves.\n\n\n== References ==\n\nOfficial list of Regional Transport Offices\nOfficial list of Sub Regional Transport Offices\n\n\n== External links ==\nhttps://www.mvd.kerala.gov.in (Link to Kerala Motor Vehicles Department.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_analysis">Profitability analysis</a></td>
+      <td>In cost accounting, profitability analysis is an analysis of the profitability of an organisation's output. Output of an organisation can be grouped into products, customers, locations, channels and/or transactions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_index">Profitability index</a></td>
+      <td>Profitability index (PI), also known as profit investment ratio (PIR) and value investment ratio (VIR), is the ratio of payoff to investment of a proposed project. It is a useful tool for ranking projects because it allows you to quantify the amount of value created per unit of investment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_Profitability_Analysis">Customer Profitability Analysis</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitable_growth">Profitable growth</a></td>
+      <td>Profitable Growth is the combination of profitability and growth, more precisely the combination of Economic Profitability and Growth of Free cash flows. Profitable growth is aimed at seducing the financial community; it emerged in the early 80s when shareholder value creation became firms’ main objective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Porter's_five_forces_analysis">Porter's five forces analysis</a></td>
+      <td>Porter's Five Forces Framework is a method of analysing the operating environment of a competition of a business. It draws from industrial organization (IO) economics to derive five forces that determine the competitive intensity and, therefore, the attractiveness (or lack thereof) of an industry in terms of its profitability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_income">Net income</a></td>
+      <td>In business and accounting, net income (also total comprehensive income, net earnings, net profit, bottom line, sales profit, or credit sales) is an entity's income minus cost of goods sold, expenses, depreciation and amortization, interest, and taxes for an accounting period.It is computed as the residual of all revenues and gains less all expenses and losses for the period, and has also been defined as the net increase in shareholders' equity that results from a company's operations. It is different from gross income, which only deducts the cost of goods sold from revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Audit_plan">Audit plan</a></td>
+      <td>Audit planning is a vital area of the audit, primarily conducted at the beginning of audit process, to ensure that appropriate attention is devoted to important areas, potential problems are promptly identified, work is completed expeditiously and work is properly coordinated. "Audit planning" means developing a general strategy and a detailed approach for the expected nature, timing and extent of the audit.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hart_Memorial_Trophy">Hart Memorial Trophy</a></td>
+      <td>The Hart Memorial Trophy, originally known as the Hart Trophy is an annual award for the most valuable player to his team in the National Hockey League (NHL), voted by the members of the Professional Hockey Writers' Association. The original trophy was donated to the league in 1923 by David Hart, the father of Cecil Hart, the longtime head coach of the Montreal Canadiens.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Taylor_Hawkins">Taylor Hawkins</a></td>
+      <td>Oliver Taylor Hawkins (February 17, 1972 – March 25, 2022) was an American musician, best known as the drummer of the rock band Foo Fighters, with whom he recorded nine studio albums between 1999 and 2021. Before joining the band in 1997, he was the touring drummer for Sass Jordan and for Alanis Morissette, as well as the drummer in the progressive experimental band Sylvia which later became known as ANYONE.In 2004, Hawkins formed his own side project, Taylor Hawkins and the Coattail Riders, in which he played drums and sang, releasing three studio albums between 2006 and 2019.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interrupt">Interrupt</a></td>
+      <td>In digital computers, an interrupt (sometimes referred to as a trap) is a request for the processor to interrupt currently executing code (when permitted), so that the event can be processed in a timely manner. If the request is accepted, the processor will suspend its current activities, save its state, and execute a function called an interrupt handler (or an interrupt service routine, ISR) to deal with the event.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cholecystitis">Cholecystitis</a></td>
+      <td>Cholecystitis is inflammation of the gallbladder. Symptoms include right upper abdominal pain, pain in the right shoulder, nausea, vomiting, and occasionally fever.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tolling_(law)">Tolling (law)</a></td>
+      <td>Tolling is a legal doctrine that allows for the pausing or delaying of the running of the period of time set forth by a statute of limitations, such that a lawsuit may potentially be filed even after the statute of limitations has run. Although grounds for tolling the statute of limitations vary by jurisdiction, common grounds include:\nThe plaintiff was a minor at the time a cause of action accrued.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Online_newspaper">Online newspaper</a></td>
+      <td>An online newspaper (or electronic news or electronic news publication) is the online version of a newspaper, either as a stand-alone publication or as the online version of a printed periodical.\nGoing online created more opportunities for newspapers, such as competing with broadcast journalism in presenting breaking news in a more timely manner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marketing">Marketing</a></td>
+      <td>Marketing is the process of exploring, creating, and delivering value to meet the needs of a target market in terms of goods and services; potentially including selection of a target audience; selection of certain attributes or themes to emphasize in advertising; operation of advertising campaigns; attendance at trade shows and public events; design of products and packaging attractive to buyers; defining the terms of sale, such as price, discounts, warranty, and return policy; product placement in media or with people believed to influence the buying habits of others; agreements with retailers, wholesale distributors, or resellers; and attempts to create awareness of, loyalty to, and positive feelings about a brand. Marketing is typically done by the seller, typically a retailer or manufacturer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Merchandising">Merchandising</a></td>
+      <td>Merchandising is any practice which contributes to the sale of products to a retail consumer. At a retail in-store level, merchandising refers to displaying products that are for sale in a creative way that entices customers to purchase more items or products.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/History_of_Western_fashion">History of Western fashion</a></td>
+      <td>The following is a chronological list of articles covering the history of Western fashion—the story of the changing fashions in clothing in countries under influence of the Western world⁠—from the 5th century to the present.\n\n\n== History of fashion by time ==\n400–1100 in fashion\n1100–1200 in fashion\n1200–1300 in fashion\n1300–1400 in fashion\n1400–1500 in fashion\n1500–1550 in fashion\n1550–1600 in fashion\n1600–1650 in fashion\n1650–1700 in fashion\n1700–1750 in fashion\n1750–1775 in fashion\n1775–1795 in fashion\n1795–1820 in fashion\n1820s in fashion\n1830s in fashion\n1840s in fashion\n1850s in fashion\n1860s in fashion\n1870s in fashion\n1880s in fashion\n1890s in fashion\n1900s in fashion\n1910s in fashion\n1920s in fashion\n1930–1945 in fashion\n1945–1960 in fashion\n1960s in fashion\n1970s in fashion\n1980s in fashion\n1990s in fashion\n2000s in fashion\n2010s in fashion\n2020s in fashion\n\n\n== See also ==\n\n\n=== Medieval dress ===\nByzantine dress\nEarly medieval European dress\nEnglish medieval clothing\nAnglo-Saxon dress\n\n\n=== Western world and their manners of dressing up ===\nThe Western wear category of clothing reflects the style worn in 19th-century clothes for both men and women in the 1940s and 1950s, singing cowboys, such as Gene Autry and Roy Rogers, wore stylized clothes that were popularized in Western films and television.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2020s_in_fashion">2020s in fashion</a></td>
+      <td>2000s fashion is often described as being a global mash up, where trends saw the fusion of previous vintage styles, global and ethnic clothing (e.g. boho), as well as the fashions of numerous music-based subcultures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2000s_in_fashion">2000s in fashion</a></td>
+      <td>The 2010s were defined by hipster fashion, athleisure, a revival of austerity-era period pieces and alternative fashions, swag-inspired outfits, 1980s-style neon streetwear, and unisex 1990s-style elements influenced by grunge and skater fashions. The later years of the decade witnessed the growing importance in the western world of social media influencers paid to promote fast fashion brands on Pinterest and Instagram.Popular global fashion brands of the decade included Abercrombie and Fitch, Adidas, Balenciaga, Ben Sherman, Burberry, Christian Dior, Coach, DSquared2, Dorothy Perkins, Fashion Nova, Forever 21, Gucci, H&amp;M, Hollister, Hugo Boss, Lacoste, Louis Vuitton, Marks and Spencer, Michael Kors, Monsoon Accessorize, Nike, Nine West, Off-White, River Island, Supreme, Topman, Topshop, Uniqlo, Under Armour, and Vans.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2010s_in_fashion">2010s in fashion</a></td>
+      <td>The 2010s were defined by hipster fashion, athleisure, a revival of austerity-era period pieces and alternative fashions, swag-inspired outfits, 1980s-style neon streetwear, and unisex 1990s-style elements influenced by grunge and skater fashions. The later years of the decade witnessed the growing importance in the western world of social media influencers paid to promote fast fashion brands on Pinterest and Instagram.Popular global fashion brands of the decade included Abercrombie and Fitch, Adidas, Balenciaga, Ben Sherman, Burberry, Christian Dior, Coach, DSquared2, Dorothy Perkins, Fashion Nova, Forever 21, Gucci, H&amp;M, Hollister, Hugo Boss, Lacoste, Louis Vuitton, Marks and Spencer, Michael Kors, Monsoon Accessorize, Nike, Nine West, Off-White, River Island, Supreme, Topman, Topshop, Uniqlo, Under Armour, and Vans.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/History_of_fashion_design">History of fashion design</a></td>
+      <td>History of fashion design refers specifically to the development of the purpose and intention behind garments, shoes and accessories, and their design and construction. The modern industry, based around firms or fashion houses run by individual designers, started in the 19th century with Charles Frederick Worth who, beginning in 1858, was the first designer to have his label sewn into the garments he created.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fashion_capital">Fashion capital</a></td>
+      <td>A fashion capital is a city with major influence on international fashion scene, from history, heritage, designers, trends, styles, to manufacturing innovation and retailing of fashion products, including events such as fashion weeks, fashion council awards, and trade fairs that together, generate significant economic output.With exquisite fashion heritage, structured organization, and the most vaunted fashion designers of the last century, four cities are considered the main fashion capitals of the 21st century. Called the "Big Four, the most prominent fashion capitals of the world—in chronological order of their eponymous fashion weeks, are New York, London, Milan, and Paris, which receive the majority of press coverage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alternative_fashion">Alternative fashion</a></td>
+      <td>Alternative fashion or Alt fashion is fashion that stands apart from mainstream commercial fashion. Alternative fashion includes the fashions of specific subcultures such as emo, scene, goth subculture, hip hop,  cyberpunk, kawaii, cottagecore, goblincore, 70's core, and Lolita fashion; however, it is not limited to these.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>STEIN MART INC      ITEM 1A RISK FACTORS        Our results of <font color="blue">operations</font> and <font color="blue">financial condition</font> can be <font color="blue"><font color="blue">adversely</font> affected</font>     <font color="blue">by numerous risks</font> and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">most important</font> of these risks and     <font color="blue">uncertainties</font> are detailed below</td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">should carefully</font> consider the risk     <font color="blue">factors described</font> below and other <font color="blue">risks which may</font> be disclosed from time to     time  in  the  Company’s  <font color="blue">filings with</font> the SEC before investing in the     Company’s securities</td>
+    </tr>
+    <tr>
+      <td>Should any of these <font color="blue">risks actually materialize</font>, our     business, <font color="blue">financial condition</font>, and <font color="blue">future prospects could</font> be <font color="blue">negatively</font>     impacted</td>
+    </tr>
+    <tr>
+      <td>Intense <font color="blue">competition</font> in the <font color="blue">retail industry</font></td>
+    </tr>
+    <tr>
+      <td>We face intense <font color="blue">competition</font> for     <font color="blue">customers from</font> department stores, specialty retailers and regional and     national off-price retail chains</td>
+    </tr>
+    <tr>
+      <td>Many of these <font color="blue">competitors</font> are larger and     have <font color="blue"><font color="blue">significant</font>ly</font> greater financial and marketing resources than we do</td>
+    </tr>
+    <tr>
+      <td>In     addition, many department stores have become more promotional and have     reduced their <font color="blue">price points</font>, and certain department stores and certain of our     vendors have <font color="blue">opened outlet stores which offer <font color="blue">merchandise</font> at prices</font> that are     <font color="blue">competitive with ours</font></td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> also make sales through the     Internet, and although we do maintain <font color="blue">an Internet </font>site, we do not sell     <font color="blue"><font color="blue">merchandise</font> online</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we <font color="blue">may face periods</font> of intense <font color="blue">competition</font>     in  the  future  which  could  have  a  material adverse effect on our     <font color="blue">profitability</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">open new stores</font> in a cost-effective and <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Our future operating results will depend to a substantial <font color="blue">extent upon</font> our     ability to open and operate <font color="blue">new stores successfully</font>, and our ability to open     <font color="blue">new stores will depend upon</font> a number of factors, including the ability to     properly identify and enter new markets, locate suitable store sites in the     face of intense <font color="blue">competition</font>, negotiate acceptable lease terms, construct or     refurbish sites, hire, train and retain <font color="blue">skilled managers</font> and personnel, and     other factors, some of which may be beyond our control</td>
+    </tr>
+    <tr>
+      <td>In particular, the     success of our individual <font color="blue">stores depends</font> to a great <font color="blue">extent on locating them</font>     in  desirable and <font color="blue">convenient venues</font> in markets that include our target     <font color="blue">demographic</font></td>
+    </tr>
+    <tr>
+      <td>The success of individual stores                                           8     ______________________________________________________________________       <font color="blue">also may <font color="blue">depend on</font></font> the success of the <font color="blue">shopping centers</font> in which they are     located</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">demographic</font> and other <font color="blue">marketing data</font> we rely on in     determining  the location of our <font color="blue">stores cannot predict future consumer</font>     <font color="blue">preferences</font> and <font color="blue">buying trends with</font> complete accuracy</td>
+    </tr>
+    <tr>
+      <td>Lastly, our <font color="blue">proposed expansion also will</font> place <font color="blue">increased demands on</font> our     operational,  managerial and <font color="blue">administrative resources</font></td>
+    </tr>
+    <tr>
+      <td>These increased     <font color="blue">demands could</font> cause us to operate our business less effectively, which in     turn could cause <font color="blue">deterioration</font> in the <font color="blue">financial performance</font> of our existing     stores</td>
+    </tr>
+    <tr>
+      <td>In addition, to the extent that our <font color="blue">new store openings</font> are in     existing markets, we may experience <font color="blue">reduced net sales volumes</font> in existing     stores in those markets</td>
+    </tr>
+    <tr>
+      <td>We expect to fund our <font color="blue">expansion through cash flow</font>     from <font color="blue">operations</font> and, if necessary, by borrowings under our revolving credit     facility; however, if we experience a decline in performance, we may slow or     <font color="blue">discontinue store openings</font></td>
+    </tr>
+    <tr>
+      <td>Consumer <font color="blue">sensitivity</font> to <font color="blue">economic <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">retail apparel</font> business is     <font color="blue">dependent</font>  upon the level of <font color="blue">consumer spending</font> which may be <font color="blue">materially</font>     <font color="blue">adversely</font>  affected  by  an <font color="blue">economic downturn</font> or a decline in consumer     confidence</td>
+    </tr>
+    <tr>
+      <td>As  a  fashion  retailer,  we  rely on the <font color="blue">expenditure</font> of     <font color="blue">discretionary</font> income for most, if not all, of our sales</td>
+    </tr>
+    <tr>
+      <td>A downturn, whether     real or perceived, in <font color="blue">economic <font color="blue">conditions</font></font> or prospects, particularly in the     <font color="blue">Southeast </font>and other regions in which we derive a <font color="blue">significant</font> portion of our     net  sales, could <font color="blue">adversely</font> affect <font color="blue">consumer spending</font> habits and have a     material adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In  particular, the <font color="blue">continued threat</font> of terrorism, heightened security     measures  and  military  action in response to an act of terrorism has     <font color="blue">disrupted commerce</font> and intensified the <font color="blue">uncertainty</font> of the US economy</td>
+    </tr>
+    <tr>
+      <td>Any     further acts of terrorism or a <font color="blue">future war may further disrupt commerce</font> and     undermine consumer confidence, which could <font color="blue">negatively</font> impact our sales     <font color="blue">revenue by</font> causing <font color="blue">consumer spending</font> to decline</td>
+    </tr>
+    <tr>
+      <td>Furthermore, an act of     terrorism  or  war, or the threat thereof, could <font color="blue">negatively</font> impact our     business <font color="blue">by interfering with</font> our ability to obtain <font color="blue"><font color="blue">merchandise</font> from vendors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Inability </font>to obtain <font color="blue">merchandise</font> from our vendors or substitute suppliers at     similar costs in a <font color="blue">timely manner</font> could have a material adverse effect on our     operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unanticipated </font>changes in <font color="blue">fashion trends</font> and changing consumer <font color="blue">preferences</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font> in part upon our ability to anticipate and respond to     changing  consumer  <font color="blue">preferences</font> and <font color="blue">fashion trends</font> in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Although we attempt to <font color="blue">stay abreast</font> of the fashion tastes of our customers     and provide <font color="blue">merchandise</font> that satisfies customer demand, <font color="blue">fashion trends</font> can     change rapidly and we <font color="blue">cannot assure</font> that we <font color="blue">will accurately</font> anticipate     shifts  in  <font color="blue">fashion trends</font> and adjust our <font color="blue">merchandise</font> mix to appeal to     changing consumer tastes in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>If we misjudge the market for     our products or are <font color="blue">unsuccessful</font> in responding to changes in <font color="blue">fashion trends</font>     or in <font color="blue">market demand</font>, we could experience insufficient or <font color="blue">excess inventory</font>     <font color="blue">levels which could</font> result in <font color="blue">higher markdowns</font>, any of <font color="blue">which would</font> have a     material  adverse  effect  on  our  <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A lack of <font color="blue">adequate sources</font> of <font color="blue">merchandise</font> at acceptable prices</td>
+    </tr>
+    <tr>
+      <td>Our business     is <font color="blue">dependent</font> to a <font color="blue">significant</font> degree upon our ability to <font color="blue">purchase designer</font>     and other fashion <font color="blue">merchandise</font> at acceptable <font color="blue">wholesale prices</font></td>
+    </tr>
+    <tr>
+      <td>Although we     believe our <font color="blue">relationships with</font> our vendors are positive, we do not have     long-term agreements with any vendor</td>
+    </tr>
+    <tr>
+      <td>As a result, we must <font color="blue">continuously</font> seek     out buying <font color="blue">opportunities</font> from our existing suppliers and from new sources</td>
+    </tr>
+    <tr>
+      <td>We  compete for these <font color="blue">opportunities</font> with other retailers, discount and     deep-discount  chains,  mass  <font color="blue">merchandise</font>rs and various privately-held     companies and <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>Although we do not <font color="blue">depend on</font> any <font color="blue">single vendor</font> or     group of vendors and believe we can <font color="blue">successfully compete</font> in <font color="blue">seeking out new</font>     vendors, the loss of <font color="blue">certain key vendors could</font> make it <font color="blue">difficult</font> for us to     acquire <font color="blue">sufficient quantities</font> and an <font color="blue"><font color="blue">appropriate</font> mix</font> of <font color="blue">merchandise</font> at     acceptable prices, which could have a material adverse effect on our results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Seasonality, and <font color="blue">especially</font> the importance of the <font color="blue">holiday selling season</font></td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">affected by</font> the <font color="blue">seasonal pattern common</font> to <font color="blue">most retailers</font></td>
+    </tr>
+    <tr>
+      <td>Historically, our <font color="blue">highest net sales</font> and <font color="blue">profit levels</font> occur during the     fourth quarter, which includes the <font color="blue">holiday selling season</font></td>
+    </tr>
+    <tr>
+      <td>Our operating     results depend <font color="blue"><font color="blue">significant</font>ly</font> upon net sales generated during the fourth     quarter, and any factor that <font color="blue">negatively</font> impacts the <font color="blue">holiday selling season</font>     could have a material adverse effect on our results of <font color="blue">operations</font> for the     <font color="blue">entire year</font></td>
+    </tr>
+    <tr>
+      <td>Our advertising, marketing and <font color="blue">promotional strategies may</font> be <font color="blue">ineffective</font> and     <font color="blue">inefficient</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">profitability</font> and results of <font color="blue">operations</font> may be <font color="blue">materially</font>     <font color="blue">affected by</font> the <font color="blue">effectiveness</font> and <font color="blue">efficiency</font> of our marketing <font color="blue">expenditure</font>s     and our ability to select the right markets and media in which to advertise</td>
+    </tr>
+    <tr>
+      <td>In particular, we may not be successful in our efforts to create greater     awareness of our stores and our promotions, identify the <font color="blue">most effective</font> and     <font color="blue">efficient level</font> of spending in <font color="blue">each market</font> and <font color="blue">specific media vehicle</font> and     determine  the  <font color="blue">appropriate</font>  creative  message  and  <font color="blue">media mix</font> for our     advertising, marketing and promotional <font color="blue">expenditure</font>s</td>
+    </tr>
+    <tr>
+      <td>Our planned marketing     <font color="blue">expenditure</font>s may not result in <font color="blue">increased revenues</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if we are     not able to manage our marketing <font color="blue">expenditure</font>s on a cost-effective basis, our     <font color="blue">profitability</font>  and results of <font color="blue">operations</font> could be <font color="blue">materially</font> <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">third parties</font>, which we rely on for a majority of the <font color="blue">distribution</font>     aspects of our business, experience <font color="blue">labor strikes</font> or do not <font color="blue">adequately</font>     perform our <font color="blue">distribution</font> functions, our business would be disrupted</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">efficient operation</font> of our stores is <font color="blue">dependent</font> on our ability to receive     <font color="blue">merchandise</font> in our <font color="blue">stores throughout</font> the <font color="blue"><font color="blue">United States</font> </font>in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> vendors to sort and <font color="blue">pack <font color="blue">substantially</font></font> all of our <font color="blue">merchandise</font>     and <font color="blue">on package delivery companies</font> to deliver this <font color="blue">merchandise</font> directly to     our stores</td>
+    </tr>
+    <tr>
+      <td>These vendors and <font color="blue">package delivery companies may</font> experience     <font color="blue">labor strikes</font> or other <font color="blue">disruption</font>s in the future, the resolution of which     will be out of our control, and could result in a material <font color="blue">disruption</font> in our     business</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">failure by</font> these <font color="blue">third parties</font> to respond <font color="blue">adequately</font> to our     <font color="blue">distribution</font> needs, including <font color="blue">labor strikes</font> or other <font color="blue">disruption</font>s in the     business,  would  disrupt  our  <font color="blue">operations</font>  and  <font color="blue">negatively</font> impact our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>9     ______________________________________________________________________       Because of our focus on keeping our inventory at the forefront of fashion     trends, extreme and/or unseasonable weather <font color="blue">conditions</font> could force us to     <font color="blue">prematurely</font> mark down inventory</td>
+    </tr>
+    <tr>
+      <td>Our business is susceptible to unseasonable     weather <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>For example, extended periods of <font color="blue">unseasonably warm</font>     <font color="blue">temperatures during</font> the <font color="blue">winter season</font> or <font color="blue">cool weather during</font> the summer     <font color="blue">season could</font> render a portion of our <font color="blue">inventory incompatible with</font> those     unseasonable <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>These prolonged unseasonable weather <font color="blue">conditions</font>     could have a material adverse effect on our business, <font color="blue">financial condition</font>     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, hurricanes or other <font color="blue">extreme weather</font>     <font color="blue">conditions</font> over a <font color="blue">prolonged period might</font> make it <font color="blue">difficult</font> for our customers     to travel to our stores, which could have a material adverse effect on our     business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, as many     of our stores are located in the <font color="blue">southeastern</font> <font color="blue"><font color="blue">United States</font> </font>and Texas, we     are subject to <font color="blue">disruption</font>s from hurricanes which may have a material adverse     effect on our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in <font color="blue">comparable store sales</font> and quarterly results of <font color="blue">operations</font>     could cause the price of our common stock to decline <font color="blue">substantially</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">comparable store sales</font> and quarterly results of <font color="blue">operations</font> are <font color="blue">affected by</font> a     variety of factors, including:         •   <font color="blue">fashion trends</font>         •   calendar shifts of holiday or <font color="blue">seasonal periods</font>         •   the <font color="blue">effectiveness</font> of our <font color="blue">inventory management</font>         •   changes in our <font color="blue">merchandise</font> mix         •   the timing of <font color="blue">promotional events</font>         •   weather <font color="blue">conditions</font>         •   changes in general <font color="blue">economic <font color="blue">conditions</font></font> and <font color="blue">consumer spending</font> patterns         •   actions of <font color="blue">competitors</font>       Our <font color="blue">comparable store sales</font> and quarterly results have fluctuated in the past     and are expected to continue to fluctuate in the future</td>
+    </tr>
+    <tr>
+      <td>In addition, we     <font color="blue">cannot assure</font> you that we will be able to maintain <font color="blue">comparable store sales</font>     <font color="blue">increases as</font> we expand our business</td>
+    </tr>
+    <tr>
+      <td>We may be unable to close under-performing stores in a cost-effective and     <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>As part of our strategy, we close certain under-performing     stores,  <font color="blue">generally</font>  based  on  <font color="blue">considerations</font>  of store <font color="blue">profitability</font>,     <font color="blue">competition</font>, strategic factors and other <font color="blue">considerations</font></td>
+    </tr>
+    <tr>
+      <td>Closing a store     could  subject  us  to  costs  including  the  write-down of leasehold     <font color="blue">improvements</font>, equipment, furniture and fixtures</td>
+    </tr>
+    <tr>
+      <td>In addition, we could     <font color="blue">remain liable</font> for <font color="blue">future lease obligations</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">costs associated with</font>     closings of under-performing stores could have a material adverse effect on     our <font color="blue">profitability</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">adequately</font> protect our trademark Stein Mart^®, and, to a     lesser  extent, the various other marks we use in <font color="blue">conjunction with</font> our     <font color="blue">private label</font> <font color="blue">merchandise</font> program, could have a <font color="blue">negative impact on</font> our brand     image</td>
+    </tr>
+    <tr>
+      <td>We believe that our trademark Stein Mart^® and, to a <font color="blue">lesser extent</font>,     the various other marks that we use in <font color="blue">connection with</font> our <font color="blue">private label</font>     <font color="blue">merchandise</font> program, are important to us because we feel that these brands     have <font color="blue">characteristics unique</font> to our business</td>
+    </tr>
+    <tr>
+      <td>We have obtained a federal     <font color="blue">registration</font> of the Stein Mart^® trademark and various other <font color="blue">trademarks</font> in     the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that the <font color="blue">registration</font>s that we have     obtained <font color="blue">will prevent</font> the imitation of our business or <font color="blue">infringement</font> of our     <font color="blue">intellectual property rights by others</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to protect our     brand  or  our brand becomes associated with lesser characteristics or     otherwise carries a <font color="blue">negative connotation</font>, our brand image, and <font color="blue">consequently</font>     the results of our <font color="blue">operations</font>, could be <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> on certain key personnel</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">continued success</font> will depend</font>     to  a  <font color="blue">significant</font> <font color="blue">extent upon</font> the efforts and <font color="blue">abilities</font> of our senior     <font color="blue">executives</font>, and the loss of the services of one or more of these <font color="blue">executives</font>     could have a material adverse effect upon our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">executives</font> are Michael D Fisher, president and <font color="blue">chief executive officer</font>; Jay     Stein, chairman of the board of directors; James G Delfs, <font color="blue">senior vice</font>     president, finance and <font color="blue">chief financial officer</font>; D Hunt Hawkins, <font color="blue">senior vice</font>     president, human resources; and Michael D Ray, <font color="blue">senior vice</font> president,     director of stores; and our <font color="blue">general merchandising managers</font>, M Kassie Jones,     William  A Moll and John H Pennell, as well as the <font color="blue">vice president</font> of     planning and <font color="blue">allocation</font>, <font color="blue">Roseann McLean</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">continued success</font> is also     <font color="blue">dependent</font> upon our ability to attract and retain <font color="blue">qualified employees</font> to meet     our needs, <font color="blue">especially</font> to support planned growth</td>
+    </tr>
+  </tbody>
+</table>

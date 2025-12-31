@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: statements involve known", fill: "#ca2c92"},
+{source: "1: statements involve known", target: "1: unknown risks", fill: "#ca2c92"},
+{source: "1: unknown risks", target: "1: uncertainties", fill: "#ca2c92"},
+{source: "1: uncertainties", target: "1: Companys ", fill: "#ca2c92"},
+{source: "1: Companys ", target: "1: materially different from", fill: "#ca2c92"},
+{source: "1: statements involve known", target: "2: uncertainties", fill: "#013220"},
+{source: "2: uncertainties", target: "2: construction", fill: "#013220"},
+{source: "2: uncertainties", target: "5: government funds available", fill: "#48d1cc"},
+{source: "5: government funds available", target: "5: construction activity", fill: "#48d1cc"},
+{source: "5: construction activity", target: "5: continued slow down", fill: "#48d1cc"},
+{source: "5: continued slow down", target: "5: home building activity could", fill: "#48d1cc"},
+{source: "5: home building activity could", target: "5: Companys ", fill: "#48d1cc"},
+{source: "5: Companys ", target: "5: financial condition", fill: "#48d1cc"},
+{source: "5: financial condition", target: "5: operations", fill: "#48d1cc"},
+{source: "5: government funds available", target: "13: relatively minor fluctuations", fill: "#d19fe8"},
+{source: "13: relatively minor fluctuations", target: "13: demand general", fill: "#d19fe8"},
+{source: "13: demand general", target: "13: conditions", fill: "#d19fe8"},
+{source: "13: conditions", target: "13: market conditions beyond", fill: "#d19fe8"},
+{source: "13: relatively minor fluctuations", target: "16: Significant ", fill: "#e7accf"},
+{source: "16: Significant ", target: "16: availability", fill: "#e7accf"},
+{source: "16: availability", target: "16: raw materials", fill: "#e7accf"},
+{source: "16: Significant ", target: "17: Significant ", fill: "#f400a1"},
+{source: "17: Significant ", target: "17: connection with", fill: "#f400a1"},
+{source: "17: connection with", target: "17: businesses", fill: "#f400a1"},
+{source: "17: businesses", target: "17: decreases", fill: "#f400a1"},
+{source: "17: decreases", target: "17: availability could materially", fill: "#f400a1"},
+{source: "17: availability could materially", target: "17: adversely", fill: "#f400a1"},
+{source: "17: Significant ", target: "36: Environmental ", fill: "#00755e"},
+{source: "36: Environmental ", target: "36: liabilities", fill: "#00755e"},
+{source: "36: Environmental ", target: "START_HERE", fill: "#00755e"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Passeig_de_Lluís_Companys,_Barcelona">Passeig de Lluís Companys, Barcelona</a></td>
+      <td>Passeig de Lluís Companys (Catalan pronunciation: [pəˈsɛdʒ də ʎuˈis kumˈpaɲs]) is a promenade in the Ciutat Vella and Eixample districts of Barcelona, Catalonia, Spain, and can be seen as an extension of Passeig de Sant Joan. It was named after President Lluís Companys, who was executed in 1940.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conxita_Julià">Conxita Julià</a></td>
+      <td>Conxita Julià i Farrés (Catalan pronunciation: [kuɲˈʃitə ʒuliˈa j fəˈres]; 11 June 1920 – 9 January 2019), also known as Conxita de Carrasco, was a Catalan woman noted for her dealings with Lluís Companys, President of Catalonia, in the 1930s, and for her poetry. Julià died in January 2019 at the age of 98.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_largest_companies_in_the_United_States_by_revenue">List of largest companies in the United States by revenue</a></td>
+      <td>This list comprises the largest companies in the United States by revenue as of 2022, according to the Fortune 500 tally of companies. Retail corporation Walmart has been the largest company in the US by revenue since 2014.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/El_Tarròs">El Tarròs</a></td>
+      <td>El Tarròs (Spanish: Tarrós) is a small village in Tornabous municipality, in the province of Lleida, in Catalonia, Spain. In 2008 it had 100 inhabitants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_engineering">Construction engineering</a></td>
+      <td>Construction engineering is a professional discipline that deals with the designing, planning, construction and management of infrastructures such as roads, tunnels, bridges, airports, railroads, facilities, buildings, dams, utilities and other projects.\nCivil engineering is a related field that deals more with the practical aspects of projects.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dirichlet_conditions">Dirichlet conditions</a></td>
+      <td>In mathematics, the Dirichlet conditions are sufficient conditions for a real-valued, periodic function f to be equal to the sum of its Fourier series at each point where f is continuous. Moreover, the behavior of the Fourier series at points of discontinuity is determined as well (it is the midpoint of the values of the discontinuity).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Wolfe_conditions">Wolfe conditions</a></td>
+      <td>In the unconstrained minimization problem, the Wolfe conditions are a set of inequalities for performing inexact line search, especially in quasi-Newton methods, first published by Philip Wolfe in 1969.In these methods the idea is to find\n\n  \n    \n      \n        \n          min\n          \n            x\n          \n        \n        f\n        (\n        \n          x\n        \n        )\n      \n    \n    {\displaystyle \min _{x}f(\mathbf {x} )}\n  for some smooth \n  \n    \n      \n        f\n        :\n        \n          \n            R\n          \n          \n            n\n          \n        \n        →\n        \n          R\n        \n      \n    \n    {\displaystyle f\colon \mathbb {R} ^{n}\to \mathbb {R} }\n  . Each step often involves approximately solving the subproblem\n\n  \n    \n      \n        \n          min\n          \n            α\n          \n        \n        f\n        (\n        \n          \n            x\n          \n          \n            k\n          \n        \n        +\n        α\n        \n          \n            p\n          \n          \n            k\n          \n        \n        )\n      \n    \n    {\displaystyle \min _{\alpha }f(\mathbf {x} _{k}+\alpha \mathbf {p} _{k})}\n  where \n  \n    \n      \n        \n          \n            x\n          \n          \n            k\n          \n        \n      \n    \n    {\displaystyle \mathbf {x} _{k}}\n   is the current best guess, \n  \n    \n      \n        \n          \n            p\n          \n          \n            k\n          \n        \n        ∈\n        \n          \n            R\n          \n          \n            n\n          \n        \n      \n    \n    {\displaystyle \mathbf {p} _{k}\in \mathbb {R} ^{n}}\n   is a search direction, and \n  \n    \n      \n        α\n        ∈\n        \n          R\n        \n      \n    \n    {\displaystyle \alpha \in \mathbb {R} }\n   is the step length.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nervous_Conditions">Nervous Conditions</a></td>
+      <td>Nervous Conditions is a novel by Zimbabwean author Tsitsi Dangarembga, first published in the United Kingdom in 1988. It was the first book published by a black woman from Zimbabwe in English.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_(album)">Conditions (album)</a></td>
+      <td>Conditions is the debut studio album by Australian rock band The Temper Trap, released in Australia through Liberation Music on 19 June 2009. It was later released in the United Kingdom on 10 August 2009.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_of_Learning">Conditions of Learning</a></td>
+      <td>Conditions of Learning, by Robert M. Gagné, was originally published in 1965 by Holt, Rinehart and Winston and describes eight kinds of learning and nine events of instruction. This theory of learning involved two steps.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_races">Conditions races</a></td>
+      <td>Conditions races are horse races in which the weights carried by the runners are laid down by the conditions attached to the race. Weights are allocated according to the sex of the runners, with female runners carrying less weight than males; the age of the runners, with younger horses receiving weight from older runners to allow for relative maturity, referred to as weight for age; and the quality of the runners, with horses that have won certain values of races giving weight to less successful entrants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability">Availability</a></td>
+      <td>In reliability engineering, the term availability has the following meanings:\n\nThe degree to which a system, subsystem or equipment is in a specified operable and committable state at the start of a mission, when the mission is called for at an unknown, i.e. a random, time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_heuristic">Availability heuristic</a></td>
+      <td>The availability heuristic, also known as availability bias, is a mental shortcut that relies on immediate examples that come to a given person's mind when evaluating a specific topic, concept, method or decision. The availability heuristic operates on the notion that if something can be recalled, it must be important, or at least more important than alternative solutions which are not as readily recalled.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Not_Available">Not Available</a></td>
+      <td>Not Available is the second studio album (released as the fourth) by the Residents, recorded in 1974. The album was allegedly meant to only be released once its creators completely forgot about its existence (adhering to their "Theory of Obscurity," in which an artist's purest work is created without an audience) - however, due to ongoing delays in the release of Eskimo, Not Available was released to supply the demand for new Residents material, given their unexpected critical and commercial success following the release of the Duck Stab EP.\n\n\n== History ==\nIt is said that the lyrics and themes of Not Available arose from personal tensions within the group, and that the project began as a private psychodrama before being adapted into a possible operetta.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High-availability_cluster">High-availability cluster</a></td>
+      <td>High-availability clusters (also known as HA clusters, fail-over clusters) are groups of computers that support server applications that can be reliably utilized with a minimum amount of down-time.  They operate by using high availability software to harness redundant computers in groups or clusters that provide continued service when system components fail.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business">Business</a></td>
+      <td>Business is the activity of making one's living or making money by producing or buying and selling products (such as goods and services). It is also "any activity or enterprise entered into for profit."Having a business name does not separate the business entity from the owner, which means that the owner of the business is responsible and liable for debts incurred by the business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business-to-business">Business-to-business</a></td>
+      <td>Business-to-business (B2B or, in some countries, BtoB) is a situation where one business makes a commercial transaction with another. This typically occurs when:\n\nA business is sourcing materials for their production process for output   (e.g., a food manufacturer purchasing salt), i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Small_business">Small business</a></td>
+      <td>Small businesses are  corporations, partnerships, or sole proprietorships which have fewer employees and/or less annual revenue than a regular-sized business or corporation. Businesses are defined as "small" in terms of being able to apply for government support and qualify for preferential tax policy varies depending on the country and industry.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_Is_Business">Business Is Business</a></td>
+      <td>Business-to-business (B2B or, in some countries, BtoB) is a situation where one business makes a commercial transaction with another. This typically occurs when:\n\nA business is sourcing materials for their production process for output   (e.g., a food manufacturer purchasing salt), i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Family_business">Family business</a></td>
+      <td>A family business is a commercial organization in which decision-making is influenced by multiple generations of a family, related by blood or marriage or adoption, who has both the ability to influence the vision of the business and the willingness to use this ability to pursue distinctive goals. They are closely identified with the firm through leadership or ownership.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_Proposal">Business Proposal</a></td>
+      <td>Business Proposal (Korean: 사내 맞선; Hanja: 社內맞선; RR: Sanae Matseon; lit. The Office Blind Date) is a South Korean romantic comedy television series based on the webtoon of the same title written by HaeHwa and illustrated by Narak.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Liability">The Liability</a></td>
+      <td>The Liability (also known as The Hitman's Apprentice) is a 2013 British black comedy crime-thriller film directed by Craig Viveiros and written by John Wrathall. The film stars Tim Roth, Talulah Riley, Jack O'Connell and Peter Mullan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_liability_company">Limited liability company</a></td>
+      <td>A limited liability company (LLC) is the US-specific form of a private limited company. It is a business structure that can combine the pass-through taxation of a partnership or sole proprietorship with the limited liability of a corporation.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>EAGLE MATERIALS INC      ITEM 1A RISK FACTORS          These <font color="blue">statements involve known</font> and <font color="blue">unknown risks</font> and <font color="blue">uncertainties</font> that     may cause the Company’s actual results to be <font color="blue">materially different from</font>     planned or expected results</td>
+    </tr>
+    <tr>
+      <td>Those risks and <font color="blue">uncertainties</font> include, but are     not limited to:       •   Levels of <font color="blue">construction</font> spending</td>
+    </tr>
+    <tr>
+      <td>Demand for the Company’s products is     directly related to the level of activity in the <font color="blue">construction</font> industry,     which includes residential, commercial and infrastructure <font color="blue">construction</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, activity in the infrastructure <font color="blue">construction</font> business is     directly related to the amount of <font color="blue">government funding available</font> for such     projects</td>
+    </tr>
+    <tr>
+      <td>Any decrease in the amount of <font color="blue">government funds available</font> for such     projects or any decrease in <font color="blue">construction</font> activity in general, including     <font color="blue">continued slow down</font> of home building activity, could have a material adverse     effect on the Company’s <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s business is <font color="blue"><font color="blue"><font color="blue">significant</font>ly</font> <font color="blue">affected by</font></font>     the movement of <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>Interest rates have a <font color="blue">direct impact on</font> the     level of residential, commercial and infrastructure <font color="blue">construction</font> activity     put in place</td>
+    </tr>
+    <tr>
+      <td>Higher <font color="blue">interest rates</font> could have a material adverse effect on     our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, increases in interest     <font color="blue">rates could</font> result in <font color="blue">higher interest expense</font> related to the Company’s     <font color="blue">borrowings under</font> its credit <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>•   Price <font color="blue">fluctuations</font> and supply/demand for our products</td>
+    </tr>
+    <tr>
+      <td>The products     sold by the Company are <font color="blue">commodities</font> and <font color="blue"><font color="blue">competition</font> among manufacturers</font> is     <font color="blue">based largely on price</font></td>
+    </tr>
+    <tr>
+      <td>Prices are often subject to material changes in     response to relatively minor <font color="blue">fluctuations</font> in supply and demand, general     economic  <font color="blue">conditions</font>  and  other market <font color="blue">conditions</font> beyond our control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in the <font color="blue">production <font color="blue">capacity</font></font> for <font color="blue">products such as gypsum wallboard</font>     may create an <font color="blue">oversupply</font> of <font color="blue">such products</font> and <font color="blue">negatively impact product</font>     prices</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that prices for <font color="blue">products sold by</font> the     Company will not decline in the future or that <font color="blue">such declines will</font> not have a     material  adverse  effect  on  our  <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Significant </font>changes in the cost of, and the <font color="blue">availability</font> of, fuel,     energy and other <font color="blue">raw materials</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>increases in the cost of fuel,     energy  or  raw  materials  used  in <font color="blue"><font color="blue">connection</font> with</font> our <font color="blue">businesses</font> or     substantial <font color="blue">decreases</font> in their <font color="blue">availability</font> could materially and <font color="blue">adversely</font>     affect our sales and operating profits</td>
+    </tr>
+    <tr>
+      <td>Major cost components in each of our     <font color="blue">businesses</font> are the cost of fuel, energy and <font color="blue">raw materials</font></td>
+    </tr>
+    <tr>
+      <td>Prices for fuel,     energy or <font color="blue">raw materials</font> used in <font color="blue"><font color="blue">connection</font> with</font> our <font color="blue">businesses</font> could change     <font color="blue"><font color="blue">significant</font>ly</font> in a short period of time for <font color="blue">reasons outside</font> our control</td>
+    </tr>
+    <tr>
+      <td>•   The seasonal nature of the Company’s business</td>
+    </tr>
+    <tr>
+      <td>A majority of our     business is <font color="blue">seasonal with peak revenues</font> and profits occurring primarily in     the  months  of  April through November</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Quarterly </font>results have varied     <font color="blue"><font color="blue">significant</font>ly</font> in the past and are likely to vary <font color="blue"><font color="blue">significant</font>ly</font> from quarter     to quarter in the future</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">variations could</font> have a <font color="blue">negative impact on</font>     the price of the Company’s <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>•   National and regional economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>A majority of our revenues     are <font color="blue">from customers</font> who are in <font color="blue">industries</font> and <font color="blue">businesses</font> that are cyclical in     nature and subject to changes in general economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     since <font color="blue">operations</font> occur in a variety of <font color="blue">geographic markets</font>, our <font color="blue">businesses</font>     are subject to the economic <font color="blue">conditions</font> in <font color="blue">each such geographic market</font></td>
+    </tr>
+    <tr>
+      <td>General <font color="blue">economic downturns</font> or <font color="blue">localized downturns</font> in the regions where we     have <font color="blue">operations</font>, including any downturns in the <font color="blue">construction</font> industry or     increases  in  <font color="blue">capacity</font> in the gypsum wallboard, paperboard and cement     <font color="blue">industries</font>, could have a material adverse effect on our business, financial     condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>15       _________________________________________________________________    [74]Table of Contents         •   Unfavorable weather <font color="blue">conditions</font> during peak <font color="blue">construction</font> periods and     other <font color="blue">unexpected operational difficulties</font></td>
+    </tr>
+    <tr>
+      <td>Because a majority of our     business is seasonal, bad weather <font color="blue">conditions</font> and other unexpected     operational difficulties during peak periods could <font color="blue">adversely</font> affect     operating income and <font color="blue">cash flow</font> and could have a <font color="blue">disproportionate impact on</font>     our results of <font color="blue">operations</font> for the full year</td>
+    </tr>
+    <tr>
+      <td>•    <font color="blue">Competition </font>from new or <font color="blue">existing competitors</font> or the ability to     <font color="blue">successfully penetrate new markets</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">construction</font> products industry is     <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to keep our <font color="blue">products competitively</font>     priced, our <font color="blue">sales could</font> be <font color="blue">reduced materially</font></td>
+    </tr>
+    <tr>
+      <td>Also, we may experience     increased  <font color="blue">competition</font>  from  <font color="blue">companies offering products based on new</font>     processes that are more <font color="blue">efficient</font> or result in <font color="blue">improvements</font> in product     performance, which could put us at a <font color="blue">disadvantage</font> and cause us to lose     customers and <font color="blue">sales volume</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to continue to <font color="blue">compete effectively</font>     could have a material adverse effect on our business, <font color="blue">financial condition</font>     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Environmental </font><font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to state,     federal and <font color="blue">local <font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font>, which impose <font color="blue">liability</font>     for cleanup or <font color="blue">remediation</font> of <font color="blue"><font color="blue">environmental</font> pollution</font> and <font color="blue"><font color="blue">hazardous</font> waste</font>     arising from past acts; and require <font color="blue">pollution control</font> and prevention, site     <font color="blue">restoration</font> and operating permits and/or approvals to <font color="blue">conduct certain</font> of its     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Certain of our <font color="blue">operations</font> may from time-to-time involve the use     of substances that are classified as toxic or <font color="blue">hazardous</font> substances within     the meaning of these laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Risk of <font color="blue">environmental</font> <font color="blue">liability</font>     is inherent in the operation of our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>As a result, it is possible     that <font color="blue">environmental</font> <font color="blue">liabilities</font> could have a material adverse effect on the     Company in the future</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Compliance </font>with governmental <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> and our     customers are subject to and <font color="blue"><font color="blue">affected by</font> federal</font>, state and <font color="blue">local laws</font> and     <font color="blue">regulations</font> with respect to land usage, street and highway usage, noise     level and health and safety and <font color="blue">environmental</font> matters</td>
+    </tr>
+    <tr>
+      <td>In many instances,     various  permits are required for <font color="blue">construction</font> and related <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">management</font> believes that we are in compliance in all material     respects with <font color="blue">regulatory requirements</font>, there can be no assurance that the     Company will not incur material costs or <font color="blue">liabilities</font> in <font color="blue"><font color="blue">connection</font> with</font>     <font color="blue">regulatory requirements</font> or that demand for its <font color="blue">products will</font> be <font color="blue">affected by</font>     <font color="blue">regulatory issues affecting</font> its customers</td>
+    </tr>
+    <tr>
+      <td>•   Events that <font color="blue">may disrupt</font> the US or world economy</td>
+    </tr>
+    <tr>
+      <td>Future terrorist     attacks, the ensuing US military and other responsive actions, could have     a <font color="blue"><font color="blue">significant</font> adverse</font> effect on the general economic, market and political     <font color="blue">conditions</font>,  which  in  turn could have material adverse effect on the     Company’s business</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Significant </font>changes in the cost and <font color="blue">availability</font> of <font color="blue">transportation</font></td>
+    </tr>
+    <tr>
+      <td>Some of the <font color="blue">raw materials</font> used in our manufacturing processes, such as coal     or coke, are transported to our <font color="blue">facilities</font> by truck or rail</td>
+    </tr>
+    <tr>
+      <td>In addition,     the <font color="blue">transportation</font> costs associated with the delivery of our wallboard     products are a <font color="blue">significant</font> portion of the <font color="blue">variable cost</font> of the wallboard     division</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>increases in the cost of fuel or energy can result in     material increases in the cost of <font color="blue">transportation</font> which could materially and     <font color="blue">adversely</font> affect our operating profits</td>
+    </tr>
+    <tr>
+      <td>In addition, reductions in the     <font color="blue">availability</font> of <font color="blue">certain modes</font> of <font color="blue">transportation</font> such as rail or trucking     <font color="blue">could limit</font> our ability to deliver product and <font color="blue">therefore materially</font> and     <font color="blue">adversely</font> affect our operating profits</td>
+    </tr>
+    <tr>
+      <td>In general, the Company is subject to the risks and <font color="blue">uncertainties</font> of     the  <font color="blue">construction</font>  industry  and  of  doing  business  in the <font color="blue">US The     </font>forward-looking statements are made as of the date of this report, and the     Company undertakes <font color="blue">no obligation</font> to update them, whether as a result of new     information, <font color="blue">future events</font> or otherwise</td>
+    </tr>
+  </tbody>
+</table>

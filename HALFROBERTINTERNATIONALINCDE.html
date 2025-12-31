@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: Companys ", fill: "#dea5a4"},
+{source: "3: Companys ", target: "3: dependent upon", fill: "#dea5a4"},
+{source: "3: dependent upon", target: "3: Companys ", fill: "#dea5a4"},
+{source: "3: Companys ", target: "4: economic condition", fill: "#a8516e"},
+{source: "4: economic condition", target: "4: unemployment", fill: "#a8516e"},
+{source: "4: unemployment", target: "4: Company ", fill: "#a8516e"},
+{source: "4: Company ", target: "4: specific industry may severely reduce", fill: "#a8516e"},
+{source: "4: specific industry may severely reduce", target: "4: Companys ", fill: "#a8516e"},
+{source: "4: Companys ", target: "4: thereby significantly decrease", fill: "#a8516e"},
+{source: "4: thereby significantly decrease", target: "4: Companys ", fill: "#a8516e"},
+{source: "4: economic condition", target: "6: The Companys ", fill: "#bcd4e6"},
+{source: "6: The Companys ", target: "6: staffing services", fill: "#bcd4e6"},
+{source: "6: staffing services", target: "6: individuals seeking employment", fill: "#bcd4e6"},
+{source: "6: The Companys ", target: "8: Candidates ", fill: "#f984e5"},
+{source: "8: Candidates ", target: "8: generally seek temporary", fill: "#f984e5"},
+{source: "8: generally seek temporary", target: "8: competitors", fill: "#f984e5"},
+{source: "8: Candidates ", target: "17: Companys ", fill: "#c72c48"},
+{source: "17: Companys ", target: "17: Protiviti ", fill: "#c72c48"},
+{source: "17: Protiviti ", target: "17: businesses", fill: "#c72c48"},
+{source: "17: businesses", target: "17: highly dependent upon", fill: "#c72c48"},
+{source: "17: highly dependent upon", target: "17: reputations", fill: "#c72c48"},
+{source: "17: Companys ", target: "19: Potential Liability to Employees and Clients", fill: "#95b"},
+{source: "19: Potential Liability to Employees and Clients", target: "22: the Company ", fill: "#b19cd9"},
+{source: "22: the Company ", target: "22: liability", fill: "#b19cd9"},
+{source: "22: liability", target: "22: various workplace events", fill: "#b19cd9"},
+{source: "22: various workplace events", target: "22: physical injury discrimination", fill: "#b19cd9"},
+{source: "22: physical injury discrimination", target: "22: harassment", fill: "#b19cd9"},
+{source: "22: the Company ", target: "43: The Company ", fill: "#003153"},
+{source: "43: The Company ", target: "43: subsidiaries", fill: "#003153"},
+{source: "43: subsidiaries", target: "43: defendants", fill: "#003153"},
+{source: "43: defendants", target: "43: the Company ", fill: "#003153"},
+{source: "43: the Company ", target: "43: liabilities", fill: "#003153"},
+{source: "43: The Company ", target: "START_HERE", fill: "#003153"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Passeig_de_Lluís_Companys,_Barcelona">Passeig de Lluís Companys, Barcelona</a></td>
+      <td>Passeig de Lluís Companys (Catalan pronunciation: [pəˈsɛdʒ də ʎuˈis kumˈpaɲs]) is a promenade in the Ciutat Vella and Eixample districts of Barcelona, Catalonia, Spain, and can be seen as an extension of Passeig de Sant Joan. It was named after President Lluís Companys, who was executed in 1940.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Estadi_Olímpic_Lluís_Companys">Estadi Olímpic Lluís Companys</a></td>
+      <td>Estadi Olímpic Lluís Companys (Catalan pronunciation: [əsˈtaði uˈlimpiɡ ʎuˈis kumˈpaɲs], formerly known as the Estadi Olímpic de Montjuïc and Estadio de Montjuic) is a stadium in Barcelona, Catalonia, Spain. Originally built in 1927 for the 1929 International Exposition in the city (and Barcelona's bid for the 1936 Summer Olympics, which were awarded to Berlin), it was renovated in 1989 to be the main stadium for the 1992 Summer Olympics and 1992 Summer Paralympics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conxita_Julià">Conxita Julià</a></td>
+      <td>Conxita Julià i Farrés (Catalan pronunciation: [kuɲˈʃitə ʒuliˈa j fəˈres]; 11 June 1920 – 9 January 2019), also known as Conxita de Carrasco, was a Catalan woman noted for her dealings with Lluís Companys, President of Catalonia, in the 1930s, and for her poetry. Julià died in January 2019 at the age of 98.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary">Subsidiary</a></td>
+      <td>A subsidiary, subsidiary company or daughter company is a company owned or controlled by another company, which is called the parent company or holding company. Two or more subsidiaries that belong to the same parent company are called sister companies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/El_Tarròs">El Tarròs</a></td>
+      <td>El Tarròs (Spanish: Tarrós) is a small village in Tornabous municipality, in the province of Lleida, in Catalonia, Spain. In 2008 it had 100 inhabitants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_companies_traded_on_the_JSE">List of companies traded on the JSE</a></td>
+      <td>This is a list of companies traded on the JSE. The original compilation of the list was done in February 2006. It is in the process of being updated as at April 2021.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adecco_Staffing,_USA">Adecco Staffing, USA</a></td>
+      <td>Adecco Staffing, USA is the second largest provider of recruitment and staffing services in the United States, offering human resource services such as temporary staffing, permanent placement, outsourcing, career transition or outplacement. Based in Jacksonville, FL, it serves small- and mid-sized businesses as well as Fortune 500 companies.Adecco Staffing is a subsidiary of Adecco Group North America, which is owned by the Swiss-based Adecco Group.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Yoh_Services">Yoh Services</a></td>
+      <td>Yoh Services LLC is an American talent and outsourcing company headquartered in Philadelphia, Pennsylvania.  Yoh's primary services include temporary placement, direct hire, managed staffing services and outsourced solutions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pasona">Pasona</a></td>
+      <td>Pasona Inc. (株式会社パソナ Kabushiki Gaisha Pasona) is a Japanese multinational corporation that provides a variety of staffing services, including temporary staffing, recruiting, outplacement, and outsourcing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Defence_Services_Staff_College">Defence Services Staff College</a></td>
+      <td>The Defence Services Staff College (DSSC) is a defence service training institution of the Ministry of Defence, Government of India.\nIt trains officers of all three services of the Indian Armed Forces – (Indian Military Service, Indian Naval Service, Indian Airforce Service), selected officers from the Paramilitary forces and the Civil Services and officers from friendly foreign countries for command and staff appointments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Allied_Universal">Allied Universal</a></td>
+      <td>Allied Universal is an American provider of security systems and services, janitorial services, and staffing. The company was formed in 2016 by the merger of Universal Services of America, a Santa Ana, California-based security and janitorial services company, and AlliedBarton Security Services, based in Conshohocken, Pennsylvania.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Managed_services">Managed services</a></td>
+      <td>Managed services is the practice of outsourcing the responsibility for maintaining, and anticipating need for, a range of processes and functions, ostensibly for the purpose of improved operations and reduced budgetary expenditures through the reduction of directly-employed staff. It is an alternative to the break/fix or on-demand outsourcing model where the service provider performs on-demand services and bills the customer only for the work done.Under this subscription model, the client or customer is the entity that owns or has direct oversight of the organization or system being managed, whereas the managed services provider (MSP) is the service provider delivering the managed services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Kelly_Services">Kelly Services</a></td>
+      <td>Kelly Services, Inc. (formerly Russell Kelly Office Service and Kelly Girl Service, Inc.) is an American office staffing company that operates globally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_analysis">Competitor analysis</a></td>
+      <td>Competitive analysis in marketing and strategic management is an assessment of the strengths and weaknesses of current and potential competitors. This analysis provides both an offensive and defensive strategic context to identify opportunities and threats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_backlinking">Competitor backlinking</a></td>
+      <td>Competitor backlinking is a search engine optimization strategy that involves analyzing the backlinks of competing websites within a vertical search. The outcome of this activity is designed to increase organic search engine rankings and to gain an understanding of the link building strategies used by business competitors.By analyzing the backlinks to competitor websites, it is possible to gain a benchmark on the number of links and the quality of links that is required for high search engine rankings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_of_athletics">Sport of athletics</a></td>
+      <td>Athletics is a group of sporting events that involves competitive running, jumping, throwing, and walking. The most common types of athletics competitions are track and field, road running, cross country running, and racewalking.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_female_fitness_and_figure_competitors">List of female fitness and figure competitors</a></td>
+      <td>This is a list of female fitness and figure competitors.\n\n\n== A ==\nJelena Abbou\n\n\n== B ==\nLauren Beckham\nAlexandra Béres\nSharon Bruneau\n\n\n== C ==\nNatalie Montgomery-Carroll\nJen Cassetty\nKim Chizevsky\nSusie Curry\n\n\n== D ==\nDebbie Dobbins\nNicole Duncan\n\n\n== E ==\nJamie Eason\nAlexis Ellis\n\n\n== F ==\nAmy Fadhli\nJaime Franklin\n\n\n== G ==\nAdela García \nConnie Garner\nElaine Goodlad\nTracey Greenwood\nOksana Grishina\n\n\n== H ==\nMallory Haldeman\nVanda Hădărean\nJen Hendershott\nSoleivi Hernandez\nApril Hunter\n\n\n== I ==\n\n\n== J ==\nTsianina Joelson\n\n\n== K ==\nAdria Montgomery-Klein\nAshley Kaltwasser\n\n\n== L ==\nLauren Lillo\nMary Elizabeth Lado\nTammie Leady\nJennifer Nicole Lee\nAmber Littlejohn\nJulie Lohre\nJenny Lynn\n\n\n== M ==\nTimea Majorová\nLinda Maxwell\nDavana Medina\nJodi Leigh Miller\nChisato Mishima\n\n\n== N ==\nKim Nielsen\n\n\n== O ==\n\n\n== P ==\nVicky Pratt\nElena Panova\nChristine Pomponio-Pate\nCathy Priest\n\n\n== Q ==\n\n\n== R ==\nMaite Richert\nCharlene Rink\nKelly Ryan\n\n\n== S ==\nErin Stern\nCarol Semple-Marzetta\nKrisztina Sereny\nTrish Stratus (Patricia Anne Stratigias)\n\n\n== T ==\nKristi Tauti\nJennifer Thomas\n\n\n== U ==\n\n\n== V ==\nLisa Marie Varon\n\n\n== W ==\nLatisha Wilder\nTorrie Wilson\nLyen Wong\nJenny Worth\nNicole Wilkins\n\n\n== Y ==\n\n\n== Z ==\nMarietta Žigalová\nMalika Zitouni\n\n\n== See also ==\nList of female bodybuilders\n\n\n== References ==\nThere has been a rise in the number of women wanting to compete as fitness models.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Dancing_with_the_Stars_(American_TV_series)_competitors">List of Dancing with the Stars (American TV series) competitors</a></td>
+      <td>Dancing with the Stars is an American reality television show in which celebrity contestants and professional dance partners compete to be the best dancers, as determined by the show's judges and public voting. The series first broadcast in 2005, and thirty complete seasons have aired on ABC. During each season, competitors are progressively eliminated on the basis of public voting and scores received from the judges until only a few contestants remain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_Group">Competitor Group</a></td>
+      <td>Competitor Group, Inc. (CGI) is a privately held, for-profit, sports marketing and management company based in Mira Mesa, San Diego, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Round-robin_tournament">Round-robin tournament</a></td>
+      <td>A round-robin tournament (or all-play-all tournament) is a competition in which each contestant meets every other participant, usually in turn. A round-robin contrasts with an elimination tournament, in which participants are eliminated after a certain number of losses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Protiviti">Protiviti</a></td>
+      <td>Protiviti Inc. (Protiviti) is a global consulting firm headquartered in Menlo Park and San Ramon, California, that provides consulting in internal audit, risk and compliance, technology, business processes, data analytics and finance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_management_consulting_firms">List of management consulting firms</a></td>
+      <td>This list includes notable management consulting firms.\nManagement consulting indicates both the industry of, and the practice of, helping organizations improve their performance, primarily through the analysis of existing business problems and development of plans for improvement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Guidance_Software">Guidance Software</a></td>
+      <td>Guidance Software, Inc. was a public company (NASDAQ: GUID) founded in 1997.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liability_insurance">Liability insurance</a></td>
+      <td>Liability insurance (also called third-party insurance) is a part of the general insurance system of risk financing to protect the purchaser (the "insured") from the risks of liabilities imposed by lawsuits and similar claims and protects the insured if the purchaser is sued for claims that come within the coverage of the insurance policy.\nOriginally, individual companies that faced a common peril formed a group and created a self-help fund out of which to pay compensation should any member incur loss (in other words, a mutual insurance arrangement).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Liability">The Liability</a></td>
+      <td>The Liability (also known as The Hitman's Apprentice) is a 2013 British black comedy crime-thriller film directed by Craig Viveiros and written by John Wrathall. The film stars Tim Roth, Talulah Riley, Jack O'Connell and Peter Mullan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emirates_subsidiaries">Emirates subsidiaries</a></td>
+      <td>Emirates Airline has diversified into related industries and sectors, including airport services, event organization, engineering, catering, and tour operator operations. Emirates has four subsidiaries, and its parent company has more than 50.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_alliance">Subsidiary alliance</a></td>
+      <td>A subsidiary alliance, in South Asian history, was a tributary alliance between an Indian state and a European East India Company. The system of subsidiary alliances was pioneered by the French East India Company governor Joseph François Dupleix, who in the late 1740s established treaties with the Nizam of Hyderabad, India, and other Indian princes in the Carnatic.It stated that the Indian rulers who formed a treaty with the British would be provided with protection against any external attacks in place that the rulers were (a) required to keep the British army at the capitals of their states (b)they were either to give either money or some territory to the company for the maintenance of the British troops (c) they were to turn out from their states all non-english europeans whether they were employed in the army or in the civil service and (d)they had to keep a British official called 'resident' at the capital of their respective states who would oversee all the negotiations and talks with the other states which meant that the rulers were to have no direct correspondence or relations with the other states .</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Gazprom_subsidiaries">List of Gazprom subsidiaries</a></td>
+      <td>Russian energy company Gazprom has several hundred subsidiaries and affiliated companies owned and controlled directly or indirectly. The subsidiaries and affiliated companies are listed by country.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_right">Subsidiary right</a></td>
+      <td>A subsidiary right (also called a subright or sub-lease) is the right to produce or publish a product in different formats based on the original material. Subsidiary rights are common in the publishing and entertainment industries, in which subsidiary rights are granted by the author to an agent, publisher, newspaper, or film studio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Taxable_REIT_subsidiaries">Taxable REIT subsidiaries</a></td>
+      <td>Taxable REIT subsidiaries (TRSs) allow real estate investment trusts (REITs) to more effectively compete with other real estate owners.  They do this by providing services to tenants or third parties such as landscaping, cleaning, or concierge, and they provide new earnings growth opportunities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Ubisoft_subsidiaries">List of Ubisoft subsidiaries</a></td>
+      <td>Ubisoft is a French video game publisher headquartered in Montreuil, founded in March 1986 by the Guillemot brothers. Since its establishment, Ubisoft has become one of the largest video game publishers, and it has the largest in-house development team, with more than 20,000 employees working in over 45 studios as of May 2021.While Ubisoft set up many in-house studios itself, such as Ubisoft Montreal, Ubisoft Toronto, Ubisoft Montpellier and Ubisoft Paris, the company also acquired several studios, such as Massive Entertainment, Red Storm Entertainment, Reflections Interactive and FreeStyleGames.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Defendant">Defendant</a></td>
+      <td>In court proceedings, a defendant is a person or object who is the party either accused of committing a crime in criminal prosecution or against whom some type of civil relief is being sought in a civil case.\nTerminology varies from one jurisdiction to another.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Relief_defendant">Relief defendant</a></td>
+      <td>In the US, and possibly other common law countries, a "relief defendant" or "nominal defendant" is a person named in civil litigation who is not accused of wrongdoing. However, it is alleged that the relief defendant has received property originally obtained illegally and to which the relief defendant has no legitimate claim.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Innocent_Defendant">Innocent Defendant</a></td>
+      <td>Innocent Defendant (Korean: 피고인; Hanja: 被告人; RR: Pigoin; lit. Defendant) is a South Korean television series starring Ji Sung with Um Ki-joon, Kwon Yu-ri, Oh Chang-seok and Uhm Hyun-kyung.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alford_plea">Alford plea</a></td>
+      <td>In United States law, an Alford plea, also called a Kennedy plea in West Virginia, an Alford guilty plea, and the Alford doctrine, is a guilty plea in criminal court, whereby a defendant in a criminal case does not admit to the criminal act and asserts innocence, but admits that the evidence presented by the prosecution would be likely to persuade a judge or jury to find the defendant guilty beyond a reasonable doubt.Alford pleas are legally permissible in nearly all U.S. federal and state courts, except in the state courts of Indiana, Michigan, and New Jersey, or in the courts of the United States Armed Forces.\n\n\n== Origin ==\n\nThe Alford guilty plea is named after the United States Supreme Court case of North Carolina v.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_defendants_at_the_International_Military_Tribunal">List of defendants at the International Military Tribunal</a></td>
+      <td>Between 20 November 1945 and 1 October 1946, the International Military Tribunal (IMT) tried 24 of the most important political and military leaders of Nazi Germany. Most of the defendants had surrendered to the United States Army, but the Soviet Union also held a few top Nazis who were extradited for trial at Nuremberg.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HALF ROBERT INTERNATIONAL INC /DE/      Item 1A    Risk Factors          The  Company’s  business  prospects  are  subject to <font color="blue">various risks</font> and     <font color="blue">uncertainties</font> that impact its business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">most important</font> of these risks     and <font color="blue">uncertainties</font> are as follows:         Business Highly Dependent Upon the State of the Economy</td>
+    </tr>
+    <tr>
+      <td>The demand for     <font color="blue">the Company</font>’s services, in particular its <font color="blue">staffing services</font>, is highly     <font color="blue"><font color="blue">dependent</font> upon</font> the state of the economy and upon the staffing needs of the     Company’s clients</td>
+    </tr>
+    <tr>
+      <td>Any variation in the <font color="blue">economic condition</font> or <font color="blue">unemployment</font>     levels of the US or of any of the foreign countries in which the <font color="blue">Company     </font>does business, or in the <font color="blue">economic condition</font> of any region of any of the     foregoing, or in any <font color="blue">specific industry may severely reduce</font> the demand for     <font color="blue">the Company</font>’s services and <font color="blue">thereby <font color="blue">significant</font>ly decrease</font> <font color="blue">the Company</font>’s     revenues and profits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Availability of Candidates</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s <font color="blue">staffing services</font> business     consists of the placement of <font color="blue"><font color="blue">individuals</font> seeking employment</font></td>
+    </tr>
+    <tr>
+      <td>There can be no     assurance that <font color="blue">candidates</font> for <font color="blue">employment <font color="blue">will continue</font></font> to <font color="blue">seek employment</font>     through  the  Company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Candidates </font><font color="blue">generally seek temporary</font> or regular     positions  through  multiple  sources,  including  <font color="blue"><font color="blue">the Company</font> </font>and its     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Any shortage of <font color="blue">candidates</font> <font color="blue">could <font color="blue">materially</font></font> <font color="blue">adversely</font> affect     <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Highly Competitive Business</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">staffing services</font> business is highly     <font color="blue">competitive</font> and, because it is a service business, the barriers to entry are     quite low</td>
+    </tr>
+    <tr>
+      <td>There are many <font color="blue">competitors</font>, some of which have <font color="blue">greater resources</font>     than <font color="blue">the Company</font>, and new <font color="blue">competitors</font> are entering the market all the time</td>
+    </tr>
+    <tr>
+      <td>In addition, long-term contracts form a negligible portion of <font color="blue">the Company</font>’s     revenue</td>
+    </tr>
+    <tr>
+      <td>Therefore, there can be no assurance that <font color="blue"><font color="blue">the Company</font> </font>will be able     to  retain clients or market share in the future</td>
+    </tr>
+    <tr>
+      <td>Nor can there be any     assurance that <font color="blue"><font color="blue">the Company</font> </font>will, in light of <font color="blue">competitive</font> pressures, be able     to <font color="blue">remain profitable</font> or, if profitable, maintain its <font color="blue">current profit margins</font></td>
+    </tr>
+    <tr>
+      <td>The  success  of  the  Company’s staffing and <font color="blue"><font color="blue">Protiviti </font>    </font><font color="blue">businesses</font>  is highly <font color="blue"><font color="blue">dependent</font> upon</font> their <font color="blue">reputations</font></td>
+    </tr>
+    <tr>
+      <td>Any event that     <font color="blue">adversely</font>  impacts  the reputation of either business <font color="blue">could <font color="blue">materially</font></font>     <font color="blue">adversely</font> affect <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Potential Liability</font> to Employees and Clients</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s temporary     services business <font color="blue">entails employing <font color="blue">individuals</font> on</font> a <font color="blue">temporary basis</font> and     <font color="blue"><font color="blue">placing such</font> <font color="blue">individuals</font></font> in clients’ workplaces</td>
+    </tr>
+    <tr>
+      <td>The Company’s ability to     control the <font color="blue">workplace environment</font> is limited</td>
+    </tr>
+    <tr>
+      <td>As the employer of record of     its <font color="blue">temporary employees</font>, <font color="blue"><font color="blue">the Company</font> </font>incurs a risk of <font color="blue">liability</font> to its     temporary  employees for <font color="blue">various workplace events</font>, including claims of     physical injury, discrimination or <font color="blue">harassment</font></td>
+    </tr>
+    <tr>
+      <td>While such claims have not     <font color="blue">historically</font> had a material adverse effect upon <font color="blue">the Company</font>, there can be no     assurance  that  such  claims in the <font color="blue">future will</font> not result in adverse     publicity or have a material adverse effect upon <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Company     </font><font color="blue">also incurs</font> a risk of <font color="blue">liability</font> to its clients resulting <font color="blue">from allegations</font> of     errors, omissions or theft by its <font color="blue">temporary employees</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>maintains     <font color="blue">insurance with respect</font> to many of such claims</td>
+    </tr>
+    <tr>
+      <td>While such claims have not     <font color="blue">historically</font> had a material adverse effect upon <font color="blue">the Company</font>, there can be no     assurance that <font color="blue"><font color="blue">the Company</font> </font><font color="blue">will continue</font> to be able to obtain insurance at a     cost that does not have a material adverse effect upon <font color="blue"><font color="blue">the Company</font> </font>or that     such claims (whether by reason of <font color="blue"><font color="blue">the Company</font> </font>not having insurance or by     reason of such claims being outside the scope of <font color="blue">the Company</font>’s insurance)     will not have a material adverse effect upon <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>is engaged in the services     business</td>
+    </tr>
+    <tr>
+      <td>As such, its success or failure is highly <font color="blue"><font color="blue">dependent</font> upon</font> the     performance of its <font color="blue">management personnel</font> and employees, rather than upon     <font color="blue">technology</font> or <font color="blue">upon tangible assets</font> (of which <font color="blue"><font color="blue">the Company</font> </font>has few)</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government Regulation</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s business is subject to regulation or     licensing in many states and in <font color="blue">certain foreign countries</font></td>
+    </tr>
+    <tr>
+      <td>While the <font color="blue">Company     </font>has had no material <font color="blue">difficulty complying with regulations</font> in the past, there     can be no assurance that <font color="blue"><font color="blue">the Company</font> </font>will be able to continue to obtain all     <font color="blue">necessary licenses</font> or                                           5     ______________________________________________________________________       approvals or that the cost of <font color="blue">compliance will</font> not prove to be material</td>
+    </tr>
+    <tr>
+      <td>Any     <font color="blue">inability</font> of <font color="blue"><font color="blue">the Company</font> </font>to comply with <font color="blue">government</font> regulation or licensing     <font color="blue">requirements</font> <font color="blue">could <font color="blue">materially</font></font> <font color="blue">adversely</font> affect <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government Regulation</font> of the Workplace</td>
+    </tr>
+    <tr>
+      <td>The Company’s <font color="blue">temporary services</font>     business <font color="blue">entails employing <font color="blue">individuals</font> on</font> a <font color="blue">temporary basis</font> and <font color="blue">placing such</font>     <font color="blue">individuals</font> in clients’ workplaces</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">government</font> regulation of the     workplace  or  of  the  employer-employee relationship, or judicial or     <font color="blue">administrative proceedings</font> related to such regulation, <font color="blue">could <font color="blue">materially</font></font>     <font color="blue">adversely</font> affect <font color="blue">the Company</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">operations</font> of both the <font color="blue">staffing services</font>     business and <font color="blue">Protiviti </font>include services related to Sarbanes-Oxley and other     <font color="blue">regulatory compliance</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that <font color="blue">there will</font> be ongoing     demand for these services</td>
+    </tr>
+    <tr>
+      <td>Reliance on Short-Term Contracts</td>
+    </tr>
+    <tr>
+      <td>Because long-term contracts are not a     <font color="blue">significant</font> part of <font color="blue">the Company</font>’s <font color="blue">staffing services</font> business, future results     cannot be <font color="blue">reliably predicted by</font> considering past trends or <font color="blue">extrapolating</font>     past results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>and certain <font color="blue">subsidiaries</font> are <font color="blue">defendants</font> in several class action     lawsuits alleging various wage and hour claims that could cause the <font color="blue">Company     </font>to incur substantial <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>and certain <font color="blue">subsidiaries</font>     are <font color="blue">defendants</font> in several class action lawsuits brought by or on behalf of     <font color="blue">the Company</font>’s current and <font color="blue">former employees</font> alleging violations of federal     and state <font color="blue">law with respect</font> to <font color="blue">certain wage</font> and <font color="blue">hour matters</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>and     certain <font color="blue">subsidiaries</font> are currently <font color="blue">defendants</font> in two class action lawsuits     <font color="blue">in California </font>and one class action lawsuit <font color="blue">in Massachusetts</font></td>
+    </tr>
+    <tr>
+      <td>All three     lawsuits  allege, among other things, the <font color="blue">misclassification</font> of certain     <font color="blue">employees as exempt employees under federal</font> and state law and other related     wage and <font color="blue">hour violations</font> and seek an <font color="blue">unspecified amount</font> for <font color="blue">unpaid overtime</font>     <font color="blue">compensation</font>,  statutory  penalties,  and  other  damages,  as well as     attorneys’  fees</td>
+    </tr>
+    <tr>
+      <td>However, these lawsuits may consume substantial amounts of the     Company’s financial and <font color="blue">managerial resources</font> and might result in adverse     publicity, regardless of the <font color="blue">ultimate outcome</font> of the lawsuits</td>
+    </tr>
+    <tr>
+      <td>In addition,     <font color="blue"><font color="blue">the Company</font> </font>and its <font color="blue">subsidiaries</font> may become subject to similar lawsuits in     other <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">unfavorable outcome with respect</font> to these lawsuits     and any future lawsuits could, individually or in the aggregate, cause the     Company to incur substantial <font color="blue">liabilities</font> that may have a material adverse     effect  upon <font color="blue">the Company</font>’s business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Protiviti </font>is a services business, and     is  <font color="blue">dependent</font>  upon its ability to attract and retain personnel</td>
+    </tr>
+    <tr>
+      <td>While     <font color="blue">Protiviti </font>has retained its <font color="blue">key personnel</font> to date, there can be no assurance     that it <font color="blue">will continue</font> to be able to do so</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Protiviti </font> operates in a highly <font color="blue">competitive</font>     business</td>
+    </tr>
+    <tr>
+      <td>As with <font color="blue">the Company</font>’s <font color="blue">staffing services</font> business, the barriers to     entry are quite low</td>
+    </tr>
+    <tr>
+      <td>There are many <font color="blue">competitors</font>, some of which have greater     <font color="blue">resources than</font> <font color="blue">Protiviti </font>and many of which have been in operation far longer     than Protiviti</td>
+    </tr>
+    <tr>
+      <td>In particular, <font color="blue">Protiviti </font><font color="blue">faces <font color="blue">competition</font> from</font> the “big     four” accounting firms, which have been in operation for a considerable     period of time and have established <font color="blue">reputations</font> and <font color="blue">client bases</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because     </font>the  principal factors upon which <font color="blue">competition</font> is based are reputation,     <font color="blue">technology</font>, tools, project <font color="blue">methodologies</font>, price of services and depth of     skills  of personnel, there can be no assurance that <font color="blue">Protiviti </font>will be     successful in attracting and retaining clients</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Potential Liability</font></td>
+    </tr>
+    <tr>
+      <td>The business of <font color="blue">Protiviti </font>consists of providing     internal  audit  and business and <font color="blue">technology</font> risk consulting services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Liability </font>could be incurred or <font color="blue">litigation could</font> be <font color="blue">instituted against</font> the     Company or <font color="blue">Protiviti </font>for claims related to these <font color="blue">activities</font> or to prior     <font color="blue">transactions</font> or <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that such <font color="blue">liability</font> or     <font color="blue">litigation will</font> not have a material <font color="blue">adverse impact on</font> <font color="blue">Protiviti </font>or the     Company</td>
+    </tr>
+  </tbody>
+</table>

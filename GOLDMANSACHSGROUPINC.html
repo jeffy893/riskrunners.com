@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: businesses", fill: "#e75480"},
+{source: "1: businesses", target: "1: market liquidity", fill: "#e75480"},
+{source: "1: market liquidity", target: "1: operational legal", fill: "#e75480"},
+{source: "1: operational legal", target: "1: regulatory risks", fill: "#e75480"},
+{source: "1: businesses", target: "11: fluctuations", fill: "#f78fa7"},
+{source: "11: fluctuations", target: "11: volatility may adversely affect", fill: "#f78fa7"},
+{source: "11: volatility may adversely affect", target: "11: interest rate", fill: "#f78fa7"},
+{source: "11: interest rate", target: "11: products currency", fill: "#f78fa7"},
+{source: "11: products currency", target: "11: equity positions", fill: "#f78fa7"},
+{source: "11: equity positions", target: "11: investments", fill: "#f78fa7"},
+{source: "11: investments", target: "11: willingness", fill: "#f78fa7"},
+{source: "11: willingness", target: "11: enter into new", fill: "#f78fa7"},
+{source: "11: enter into new", target: "11: transactions", fill: "#f78fa7"},
+{source: "11: fluctuations", target: "22: trades rather than on", fill: "#9c2542"},
+{source: "22: trades rather than on", target: "22: marketed basis which increases", fill: "#9c2542"},
+{source: "22: marketed basis which increases", target: "22: Goldman Sachs ", fill: "#9c2542"},
+{source: "22: Goldman Sachs ", target: "22: purchased securities at", fill: "#9c2542"},
+{source: "22: purchased securities at", target: "22: may incur significant losses as", fill: "#9c2542"},
+{source: "22: trades rather than on", target: "44: ratings could adversely affect", fill: "#f4bbff"},
+{source: "44: ratings could adversely affect", target: "44: competitive position", fill: "#f4bbff"},
+{source: "44: competitive position", target: "44: borrowing costs limit", fill: "#f4bbff"},
+{source: "44: borrowing costs limit", target: "44: capital markets", fill: "#f4bbff"},
+{source: "44: capital markets", target: "44: obligations under certain bilateral provisions", fill: "#f4bbff"},
+{source: "44: obligations under certain bilateral provisions", target: "44: collateralized financing contracts", fill: "#f4bbff"},
+{source: "44: ratings could adversely affect", target: "48: access funds from", fill: "#fddde6"},
+{source: "48: access funds from", target: "48: subsidiaries could adversely affect", fill: "#fddde6"},
+{source: "48: subsidiaries could adversely affect", target: "48: obligations", fill: "#fddde6"},
+{source: "48: access funds from", target: "52: Regulatory ", fill: "#f0f"},
+{source: "52: Regulatory ", target: "52: kind could impede access", fill: "#f0f"},
+{source: "52: kind could impede access", target: "52: The Goldman Sachs Group Inc", fill: "#f0f"},
+{source: "52: Regulatory ", target: "82: Shortcomings ", fill: "#014421"},
+{source: "82: Shortcomings ", target: "82: impairment", fill: "#014421"},
+{source: "82: impairment", target: "82: disruption", fill: "#014421"},
+{source: "82: disruption", target: "82: businesses", fill: "#014421"},
+{source: "82: businesses", target: "82: liability", fill: "#014421"},
+{source: "82: liability", target: "82: regulatory", fill: "#014421"},
+{source: "82: regulatory", target: "82: intervention", fill: "#014421"},
+{source: "82: intervention", target: "82: reputational", fill: "#014421"},
+{source: "82: Shortcomings ", target: "97: significant additional resources", fill: "#ccf"},
+{source: "97: significant additional resources", target: "97: protective measures", fill: "#ccf"},
+{source: "97: protective measures", target: "97: remediate vulnerabilities", fill: "#ccf"},
+{source: "97: remediate vulnerabilities", target: "97: litigation", fill: "#ccf"},
+{source: "97: litigation", target: "97: financial losses", fill: "#ccf"},
+{source: "97: financial losses", target: "97: fully covered through", fill: "#ccf"},
+{source: "97: significant additional resources", target: "START_HERE", fill: "#ccf"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Home Improvement Retail</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_administration">Business administration</a></td>
+      <td>Business administration (also known as business management) is the administration of a  commercial enterprise. It includes all aspects of overseeing and supervising business operations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_Insider">Business Insider</a></td>
+      <td>Insider – previously named Business Insider (BI) – is an American financial and business news website founded in 2007. Since 2015, a majority stake in Business Insider's parent company Insider Inc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_Is_Business">Business Is Business</a></td>
+      <td>Business-to-business (B2B or, in some countries, BtoB) is a situation where one business makes a commercial transaction with another. This typically occurs when:\n\nA business is sourcing materials for their production process for output   (e.g., a food manufacturer purchasing salt), i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Family_business">Family business</a></td>
+      <td>A family business is a commercial organization in which decision-making is influenced by multiple generations of a family, related by blood or marriage or adoption, who has both the ability to influence the vision of the business and the willingness to use this ability to pursue distinctive goals. They are closely identified with the firm through leadership or ownership.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_Proposal">Business Proposal</a></td>
+      <td>Business Proposal (Korean: 사내 맞선; Hanja: 社內맞선; RR: Sanae Matseon; lit. The Office Blind Date) is a South Korean romantic comedy television series based on the webtoon of the same title written by HaeHwa and illustrated by Narak.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capture">Regulatory capture</a></td>
+      <td>In politics, regulatory capture (also agency capture and client politics) is a form of corruption of authority that occurs when a political entity, policymaker, or regulator is co-opted to serve the commercial, ideological, or political interests of a minor constituency, such as a particular geographic area, industry, profession, or ideological group.When regulatory capture occurs, a special interest is prioritized over the general interests of the public, leading to a net loss for society. The theory of client politics is related to that of rent-seeking and political failure; client politics "occurs when most or all of the benefits of a program go to some single, reasonably small interest (e.g., industry, profession, or locality) but most or all of the costs will be borne by a large number of people (for example, all taxpayers)".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Perkin_Transactions">Perkin Transactions</a></td>
+      <td>Perkin Transactions is a scientific journal devoted to organic chemistry published from 1997 to 2002 by the Royal Society of Chemistry. It was split into Perkin Transactions I and Perkin Transactions II. The predecessor journals published by the Chemical Society before the merger of that Society with other Societies to form the Royal Society of Chemistry were the Journal of the Chemical Society, Perkin Transactions 1 and Journal of the Chemical Society, Perkin Transactions 2 (1972-1996).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Transactions_demand">Transactions demand</a></td>
+      <td>Transactions demand, in economic theory, specifically Keynesian economics and monetary economics, is one of the determinants of the demand for money, the others being asset demand and precautionary demand.\n\n\n== Overview ==\nThe transactions demand for money refers specifically to money narrowly defined to include only its liquid forms, especially cash and checking account balances.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/IEEE_Transactions_on_Signal_Processing">IEEE Transactions on Signal Processing</a></td>
+      <td>The IEEE Transactions on Signal Processing is a biweekly peer-reviewed scientific journal published by the Institute of Electrical and Electronics Engineers covering research on signal processing. It was established in 1953 as the IRE Transactions on Audio, renamed to IEEE Transactions on Audio and Electroacoustics in 1966 and to IEEE Transactions on Acoustics, Speech, and Signal Processing in 1974, before obtaining its current name in 1992.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Transactions_per_second">Transactions per second</a></td>
+      <td>In a very generic sense, the term transactions per second (TPS) refers to the number of atomic actions performed by certain entity per second. In a more restricted view, the term is usually used by DBMS vendor and user community to refer to the number of database transactions performed per second.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/IEEE_Transactions_on_Computers">IEEE Transactions on Computers</a></td>
+      <td>IEEE Transactions on Computers is a monthly peer-reviewed scientific journal covering all aspects of computer design. It was established in 1952 and is published by the IEEE Computer Society.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marcus_Goldman">Marcus Goldman</a></td>
+      <td>Marcus Goldman (December 9, 1821 – July 20, 1904) was an American investment banker, businessman, and financier. He was born into an Ashkenazi Jewish family in Trappstadt, and immigrated to the United States in 1848.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Goldman_Sachs_Foundation">Goldman Sachs Foundation</a></td>
+      <td>The Goldman Sachs Foundation is a New York-based, not-for-profit private foundation that is a subsidiary of the financial services firm Goldman Sachs and has the goal of bettering humanity worldwide, especially regarding health and education. In recent years its principal philanthropic projects have been: 10,000 Women, and 10,000 Small Businesses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lloyd_Blankfein">Lloyd Blankfein</a></td>
+      <td>Lloyd Craig Blankfein (born September 20, 1954) is an American investment banker who has served as senior chairman of Goldman Sachs since 2019, and chairman and chief executive from 2006 until the end of 2018. Previous to leading Goldman Sachs, he was the company's president and chief operating officer (COO) from 2004 to 2006, serving under then-CEO Henry Paulson.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/David_M._Solomon">David M. Solomon</a></td>
+      <td>David Michael Solomon (born c. 1962) is an American investment banker, and the chief executive officer (CEO) of Goldman Sachs, a position he has held since October 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_debt_obligation">Collateralized debt obligation</a></td>
+      <td>A collateralized debt obligation (CDO) is a type of structured asset-backed security (ABS). Originally developed as instruments for the corporate debt markets, after 2002 CDOs became vehicles for refinancing mortgage-backed securities (MBS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Obligation">Obligation</a></td>
+      <td>An obligation is a course of action that someone is required to take, whether legal or moral.  Obligations are constraints; they limit freedom.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Political_obligation">Political obligation</a></td>
+      <td>Political obligation refers to a moral requirement to obey national laws. Its origins are unclear, however it traces to the Ancient Greeks.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Solidary_obligations">Solidary obligations</a></td>
+      <td>A solidary obligation, or an obligation in solidum, is a type of obligation in the civil law jurisprudence that allows either obligors to be bound together, each liable for the whole performance, or obligees to be bound together, all owed just a single performance and each entitled to the entirety of it.  In general, solidarity of an obligation is never presumed, and it must be expressly stated as the true intent of the parties' will.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Law_of_obligations">Law of obligations</a></td>
+      <td>The law of obligations is one branch of private law under the civil law legal system and so-called "mixed" legal systems. It is the body of rules that organizes and regulates the rights and duties arising between individuals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deontology">Deontology</a></td>
+      <td>In moral philosophy, deontological ethics or deontology (from Greek: δέον, 'obligation, duty' + λόγος, 'study') is the normative ethical theory that the morality of an action should be based on whether that action itself is right or wrong under a series of rules, rather than based on the consequences of the action. It is sometimes described as duty-, obligation-, or rule-based ethics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nondelegable_obligation">Nondelegable obligation</a></td>
+      <td>A nondelegable obligation (also known as a non-delegable duty) is a legal obligation or duty which cannot legally be delegated or, if delegated, the principal is still liable for said obligation.  They are also known as non-assignable duties or obligations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_agency">Regulatory agency</a></td>
+      <td>A regulatory agency (regulatory body, regulator) or independent agency (independent regulatory agency) is a government authority that is responsible for exercising autonomous dominion over some area of human activity in a licensing and regulating capacity.\nThese are customarily set up to strengthen safety and standards, and/or to protect consumers in markets where there is a lack of effective competition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_state">Regulatory state</a></td>
+      <td>The term regulatory state refers to the expansion in the use of rulemaking, monitoring and enforcement techniques and institutions by the state and to a parallel change in the way its positive or negative functions in society are being carried out. The expansion of the state nowadays is generally via regulation and less via taxing and spending.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sign">Regulatory sign</a></td>
+      <td>A regulatory sign is used to indicate or reinforce traffic laws, regulations or requirements which apply either at all times or at specified times or places upon a street or highway, the disregard of which may constitute a violation, or a sign in general that regulates public behavior in places open to the public.  The FHWA defines regulatory sign as "a sign that gives notice to road users of traffic laws or regulations".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sequence">Regulatory sequence</a></td>
+      <td>A regulatory sequence is a segment of a nucleic acid molecule which is capable of increasing or decreasing the expression of specific genes within an organism. Regulation of gene expression is an essential feature of all living organisms and viruses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capitalism">Regulatory capitalism</a></td>
+      <td>Regulatory capitalism suggests that the operation maintenance and development of the international political economy increasingly depends on administrative rules outside the legislatures and the courts. In other words, it tells us that capitalism is a regulatory institution – one that is being constituted, shaped, constrained and expanded as a historically woven patchwork of regulatory institutions, strategies, and functions.Although this patchwork varies widely across regions, nations, regimes, sectors, issues, and arenas, the general trend despite and beyond the process of liberalization is that of growth rather than decline of the role regulation in shaping policy and politics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_T_cell">Regulatory T cell</a></td>
+      <td>The regulatory T cells (Tregs  or Treg cells), formerly known as suppressor T cells, are a subpopulation of T cells that modulate the immune system, maintain tolerance to self-antigens, and prevent autoimmune disease. Treg cells are immunosuppressive and generally suppress or downregulate induction and proliferation of effector T cells.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lawsuit">Lawsuit</a></td>
+      <td>A lawsuit is a proceeding by a party or parties against another in the civil court of law. The archaic term "suit in law" is found in only a small number of laws still in effect today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Strategic_litigation">Strategic litigation</a></td>
+      <td>Strategic litigation, also known as impact litigation, is the practice of bringing lawsuits intended to effect societal change. Impact litigation cases may be class action lawsuits or individual claims with broader significance, and may rely on statutory law arguments or on constitutional claims.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_litigation">International litigation</a></td>
+      <td>International litigation, sometimes called transnational litigation, is the practice of litigation in connection with disputes among businesses or individuals residing or based in different countries.\nThe main difference between international litigation and domestic litigation is that, in the former, certain issues are more likely to be of significance — such as personal jurisdiction, service of process, evidence from abroad, and enforcement of judgments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Multidistrict_litigation">Multidistrict litigation</a></td>
+      <td>In United States law, multidistrict litigation (MDL) refers to a special federal legal procedure designed to speed the process of handling complex cases, such as air disaster litigation or complex product liability suits.\n\n\n== Description ==\nMDL cases occur when "civil actions involving one or more common questions of fact are pending in different districts." In order to efficiently process cases that could involve hundreds (or thousands) of plaintiffs in dozens of different federal courts that all share common issues, the Judicial Panel on Multidistrict Litigation (JPML) decides whether cases should be consolidated under MDL, and if so, where the cases should be transferred.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Settlement_(litigation)">Settlement (litigation)</a></td>
+      <td>In law, a settlement is a resolution between disputing parties about a legal case, reached either before or after court action begins. A collective settlement is a settlement of multiple similar legal cases.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_interest_law">Public interest law</a></td>
+      <td>Public interest law refers to legal practices undertaken to help poor, marginalized, or under-represented people, or to effect change in social policies in the public interest, on 'not for profit' terms (pro bono publico), often in the fields of civil rights, civil liberties, religious liberty, human rights, women's rights, consumer rights, environmental protection, and so on.In a celebrated 1905 speech, Louis Brandeis decried the legal profession, complaining that "able lawyers have to a large extent allowed themselves to become adjuncts of great corporations and have neglected their obligation to use their powers for the protection of the people."In the tradition thus exemplified, a common ethic for public-interest lawyers in a growing number of countries remains "fighting for the little guy".\n\n\n== By jurisdiction ==\n\n\n=== Central and Eastern Europe ===\nAt the end of the communist period in the early 1990s, the national legal systems of Central and Eastern Europe were still in a formative stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Review_of_Litigation">The Review of Litigation</a></td>
+      <td>The Review of Litigation (TROL) is a law journal established in 1980 at the University of Texas School of Law to serve as "a national forum of interchange of academic and practical discussion of various aspects of litigation." The journal publishes articles on "topics related to procedure, evidence, trial and appellate advocacy, alternative dispute resolution, and often-litigated substantive law."The journal publishes four issues annually, one of which is a symposium issue published in collaboration with the litigation section of American Association of Law Schools. Past topics have included mass torts and conflicts of interest.The journal is often cited in published court opinions, and is the most cited law journal in the category "Civil Litigation and Dispute Resolution" in the Washington &amp; Lee Law School law journal rankings as of 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Parallel_litigation">Parallel litigation</a></td>
+      <td>Parallel litigation is a scenario in which different courts are hearing the same claim(s).  In the United States, parallel litigation (and the "race to judgement" that results)is a consequence of its system of "dual sovereignty, in which both state and federal courts have personal jurisdiction over the parties.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GOLDMAN SACHS GROUP INC/      Item 1A    Risk Factors       We  face  a  variety of risks that are substantial and inherent in our     <font color="blue">businesses</font>, including market, liquidity, credit, operational, legal and     <font color="blue"><font color="blue">regulatory</font> risks</font></td>
+    </tr>
+    <tr>
+      <td>The following are some of the more <font color="blue">important factors</font> that could     affect our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">businesses</font>  may be <font color="blue"><font color="blue">adversely</font> affected by <font color="blue">conditions</font></font> in the global     <font color="blue">financial markets</font> and <font color="blue">economic <font color="blue">conditions</font> <font color="blue">generally</font></font></td>
+    </tr>
+    <tr>
+      <td>We have achieved <font color="blue">record earnings per common</font> share in each of our last two     fiscal  years,  reflecting a favorable <font color="blue">trading <font color="blue">environment</font></font> in FICC, an     <font color="blue">improvement</font> in the <font color="blue">trading <font color="blue">environment</font></font> for Equities and an increase in     <font color="blue"><font color="blue">investment banking</font> activity</font></td>
+    </tr>
+    <tr>
+      <td>An adverse change in these <font color="blue">market <font color="blue">conditions</font></font>     <font color="blue">may <font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">businesses</font> are <font color="blue">materially affected by <font color="blue">conditions</font></font> in the <font color="blue">global financial</font>     markets and <font color="blue">economic <font color="blue">conditions</font> <font color="blue">generally</font></font> and these <font color="blue"><font color="blue">conditions</font> may</font> change     suddenly and <font color="blue">dramatically</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font>or uncertain economic and market     <font color="blue">conditions</font> have <font color="blue">adversely</font> affected, and may in the future <font color="blue">adversely</font> affect,     our business and <font color="blue">profitability</font> in many ways, including the following:         •   We have been operating in a <font color="blue">low <font color="blue">interest rate</font> market</font> for the past     <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increasing </font>or high <font color="blue">interest rate</font>s and/or widening credit     spreads, <font color="blue">especially</font> if such changes are rapid, may create a less favorable     <font color="blue">environment</font> for certain of our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>•   We have <font color="blue">been committing increasing amounts</font> of capital in many of our     <font color="blue">businesses</font> and <font color="blue">generally</font> maintain large trading, <font color="blue">specialist</font> and investing     positions</td>
+    </tr>
+    <tr>
+      <td>Market <font color="blue">fluctuations</font> and volatility <font color="blue">may <font color="blue">adversely</font> affect</font> the value     of those positions, including, but not limited to, our <font color="blue">interest rate</font> and     credit products, currency, commodity and <font color="blue">equity positions</font> and our merchant     banking  <font color="blue">investments</font>,  or may reduce our <font color="blue">willingness</font> to <font color="blue"><font color="blue">enter into</font> new</font>     <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, we have incurred <font color="blue">significant</font> <font color="blue">trading losses</font>     in  periods  of  <font color="blue">market turbulence</font></td>
+    </tr>
+    <tr>
+      <td>Conversely, certain of our trading     <font color="blue">businesses</font> depend on market volatility to <font color="blue">provide trading</font> and arbitrage     <font color="blue">opportunities</font>, and <font color="blue">decreases</font> in <font color="blue">volatility may reduce</font> these <font color="blue">opportunities</font>     and <font color="blue">adversely</font> affect the results of these <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>•   Industry-wide declines in the size and number of <font color="blue"><font color="blue">underwriting</font>s</font> and     mergers and <font color="blue">acquisitions may</font> have an adverse effect on our revenues and,     because we may be unable to <font color="blue">reduce expenses correspondingly</font>, our profit     margins</td>
+    </tr>
+    <tr>
+      <td>In particular, because a <font color="blue">significant</font> portion of our investment     <font color="blue">banking revenues</font> are <font color="blue">derived from</font> our <font color="blue">participation</font> in large <font color="blue"><font color="blue">transaction</font>s</font>, a     decrease in the number of large <font color="blue"><font color="blue">transaction</font>s</font> due to uncertain or unfavorable     <font color="blue">market <font color="blue">conditions</font></font> <font color="blue">may <font color="blue">adversely</font> affect</font> our <font color="blue">investment banking</font> business</td>
+    </tr>
+    <tr>
+      <td>•   Pricing and other <font color="blue"><font color="blue">competitive</font> pressures</font> have continued, even as the     volume and number of <font color="blue">investment banking</font> <font color="blue"><font color="blue">transaction</font>s</font> have increased</td>
+    </tr>
+    <tr>
+      <td>In     addition,  the trend in the <font color="blue">underwriting</font> business <font color="blue">toward multiple book</font>     runners and co-managers handling <font color="blue"><font color="blue">transaction</font>s</font>, where <font color="blue"><font color="blue">previously</font> there would</font>     have been a single book runner, <font color="blue">may <font color="blue">adversely</font> affect</font> our business and reduce     our revenues</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Reductions </font>in the level of the <font color="blue">equity markets also tend</font> to reduce the     value of our clients’ portfolios, which in turn may reduce the fees we earn     for  managing  assets</td>
+    </tr>
+    <tr>
+      <td>Even in the absence of uncertain or unfavorable     economic  or  market  <font color="blue">conditions</font>,  <font color="blue">investment performance by</font> our asset     <font color="blue">management</font> business below the performance of <font color="blue">benchmarks</font> or <font color="blue"><font color="blue">competitors</font> could</font>     result in a decline in assets under <font color="blue">management</font> and in the incentive and     <font color="blue">management</font> fees we receive</td>
+    </tr>
+    <tr>
+      <td>19       _________________________________________________________________    [94]Table of <font color="blue">Contents       </font>  •   Concentration of risk increases the potential for <font color="blue">significant</font> losses     in our market-making, <font color="blue">proprietary</font> trading and investing, block trading,     merchant banking, <font color="blue">underwriting</font> and lending <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>This risk may     increase to the extent we expand our <font color="blue">proprietary</font> trading and investing     <font color="blue">businesses</font> or <font color="blue">commit capital</font> to <font color="blue">facilitate</font> customer-driven business</td>
+    </tr>
+    <tr>
+      <td>For     example, large blocks of securities are <font color="blue">increasingly</font> being sold in block     <font color="blue">trades rather than on</font> a marketed basis, which increases the risk that     <font color="blue"><font color="blue">Goldman Sachs</font> </font>may be unable to resell the <font color="blue">purchased securities at</font> favorable     prices and may incur <font color="blue">significant</font> losses as a result</td>
+    </tr>
+    <tr>
+      <td>Moreover, because of     <font color="blue">concentration</font> of risk, we <font color="blue">may suffer losses even</font> when economic and market     <font color="blue">conditions</font> are <font color="blue">generally</font> favorable for others in the industry</td>
+    </tr>
+    <tr>
+      <td>We also     <font color="blue">regularly <font color="blue">enter into</font></font> large <font color="blue"><font color="blue">transaction</font>s</font> as part of our trading <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>The number and size of such <font color="blue"><font color="blue">transaction</font>s</font> may affect our results of     <font color="blue">operations</font> in a <font color="blue">given period</font></td>
+    </tr>
+    <tr>
+      <td>•   The volume of <font color="blue"><font color="blue">transaction</font>s</font> that we execute for our clients and as a     <font color="blue">specialist</font> or market maker may decline, which would reduce the revenues we     receive <font color="blue">from <font color="blue">commissions</font></font> and spreads</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue"><font color="blue">competitive</font> pressures</font> and     other industry factors, including the <font color="blue">increasing use by</font> our clients of     low-cost electronic trading, could cause a reduction in <font color="blue">commissions</font> and     spreads</td>
+    </tr>
+    <tr>
+      <td>In our <font color="blue">specialist</font> <font color="blue">businesses</font>, we are <font color="blue">obligated by stock exchange</font>     rules to maintain an <font color="blue">orderly market</font>, including <font color="blue">by purchasing shares</font> in a     <font color="blue">declining market</font></td>
+    </tr>
+    <tr>
+      <td>This may result in <font color="blue">trading losses</font> and an increased need     for  liquidity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Weakness  </font>in global equity markets and the trading of     securities in <font color="blue">multiple markets</font> and on multiple exchanges could <font color="blue">adversely</font>     impact our trading <font color="blue">businesses</font> and impair the value of our goodwill and     <font color="blue">identifiable intangible assets</font></td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue"><font color="blue">competitive</font> pressures</font> have been     <font color="blue">particularly intense</font> in the context of <font color="blue">block trades</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may incur losses as</font> a result of in<font color="blue">effective</font> risk <font color="blue">management</font> processes and     strategies</td>
+    </tr>
+    <tr>
+      <td>We  seek to monitor and control our <font color="blue">risk exposure through</font> a variety of     <font color="blue">separate but complementary financial</font>, credit, operational, compliance and     legal  reporting systems</td>
+    </tr>
+    <tr>
+      <td>Our trading risk <font color="blue">management</font> process seeks to     balance our ability to <font color="blue">profit from trading positions with</font> our exposure to     potential  losses</td>
+    </tr>
+    <tr>
+      <td>While we employ a broad and <font color="blue">diversified set</font> of risk     monitoring  and  risk  <font color="blue">mitigation <font color="blue">techniques</font></font>, those <font color="blue">techniques</font> and the     judgments that <font color="blue">accompany</font> their <font color="blue">application cannot</font> anticipate <font color="blue">every economic</font>     and <font color="blue">financial outcome</font> or the specifics and timing of <font color="blue">such outcomes</font></td>
+    </tr>
+    <tr>
+      <td>Thus, we     may, in the course of our <font color="blue">activities</font>, incur losses</td>
+    </tr>
+    <tr>
+      <td>For a further discussion of our risk <font color="blue">management</font> policies and procedures, see     “Management’s Discussion and Analysis of Financial Condition and Results of     Operations — Risk Management” in Part II, Item 7 of the <font color="blue">Annual Report </font>on     Form 10-K       Our <font color="blue">liquidity may</font> be <font color="blue">adversely</font> affected by an <font color="blue">inability</font> to access the debt     <font color="blue">capital markets</font> or to <font color="blue">sell assets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Liquidity </font>is essential to our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">liquidity could</font> be <font color="blue">impaired by</font>     an <font color="blue">inability</font> to access secured and/or unsecured debt markets, an <font color="blue">inability</font>     to <font color="blue">sell assets</font> or <font color="blue">unforeseen outflows</font> of cash or collateral</td>
+    </tr>
+    <tr>
+      <td>This situation     may arise due to <font color="blue">circumstances</font> that we may be unable to control, such as a     <font color="blue">general market <font color="blue">disruption</font></font> or an <font color="blue">operational problem</font> that <font color="blue">affects third</font>     parties or us</td>
+    </tr>
+    <tr>
+      <td>Further, our ability to <font color="blue">sell assets</font> may be impaired if other     <font color="blue">market <font color="blue"><font color="blue">participant</font>s</font></font> are seeking to sell similar <font color="blue">assets at</font> the same time</td>
+    </tr>
+    <tr>
+      <td>A reduction in our credit ratings could <font color="blue">adversely</font> affect our liquidity and     <font color="blue">businesses</font> in many ways</td>
+    </tr>
+    <tr>
+      <td>A reduction in our credit     ratings could <font color="blue">adversely</font> affect our liquidity and <font color="blue"><font color="blue">competitive</font> position</font>,     increase our borrowing costs, limit our access to the <font color="blue">capital markets</font> or     trigger our <font color="blue"><font color="blue"><font color="blue">obligation</font>s</font> under certain bilateral provisions</font> in some of our     trading and <font color="blue"><font color="blue">collateralized</font> financing contracts</font></td>
+    </tr>
+    <tr>
+      <td>Under these provisions,     <font color="blue"><font color="blue">counterparties</font> could</font> be permitted to                                         20       _________________________________________________________________    [95]Table of <font color="blue">Contents       </font><font color="blue">terminate contracts with</font> <font color="blue"><font color="blue">Goldman Sachs</font> </font>or require us to post <font color="blue">additional</font>     collateral</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Termination  </font>of  our trading and <font color="blue">collateralized</font> financing     contracts could cause us to sustain losses and impair our liquidity by     requiring us to find other sources of financing or to make <font color="blue">significant</font> cash     payments or <font color="blue">securities movements</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">inability</font> of The <font color="blue"><font color="blue">Goldman Sachs</font> </font>Group, Inc</td>
+    </tr>
+    <tr>
+      <td>to <font color="blue">access funds from</font> its     <font color="blue">subsidiaries</font> could <font color="blue">adversely</font> affect its ability to meet its <font color="blue"><font color="blue">obligation</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">Goldman Sachs</font> </font>Group, Inc</td>
+    </tr>
+    <tr>
+      <td>is a holding company and, therefore, depends     on dividends, distributions and other <font color="blue">payments from</font> its <font color="blue">subsidiaries</font> to fund     <font color="blue">dividend payments</font> and to fund all <font color="blue">payments on</font> its <font color="blue"><font color="blue">obligation</font>s</font>, including     debt <font color="blue"><font color="blue">obligation</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">subsidiaries</font>, including GS&amp;Co, are subject to     laws that <font color="blue">authorize <font color="blue">regulatory</font> bodies</font> to block or reduce the flow of funds     from those <font color="blue">subsidiaries</font> to The <font color="blue"><font color="blue">Goldman Sachs</font> </font>Group, Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font>action     of that <font color="blue">kind could impede access</font> to funds that The <font color="blue"><font color="blue">Goldman Sachs</font> </font>Group, Inc</td>
+    </tr>
+    <tr>
+      <td>needs  to make <font color="blue">payments on</font> <font color="blue"><font color="blue">obligation</font>s</font>, including debt <font color="blue"><font color="blue">obligation</font>s</font>, or     <font color="blue">dividend payments</font></td>
+    </tr>
+    <tr>
+      <td>(or any other entity) holds <font color="blue">equity interests</font> in the firm’s regulated or     unregulated <font color="blue">subsidiaries</font>, its rights as an <font color="blue">equity holder</font> to the assets of     such <font color="blue">subsidiaries</font> are subject to the <font color="blue">satisfaction</font> of the claims of the     <font color="blue">creditors</font> of such <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">businesses</font>, <font color="blue">profitability</font> and <font color="blue">liquidity may</font> be <font color="blue">adversely</font> affected by a     <font color="blue">deterioration</font> in the credit quality of, or <font color="blue">defaults</font> by, <font color="blue">third parties</font> who     owe us money, securities or other assets</td>
+    </tr>
+    <tr>
+      <td>We are exposed to the risk that <font color="blue">third parties</font> that owe us money, securities     or  other <font color="blue">assets will</font> not perform their <font color="blue"><font color="blue">obligation</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">parties may</font>     <font color="blue">default on</font> their <font color="blue"><font color="blue">obligation</font>s</font> to us due to bankruptcy, lack of liquidity,     <font color="blue">operational failure</font> or other reasons</td>
+    </tr>
+    <tr>
+      <td>We are also subject to the risk that     our  rights  against  third  parties  may  not  be  enforceable in all     <font color="blue">circumstances</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a <font color="blue">deterioration</font> in the credit quality of third     <font color="blue">parties whose securities</font> or <font color="blue"><font color="blue">obligation</font>s</font> we hold could result in losses     and/or <font color="blue">adversely</font> affect our ability to <font color="blue">rehypothecate</font> or <font color="blue">otherwise use</font> those     securities or <font color="blue"><font color="blue">obligation</font>s</font> for <font color="blue">liquidity purposes</font></td>
+    </tr>
+    <tr>
+      <td>The amount and duration of     our credit exposures have <font color="blue">been increasing over</font> the past <font color="blue">several years</font>, as     has the breadth of the entities to which we have credit exposures</td>
+    </tr>
+    <tr>
+      <td>The scope     of our lending <font color="blue">businesses</font> has <font color="blue">also been expanding</font> and includes loans to     small and mid-size <font color="blue">businesses</font>, which are not traditional <font color="blue"><font color="blue">Goldman Sachs</font> </font>    clients</td>
+    </tr>
+    <tr>
+      <td>As a clearing member firm, we finance our client positions and we     could be held responsible for the <font color="blue">defaults</font> or <font color="blue">misconduct</font> of our clients</td>
+    </tr>
+    <tr>
+      <td>In     addition, we have experienced, due to <font color="blue">competitive</font> factors, pressure to     extend and price credit at levels that may not <font color="blue">always fully compensate us</font>     for the risks we take</td>
+    </tr>
+    <tr>
+      <td>In particular, corporate clients sometimes seek to     require credit <font color="blue">commitments from us</font> in <font color="blue"><font color="blue">connection</font> with</font> <font color="blue">investment banking</font> and     other <font color="blue">assignments</font></td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">regularly review</font> credit exposures to specific     clients and <font color="blue">counterparties</font> and to specific industries, countries and regions     that we believe <font color="blue">may present</font> credit concerns, default risk may arise from     events  or  <font color="blue">circumstances</font>  that are <font color="blue">difficult</font> to detect or foresee</td>
+    </tr>
+    <tr>
+      <td>In     addition, concerns about, or a default by, one institution could lead to     <font color="blue">significant</font> liquidity problems, losses or <font color="blue">defaults</font> by other <font color="blue">institutions</font>,     which in turn could <font color="blue">adversely</font> affect <font color="blue">Goldman Sachs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Mandatory </font><font color="blue">physical settlement</font> of <font color="blue">derivative</font> <font color="blue"><font color="blue">transaction</font>s</font> may expose us to     losses if we are unable to deliver the <font color="blue">underlying security</font> or <font color="blue">obligation</font></td>
+    </tr>
+    <tr>
+      <td>Like many <font color="blue"><font color="blue">participant</font>s</font> in the <font color="blue"><font color="blue">derivative</font>s</font> marketplace, we are party to a     large number of <font color="blue">derivative</font> <font color="blue"><font color="blue">transaction</font>s</font>, including credit <font color="blue"><font color="blue">derivative</font>s</font>, that     require that we deliver to the <font color="blue">counterparty</font> the <font color="blue">underlying security</font> or     <font color="blue">obligation</font> in order to receive payment</td>
+    </tr>
+    <tr>
+      <td>In a number of cases, we do not hold     the <font color="blue">underlying security</font> or <font color="blue">obligation</font> and may have <font color="blue">difficult</font>y obtaining, or     be unable to obtain, the <font color="blue">underlying security</font> or <font color="blue">obligation</font> through the     <font color="blue">physical settlement</font> of other <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As a result, we are subject to     the risk that we may not be able to obtain the security or <font color="blue">obligation</font> within     the required <font color="blue">contractual</font> timeframe for delivery</td>
+    </tr>
+    <tr>
+      <td>This could cause us to     forfeit the <font color="blue">payments due</font> to us under these contracts or result in settlement     <font color="blue">delays with</font> the attendant credit and <font color="blue">operational risk as</font>                                         21       _________________________________________________________________    [96]Table of <font color="blue">Contents       </font><font color="blue">well as increased costs</font> to the firm</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">derivative</font>s</font> industry is working on     various  proposals to address this issue</td>
+    </tr>
+    <tr>
+      <td>A failure of the industry to     address this <font color="blue">issue could</font> result in an un<font color="blue">willingness</font> of <font color="blue">counterparties</font> to     <font color="blue"><font color="blue">enter into</font> certain types</font> of <font color="blue">derivative</font> <font color="blue"><font color="blue">transaction</font>s</font>, which could negatively     impact our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unconfirmed  </font><font color="blue">derivative</font>  <font color="blue"><font color="blue">transaction</font>s</font>  and unauthorized <font color="blue">assignments</font> of     <font color="blue"><font color="blue">derivative</font>s</font> by counter<font color="blue">parties may</font> expose us to <font color="blue">unexpected risk</font> and potential     losses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Derivative </font>contracts and other <font color="blue"><font color="blue">transaction</font>s</font> <font color="blue">entered into</font> with <font color="blue">third parties</font>     are not <font color="blue">always confirmed by</font> the <font color="blue">counterparties</font> on a <font color="blue">timely basis</font></td>
+    </tr>
+    <tr>
+      <td>While the     <font color="blue">transaction</font> remains unconfirmed, we are subject to heightened credit and     operational risk and in the event of a <font color="blue">default may find</font> it more <font color="blue">difficult</font> to     enforce the contract</td>
+    </tr>
+    <tr>
+      <td>The growth in the <font color="blue"><font color="blue">derivative</font>s</font> industry, including     credit <font color="blue"><font color="blue">derivative</font>s</font> and other swap <font color="blue"><font color="blue">transaction</font>s</font>, has <font color="blue">also exposed us</font> and     other industry <font color="blue"><font color="blue">participant</font>s</font> to an <font color="blue">increasing incidence</font> of <font color="blue">counterparties</font>     seeking to unilaterally assign <font color="blue"><font color="blue">transaction</font>s</font> without required prior notice     and consent</td>
+    </tr>
+    <tr>
+      <td>Although industry <font color="blue"><font color="blue">participant</font>s</font> have taken steps to eliminate     this practice and its <font color="blue">effects on</font> a going-forward basis, including through     the adoption of the 2005 ISDA Novation Protocol, it is not <font color="blue">yet clear how</font>     <font color="blue">effective</font> these <font color="blue">efforts will</font> be, and the steps that have <font color="blue">been taken by</font> the     industry  do  not resolve the issue for <font color="blue">derivative</font> contracts that were     <font color="blue">previously</font>  entered  into</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unauthorized  </font><font color="blue">assignments</font>  <font color="blue">could introduce</font>     <font color="blue">uncertainty</font>  as  to the status of a <font color="blue">transaction</font>, impair our ability to     evaluate credit risk and impede trade reconciliations, which could lead to a     higher number of failed <font color="blue"><font color="blue">transaction</font>s</font> and collateral call <font color="blue">defaults</font></td>
+    </tr>
+    <tr>
+      <td>A failure in our <font color="blue">operational systems</font> or <font color="blue">infrastructure</font>, or those of third     parties, could impair our liquidity, disrupt our <font color="blue">businesses</font>, damage our     reputation and cause losses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Shortcomings </font>or failures in our internal processes, people or systems could     lead to <font color="blue">impairment</font> of our liquidity, financial loss, <font color="blue">disruption</font> of our     <font color="blue">businesses</font>, <font color="blue">liability</font> to clients, <font color="blue">regulatory</font> <font color="blue">intervention</font> or <font color="blue">reputational</font>     damage</td>
+    </tr>
+    <tr>
+      <td>For example, our <font color="blue">businesses</font> are <font color="blue">highly dependent on</font> our ability to     process, on a <font color="blue">daily basis</font>, a large number of <font color="blue"><font color="blue">transaction</font>s</font> across numerous     and <font color="blue">diverse markets</font> in many currencies</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">transaction</font>s</font> we process have     become  <font color="blue">increasingly</font>  complex and <font color="blue">often must adhere</font> to client-specific     <font color="blue">guidelines</font>,  <font color="blue">as well as legal</font> and <font color="blue">regulatory</font> standards</td>
+    </tr>
+    <tr>
+      <td>Our financial,     accounting, data processing or other operating systems and <font color="blue"><font color="blue">facilities</font> may</font>     fail to operate properly or <font color="blue">become disabled as</font> a result of events that are     wholly or <font color="blue">partially beyond</font> our control, <font color="blue">adversely</font> affecting our ability to     process these <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">inability</font> of our systems to <font color="blue">accommodate</font> an     <font color="blue">increasing volume</font> of <font color="blue"><font color="blue">transaction</font>s</font> could also constrain our ability to expand     our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We also face the risk of <font color="blue">operational failure</font> or <font color="blue">termination</font> of any of the     clearing   agents,  exchanges,  clearing  houses  or  other  financial     <font color="blue">intermediaries</font> we use to <font color="blue">facilitate</font> our securities <font color="blue"><font color="blue">transaction</font>s</font>, and as our     <font color="blue">interconnectivity with</font> our <font color="blue">clients grows</font>, we will <font color="blue">increasingly</font> face the risk     of  <font color="blue">operational failure</font> with respect to our clients’ systems</td>
+    </tr>
+    <tr>
+      <td>Any such     failure  or  <font color="blue">termination</font>  could <font color="blue">adversely</font> affect our ability to effect     <font color="blue"><font color="blue">transaction</font>s</font>, service our clients and manage our exposure to risk</td>
+    </tr>
+    <tr>
+      <td>Despite the <font color="blue">contingency</font> plans and <font color="blue">facilities</font> we have in place, our ability     to  conduct  business may be <font color="blue">adversely</font> impacted by a <font color="blue">disruption</font> in the     <font color="blue">infrastructure</font> that supports our <font color="blue">businesses</font> and the <font color="blue">communities</font> in which we     are  located</td>
+    </tr>
+    <tr>
+      <td>This  may  include  a  <font color="blue">disruption</font> involving electrical,     communications, transportation or other <font color="blue">services used by</font> <font color="blue"><font color="blue">Goldman Sachs</font> </font>or     <font color="blue">third parties</font> with which we conduct business</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">disruption</font>s may occur,     for example, as a result of events that <font color="blue">affect only</font> the buildings of Goldman     Sachs or such <font color="blue">third parties</font>, or as a result of events with a broader impact     on the cities where those buildings are located</td>
+    </tr>
+    <tr>
+      <td>Nearly all of our employees     in our <font color="blue">primary locations</font>, including New York, London, Frankfurt, Hong Kong     and Tokyo, work in close proximity to one another, in one or more buildings</td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">disruption</font> occurs in one location and our employees in that location     are unable to occupy our offices or communicate with or travel to other     locations, our ability to service and <font color="blue">interact with</font> our <font color="blue">clients may suffer</font>     and we may not be able to <font color="blue">successfully</font> implement <font color="blue">contingency</font> plans that     <font color="blue">depend on communication</font> or travel</td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________    [97]Table of <font color="blue">Contents       </font>Our <font color="blue">operations</font> rely on the secure processing, storage and <font color="blue">transmission</font> of     <font color="blue">confidential</font> and other information in our <font color="blue">computer systems</font> and networks</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>we  take  <font color="blue">protective measures</font> and endeavor to <font color="blue">modify them as</font>     <font color="blue">circumstances</font> warrant, our <font color="blue">computer systems</font>, software and <font color="blue">networks may</font> be     vulnerable to unauthorized access, computer viruses or other <font color="blue">malicious code</font>     and other events that could have a <font color="blue">security impact</font></td>
+    </tr>
+    <tr>
+      <td>If one or more of such     events occur, this <font color="blue">potentially could jeopardize</font> our or our clients’ or     <font color="blue">counterparties</font>’ <font color="blue">confidential</font> and other information processed and stored in,     and <font color="blue">transmitted through</font>, our <font color="blue">computer systems</font> and networks, or otherwise     cause   <font color="blue">interruptions</font>  or  <font color="blue">malfunctions</font>  in  our,  our  clients’,  our     <font color="blue">counterparties</font>’  or  third  parties’ <font color="blue">operations</font>, which could result in     <font color="blue">significant</font> losses or <font color="blue">reputational</font> damage</td>
+    </tr>
+    <tr>
+      <td>We may be required to expend     <font color="blue">significant</font> <font color="blue">additional</font> resources to modify our <font color="blue">protective measures</font> or to     investigate and <font color="blue">remediate vulnerabilities</font> or other exposures, and we may be     subject to <font color="blue">litigation</font> and <font color="blue">financial losses</font> that are either not insured     against or not <font color="blue">fully covered through</font> any insurance maintained by us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conflicts </font>of interest are increasing and a failure to <font color="blue"><font color="blue"><font color="blue">appropriate</font>ly</font> deal</font>     <font color="blue">with conflicts</font> of interest could <font color="blue">adversely</font> affect our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our reputation is one of our <font color="blue">most important assets</font></td>
+    </tr>
+    <tr>
+      <td>As we have expanded the     scope of our <font color="blue">businesses</font> and our <font color="blue">client base</font>, we <font color="blue">increasingly</font> have to address     <font color="blue">potential conflicts</font> of interest, including those relating to our <font color="blue">proprietary</font>     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>For example, conflicts may arise between our <font color="blue">position as</font> a     <font color="blue">financial advisor</font> in a merger <font color="blue">transaction</font> and a <font color="blue">principal investment</font> we hold     in one of the parties to the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>In addition, hedge funds and     <font color="blue">private equity funds</font> are an <font color="blue">increasingly</font> important portion of our client     base,  and <font color="blue">also compete with us</font> in a number of our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We have     extensive procedures and controls that are designed to <font color="blue">address conflicts</font> of     interest</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue"><font color="blue"><font color="blue">appropriate</font>ly</font> deal</font>ing <font color="blue">with conflicts</font> of interest is     complex and <font color="blue">difficult</font> and our <font color="blue">reputation could</font> be damaged if we fail, or     appear to fail, to deal <font color="blue"><font color="blue">appropriate</font>ly</font> <font color="blue">with conflicts</font> of interest</td>
+    </tr>
+    <tr>
+      <td>In addition, the SEC and other federal and state <font color="blue">regulators</font> have increased     their  scrutiny  of  potential  conflicts of interest</td>
+    </tr>
+    <tr>
+      <td>For example, in     June 2005, the NASD <font color="blue">filed with</font> the SEC <font color="blue">proposed rules</font> that would require     <font color="blue">certain disclosures</font> to be contained in <font color="blue">fairness opinions</font>, and <font color="blue">would mandate</font>     specific  procedures to be <font color="blue">followed by</font> member firms in <font color="blue"><font color="blue">connection</font> with</font>     issuing these opinions</td>
+    </tr>
+    <tr>
+      <td>While we have policies and procedures in place that     are  intended  to  ensure that any <font color="blue">potential conflicts</font> of interest are     <font color="blue"><font color="blue">appropriate</font>ly</font>  addressed,  it  is possible that potential or perceived     conflicts  <font color="blue">could give rise</font> to <font color="blue">litigation</font> or <font color="blue"><font color="blue">enforcement</font> actions</font></td>
+    </tr>
+    <tr>
+      <td>It is     possible that the <font color="blue">regulatory</font> scrutiny of, and <font color="blue">litigation</font> in <font color="blue"><font color="blue">connection</font> with</font>,     conflicts of <font color="blue">interest will</font> make our <font color="blue">clients <font color="blue">less willing</font></font> to <font color="blue">enter into</font>     <font color="blue"><font color="blue">transaction</font>s</font> in which such a <font color="blue">conflict may</font> occur, and will <font color="blue">adversely</font> affect     our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">businesses</font>  and those of our clients are subject to extensive and     <font color="blue">pervasive regulation around</font> the world</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Goldman Sachs</font>, as a <font color="blue">participant</font> in the <font color="blue">financial services industry</font>, is     subject to extensive regulation in <font color="blue"><font color="blue">jurisdictions</font> around</font> the world</td>
+    </tr>
+    <tr>
+      <td>We face     the  risk of <font color="blue">significant</font> <font color="blue">intervention</font> by <font color="blue">regulatory</font> <font color="blue">authorities</font> in all     <font color="blue">jurisdictions</font> in which we conduct our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Among other things, we     could be fined, prohibited from engaging in some of our business <font color="blue">activities</font>     or subject to <font color="blue">limitations</font> or <font color="blue">conditions</font> on our business <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>New  laws or <font color="blue">regulations</font> or changes in <font color="blue">enforcement</font> of <font color="blue">existing laws</font> or     <font color="blue">regulations</font> applicable to our business or those of our <font color="blue">clients may also</font>     <font color="blue">adversely</font> affect our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>For example, the SEC has <font color="blue">adopted rules</font>     requiring  the  <font color="blue">registration</font> of <font color="blue">certain hedge funds advisers under</font> the     <font color="blue">Investment Advisers Act </font>of 1940, <font color="blue">and the SEC </font>or other <font color="blue">regulators</font> may seek to     <font color="blue">further regulate hedge funds</font> in the future</td>
+    </tr>
+    <tr>
+      <td>It is possible that these or     other future <font color="blue">regulatory</font> developments rules may have a <font color="blue">significant</font> impact on     our trading, prime brokerage and other business <font color="blue">relationships with hedge</font>     funds,  or on the growth of our prime brokerage and <font color="blue">securities lending</font>     <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>In addition, under the European Union’s Transparency Directive     (Directive 2004/109/EC), which is due to be <font color="blue">implemented by</font> member states by     January 2007, issuers of securities admitted to listing on regulated markets     in the <font color="blue">European Union </font>may, depending upon the manner of <font color="blue">implementation</font>, be     required to provide                                         23       _________________________________________________________________    [98]Table of <font color="blue">Contents       </font>expanded ongoing financial disclosure, which could have an <font color="blue">adverse impact on</font>     our  ability or the ability of certain of our non-European Union-based     clients to maintain the listing of these securities or to <font color="blue">conduct securities</font>     offerings  in Europe</td>
+    </tr>
+    <tr>
+      <td>Furthermore, the SEC’s Regulation NMS, which was     adopted in 2005 and is expected to become <font color="blue">effective</font> in 2006, introduces     <font color="blue">significant</font> changes to the regulation of <font color="blue">trading on securities exchanges</font> and     <font color="blue">marketplaces</font></td>
+    </tr>
+    <tr>
+      <td>While  it  is  too  early  to  predict  the impact that     <font color="blue">Regulation NMS </font>will have, it could result in the imposition of <font color="blue">additional</font>     compliance  costs  on our trading <font color="blue">businesses</font> and alter the <font color="blue">competitive</font>     <font color="blue">environment</font> in which these <font color="blue">businesses</font> function</td>
+    </tr>
+    <tr>
+      <td>Many  of  our  <font color="blue">businesses</font>  are operating in an uncertain and <font color="blue">difficult</font>     <font color="blue">regulatory</font> <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Firms in the <font color="blue">financial services industry</font> have been operating in a <font color="blue">difficult</font>     <font color="blue">regulatory</font> <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>The industry has experienced <font color="blue">increased scrutiny from</font>     a  variety  of  <font color="blue">regulators</font>, both within and outside the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Penalties  </font>and  fines  sought by <font color="blue">regulatory</font> <font color="blue">authorities</font> have increased     <font color="blue">substantially</font> over the last <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">environment</font> has led some of     our clients to be <font color="blue">less willing</font> to engage in <font color="blue"><font color="blue">transaction</font>s</font> that may carry a     risk of increased scrutiny by <font color="blue">regulators</font></td>
+    </tr>
+    <tr>
+      <td>In addition, while the firm always     strives to <font color="blue">fully comply with</font> all legal and <font color="blue">regulatory</font> <font color="blue">requirements</font>, this     <font color="blue">regulatory</font> and <font color="blue">enforcement</font> <font color="blue">environment</font> has created <font color="blue">uncertainty</font> with respect     to a number of <font color="blue"><font color="blue">transaction</font>s</font> that had <font color="blue">historically been <font color="blue">entered into</font> by</font>     financial  <font color="blue">services firms</font>, including our firm, and that were <font color="blue">generally</font>     believed to be permissible and <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">environment</font> has led us and     our <font color="blue">competitors</font> to modify <font color="blue">transaction</font> structures and, in some cases, to     limit or cease our execution of some types of <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantial </font>legal <font color="blue">liability</font> or <font color="blue">significant</font> <font color="blue">regulatory</font> action against Goldman     Sachs could have material <font color="blue">adverse financial effects</font> or cause <font color="blue">significant</font>     <font color="blue">reputational</font> harm to <font color="blue">Goldman Sachs</font>, which in turn <font color="blue">could seriously harm</font> our     business prospects</td>
+    </tr>
+    <tr>
+      <td>We face <font color="blue">significant</font> legal risks in our <font color="blue">businesses</font>, and the volume of claims     and amount of damages and penalties claimed in <font color="blue">litigation</font> and <font color="blue">regulatory</font>     proceedings against financial <font color="blue">institutions</font> remain high</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">interaction between</font> our <font color="blue">equity research analysts</font> and <font color="blue">investment banking</font>     <font color="blue">businesses</font> has been subject to <font color="blue">new <font color="blue">requirements</font></font> and <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">discussed under</font> “Business — Regulation” in Part I, Item 1 of the Annual     Report on Form 10-K, the <font color="blue">research areas</font> of <font color="blue">investment banks</font> have been and     remain the subject of <font color="blue">regulatory</font> scrutiny that has led to <font color="blue"><font color="blue">restrictions</font> on</font>     the <font color="blue">interaction between</font> <font color="blue">equity research analysts</font> and <font color="blue">investment banking</font>     <font color="blue">personnel at securities firms</font></td>
+    </tr>
+    <tr>
+      <td>has agreed to a <font color="blue">global settlement</font> to     resolve investigations into <font color="blue">equity research analysts</font>’ alleged conflicts of     <font color="blue">interest pursuant</font> to which GS&amp;Co</td>
+    </tr>
+    <tr>
+      <td>has been subject to <font color="blue">certain <font color="blue">restrictions</font></font>     and  <font color="blue">undertakings</font></td>
+    </tr>
+    <tr>
+      <td>Certain of these <font color="blue">requirements</font> and <font color="blue">restrictions</font> have     imposed <font color="blue">additional</font> costs and <font color="blue">limitations</font> on the conduct of our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation  </font>and  <font color="blue">regulatory</font>  scrutiny of complex, structured financial     <font color="blue"><font color="blue">transaction</font>s</font> remain high</td>
+    </tr>
+    <tr>
+      <td>Regulators,  both  within  and  outside the <font color="blue">United States</font>, continue to     scrutinize  complex,  structured finance <font color="blue"><font color="blue">transaction</font>s</font> and have brought     <font color="blue"><font color="blue">enforcement</font> actions</font> against a number of financial <font color="blue">institutions</font> in <font color="blue">connection</font>     with such <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In some of the <font color="blue"><font color="blue">enforcement</font> actions</font>, clients of the     financial <font color="blue">institutions</font> allegedly engaged in accounting, disclosure or other     violations of the <font color="blue">securities laws</font>, and the financial <font color="blue">institutions</font> allegedly     <font color="blue">facilitate</font>d these improprieties by entering into <font color="blue"><font color="blue">transaction</font>s</font> with the     clients</td>
+    </tr>
+    <tr>
+      <td>We seek to create <font color="blue">innovative solutions</font> to address our clients’     needs, and we have <font color="blue">entered into</font>, and continue to <font color="blue">enter into</font>, structured     <font color="blue"><font color="blue">transaction</font>s</font> with clients</td>
+    </tr>
+    <tr>
+      <td>While we have policies and procedures in place     that are intended to ensure that the structured <font color="blue"><font color="blue">transaction</font>s</font> we <font color="blue">enter into</font>     are <font color="blue"><font color="blue">appropriate</font>ly</font> reviewed and <font color="blue">comply with applicable laws</font> and <font color="blue">regulations</font>,     it  is  possible that certain of these <font color="blue"><font color="blue">transaction</font>s</font> <font color="blue">could give rise</font> to     <font color="blue">litigation</font>  or <font color="blue"><font color="blue">enforcement</font> actions</font></td>
+    </tr>
+    <tr>
+      <td>It is possible that the <font color="blue">regulatory</font>     scrutiny  of,  and  <font color="blue">litigation</font>  in <font color="blue"><font color="blue">connection</font> with</font>, structured finance     <font color="blue"><font color="blue">transaction</font>s</font>  will  make  our <font color="blue">clients <font color="blue">less willing</font></font> to <font color="blue">enter into</font> these     <font color="blue"><font color="blue">transaction</font>s</font>, and will <font color="blue">adversely</font> affect our business in this area</td>
+    </tr>
+    <tr>
+      <td>24       _________________________________________________________________    [99]Table of <font color="blue">Contents       </font>We  are subject to <font color="blue">regulatory</font> inquiries and <font color="blue">investigations into market</font>     timing, late trading and other <font color="blue">activities</font> involving mutual funds</td>
+    </tr>
+    <tr>
+      <td>In recent years, there have been industry-wide and other <font color="blue">investigations by</font>     federal and state <font color="blue">authorities</font> concerning market timing, late trading and     other <font color="blue">activities</font> involving mutual funds and <font color="blue">investment advisers</font></td>
+    </tr>
+    <tr>
+      <td>Federal and     state  <font color="blue">authorities</font>  have made <font color="blue">informational</font> requests regarding trading     practices broadly across all of the <font color="blue">major fund companies</font> and broker-dealers</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Goldman Sachs</font> </font>has received requests for information and has <font color="blue">been fully</font>     <font color="blue">cooperating with</font> those <font color="blue">authorities</font></td>
+    </tr>
+    <tr>
+      <td>While we believe that we have in place     <font color="blue">reasonable measures</font> to detect and <font color="blue">deter disruptive</font> and <font color="blue">abusive trading</font>     practices and <font color="blue">comply with applicable legal</font> and <font color="blue">regulatory</font> <font color="blue">requirements</font>, we     <font color="blue">cannot predict</font> the course that these inquiries and areas of focus may take     or the impact that any new laws or <font color="blue">regulations</font> governing mutual funds may     have on our <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">specialist</font> business is subject to a <font color="blue">global settlement</font> and <font color="blue">civil actions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulators </font>have also been conducting investigations into certain trading     practices of <font color="blue">specialist</font> firms, including our <font color="blue">specialist</font> unit</td>
+    </tr>
+    <tr>
+      <td>In March 2004,     certain NYSE <font color="blue">specialist</font> firms, including our <font color="blue">specialist</font> unit, agreed to a     <font color="blue">global settlement</font> with the <font color="blue">SEC <font color="blue">and NYSE </font></font>to resolve charges that the firms     violated certain federal <font color="blue">securities laws</font> <font color="blue">and NYSE </font>rules in <font color="blue"><font color="blue">connection</font> with</font>     their <font color="blue">activities</font> as NYSE <font color="blue">specialist</font>s during the years 1999 through 2003</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">global settlement</font> involves, among others, restitution and penalties, a     censure, cease and desist order and certain <font color="blue">undertakings</font> with respect to our     <font color="blue">specialist</font> unit’s systems and procedures</td>
+    </tr>
+    <tr>
+      <td>The settlement did not resolve the     related  <font color="blue">civil actions</font> <font color="blue">discussed under</font> “Legal Proceedings — Specialist</td>
+    </tr>
+  </tbody>
+</table>

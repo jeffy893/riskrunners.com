@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: inherent risks", fill: "#ffba00"},
+{source: "1: inherent risks", target: "1: uncertainties associated with", fill: "#ffba00"},
+{source: "1: uncertainties associated with", target: "1: global operations", fill: "#ffba00"},
+{source: "1: global operations", target: "1: involve manufacturing", fill: "#ffba00"},
+{source: "1: involve manufacturing", target: "1: applications", fill: "#ffba00"},
+{source: "1: applications", target: "1: throughout", fill: "#ffba00"},
+{source: "1: inherent risks", target: "2: uncertainties", fill: "#a1caf1"},
+{source: "2: uncertainties", target: "2: associated with", fill: "#a1caf1"},
+{source: "2: associated with", target: "2: could adversely affect", fill: "#a1caf1"},
+{source: "2: could adversely affect", target: "2: financial condition", fill: "#a1caf1"},
+{source: "2: uncertainties", target: "6: Unfavorable ", fill: "#f7f"},
+{source: "6: Unfavorable ", target: "6: fluctuations", fill: "#f7f"},
+{source: "6: fluctuations", target: "6: foreign currency exchange rates could negatively", fill: "#f7f"},
+{source: "6: foreign currency exchange rates could negatively", target: "6: operations", fill: "#f7f"},
+{source: "6: operations", target: "6: financial position", fill: "#f7f"},
+{source: "6: Unfavorable ", target: "9: translated financial", fill: "#e32636"},
+{source: "9: translated financial", target: "9: consolidated financial", fill: "#e32636"},
+{source: "9: translated financial", target: "11: Operating ", fill: "#9c2542"},
+{source: "11: Operating ", target: "11: internationally", fill: "#9c2542"},
+{source: "11: internationally", target: "11: risks which could negatively", fill: "#9c2542"},
+{source: "11: risks which could negatively", target: "11: financial performance", fill: "#9c2542"},
+{source: "11: Operating ", target: "14: Maintaining ", fill: "#039"},
+{source: "14: Maintaining ", target: "14: competitive", fill: "#039"},
+{source: "14: competitive", target: "14: investment", fill: "#039"},
+{source: "14: Maintaining ", target: "15: competitive markets", fill: "#ff6e4a"},
+{source: "15: competitive markets", target: "15: competitors", fill: "#ff6e4a"},
+{source: "15: competitors", target: "15: well established", fill: "#ff6e4a"},
+{source: "15: competitive markets", target: "34: Compliance ", fill: "#808000"},
+{source: "34: Compliance ", target: "34: with environmental laws", fill: "#808000"},
+{source: "34: with environmental laws", target: "34: regulations", fill: "#808000"},
+{source: "34: Compliance ", target: "START_HERE", fill: "#808000"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Fertilizers and Agricultural Chemicals</td>
+    </tr>
+    <tr>
+      <td>Agricultural Products</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Measurement_uncertainty">Measurement uncertainty</a></td>
+      <td>In metrology, measurement uncertainty is the expression of the statistical dispersion of the values attributed to a measured quantity. All measurements are subject to uncertainty and a measurement result is complete only when it is accompanied by a statement of the associated uncertainty, such as the standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty">Uncertainty</a></td>
+      <td>Uncertainty refers to epistemic situations involving imperfect or unknown information. It applies to predictions of future events, to physical measurements that are already made, or to the unknown.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt">Fear, uncertainty, and doubt</a></td>
+      <td>Fear, uncertainty, and doubt (often shortened to FUD) is a propaganda tactic used in sales, marketing, public relations, politics, polling and cults. FUD is generally a strategy to influence perception by disseminating negative and dubious or false information and a manifestation of the appeal to fear.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cone_of_Uncertainty">Cone of Uncertainty</a></td>
+      <td>In project management, the Cone of Uncertainty describes the evolution of the amount of best case uncertainty during a project. At the beginning of a project, comparatively little is known about the product or work results, and so estimates are subject to large uncertainty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_budget">Uncertainty budget</a></td>
+      <td>The uncertainty budget is an aid for specifying the expanded measurement uncertainty. The individual measurement uncertainty factors are summarised, usually in tabular form, in the measurement uncertainty budget.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_accounting">Financial accounting</a></td>
+      <td>Financial accounting is the field of accounting concerned with the summary, analysis and reporting of financial transactions related to a business. This involves the preparation of financial statements available for public use.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_Financial_Reporting_Standards">International Financial Reporting Standards</a></td>
+      <td>International Financial Reporting Standards, commonly called IFRS, are accounting standards issued by the IFRS Foundation and the International Accounting Standards Board (IASB). They constitute a standardised way of describing the company's financial performance and position so that company financial statements are understandable and comparable across international boundaries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chief_financial_officer">Chief financial officer</a></td>
+      <td>The chief financial officer (CFO) is an officer of a company or organization that is assigned the primary responsibility for managing the company's finances, including financial planning, management of financial risks, record-keeping, and financial reporting. In some sectors, the CFO is also responsible for analysis of data.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_financial_performance_measures">List of financial performance measures</a></td>
+      <td>This article comprises a list of measures of financial performance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Starbucks">Starbucks</a></td>
+      <td>Starbucks Corporation is an American multinational chain of coffeehouses and roastery reserves headquartered in Seattle, Washington. It is the world's largest coffeehouse chain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_statement">Income statement</a></td>
+      <td>An income statement or profit and loss account (also referred to as a profit and loss statement (P&amp;L), statement of profit or loss, revenue statement, statement of financial performance, earnings statement, statement of earnings, operating statement, or statement of operations) is one of the financial statements of a company and shows the company's revenues and expenses during a particular period.It indicates how the revenues (also known as the “top line”) are transformed into the net income or net profit (the result after all revenues and expenses have been accounted for). The purpose of the income statement is to show managers and investors whether the company made money (profit) or lost money (loss) during the period being reported.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Organizational_performance">Organizational performance</a></td>
+      <td>Organizational performance comprises the actual output or results of an organization as measured against its intended outputs (or goals and objectives).\nOrganizational performance also the success or fulfilment of organization at end of program or projects as it is intended.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmental,_social,_and_corporate_governance">Environmental, social, and corporate governance</a></td>
+      <td>Environmental, social, and corporate governance (ESG) is an approach to evaluating the extent to which a corporation works on behalf of social goals that go beyond the role of a corporation to maximize profits on behalf of the corporation's shareholders. Typically, the social goals advocated within an ESG perspective include working to achieve a certain set of environmental goals, as well as a set of goals having to do with supporting certain social movements, and a third set of goals having to do with whether the corporation is governed in a way that is consistent with the goals of the diversity, equity, and inclusion movement.A variety of governmental organizations and financial institutions have devised ways to measure the extent to which a specific corporation is aligned with ESG goals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Corporate_social_responsibility">Corporate social responsibility</a></td>
+      <td>Corporate social responsibility (CSR) is a form of international private business self-regulation which aims to contribute to societal goals of a philanthropic, activist, or charitable nature by engaging in or supporting volunteering or ethically oriented practices. While once it was possible to describe CSR as an internal organizational policy or a corporate ethic strategy, that time has passed as various national and international laws have been developed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_acumen">Business acumen</a></td>
+      <td>Business acumen, also known as business savviness, business sense and business understanding, is keenness and quickness in understanding and dealing with a business situation (risks and opportunities) in a manner that is likely to lead to a good outcome. Additionally, business acumen has emerged as a vehicle for improving financial performance and leadership development.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_analysis">Competitor analysis</a></td>
+      <td>Competitive analysis in marketing and strategic management is an assessment of the strengths and weaknesses of current and potential competitors. This analysis provides both an offensive and defensive strategic context to identify opportunities and threats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_backlinking">Competitor backlinking</a></td>
+      <td>Competitor backlinking is a search engine optimization strategy that involves analyzing the backlinks of competing websites within a vertical search. The outcome of this activity is designed to increase organic search engine rankings and to gain an understanding of the link building strategies used by business competitors.By analyzing the backlinks to competitor websites, it is possible to gain a benchmark on the number of links and the quality of links that is required for high search engine rankings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitors_for_the_Crown_of_Scotland">Competitors for the Crown of Scotland</a></td>
+      <td>When the crown of Scotland became vacant in September 1290 on the death of the seven-year-old child Queen Margaret, 13 claimants to the throne came forward. Those with the most credible claims were John Balliol, Robert Bruce, John Hastings and Floris V, Count of Holland.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Dancing_with_the_Stars_(American_TV_series)_competitors">List of Dancing with the Stars (American TV series) competitors</a></td>
+      <td>Dancing with the Stars is an American reality television show in which celebrity contestants and professional dance partners compete to be the best dancers, as determined by the show's judges and public voting. The series first broadcast in 2005, and thirty complete seasons have aired on ABC. During each season, competitors are progressively eliminated on the basis of public voting and scores received from the judges until only a few contestants remain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_Group">Competitor Group</a></td>
+      <td>Competitor Group, Inc. (CGI) is a privately held, for-profit, sports marketing and management company based in Mira Mesa, San Diego, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Round-robin_tournament">Round-robin tournament</a></td>
+      <td>A round-robin tournament (or all-play-all tournament) is a competition in which each contestant meets every other participant, usually in turn. A round-robin contrasts with an elimination tournament, in which participants are eliminated after a certain number of losses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DONALDSON CO INC      Item 1A  RISK FACTORS               There are <font color="blue">inherent risks</font> and <font color="blue"><font color="blue">uncertainties</font> <font color="blue">associated with</font></font> our     <font color="blue">global <font color="blue">operations</font></font> that <font color="blue">involve manufacturing</font> and sale of products for highly     demanding  customer  <font color="blue">applications</font>  <font color="blue">throughout</font> the world</td>
+    </tr>
+    <tr>
+      <td>The risks and     <font color="blue">uncertainties</font>  <font color="blue">associated with</font> our business <font color="blue">could adversely affect</font> our     operating performance or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The following discussion along     with  <font color="blue">discussions</font>  elsewhere  in  this  report  outlines the risks and     <font color="blue">uncertainties</font>  that  we believe are the most material to our business</td>
+    </tr>
+    <tr>
+      <td>However, these are not the only risks or <font color="blue">uncertainties</font> that <font color="blue">could affect</font> our     business</td>
+    </tr>
+    <tr>
+      <td>Therefore,  the  following is not intended to be a complete     discussion of all potential risks or <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font><font color="blue">fluctuations</font> in <font color="blue">foreign currency exchange rates could <font color="blue">negatively</font></font>     impact our results of <font color="blue">operations</font> and <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">operations</font> in many countries</td>
+    </tr>
+    <tr>
+      <td>Each of our <font color="blue">subsidiaries</font>     reports its results of <font color="blue">operations</font> and <font color="blue">financial position</font> in its relevant     foreign currency, which is then translated into <font color="blue">United States </font>dollars</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">translated financial</font> information is included in our <font color="blue">consolidated financial</font>     statements</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">strengthening</font> of the <font color="blue">United States </font>dollar in <font color="blue">comparison</font> to     the <font color="blue">foreign currencies</font> of our <font color="blue">subsidiaries</font> could have a <font color="blue">negative <font color="blue">impact on</font></font>     our results of <font color="blue">operations</font> or <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Operating </font><font color="blue">internationally</font> carries <font color="blue">risks which could <font color="blue">negatively</font></font> effect our     <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>We have sales and manufacturing <font color="blue">operations</font> <font color="blue">throughout</font> the world,     with the <font color="blue">heaviest concentrations</font> in North America, Europe and Asia</td>
+    </tr>
+    <tr>
+      <td>Our     stability, growth and <font color="blue">profitability</font> are subject to a number of risks of     doing business <font color="blue">internationally</font> that <font color="blue">could harm</font> our business, including:         • political and <font color="blue">military events</font>,       • legal and <font color="blue">regulatory requirements</font> in <font color="blue">local <font color="blue">jurisdictions</font></font>,       • tariffs and <font color="blue">trade barriers</font>,       • <font color="blue">potential <font color="blue">difficulties</font></font> in staffing and managing local <font color="blue">operations</font>,       • credit risk of <font color="blue">local customers</font> and <font color="blue">distributors</font>,       • <font color="blue">difficulties</font> in <font color="blue">protecting intellectual property</font>, and       • local economic, political and social <font color="blue">conditions</font>, specifically in <font color="blue">China     </font>where we have <font color="blue">significant <font color="blue">investment</font>s</font> in both our <font color="blue">Engine and Industrial     </font><font color="blue">products segments</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Maintaining </font>a <font color="blue">competitive</font> advantage requires continuing <font color="blue">investment</font>, with     uncertain returns</td>
+    </tr>
+    <tr>
+      <td>We  operate  in  highly  <font color="blue">competitive</font> markets and have numerous     <font color="blue">competitors</font>  who  may already be <font color="blue">well established</font> in those markets</td>
+    </tr>
+    <tr>
+      <td>We     experience <font color="blue">price pressures from</font> these <font color="blue">competitors</font> in <font color="blue">certain product lines</font>     and <font color="blue">geographic markets</font></td>
+    </tr>
+    <tr>
+      <td>We expect our <font color="blue">competitors</font> to <font color="blue">continue improving</font> the     design and performance of their products and to <font color="blue">introduce new products</font> that     are <font color="blue">competitive</font> in both price and performance</td>
+    </tr>
+    <tr>
+      <td>We believe that we have     <font color="blue">certain technological <font color="blue">advantages</font> over</font> our <font color="blue">competitors</font> but maintaining       3       _________________________________________________________________       [43]Table of <font color="blue">Contents       </font>these  <font color="blue">advantages</font>  requires  us  to <font color="blue">continually invest</font> in research and     development, sales and marketing and <font color="blue">customer service</font> and support</td>
+    </tr>
+    <tr>
+      <td>There is     no guarantee that we will be successful in maintaining these <font color="blue">advantages</font></td>
+    </tr>
+    <tr>
+      <td>We     are currently making <font color="blue">investment</font>s in <font color="blue">emissions <font color="blue">technology</font> development</font> to meet     the changing <font color="blue">regulatory requirements</font> worldwide</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">financial performance</font>     may be <font color="blue"><font color="blue">negatively</font> impacted</font> if a competitor’s successful product innovation     reaches the market before ours or <font color="blue">gains broader market acceptance</font> before our     <font color="blue">product offerings</font></td>
+    </tr>
+    <tr>
+      <td>A number of our major OEM <font color="blue">customers manufacture</font> component products     for  their  own use</td>
+    </tr>
+    <tr>
+      <td>Although these OEM <font color="blue">customers rely on us</font> and other     suppliers  for other of their component products, they <font color="blue">could choose</font> to     <font color="blue">manufacture additional</font> component products for their own use</td>
+    </tr>
+    <tr>
+      <td>There is also a     risk that one of our <font color="blue">customers would</font> acquire one of our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">adversely impacted by</font> changes in <font color="blue">technology</font> that could     reduce or eliminate the demand for our products</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">at risk with respect</font>     to:         • <font color="blue">Breakthroughs </font>in <font color="blue">technology</font> which provide a viable <font color="blue">alternative</font> to diesel     engines</td>
+    </tr>
+    <tr>
+      <td>• Reduced demand for <font color="blue">disk drive products</font> if our <font color="blue">customers further</font> develop     <font color="blue">flash memory</font> or a similar <font color="blue">technology</font> which would eliminate the need for     <font color="blue">filtration solutions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font>may not <font color="blue">necessarily</font> have a positive <font color="blue">impact on</font> our results</td>
+    </tr>
+    <tr>
+      <td>We have and continue to <font color="blue">pursue <font color="blue">acquisitions</font></font> of <font color="blue">complementary product</font>     lines,  <font color="blue">technologies</font>  and  <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that these     <font color="blue"><font color="blue">acquisitions</font> will</font> have a positive <font color="blue">impact on</font> our results</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">acquisitions</font>     <font color="blue">could <font color="blue">negatively</font> impact</font> our <font color="blue">profitability</font> due to <font color="blue">dilutive issuances</font> of     <font color="blue">equity securities</font>, the incurrence of debt and <font color="blue">contingent <font color="blue">liabilities</font></font> and     <font color="blue">amortization expenses</font> related to <font color="blue">intangible assets</font></td>
+    </tr>
+    <tr>
+      <td>There are also a number     of <font color="blue">risks involved</font> in <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>For example, we could have <font color="blue">difficulties</font>     in  <font color="blue">assimilating</font>  the  acquired <font color="blue">operations</font>, assume <font color="blue"><font color="blue">unanticipated</font> legal</font>     <font color="blue">liabilities</font> or <font color="blue">lose key employees</font> of the acquired company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font><font color="blue">with <font color="blue">environmental laws</font></font> and <font color="blue">regulations</font> can be costly</td>
+    </tr>
+    <tr>
+      <td>We are subject to many <font color="blue">environmental laws</font> and <font color="blue">regulations</font> in the     <font color="blue">jurisdictions</font> in which we operate</td>
+    </tr>
+    <tr>
+      <td>We incur product development capital and     operating costs in order to <font color="blue">comply with</font> these laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>We may     be <font color="blue">adversely impacted by</font> new or changing <font color="blue">environmental laws</font> and <font color="blue">regulations</font>     that <font color="blue">affect both</font> our <font color="blue">operations</font> and our ability to develop and <font color="blue">sell products</font>     that meet our customers’ product and <font color="blue">performance requirements</font></td>
+    </tr>
+    <tr>
+      <td>Demand  for  our products relies on economic and industrial <font color="blue">conditions</font>     worldwide</td>
+    </tr>
+    <tr>
+      <td>Demand for certain of our products tends to be cyclical and responds     to varying levels of <font color="blue">construction</font>, <font color="blue">agricultural</font>, mining and industrial     activity in the <font color="blue">United States </font>and in other <font color="blue">industrialized nations</font></td>
+    </tr>
+    <tr>
+      <td>Sales to Caterpillar, Inc</td>
+    </tr>
+    <tr>
+      <td>and its <font color="blue">subsidiaries</font> have accounted for     greater than 10 percent of our net sales in the <font color="blue">past three fiscal years</font></td>
+    </tr>
+    <tr>
+      <td>An     adverse  change  in  Caterpillar’s <font color="blue">financial performance</font> or a material     reduction in our sales to it <font color="blue">could <font color="blue">negatively</font> impact</font> our operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unavailable </font>or higher cost materials could result in our customers being     <font color="blue">dissatisfied</font></td>
+    </tr>
+    <tr>
+      <td>We obtain raw material and <font color="blue">certain manufactured components from</font>     third-party suppliers and tend to carry limited raw material <font color="blue">inventories</font></td>
+    </tr>
+    <tr>
+      <td>Even a brief <font color="blue">unanticipated</font> delay in delivery or increases in prices by our     suppliers could result in the <font color="blue">inability</font> to satisfy our <font color="blue">customers on delivery</font>     and pricing</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">could <font color="blue">negatively</font> affect</font> our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">sell products</font> in <font color="blue">various product lines</font> that have <font color="blue">varying profit</font>     margins</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">financial performance</font> can be <font color="blue">impacted positively</font> or <font color="blue">negatively</font>     <font color="blue">depending on</font> the mix of products we <font color="blue">sell during</font> a <font color="blue">given period as compared</font>     to a <font color="blue">previous period</font></td>
+    </tr>
+  </tbody>
+</table>

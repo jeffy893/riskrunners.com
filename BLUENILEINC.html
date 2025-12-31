@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: should carefully", fill: "#704214"},
+{source: "1: should carefully", target: "1: risks described", fill: "#704214"},
+{source: "1: risks described", target: "1: which could materially", fill: "#704214"},
+{source: "1: which could materially", target: "1: adversely affect", fill: "#704214"},
+{source: "1: adversely affect", target: "1: operations", fill: "#704214"},
+{source: "1: operations", target: "1: financial condition", fill: "#704214"},
+{source: "1: should carefully", target: "24: quality diamonds", fill: "#00b7eb"},
+{source: "24: quality diamonds", target: "24: jewelry at commercially", fill: "#00b7eb"},
+{source: "24: jewelry at commercially", target: "24: reasonable prices would", fill: "#00b7eb"},
+{source: "24: reasonable prices would", target: "24: higher costs", fill: "#00b7eb"},
+{source: "24: higher costs", target: "24: lower net sales", fill: "#00b7eb"},
+{source: "24: lower net sales", target: "24: competitive position", fill: "#00b7eb"},
+{source: "24: quality diamonds", target: "32: inability", fill: "#66b032"},
+{source: "32: inability", target: "32: future diamond", fill: "#66b032"},
+{source: "32: future diamond", target: "32: jewelry supply", fill: "#66b032"},
+{source: "32: jewelry supply", target: "32: relationships on commercially reasonable terms", fill: "#66b032"},
+{source: "32: relationships on commercially reasonable terms", target: "32: future suppliers", fill: "#66b032"},
+{source: "32: future suppliers", target: "32: arrangements", fill: "#66b032"},
+{source: "32: arrangements", target: "32: products sold", fill: "#66b032"},
+{source: "32: products sold", target: "32: operations", fill: "#66b032"},
+{source: "32: inability", target: "37: Changes ", fill: "#fdd5b1"},
+{source: "37: Changes ", target: "37: significant", fill: "#fdd5b1"},
+{source: "37: Changes ", target: "49: Blue Nile ", fill: "#3f00ff"},
+{source: "49: Blue Nile ", target: "49: would prevent us from", fill: "#3f00ff"},
+{source: "49: Blue Nile ", target: "61: customers with high", fill: "#00ced1"},
+{source: "61: customers with high", target: "61: quality customer", fill: "#00ced1"},
+{source: "61: quality customer", target: "61: reason could substantially harm", fill: "#00ced1"},
+{source: "61: reason could substantially harm", target: "61: adversely impact", fill: "#00ced1"},
+{source: "61: adversely impact", target: "61: Blue Nile ", fill: "#00ced1"},
+{source: "61: customers with high", target: "62: promotion activities could adversely", fill: "#f2f3f4"},
+{source: "62: promotion activities could adversely", target: "62: new customers", fill: "#f2f3f4"},
+{source: "62: new customers", target: "62: relationships", fill: "#f2f3f4"},
+{source: "62: relationships", target: "62: substantially harm", fill: "#f2f3f4"},
+{source: "62: substantially harm", target: "62: operations", fill: "#f2f3f4"},
+{source: "62: promotion activities could adversely", target: "71: retailers offer consumers", fill: "#fddde6"},
+{source: "71: retailers offer consumers", target: "71: Contents ", fill: "#fddde6"},
+{source: "71: Contents ", target: "71: physically handle", fill: "#fddde6"},
+{source: "71: physically handle", target: "71: possible over", fill: "#fddde6"},
+{source: "71: possible over", target: "71: convenient", fill: "#fddde6"},
+{source: "71: convenient", target: "71: exchanging purchased products", fill: "#fddde6"},
+{source: "71: retailers offer consumers", target: "72: competitors", fill: "#be0032"},
+{source: "72: competitors", target: "72: substantially", fill: "#be0032"},
+{source: "72: substantially", target: "72: development", fill: "#be0032"},
+{source: "72: competitors", target: "START_HERE", fill: "#be0032"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Consumer Discretionary</td>
+    </tr>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_unsolved_problems_in_economics">List of unsolved problems in economics</a></td>
+      <td>This is a list of some of the major unsolved problems, puzzles, or questions in economics. Some of these are theoretical in origin and some of them concern the inability of orthodox economic theory to explain an empirical observation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Blue_Nile_(company)">Blue Nile (company)</a></td>
+      <td>Blue Nile is an online jewelry retailer founded in 1999. It is based in Seattle, Washington.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tobacco_harm_reduction">Tobacco harm reduction</a></td>
+      <td>Tobacco harm reduction (THR) is a public health strategy to lower the health risks to individuals and wider society associated with using tobacco products. It is an example of the concept of harm reduction, a strategy for dealing with the use of drugs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/South_African_law_of_delict">South African law of delict</a></td>
+      <td>The South African law of delict engages primarily with ‘the circumstances in which one person can claim compensation from another for harm that has been suffered’. JC Van der Walt and Rob Midgley define a delict ‘in general terms [...] as a civil wrong’, and more narrowly as ‘wrongful and blameworthy conduct which causes harm to a person’.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Standing_(law)">Standing (law)</a></td>
+      <td>In law, standing or locus standi is a condition that a party seeking a legal remedy must show they have, by demonstrating to the court, sufficient connection to and harm from the law or action challenged to support that party's participation in the case. A party has standing in the following situations:\n\nThe party is directly subject to an adverse effect by the statute or action in question, and the harm suffered will continue unless the court grants relief in the form of damages or a finding that the law either does not apply to the party or that the law is void or can be nullified.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gooseberry">Gooseberry</a></td>
+      <td>Gooseberry ( or  (American and northern British) or  (southern British)) is a common name for many species of Ribes (which also includes currants), as well as a large number of plants of similar appearance. The berries of those in the genus Ribes (sometimes placed in the genus Grossularia) are edible and may be green, orange, red, purple, yellow, white, or black.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/1995_ARL_season">1995 ARL season</a></td>
+      <td>The 1995 ARL premiership was the 88th season of professional rugby league football in Australia, and the first to be run by the Australian Rugby League following the hand-over of the Premiership's administration by the New South Wales Rugby League. For the first time since the 1988 NSWRL season, the Premiership expanded again, with the addition of two new clubs from Queensland; North Queensland, based in Townsville, and South Queensland, based in Brisbane.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cultural_liberalism">Cultural liberalism</a></td>
+      <td>Cultural liberalism (known as social liberalism in the United States) is a social philosophy which expresses the social dimension of liberalism and favors the freedom of individuals to choose whether to conform to cultural norms. In the words of Henry David Thoreau is often expressed as the right to "march to the beat of a different drummer".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Commensalism">Commensalism</a></td>
+      <td>Commensalism is a long-term biological interaction (symbiosis) in which members of one species gain benefits while those of the other species neither benefit nor are harmed. This is in contrast with mutualism, in which both organisms benefit from each other; amensalism, where one is harmed while the other is unaffected; parasitism, where one is harmed and the other benefits, and parasitoidism, which is similar to parasitism but the parasitoid has a free-living state and instead of just harming its host, it eventually ends up killing it.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-fatal_offences_against_the_person_in_English_law">Non-fatal offences against the person in English law</a></td>
+      <td>Non-fatal offences against the person, under English law, are generally taken to mean offences which take the form of an attack directed at another person, that do not result in the death of any person. Such offences where death occurs are considered homicide, whilst sexual offences are generally considered separately, since they differ substantially from other offences against the person in theoretical basis and composition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_Trade_Commission">Federal Trade Commission</a></td>
+      <td>The Federal Trade Commission (FTC) is an independent agency of the United States government whose principal mission is the enforcement of civil (non-criminal) U.S. antitrust law and the promotion of consumer protection. The FTC shares jurisdiction over federal civil antitrust enforcement with the Department of Justice Antitrust Division.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contents_insurance">Contents insurance</a></td>
+      <td>Contents insurance is insurance that pays for damage to, or loss of, an individual’s personal possessions while they are located within that individual’s home. Some contents insurance policies also provide restricted cover for personal possessions temporarily taken away from the home by the policyholder.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Table_of_contents">Table of contents</a></td>
+      <td>A table of contents, usually headed simply Contents and abbreviated informally as TOC, is a list, usually found on a page before the start of a written work, of its chapter or section titles or brief descriptions with their commencing page numbers.\n\n\n== History ==\nPliny the Elder credits Quintus Valerius Soranus (d.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Current_Contents">Current Contents</a></td>
+      <td>Current Contents is a rapid alerting service database from Clarivate Analytics, formerly the Institute for Scientific Information and Thomson Reuters. It is published online and in several different printed subject sections.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SM_Culture_&amp;_Contents">SM Culture &amp; Contents</a></td>
+      <td>SM Culture &amp; Contents (Korean: 에스엠컬처앤콘텐츠; SM C&amp;C) is a South Korean advertising, production, travel and talent company under SM Studios, a wholly-owned subsidiary of SM Entertainment. The company operates as a talent agency, television content production company, theatrical production company and travel company.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marc_Ecko's_Getting_Up:_Contents_Under_Pressure">Marc Ecko's Getting Up: Contents Under Pressure</a></td>
+      <td>Marc Ecko's Getting Up: Contents Under Pressure is a video game released in February 2006 for PlayStation 2, Xbox, and Windows. It was developed by The Collective and published by Atari, Inc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Victory_Contents">Victory Contents</a></td>
+      <td>Victory Contents (Korean: 빅토리콘텐츠; RR: bigtoli kontencheu) is a Korean drama production company based in Seoul.\n\n\n== History ==\nsource: \n\nApril 4, 2003 - Music Encyclopedia was established.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Table_of_Contents_(Enochs)">Table of Contents (Enochs)</a></td>
+      <td>Table of Contents is a sculpture designed by the American artist Dale Enochs. The sculpture is made from limestone and was commissioned by Joseph F. Miller.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Substantial_truth">Substantial truth</a></td>
+      <td>Substantial truth is a legal doctrine affecting libel and slander laws in common law jurisdictions such as the United States or the United Kingdom.\n\n\n== United States law ==\nUnder the United States law, a statement cannot be held to be actionable as slanderous or libellous if the statement is true but has "slight inaccuracies of expression".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Academy_Award_for_Best_Original_Score">Academy Award for Best Original Score</a></td>
+      <td>The Academy Award for Best Original Score is an award presented annually by the Academy of Motion Picture Arts and Sciences (AMPAS) to the best substantial body of music in the form of dramatic underscoring written specifically for the film by the submitting composer. Some pre-existing music is allowed, though, but a contending film must include a minimum of original music.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Substantial_similarity">Substantial similarity</a></td>
+      <td>Substantial similarity, in US copyright law, is the standard used to determine whether a defendant has infringed the reproduction right of a copyright. The standard arises out of the recognition that the exclusive right to make copies of a work would be meaningless if copyright infringement were limited to making only exact and complete reproductions of a work.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_countries_by_GDP_(PPP)_per_capita">List of countries by GDP (PPP) per capita</a></td>
+      <td>This article is a list of the countries of the world by gross domestic product (at purchasing power parity) per capita, i.e., the purchasing power parity (PPP) value of all final goods and services produced within a country in a given year, divided by the average (or mid-year) population for the same year.\nAs of 2019, the estimated average GDP per capita (PPP) of all of the countries of the world is Int$ 18,381.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BLUE NILE INC      Item 1A      Risk Factors             You <font color="blue">should carefully</font> consider the <font color="blue">risks described</font> below and elsewhere     in this report, <font color="blue"><font color="blue">which could</font> materially</font> and <font color="blue">adversely affect</font> our business,     results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In those cases, the trading     price of our <font color="blue"><font color="blue">common stock</font> could decline</font> and you may lose all or part of your     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Our limited operating history makes it <font color="blue">difficult</font> for us to <font color="blue">accurately</font>     <font color="blue">forecast net sales</font> and <font color="blue">appropriately</font> plan our expenses</td>
+    </tr>
+    <tr>
+      <td>We were <font color="blue">incorporated</font> in March 1999 and have a limited operating     history</td>
+    </tr>
+    <tr>
+      <td>As a result, it is <font color="blue">difficult</font> to <font color="blue">accurately</font> forecast our net sales     and plan our operating expenses</td>
+    </tr>
+    <tr>
+      <td>We base our current and <font color="blue">future expense</font>     <font color="blue">levels on</font> our operating forecasts and estimates of <font color="blue"><font color="blue">future net</font> sales</font></td>
+    </tr>
+    <tr>
+      <td>Net     sales and operating results are <font color="blue">difficult</font> to forecast because they <font color="blue">generally</font>     depend  on  the  volume and timing of the orders we receive, which are     uncertain</td>
+    </tr>
+    <tr>
+      <td>Some of our expenses are fixed, and, as a result, we may be     unable to adjust our spending in a <font color="blue">timely manner</font> to compensate for any     <font color="blue">unexpected shortfall</font> in net sales</td>
+    </tr>
+    <tr>
+      <td>We also make certain     <font color="blue">assumptions</font> when <font color="blue">forecasting</font> the amount of expense we expect related to our     stock-based <font color="blue">compensation</font>, which are <font color="blue">partly <font color="blue">based on</font> historical</font> results</td>
+    </tr>
+    <tr>
+      <td>If     actual results <font color="blue">differ from</font> our estimates, our net income in a <font color="blue">given quarter</font>     may be lower than expected</td>
+    </tr>
+    <tr>
+      <td>7       _________________________________________________________________    [58]Table of <font color="blue">Contents       </font>We expect our <font color="blue">quarterly financial</font> results to fluctuate, which may lead to     <font color="blue">volatility</font> in our stock price</td>
+    </tr>
+    <tr>
+      <td>We expect our net sales and operating results to <font color="blue">vary <font color="blue">significant</font>ly</font>     <font color="blue">from quarter</font> to <font color="blue">quarter due</font> to a number of factors, including changes in:         •  demand for our products;         •  the costs to acquire diamonds and precious metals;         •  our ability to <font color="blue">attract visitors</font> to our websites and convert those     <font color="blue">visitors into customers</font>;         •  our ability to retain <font color="blue">existing customers</font> or encourage repeat purchases;         •  our ability to manage our <font color="blue">product mix</font> and inventory;         •  <font color="blue">wholesale diamond prices</font>;         •  consumer tastes and <font color="blue">preferences</font> for diamonds and fine jewelry;         •  our ability to manage our <font color="blue">operations</font>;         •  <font color="blue">advertising</font> and other <font color="blue">marketing costs</font>;         •  our, or our <font color="blue">competitors</font>’, pricing and <font color="blue">marketing strategies</font>;         •  <font color="blue">general economic <font color="blue">conditions</font></font>;         •  <font color="blue">conditions</font> or trends in the diamond and fine <font color="blue">jewelry industry</font>;         •  <font color="blue">conditions</font> or trends in the Internet and e-commerce industry; and         •  costs of expanding or enhancing our <font color="blue">technology</font> or websites</td>
+    </tr>
+    <tr>
+      <td>As  a result of the <font color="blue">variability</font> of these and other factors, our     operating results in <font color="blue">future quarters may</font> be below the <font color="blue">expectations</font> of public     <font color="blue">market analysts</font> and investors</td>
+    </tr>
+    <tr>
+      <td>In this event, the price of our <font color="blue">common stock</font>     may decline</td>
+    </tr>
+    <tr>
+      <td>As a result of seasonal <font color="blue">fluctuations</font> in our net sales, our quarterly results     may fluctuate and could be below <font color="blue">expectations</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced and expect to continue to experience seasonal     <font color="blue">fluctuations</font> in our net sales</td>
+    </tr>
+    <tr>
+      <td>In particular, a <font color="blue">disproportionate amount</font> of     our net sales has been realized during the <font color="blue"><font color="blue">fourth quarter</font> as</font> a result of the     <font color="blue">December </font><font color="blue">holiday season</font>, and we expect this <font color="blue">seasonality</font> to continue in the     future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>36prca, 38prca and 38prca of our net sales in 2005, 2004 and     2003,  <font color="blue">respectively</font>,  were  generated  during  the  <font color="blue">fourth quarter</font></td>
+    </tr>
+    <tr>
+      <td>In     <font color="blue">anticipation</font> of increased sales activity during the <font color="blue">fourth quarter</font>, we may     <font color="blue">incur <font color="blue">significant</font> additional expenses</font>, including <font color="blue">higher inventory</font> of jewelry     and <font color="blue">additional staffing</font> in our <font color="blue">fulfillment</font> and <font color="blue">customer support</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we were to experience lower than expected <font color="blue">net sales during</font> any future     <font color="blue">fourth quarter</font>, it would have a <font color="blue">disproportionately</font> large <font color="blue">impact on</font> our     operating results and <font color="blue">financial condition</font> for that year</td>
+    </tr>
+    <tr>
+      <td>We also experience     considerable <font color="blue">fluctuations</font> in net sales in <font color="blue">periods preceding</font> other annual     <font color="blue">occasions such as</font> Valentine’s Day and Mother’s Day</td>
+    </tr>
+    <tr>
+      <td>In the future, our     seasonal sales patterns may become more pronounced, may strain our personnel     and  <font color="blue">fulfillment</font>  <font color="blue">activities</font> and may cause a shortfall in net sales as     compared to expenses in a <font color="blue">given period</font>, which would <font color="blue"><font color="blue">substantially</font> harm</font> our     business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to acquire <font color="blue">quality diamonds</font> and fine <font color="blue"><font color="blue">jewelry at</font> commercially</font>     <font color="blue">reasonable prices would</font> result in <font color="blue">higher costs</font> and <font color="blue">lower net sales</font> and     damage our <font color="blue"><font color="blue">competitive</font> position</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to acquire <font color="blue">quality diamonds</font> and fine <font color="blue">jewelry at</font>     <font color="blue">commercially reasonable prices</font>, our <font color="blue">costs may exceed</font> our forecasts, our     gross margins and operating results may suffer and our <font color="blue"><font color="blue">competitive</font> position</font>     could be damaged</td>
+    </tr>
+    <tr>
+      <td>The success of our business <font color="blue">model depends</font>, in part, on our     ability to <font color="blue">offer quality product</font> to <font color="blue">customers at prices</font> that are below those     of <font color="blue">traditional jewelry retailers</font></td>
+    </tr>
+    <tr>
+      <td>A majority of the world’s supply of rough     diamonds is <font color="blue">controlled by</font> a small number of <font color="blue">diamond mining firms</font></td>
+    </tr>
+    <tr>
+      <td>As a                                         8       _________________________________________________________________    [59]Table of <font color="blue">Contents       </font>result, any <font color="blue">decisions</font> made to restrict the supply of <font color="blue">rough diamonds by</font> these     firms to our <font color="blue">suppliers could <font color="blue">substantially</font> impair</font> our ability to acquire     diamonds at <font color="blue">commercially reasonable prices</font>, if at all</td>
+    </tr>
+    <tr>
+      <td>We do not currently     have any <font color="blue">direct supply <font color="blue">relationship</font> with</font> these <font color="blue">firms nor</font> do we expect to     <font color="blue">enter into</font> any <font color="blue">such <font color="blue">relationship</font></font> in the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to     acquire diamonds and fine jewelry is <font color="blue">also <font color="blue">substantially</font> <font color="blue">dependent</font> on</font> our     <font color="blue"><font color="blue">relationship</font>s with various suppliers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>25prca, 25prca and 36prca of our     payments to our diamond and fine <font color="blue">jewelry suppliers</font> in 2005, 2004 and 2003,     <font color="blue">respectively</font>,  were  made to our <font color="blue">top three suppliers</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to     maintain and expand these and other <font color="blue">future diamond</font> and fine <font color="blue">jewelry supply</font>     <font color="blue"><font color="blue">relationship</font>s on commercially reasonable terms</font> or the <font color="blue">inability</font> of our     current and <font color="blue">future suppliers</font> to maintain <font color="blue">arrangements</font> for the supply of     <font color="blue">products sold</font> to us on commercially reasonable terms would <font color="blue">substantially</font>     harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Suppliers </font>and <font color="blue">manufacture</font>rs of diamonds as well as retailers of     diamonds and <font color="blue">diamond jewelry</font> are vertically integrated and we expect they     <font color="blue">will continue</font> to vertically integrate their <font color="blue">operations</font> either by developing     retail channels for the products they <font color="blue">manufacture</font> or acquiring sources of     supply, including, <font color="blue">without limitation</font>, diamond mining <font color="blue">operations</font> for the     products that they sell</td>
+    </tr>
+    <tr>
+      <td>To the extent such vertical integration efforts are     successful, some of the <font color="blue">fragmentation</font> in the <font color="blue">existing diamond supply chain</font>     could be eliminated and our ability to obtain an <font color="blue">adequate supply</font> of diamonds     and fine <font color="blue">jewelry from multiple sources could</font> be limited and our <font color="blue">competitors</font>     may be able to obtain <font color="blue">diamonds at lower prices</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">meet customer</font> <font color="blue">expectations</font> with respect to <font color="blue">price would</font>     <font color="blue">adversely affect</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes  </font>in our <font color="blue">pricing strategies</font> have had and may continue to have a     <font color="blue">significant</font> <font color="blue">impact on</font> our net sales, gross margins and net income</td>
+    </tr>
+    <tr>
+      <td>In the     past, we have instituted retail price <font color="blue">reductions</font> as part of our strategy to     stimulate growth in net sales and optimize gross profit</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may institute</font>     similar price <font color="blue">reductions</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Such price <font color="blue">reductions</font> may not result     in an increase in net sales or in the <font color="blue">optimization</font> of gross profits</td>
+    </tr>
+    <tr>
+      <td>In     addition, many <font color="blue">external factors</font>, including the costs to acquire diamonds and     precious metals and our <font color="blue">competitors</font>’ pricing and <font color="blue">marketing strategies</font>, can     <font color="blue">significant</font>ly impact our <font color="blue">pricing strategies</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">meet customer</font>     <font color="blue">expectations</font> with respect to price in any <font color="blue">given period</font>, our business and     results of <font color="blue">operations</font> would suffer</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Purchasers </font>of diamonds and fine jewelry may not choose to shop online, which     <font color="blue">would prevent us from</font> increasing net sales</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">online market</font> for diamonds and fine jewelry is <font color="blue">significant</font>ly less     developed than the <font color="blue">online market</font> for books, music, toys and other consumer     products</td>
+    </tr>
+    <tr>
+      <td>If this market does not <font color="blue">gain widespread acceptance</font>, our business     may suffer</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success will depend</font>, in part, on our ability to attract     consumers who have <font color="blue">historically purchased diamonds</font> and fine <font color="blue">jewelry through</font>     <font color="blue">traditional retailers</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, we may have to incur <font color="blue">significant</font>ly     higher and more sustained <font color="blue">advertising</font> and <font color="blue">promotional expenditures</font> or price     our products more <font color="blue"><font color="blue">competitive</font>ly than</font> we currently anticipate in order to     <font color="blue">attract additional online consumers</font> to our websites and <font color="blue">convert them into</font>     <font color="blue">purchasing customers</font></td>
+    </tr>
+    <tr>
+      <td>Specific factors that <font color="blue">could prevent consumers from</font>     <font color="blue">purchasing diamonds</font> and fine jewelry from us include:         •  <font color="blue">concerns about</font> buying luxury <font color="blue">products such as diamonds</font> and fine jewelry     without a physical storefront, face-to-face interaction with sales personnel     and the ability to <font color="blue">physically handle</font> and examine products;         •  delivery time <font color="blue">associated with</font> Internet orders;         •  <font color="blue">product offerings</font> that do not <font color="blue">reflect consumer</font> tastes and <font color="blue">preferences</font>;         •  pricing that does not meet consumer <font color="blue">expectations</font>;         •  <font color="blue">concerns about</font> the security of <font color="blue">online <font color="blue">transactions</font></font> and the privacy of     personal information;         •  <font color="blue">delayed shipments</font> or shipments of incorrect or <font color="blue">damaged products</font>; and         •  inconvenience <font color="blue">associated with</font> returning or <font color="blue">exchanging purchased items</font></td>
+    </tr>
+    <tr>
+      <td>9       _________________________________________________________________    [60]Table of <font color="blue">Contents       </font>We may not succeed in continuing to establish the <font color="blue">Blue Nile </font>brand, which     <font color="blue">would prevent us from</font> acquiring customers and increasing our net sales</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> component of our business strategy is the continued     <font color="blue">establishment</font> and promotion of the <font color="blue">Blue Nile </font>brand</td>
+    </tr>
+    <tr>
+      <td>Due to the <font color="blue">competitive</font>     nature of the <font color="blue">online market</font> for diamonds and fine jewelry, if we do not     continue to establish our brand and <font color="blue">branded products</font>, we may fail to build     the <font color="blue">critical mass</font> of customers required to <font color="blue"><font color="blue">substantially</font> increase</font> our net     sales</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Promoting </font>and positioning our brand will depend largely on the     success  of our marketing and <font color="blue">merchandising</font> efforts and our ability to     provide a <font color="blue">consistent</font>, <font color="blue">high <font color="blue">quality customer</font></font> experience</td>
+    </tr>
+    <tr>
+      <td>To promote our brand     and  branded  products,  we  have  incurred and <font color="blue">will continue</font> to incur     substantial expense related to <font color="blue">advertising</font> and other <font color="blue">marketing efforts</font></td>
+    </tr>
+    <tr>
+      <td>A critical component of our brand <font color="blue">promotion strategy</font> is <font color="blue">establishing</font> a     <font color="blue">relationship</font> of trust with our customers, which we believe can be achieved     by providing a <font color="blue">high <font color="blue">quality customer</font></font> experience</td>
+    </tr>
+    <tr>
+      <td>In order to provide a high     <font color="blue">quality customer</font> experience, we have invested and <font color="blue">will continue</font> to invest     substantial  amounts  of  resources  in  our  website  <font color="blue">development</font> and     <font color="blue">functionality</font>, <font color="blue">fulfillment</font> <font color="blue">operations</font> and <font color="blue">customer service</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our     ability to provide a <font color="blue">high <font color="blue">quality customer</font></font> experience is <font color="blue">also <font color="blue">dependent</font></font>, in     large part, on <font color="blue">external factors</font> over which we may have little or no control,     including,  <font color="blue">without limitation</font>, the <font color="blue">re<font color="blue">liability</font></font> and performance of our     suppliers,  third-party  jewelry  assemblers, third-party carriers and     <font color="blue">networking vendors</font></td>
+    </tr>
+    <tr>
+      <td>During our <font color="blue">peak seasons</font>, we <font color="blue">rely on temporary employees</font>     to supplement our full-time <font color="blue">customer service</font> and <font color="blue">fulfillment</font> employees</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Temporary  </font>employees  may not have the same level of <font color="blue">commitment</font> to our     <font color="blue">customers as</font> our full-time employees</td>
+    </tr>
+    <tr>
+      <td>If our customers are <font color="blue">dissatisfied with</font>     the quality of the products or the <font color="blue">customer service</font> they receive, or if we     are unable to deliver products to our customers in a <font color="blue">timely manner</font> or at     all, our <font color="blue">customers may stop purchasing products from us</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also rely on</font>     third  parties  for information, including <font color="blue">product <font color="blue">characteristics</font></font> and     <font color="blue">availability</font> that we present to <font color="blue">consumers on</font> our websites, which may, on     occasion, be <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to provide our <font color="blue">customers with high</font>     <font color="blue">quality customer</font> experiences for any <font color="blue">reason could <font color="blue"><font color="blue">substantially</font> harm</font></font> our     reputation  and <font color="blue">adversely impact</font> our efforts to develop <font color="blue">Blue Nile </font>as a     trusted brand</td>
+    </tr>
+    <tr>
+      <td>The failure of our brand promotion <font color="blue">activities</font> could adversely     affect  our  ability  to  attract  <font color="blue">new customers</font> and maintain customer     <font color="blue">relationship</font>s, and, as a result, <font color="blue"><font color="blue">substantially</font> harm</font> our business and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We face <font color="blue">significant</font> <font color="blue">competition</font> and may be <font color="blue">unsuccessful</font> in <font color="blue">competing against</font>     current and future <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>The retail <font color="blue">jewelry industry</font> is intensely <font color="blue">competitive</font>, and we expect     <font color="blue">competition</font>  in  the sale of diamonds and fine jewelry to increase and     intensify in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font> may result in <font color="blue">price pressure</font>,     reduced  gross  margins  and  loss of market share, any of <font color="blue">which could</font>     <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Current and     potential <font color="blue">competitors</font> include:         •  <font color="blue">in<font color="blue">dependent</font></font> jewelry stores;         •  retail jewelry store chains, such as Tiffany &amp; Co</td>
+    </tr>
+    <tr>
+      <td>com;         •  department stores, chain stores and mass retailers, such as Nordstrom     and Neiman Marcus;         •  online auction sites, such as eBay;          •  catalog and television shopping retailers, such as Home Shopping     Network and QVC; and         •  discount <font color="blue">superstores</font> and wholesale clubs, such as <font color="blue">Costco Wholesale </font>and     Wal-Mart</td>
+    </tr>
+    <tr>
+      <td>In  addition to these <font color="blue">competitors</font>, we may face <font color="blue">competition</font> from     suppliers of our products that decide to <font color="blue">sell directly</font> to consumers, either     through physical retail outlets or through an <font color="blue">online store</font></td>
+    </tr>
+    <tr>
+      <td>Many of our current and potential <font color="blue">competitors</font> have <font color="blue">advantages</font> over us,     including longer operating histories, greater brand <font color="blue">recognition</font>, existing     customer and supplier <font color="blue">relationship</font>s, and <font color="blue">significant</font>ly greater financial,     marketing  and  other  resources</td>
+    </tr>
+    <tr>
+      <td>In addition, traditional store-based     <font color="blue">retailers offer consumers</font> the                                         10       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font>ability to <font color="blue">physically handle</font> and examine products in a manner that is not     <font color="blue">possible over</font> the Internet as well as a more <font color="blue">convenient</font> means of returning     and <font color="blue">exchanging purchased products</font></td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> seeking to establish an online presence may be     able to devote <font color="blue">substantially</font> more resources to website systems <font color="blue">development</font>     and exert more leverage over the supply chain for diamonds and fine jewelry     than we can</td>
+    </tr>
+    <tr>
+      <td>In addition, larger, more established and <font color="blue">better capitalized</font>     entities  may  acquire,  invest or <font color="blue">partner with traditional</font> and online     <font color="blue">competitors</font> as use <font color="blue">of the Internet </font>and other <font color="blue"><font color="blue">online services</font> increases</font></td>
+    </tr>
+    <tr>
+      <td>Our     online <font color="blue">competitors</font> can duplicate many of the products, services and content     we offer, <font color="blue">which could</font> harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In order to increase net sales and to sustain or <font color="blue">increase <font color="blue">profitability</font></font>, we     <font color="blue">must <font color="blue">attract customers</font></font> in a cost-effective manner</td>
+    </tr>
+    <tr>
+      <td>Our  success  depends  on our ability to <font color="blue">attract customers</font> in a     cost-effective  manner</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">relationship</font>s with providers of online     services, search engines, directories and other websites and e-commerce     <font color="blue">businesses</font> to provide content, <font color="blue">advertising</font> banners and other links that     direct  customers  to  our websites</td>
+    </tr>
+    <tr>
+      <td>We rely on these <font color="blue">relationship</font>s as     <font color="blue">significant</font> sources of traffic to our websites</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">agreements</font> with</font> these     providers <font color="blue">generally</font> have terms of one year or less</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     develop or maintain these <font color="blue">relationship</font>s on acceptable terms, our ability to     attract <font color="blue">new customers</font> would be harmed</td>
+    </tr>
+    <tr>
+      <td>In addition, many of the <font color="blue">parties with</font>     which we have online-<font color="blue">advertising</font> <font color="blue">arrangements</font> could provide <font color="blue">advertising</font>     services to other online or <font color="blue">traditional retailers</font>, including <font color="blue">retailers with</font>     whom we compete</td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">competition</font> for online <font color="blue">advertising</font> has increased, the     cost for these services has <font color="blue">also increased</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> increase in the     cost of the <font color="blue">marketing vehicles upon which</font> we rely could <font color="blue">adversely impact</font> our     ability to <font color="blue">attract customers</font> in a cost-effective manner</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely exclusively on</font> the sale of diamonds and fine jewelry for our net     sales, and demand for these <font color="blue"><font color="blue">products could</font> decline</font></td>
+    </tr>
+    <tr>
+      <td>Luxury products, such as diamonds and fine jewelry, are <font color="blue">discretionary</font>     purchases for consumers</td>
+    </tr>
+    <tr>
+      <td>The volume and <font color="blue">dollar value</font> of <font color="blue">such purchases may</font>     <font color="blue">significant</font>ly  decrease  <font color="blue">during economic downturns</font></td>
+    </tr>
+    <tr>
+      <td>The success of our     business depends in part on many <font color="blue">macroeconomic factors</font>, including <font color="blue">employment</font>     levels, salary levels, tax rates and credit <font color="blue">availability</font>, all of which     <font color="blue">affect consumer spending</font> and <font color="blue">disposable income</font></td>
+    </tr>
+    <tr>
+      <td>Any reduction in consumer     spending  or  disposable  <font color="blue">income may affect us</font> more <font color="blue">significant</font>ly than     companies in other <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>Our net sales and results of <font color="blue">operations</font> are <font color="blue">highly <font color="blue">dependent</font> on</font> the     demand for diamonds and <font color="blue">diamond jewelry</font>, particularly <font color="blue">engagement</font> rings</td>
+    </tr>
+    <tr>
+      <td>Should <font color="blue">prevailing consumer</font> tastes for <font color="blue">diamonds decline</font> or <font color="blue">customs with</font>     respect to <font color="blue">engagement</font> shift away from the <font color="blue">presentation</font> of <font color="blue">diamond jewelry</font>,     demand  for our <font color="blue">products would decline</font> and our business and results of     <font color="blue">operations</font> would be <font color="blue"><font color="blue">substantially</font> harm</font>ed</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">significant</font> cost of diamonds results in large part from their     scarcity</td>
+    </tr>
+    <tr>
+      <td>From time to time, attempts have been made to develop and market     <font color="blue">synthetic stones</font> and gems to compete in the market for diamonds and diamond     jewelry</td>
+    </tr>
+    <tr>
+      <td>We expect <font color="blue">such efforts</font> to continue in the future</td>
+    </tr>
+    <tr>
+      <td>If any such     efforts are successful in creating widespread demand for <font color="blue">alternative</font> diamond     products, demand and price levels for our <font color="blue">products would decline</font> and our     business and results of <font color="blue">operations</font> would be <font color="blue"><font color="blue">substantially</font> harm</font>ed</td>
+    </tr>
+    <tr>
+      <td>In recent years, increasing attention has been focused on “conflict”     diamonds, which are diamonds <font color="blue">extracted from</font> war-torn regions in Africa and     sold by rebel forces to fund <font color="blue">insurrection</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Diamonds </font>are, in some cases, also     believed to be used to fund terrorist <font color="blue">activities</font> in some regions</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although     </font>we believe that the <font color="blue">suppliers from whom</font> we purchase our diamonds seek to     exclude  <font color="blue">such diamonds from</font> their <font color="blue">inventories</font>, we cannot <font color="blue">in<font color="blue">dependent</font></font>ly     determine whether any diamond we offer was <font color="blue">extracted from</font> these regions</td>
+    </tr>
+    <tr>
+      <td>Current efforts to <font color="blue">increase consumer awareness</font> of this issue and encourage     legislative response could <font color="blue">adversely affect</font> consumer demand for diamonds</td>
+    </tr>
+    <tr>
+      <td>Consumer confidence is <font color="blue">dependent</font>, in part, on the <font color="blue">certification</font> of our     diamonds by <font color="blue">in<font color="blue">dependent</font></font> laboratories</td>
+    </tr>
+    <tr>
+      <td>A decrease in the quality of the     <font color="blue">certification</font>s provided by these <font color="blue">laboratories could adversely</font>                                         11       _________________________________________________________________    [62]Table of <font color="blue">Contents       </font>impact  demand  for  our products</td>
+    </tr>
+    <tr>
+      <td>Additionally, a decline in consumer     confidence in the <font color="blue">credibility</font> of <font color="blue">in<font color="blue">dependent</font></font> diamond grading <font color="blue">certification</font>s     could <font color="blue">adversely impact</font> demand for our <font color="blue">diamond products</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">jewelry offerings must reflect</font> the tastes and <font color="blue">preferences</font> of a     wide range of consumers whose <font color="blue">preferences</font> may change regularly</td>
+    </tr>
+    <tr>
+      <td>Our strategy     has been to offer primarily what we consider to be <font color="blue">classic styles</font> of fine     jewelry, but there can be no assurance that these styles <font color="blue">will continue</font> to be     <font color="blue">popular with consumers</font> in the future</td>
+    </tr>
+    <tr>
+      <td>If the styles we offer become less     <font color="blue">popular with consumers</font> and we are not able to adjust our inventory in a     <font color="blue">timely manner</font>, our <font color="blue"><font color="blue">net sales may</font> decline</font> or fail to meet expected levels</td>
+    </tr>
+    <tr>
+      <td>We rely on our suppliers, third-party carriers and third-party jewelers as     part of our <font color="blue">fulfillment</font> process, and these <font color="blue"><font color="blue">third parties</font> may fail</font> to     <font color="blue"><font color="blue">adequately</font> serve</font> our customers</td>
+    </tr>
+    <tr>
+      <td>In general, we rely on our suppliers to <font color="blue">promptly ship us diamonds</font>     <font color="blue">ordered by</font> our customers</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">failure by</font> our suppliers to sell and ship such     products to us in a <font color="blue">timely manner</font> will have an adverse effect on our ability     to fulfill <font color="blue">customer orders</font> and harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our suppliers, in turn, rely on third-party carriers to <font color="blue">ship diamonds</font> to us,     and in some cases, directly to our customers</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also rely on</font> third-party     carriers for <font color="blue">product shipments</font> to our customers</td>
+    </tr>
+    <tr>
+      <td>We and our suppliers are     therefore subject to the risks, including <font color="blue">employee strikes</font> and inclement     weather,  <font color="blue">associated with</font> such carriers’ abilities to <font color="blue">provide delivery</font>     services to meet our and our suppliers’ shipping needs</td>
+    </tr>
+    <tr>
+      <td>Our suppliers’, third-party carriers’ or third-party jewelers’     failure to deliver products to us or our customers in a <font color="blue">timely manner</font> or to     otherwise <font color="blue"><font color="blue">adequately</font> serve</font> our <font color="blue">customers would damage</font> our reputation and     brand and <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">fulfillment</font> <font color="blue">operations</font> are <font color="blue">interrupted</font> for any <font color="blue">significant</font> period of     time, our business and results of <font color="blue">operations</font> would be <font color="blue"><font color="blue">substantially</font> harm</font>ed</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends on</font> our ability to <font color="blue">successfully</font> receive and fulfill     orders and to promptly and securely deliver our products to our customers</td>
+    </tr>
+    <tr>
+      <td>Most of our inventory <font color="blue">management</font>, jewelry assembly, packaging, labeling and     product return processes are performed in a single <font color="blue">fulfillment</font> center</td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font><font color="blue">facility</font> is susceptible to damage or interruption from human error, fire,     flood, power loss, tele<font color="blue">communications</font> failure, terrorist attacks, acts of     war, break-ins, earthquake and similar events</td>
+    </tr>
+    <tr>
+      <td>We do not presently have a     formal disaster recovery plan and our business <font color="blue">interruption insurance may</font> be     insufficient  to  <font color="blue">compensate us</font> for losses that may occur in the event     <font color="blue">operations</font> at our <font color="blue">fulfillment</font> center are <font color="blue">interrupted</font></td>
+    </tr>
+    <tr>
+      <td>We have expanded and     may  further  expand  our  existing <font color="blue">fulfillment</font> center or transfer our     <font color="blue">fulfillment</font> <font color="blue">operations</font> to a larger <font color="blue">fulfillment</font> center in the future</td>
+    </tr>
+    <tr>
+      <td>Any     <font color="blue">interruptions</font> in our <font color="blue">fulfillment</font> center <font color="blue">operations</font> for any <font color="blue">significant</font>     period of time, including <font color="blue">interruptions</font> resulting from the expansion of our     existing <font color="blue">facility</font> or the transfer of <font color="blue">operations</font> to a new <font color="blue">facility</font>, could     damage our reputation and brand and <font color="blue"><font color="blue">substantially</font> harm</font> our business and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We face the risk of theft of our <font color="blue">products from inventory</font> or <font color="blue">during shipment</font></td>
+    </tr>
+    <tr>
+      <td>We may experience theft of our <font color="blue">products while</font> they are being held in     our <font color="blue">fulfillment</font> center or during the course of shipment to our <font color="blue">customers by</font>     third-party shipping carriers</td>
+    </tr>
+    <tr>
+      <td>We have taken steps to <font color="blue">prevent such theft</font> and     maintain  insurance  to <font color="blue">cover losses</font> resulting from theft</td>
+    </tr>
+    <tr>
+      <td>However, if     security measures fail, losses exceed our <font color="blue">insurance coverage</font> or we are not     able to maintain <font color="blue">insurance at</font> a <font color="blue">reasonable cost</font>, we could incur <font color="blue">significant</font>     losses from theft, which would <font color="blue"><font color="blue">substantially</font> harm</font> our business and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">protect <font color="blue">confidential</font></font> information of our customers and our     <font color="blue">network against <font color="blue"><font color="blue">security breaches</font> could damage</font></font> our reputation and brand and     <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> barrier to <font color="blue">online commerce</font> and <font color="blue">communications</font> is the     <font color="blue">secure <font color="blue">transmission</font></font> of <font color="blue">confidential</font> information <font color="blue">over public networks</font></td>
+    </tr>
+    <tr>
+      <td>Our     failure to prevent these <font color="blue"><font color="blue">security breaches</font> could damage</font>                                         12       _________________________________________________________________    [63]Table of <font color="blue">Contents       </font>our reputation and brand and <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Currently,  a  majority  of  our  sales are billed to our     customers’  credit  card  <font color="blue">accounts</font> directly</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on encryption</font> and     authentication <font color="blue">technology</font> licensed from <font color="blue">third parties</font> to effect secure     <font color="blue">transmission</font> of <font color="blue">confidential</font> information, including credit <font color="blue">card numbers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Advances </font>in computer <font color="blue">capabilities</font>, human errors, new <font color="blue">discoveries</font> in the     field of <font color="blue">cryptography</font> or other <font color="blue">development</font>s may result in a compromise or     breach of the <font color="blue">technology</font> used by us to <font color="blue">protect customer transaction data</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such compromise</font> of our <font color="blue">security could damage</font> our reputation and brand     and expose us to a risk of loss or <font color="blue">litigation</font> and possible <font color="blue">liability</font>, which     would  <font color="blue">substantially</font>  harm our business, and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, anyone who is able to <font color="blue">circumvent</font> our <font color="blue">security measures could</font>     <font color="blue">misappropriate</font>  <font color="blue">proprietary</font>  information or cause <font color="blue">interruptions</font> in our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may need to expend <font color="blue">significant</font> resources to <font color="blue">protect against</font>     <font color="blue">security breaches</font> or to <font color="blue">address problems</font> caused by breaches</td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue"><font color="blue">effectively</font> manage</font> the growth in our <font color="blue">operations</font> may prevent     us from <font color="blue">successfully</font> expanding our business</td>
+    </tr>
+    <tr>
+      <td>We have experienced, and in the <font color="blue">future may</font> experience, <font color="blue">rapid growth</font> in     <font color="blue">operations</font>, which has placed, and <font color="blue">could continue</font> to place, a <font color="blue">significant</font>     strain on our <font color="blue">operations</font>, services, internal controls and other managerial,     operational and <font color="blue">financial resources</font></td>
+    </tr>
+    <tr>
+      <td>To <font color="blue"><font color="blue">effectively</font> manage</font> future expansion,     we  will  need  to  maintain our operational and <font color="blue">financial systems</font> and     <font color="blue">managerial controls</font> and procedures, which include the <font color="blue">following processes</font>:         •  transaction-processing and <font color="blue">fulfillment</font>;         •  inventory <font color="blue">management</font>;         •  <font color="blue">customer support</font>;         •  <font color="blue">management</font> of multiple supplier <font color="blue">relationship</font>s;         •  operational, financial and <font color="blue">managerial controls</font>;         •  reporting procedures;         •  recruitment, training, supervision, retention and <font color="blue">management</font> of our     employees; and         •  <font color="blue">technology</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">manage future expansion</font>, our ability to provide a     <font color="blue">high <font color="blue">quality customer</font></font> experience could be harmed, <font color="blue">which would damage</font> our     reputation and brand and <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The success of our business <font color="blue">may depend on</font> our ability to <font color="blue">successfully</font> expand     our <font color="blue">product offerings</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">significant</font>ly increase our net sales and maintain and     increase our <font color="blue">profitability</font> <font color="blue">may depend on</font> our ability to <font color="blue">successfully</font> expand     our <font color="blue">product lines beyond</font> our <font color="blue">current offerings</font></td>
+    </tr>
+    <tr>
+      <td>If we offer a new product     category  that  is  not <font color="blue">accepted by consumers</font>, the <font color="blue">Blue Nile </font>brand and     <font color="blue">reputation could</font> be <font color="blue">adversely affect</font>ed, our <font color="blue"><font color="blue">net sales may</font> fall</font> short of     <font color="blue">expectations</font> and we may incur substantial expenses that are not <font color="blue">offset by</font>     <font color="blue">increased net sales</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Expansion </font>of our product lines may also strain our     <font color="blue">management</font> and operational resources</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">accurately</font> manage our inventory of fine jewelry, our     reputation and results of <font color="blue">operations</font> <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>Except for loose diamonds, <font color="blue">substantially</font> all of the fine jewelry we     sell is from our <font color="blue">physical inventory</font></td>
+    </tr>
+    <tr>
+      <td>Changes in consumer tastes for these     products subject us to <font color="blue">significant</font> inventory risks</td>
+    </tr>
+    <tr>
+      <td>If we under-stock one or more of our products, we may not be     able to obtain <font color="blue">additional units</font> in a <font color="blue">timely manner</font> on terms favorable to us,     if at all, <font color="blue">which would damage</font> our reputation and <font color="blue"><font color="blue">substantially</font> harm</font> our     business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if demand for our products     <font color="blue">increases over</font> time, we may be forced to                                         13       _________________________________________________________________    [64]Table of <font color="blue">Contents       </font><font color="blue">increase inventory levels</font></td>
+    </tr>
+    <tr>
+      <td>If one or more of our products does not achieve     <font color="blue">widespread consumer acceptance</font>, we may be required to take <font color="blue">significant</font>     <font color="blue">inventory markdowns</font>, or may not be able to sell the <font color="blue">product at</font> all, which     would <font color="blue"><font color="blue">substantially</font> harm</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If the single <font color="blue">facility</font> where <font color="blue">substantially</font> all of our computer and     <font color="blue">communications</font> hardware is located fails, our business, results of     <font color="blue">operations</font> and <font color="blue">financial condition</font> would be harmed</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">successfully</font> receive and fulfill orders and to provide     high  quality  customer  service  depends in part on the <font color="blue">efficient</font> and     un<font color="blue">interrupted</font>  operation  of  our computer and <font color="blue">communications</font> systems</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of the <font color="blue">computer hardware <font color="blue">necessary</font></font> to operate our websites     is <font color="blue">located at</font> a single leased <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>Our systems and <font color="blue">operations</font> are     vulnerable to damage or interruption from human error, fire, flood, power     loss, tele<font color="blue">communications</font> failure, terrorist attacks, acts of war, break-ins,     earthquake and similar events</td>
+    </tr>
+    <tr>
+      <td>We do not presently have <font color="blue">redundant systems</font> in     <font color="blue">multiple locations</font> or a formal disaster recovery plan, and our business     <font color="blue">interruption insurance may</font> be insufficient to <font color="blue">compensate us</font> for losses that     may occur</td>
+    </tr>
+    <tr>
+      <td>In addition, our servers are vulnerable to <font color="blue">computer viruses</font>,     physical or electronic break-ins and similar disruptions, <font color="blue">which could</font> lead     to <font color="blue">interruptions</font>, delays, loss of <font color="blue">critical data</font>, the <font color="blue">inability</font> to accept and     fulfill <font color="blue">customer orders</font> or the <font color="blue">unauthorized disclosure</font> of <font color="blue">confidential</font>     customer  data</td>
+    </tr>
+    <tr>
+      <td>The  occurrence  of  any of the <font color="blue">foregoing risks could</font>     <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Repurchases of Our Common Stock May Not Prove </font>to be the Best Use of Our Cash     Resources             In 2005, our board of <font color="blue">directors authorized</font> the repurchase of up to     dlra30 million of Blue Nile, Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">common stock</font> during the subsequent 12 months</td>
+    </tr>
+    <tr>
+      <td>We repurchased approximately dlra17dtta4 million of Blue Nile, Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">common stock</font>     in 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">In February </font>2006, our board of <font color="blue">directors authorized</font> the repurchase     of up to dlra100 million of Blue Nile, Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">common stock</font> during the subsequent     24 months</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">repurchases</font> and any <font color="blue">repurchases</font> we may make in the <font color="blue">future may</font>     not  prove  to  be <font color="blue">at optimal prices</font> and our use of cash for the stock     <font color="blue">repurchase program may</font> not prove to be the best use of our <font color="blue">cash resources</font></td>
+    </tr>
+    <tr>
+      <td>We have incurred <font color="blue">significant</font> operating losses in the past and may not be     able to <font color="blue">sustain <font color="blue">profitability</font></font> in the future</td>
+    </tr>
+    <tr>
+      <td>We experienced <font color="blue">significant</font> operating losses in <font color="blue">each quarter from</font> our     inception in 1999 through the <font color="blue">second quarter</font> of 2002</td>
+    </tr>
+    <tr>
+      <td>As a result, our     business has a limited record of <font color="blue">profitability</font> and may not continue to be     profitable or <font color="blue">increase <font color="blue">profitability</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to acquire diamonds     and fine <font color="blue"><font color="blue">jewelry at</font> commercially</font> reasonable prices, if <font color="blue">net sales decline</font> or     if our <font color="blue">expenses otherwise exceed</font> our <font color="blue">expectations</font>, we may not be able to     sustain or <font color="blue">increase <font color="blue">profitability</font></font> on a quarterly or <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>We rely on the services of our <font color="blue">key personnel</font>, any of whom would be <font color="blue">difficult</font>     to replace</td>
+    </tr>
+    <tr>
+      <td>We rely upon the <font color="blue">continued service</font> and performance of key technical,     <font color="blue">fulfillment</font>  and  senior <font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>If we lose any of these     personnel, our business <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for qualified personnel in     our industry is intense</td>
+    </tr>
+    <tr>
+      <td>We believe that our future <font color="blue">success will depend</font> on     our <font color="blue">continued ability</font> to attract, hire and retain <font color="blue">key employees</font>, including     Mark Vadon, our Chief Executive Officer, on whom we rely for <font color="blue">management</font> of     our company, <font color="blue">development</font> of our business strategy and <font color="blue">management</font> of our     strategic <font color="blue">relationship</font>s</td>
+    </tr>
+    <tr>
+      <td>Vadon, we do not have “key     person” <font color="blue">life insurance policies covering</font> any of our employees</td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">adequately</font> protect our <font color="blue">intellectual</font> property could <font color="blue">substantially</font>     harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We rely on a <font color="blue">combination</font> of patent, trademark, trade secret and     <font color="blue">copyright law</font> and <font color="blue">contractual <font color="blue">restrictions</font></font> to protect our <font color="blue">intellectual</font>     property</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">afford only</font> limited protection</td>
+    </tr>
+    <tr>
+      <td>Despite our efforts to     protect our <font color="blue">proprietary</font> rights, unauthorized parties have attempted and may     in  the  future  attempt  to  <font color="blue">copy aspects</font> of our website features and     <font color="blue">functionality</font>  or  to  obtain  and use information that we consider as     <font color="blue">proprietary</font>,  such as the <font color="blue">technology</font> used to operate our websites, our     content and our <font color="blue">trademarks</font></td>
+    </tr>
+    <tr>
+      <td>We have                                         14       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>registered “Blue Nile,” “bluenile</td>
+    </tr>
+    <tr>
+      <td>com,” the BN logo and the <font color="blue">Blue Nile </font>BN     stylized  logo as <font color="blue">trademarks</font> in the <font color="blue"><font color="blue">United States</font> </font>and in certain other     countries</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font> have, and other <font color="blue">competitors</font> may, adopt service     names similar to ours, thereby impeding our ability to build brand identity     and <font color="blue">possibly leading</font> to <font color="blue">customer confusion</font></td>
+    </tr>
+    <tr>
+      <td>In addition, there could be     <font color="blue">potential trade name</font> or <font color="blue">trademark <font color="blue">infringement</font></font> claims <font color="blue">brought by owners</font> of     other registered <font color="blue">trademarks</font> or <font color="blue">trademarks</font> that <font color="blue">incorporate variations</font> of the     term <font color="blue">Blue Nile </font>or our other <font color="blue">trademarks</font></td>
+    </tr>
+    <tr>
+      <td>Any claims or <font color="blue">customer confusion</font>     related  to  our  <font color="blue">trademarks</font> could damage our reputation and brand and     <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>com, bluenile</td>
+    </tr>
+    <tr>
+      <td>ca     Internet <font color="blue"><font color="blue">domain name</font>s</font> and various other related <font color="blue"><font color="blue">domain name</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Domain names     <font color="blue">generally</font>  are <font color="blue">regulated by</font> Internet <font color="blue"><font color="blue">regulatory</font> bodies</font></td>
+    </tr>
+    <tr>
+      <td>If we lose the     ability to use a <font color="blue">domain name</font> in a <font color="blue">particular country</font>, we would be forced to     either <font color="blue">incur <font color="blue">significant</font> additional expenses</font> to market our <font color="blue">products within</font>     that country, including the <font color="blue">development</font> of a new brand and the creation of     <font color="blue">new promotional materials</font> and packaging, or elect not to <font color="blue">sell products</font> in     that  country</td>
+    </tr>
+    <tr>
+      <td>Either result could <font color="blue"><font color="blue">substantially</font> harm</font> our business and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The regulation of <font color="blue"><font color="blue">domain name</font>s</font> in the <font color="blue"><font color="blue">United States</font> </font>    and in <font color="blue">foreign countries</font> is subject to change</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font><font color="blue">bodies could</font>     establish additional top-level domains, appoint additional <font color="blue">domain name</font>     <font color="blue">registrars</font> or modify the <font color="blue">requirements</font> for holding <font color="blue"><font color="blue">domain name</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As a result,     we may not be able to acquire or maintain the <font color="blue"><font color="blue">domain name</font>s</font> that utilize the     name <font color="blue">Blue Nile </font>in all of the countries in which we currently or intend to     conduct business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>or <font color="blue">proceedings</font> before the US Patent and Trademark Office     or similar <font color="blue">international</font> <font color="blue">regulatory</font> agencies may be <font color="blue">necessary</font> in the future     to enforce our <font color="blue">intellectual</font> property rights, to protect our <font color="blue">trade secrets</font>     and <font color="blue"><font color="blue">domain name</font>s</font> and to determine the validity and scope of the <font color="blue">proprietary</font>     rights of others</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">litigation</font> or <font color="blue">adverse priority proceeding could</font> result     in substantial costs and diversion of resources and could <font color="blue"><font color="blue">substantially</font> harm</font>     our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We sell and intend to <font color="blue">increasingly</font>     sell our products <font color="blue">international</font>ly, and the laws of many countries do not     protect our <font color="blue">proprietary</font> rights to as great an extent as do the laws of the     <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Assertions </font><font color="blue">by <font color="blue">third parties</font></font> of <font color="blue">infringement</font> by us of their <font color="blue">intellectual</font>     <font color="blue">property rights could</font> result in <font color="blue">significant</font> costs and <font color="blue"><font color="blue">substantially</font> harm</font> our     business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Third  parties have, and may in the future, assert that we have     infringed their <font color="blue">technology</font> or other <font color="blue">intellectual</font> property rights</td>
+    </tr>
+    <tr>
+      <td>We cannot     <font color="blue">predict whether</font> any <font color="blue">such assertions</font> or claims arising from <font color="blue">such assertions</font>     will <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we are     forced to <font color="blue">defend against</font> any <font color="blue">infringement</font> claims, whether they are with or     <font color="blue">without merit</font> or are determined in our favor, we may face costly <font color="blue">litigation</font>,     diversion of technical and <font color="blue">management</font> personnel or <font color="blue">product shipment delays</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, the outcome of a <font color="blue">dispute may</font> be that we would need to develop     non-infringing <font color="blue">technology</font> or <font color="blue">enter into</font> royalty or <font color="blue">licensing <font color="blue">agreements</font></font></td>
+    </tr>
+    <tr>
+      <td>Royalty or <font color="blue">licensing <font color="blue">agreements</font></font>, if required, may be un<font color="blue">available on terms</font>     acceptable to us, or at all</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">product returns</font> and the failure to <font color="blue">accurately</font> predict product     returns could <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We offer our customers an unconditional 30-day return policy that     allows our customers to <font color="blue">return most products</font> if they are not satisfied for     any  reason</td>
+    </tr>
+    <tr>
+      <td>We  make <font color="blue">allowances</font> for <font color="blue">product returns</font> in our financial     <font color="blue">statements <font color="blue">based on</font> historical return rates</font></td>
+    </tr>
+    <tr>
+      <td>Actual <font color="blue">merchandise returns</font> are     <font color="blue">difficult</font> to predict and may <font color="blue">differ from</font> our <font color="blue">allowances</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font>     increase in <font color="blue">merchandise returns</font> above our <font color="blue">allowances</font> would <font color="blue">substantially</font>     harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Interruptions </font>to our systems that impair customer access to our websites     would damage our reputation and brand and <font color="blue"><font color="blue">substantially</font> harm</font> our business     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The satisfactory performance, <font color="blue">re<font color="blue">liability</font></font> and <font color="blue">availability</font> of our     websites, transaction processing systems and <font color="blue">network <font color="blue">infrastructure</font></font> are     critical to our reputation and our ability to attract and retain customers     and  to  maintain adequate <font color="blue">customer service</font> levels</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">future systems</font>     <font color="blue">interruptions</font> or downtime                                         15       _________________________________________________________________    [66]Table of <font color="blue">Contents       </font>or technical <font color="blue">difficult</font>ies that result in the un<font color="blue">availability</font> of our websites     or reduced order <font color="blue">fulfillment</font> performance could result in <font color="blue">negative publicity</font>,     damage  our reputation and brand and cause our business and results of     <font color="blue">operations</font> to suffer</td>
+    </tr>
+    <tr>
+      <td>We may be susceptible to <font color="blue">such disruptions</font> in the     future</td>
+    </tr>
+    <tr>
+      <td>We may also experience temporary system <font color="blue">interruptions</font> for a variety     of other reasons in the future, including power failures, software or human     errors or an <font color="blue">overwhelming</font> number of <font color="blue">visitors trying</font> to reach our websites     <font color="blue">during periods</font> of <font color="blue">strong seasonal demand</font> or promotions</td>
+    </tr>
+    <tr>
+      <td>Because we are     <font color="blue">dependent</font> in part <font color="blue">on <font color="blue">third parties</font></font> for the <font color="blue">implementation</font> and maintenance of     <font color="blue">certain aspects</font> of our systems and because some of the causes of system     <font color="blue">interruptions</font> may be outside of our control, we may not be able to remedy     such <font color="blue">interruptions</font> in a <font color="blue">timely manner</font>, or at all</td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">unsuccessful</font> in <font color="blue">further expanding</font> our <font color="blue">operations</font> <font color="blue">international</font>ly</td>
+    </tr>
+    <tr>
+      <td>To  date, we have made limited <font color="blue">international</font> sales, but we have     <font color="blue">recently expanded</font> our <font color="blue">product offerings</font> and marketing and <font color="blue">sales efforts</font> in     the  <font color="blue">United Kingdom and Canada </font>and anticipate continuing to expand our     <font color="blue">international</font> sales and <font color="blue">operations</font> in the <font color="blue">future either by expanding local</font>     versions of our website for <font color="blue">foreign markets</font> or <font color="blue">through <font color="blue">acquisitions</font></font> or     <font color="blue">alliances with <font color="blue">third parties</font></font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">international</font> expansion plans we choose to     undertake  will  require <font color="blue">management</font> attention and resources and may be     <font color="blue">unsuccessful</font></td>
+    </tr>
+    <tr>
+      <td>We  have  minimal experience in selling our products in     <font color="blue">international</font> markets and in conforming to the local cultures, standards or     policies <font color="blue">necessary</font> to <font color="blue">successfully</font> compete in those markets</td>
+    </tr>
+    <tr>
+      <td>We do not     currently  have  any  overseas  <font color="blue">fulfillment</font>  or <font color="blue">distribution</font> or server     <font color="blue">facilities</font>, and outside of the United Kingdom and Canada, we have very     limited <font color="blue">web content localized</font> for <font color="blue">foreign markets</font> and we cannot be certain     that we will be able to expand our <font color="blue">global presence</font> if we choose to further     expand <font color="blue">international</font>ly</td>
+    </tr>
+    <tr>
+      <td>In addition, we may have to <font color="blue">compete with retailers</font>     that have more experience <font color="blue">with local markets</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to expand and     succeed <font color="blue">international</font>ly may also be limited by the demand for our products     and the adoption of <font color="blue">electronic commerce</font> in these markets</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Different </font>privacy,     <font color="blue">censorship</font>  and  <font color="blue">liability</font>  standards  and  <font color="blue">regulations</font>  and <font color="blue">different</font>     <font color="blue">intellectual</font> property laws in <font color="blue">foreign countries</font> may prohibit expansion into     <font color="blue">such markets</font> or cause our business and results of <font color="blue">operations</font> to suffer</td>
+    </tr>
+    <tr>
+      <td>Our current and future <font color="blue">international</font> <font color="blue">operations</font> may also fail to     succeed due to other risks inherent in foreign <font color="blue">operations</font>, including:         •  the need to develop <font color="blue">new supplier</font> and jeweler <font color="blue">relationship</font>s;         •  <font color="blue">international</font> <font color="blue">regulatory</font> <font color="blue">requirements</font> and tariffs;         •  <font color="blue">difficult</font>ies in staffing and managing foreign <font color="blue">operations</font>;         •  <font color="blue">longer payment cycles from</font> credit card companies;         •  greater <font color="blue">difficult</font>y in <font color="blue">accounts</font> receivable collection;         •  our reliance on third-party carriers for <font color="blue">product shipments</font> to our     customers;         •  risk of theft of our products <font color="blue">during shipment</font>;         •  <font color="blue">potential adverse tax consequences</font>;         •  <font color="blue">foreign currency exchange risk</font>;          •  lack of <font color="blue">infrastructure</font> to <font color="blue">adequately</font> conduct <font color="blue">electronic commerce</font>     <font color="blue">transactions</font> or <font color="blue">fulfillment</font> <font color="blue">operations</font>;         •  <font color="blue">price controls</font> or other <font color="blue"><font color="blue">restrictions</font> on foreign currency</font>;         •  <font color="blue">difficult</font>ies in obtaining export and <font color="blue">import licenses</font>;         •  <font color="blue">increased payment risk</font> and greater <font color="blue">difficult</font>y addressing credit card     fraud;         •  consumer and <font color="blue">data protection laws</font>;                                         16       _________________________________________________________________    [67]Table of <font color="blue">Contents       </font>  •  <font color="blue">lower levels</font> of adoption or use of the Internet; and         •  <font color="blue">geopolitical</font> events, including war and terrorism</td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">successfully</font> expand our <font color="blue">international</font> <font color="blue">operations</font> may     cause our business and results of <font color="blue">operations</font> to suffer</td>
+    </tr>
+    <tr>
+      <td>Our failure to rapidly respond to <font color="blue">technological</font> change could result in our     services or <font color="blue">systems becoming obsolete</font> and <font color="blue"><font color="blue">substantially</font> harm</font> our business     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As the Internet </font>and <font color="blue">online commerce</font> <font color="blue">industries</font> evolve, we may be     required to license emerging <font color="blue">technologies</font> useful in our business, enhance     our existing services, develop new services and <font color="blue">technologies</font> that address     the <font color="blue">increasingly</font> <font color="blue">sophisticated</font> and varied needs of our prospective customers     and respond to <font color="blue">technological</font> advances and <font color="blue">emerging industry standards</font> and     practices  on a cost-effective and timely basis</td>
+    </tr>
+    <tr>
+      <td>We may not be able to     <font color="blue">successfully</font> implement new <font color="blue">technologies</font> or adapt our websites, <font color="blue">proprietary</font>     <font color="blue">technologies</font> and transaction-processing systems to customer <font color="blue">requirements</font> or     <font color="blue">emerging industry standards</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to do so would <font color="blue"><font color="blue">substantially</font> harm</font>     our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our results of <font color="blue">operations</font> may be     <font color="blue">affected by</font> the timing, effectiveness and costs of any upgrades or changes     to our systems and <font color="blue">infrastructure</font></td>
+    </tr>
+    <tr>
+      <td>If use of the Internet, <font color="blue">particularly with respect</font> to <font color="blue">online commerce</font>, does     not continue to <font color="blue">increase as rapidly as</font> we anticipate, our business will be     harmed</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">future net</font> sales</font> and profits are <font color="blue">substantially</font> <font color="blue">dependent</font> upon the     continued  growth in the use <font color="blue">of the Internet </font>as an <font color="blue">effective medium</font> of     business and <font color="blue">communication by</font> our <font color="blue">target customers</font></td>
+    </tr>
+    <tr>
+      <td>Internet use may not     continue to develop <font color="blue">at historical rates</font> and <font color="blue">consumers may</font> not continue to     use the Internet and other <font color="blue"><font color="blue">online services</font> as</font> a medium for commerce</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Highly     </font><font color="blue">publicized failures by</font> some <font color="blue">online retailers</font> to <font color="blue">meet consumer demands could</font>     result in <font color="blue">consumer reluctance</font> to adopt the Internet as a means for commerce,     and <font color="blue">thereby damage</font> our reputation and brand and <font color="blue"><font color="blue">substantially</font> harm</font> our     business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the Internet may not be <font color="blue">accepted as</font> a viable long-term     <font color="blue">commercial marketplace</font> for a number of reasons, including:         •  actual or perceived lack of security of information or privacy     protection;         •  possible disruptions, <font color="blue">computer viruses</font>, spyware, phishing, attacks or     other damage to the Internet servers, service providers, network carriers     and Internet companies or to users’ computers; and         •  <font color="blue">excessive governmental regulation</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success will depend</font>, in large part, up<font color="blue">on <font color="blue">third parties</font></font> maintaining     the Internet <font color="blue">infrastructure</font> to provide a reliable network backbone with the     speed, data capacity, security and hardware <font color="blue">necessary</font> for reliable <font color="blue">Internet     </font>access and services</td>
+    </tr>
+    <tr>
+      <td>Our business, <font color="blue">which relies on</font> a <font color="blue">contextually rich</font>     website  that  requires  the <font color="blue">transmission</font> of substantial data, is also     <font color="blue">significant</font>ly <font color="blue">dependent</font> upon the <font color="blue">availability</font> and adoption of broadband     Internet access and other high speed Internet connectivity <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>We rely on our <font color="blue">relationship</font> with a third-party consumer credit company to     offer financing for the purchase of our products</td>
+    </tr>
+    <tr>
+      <td>The purchase of the diamond and fine <font color="blue">jewelry products</font> we sell is a     substantial expense for many of our customers</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">currently rely on</font> our     <font color="blue">relationship</font> with a <font color="blue">single financial institution</font> to <font color="blue">provide financing</font> to our     customers</td>
+    </tr>
+    <tr>
+      <td>If we are unable to maintain this or other similar <font color="blue">arrangements</font>,     we may not be able to offer financing <font color="blue">alternative</font>s to our customers, which     <font color="blue">may reduce demand</font> for our products and <font color="blue"><font color="blue">substantially</font> harm</font> our business and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [68]Table of <font color="blue">Contents       </font>We may undertake <font color="blue">acquisitions</font> to expand our business, <font color="blue">which may pose risks</font>     to our business and dilute the ownership of our <font color="blue">existing <font color="blue">stockholders</font></font></td>
+    </tr>
+    <tr>
+      <td>A key component of our business strategy includes <font color="blue">strengthening</font> our     <font color="blue"><font color="blue">competitive</font> position</font> and refining the customer experience on our websites     through internal <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>However, from time to time, we <font color="blue">may selectively</font>     pursue <font color="blue">acquisitions</font> of <font color="blue">businesses</font>, <font color="blue">technologies</font> or services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Integrating </font>any     newly acquired <font color="blue">businesses</font>, <font color="blue">technologies</font> or services may be expensive and     time-consuming</td>
+    </tr>
+    <tr>
+      <td>To finance any <font color="blue">acquisitions</font>, it may be <font color="blue">necessary</font> for us to     <font color="blue">raise additional funds through public</font> or <font color="blue">private financings</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional     </font>funds may not be <font color="blue">available on terms</font> that are favorable to us, and, in the     case of equity financings, would result in dilution to our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>If     we do complete any <font color="blue">acquisitions</font>, we may be unable to operate such acquired     <font color="blue">businesses</font> profitably or otherwise implement our strategy <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>If     we are unable to integrate any newly acquired entities or <font color="blue">technologies</font>     <font color="blue">effectively</font>, our business and results of <font color="blue">operations</font> <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>The time     and expense <font color="blue">associated with</font> finding suitable and compatible <font color="blue">businesses</font>,     <font color="blue">technologies</font> or <font color="blue">services could also disrupt</font> our ongoing business and divert     our <font color="blue">management</font>’s attention</td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue">acquisitions</font> by us could also result in     large  and  immediate write-offs or <font color="blue">assumptions</font> of debt and <font color="blue">contingent</font>     <font color="blue">liabilities</font>, any of <font color="blue">which could</font> <font color="blue"><font color="blue">substantially</font> harm</font> our business and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have no current plans, <font color="blue">agreements</font> or <font color="blue">commitment</font>s with     respect to any such <font color="blue">acquisitions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">net sales may</font> be <font color="blue"><font color="blue">negatively</font> affected</font> if we are required to <font color="blue">charge taxes</font>     on purchases</td>
+    </tr>
+    <tr>
+      <td>We do not collect or have <font color="blue">imposed upon us sales</font> or other taxes related     to the products we sell, except for certain corporate level taxes, sales     taxes  with  respect to <font color="blue">purchases by customers located</font> in the State of     Washington, and certain taxes required to be collected on sales to customers     outside of the <font color="blue"><font color="blue">United States</font> </font>of America</td>
+    </tr>
+    <tr>
+      <td>However, one or more states or     foreign  countries  may  seek  to <font color="blue">impose sales</font> or other <font color="blue">tax collection</font>     <font color="blue"><font color="blue">obligations</font> on us</font> in the future</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">successful assertion by one</font> or more     states or <font color="blue">foreign countries</font> that we should be <font color="blue">collecting sales</font> or other     taxes  on  the  sale  of  our <font color="blue">products could</font> result in substantial tax     <font color="blue">liabilities</font> for past sales, discourage customers from purchasing products     from us, decrease our ability to compete with <font color="blue">traditional retailers</font> or     otherwise <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Currently, <font color="blue">decisions</font> of the <font color="blue">US <font color="blue">Supreme Court </font></font>restrict the imposition     of <font color="blue">obligations</font> to collect state and <font color="blue">local sales</font> and <font color="blue">use taxes with respect</font>     to sales made over the Internet</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">implementation</font> of the <font color="blue">restrictions</font>     <font color="blue">imposed by</font> these <font color="blue">Supreme Court </font><font color="blue">decisions</font> is subject to <font color="blue"><font color="blue">interpretation</font> by</font>     state and <font color="blue">local taxing authorities</font></td>
+    </tr>
+    <tr>
+      <td>While we believe that these Supreme     Court  <font color="blue">decisions</font> currently restrict state and <font color="blue">local taxing authorities</font>     outside the State of <font color="blue">Washington </font>from requiring us to <font color="blue">collect sales</font> and use     <font color="blue">taxes <font color="blue">from purchasers located</font> within</font> their <font color="blue">jurisdiction</font>s, taxing authorities     outside the State of <font color="blue">Washington </font><font color="blue">could disagree with</font> our <font color="blue">interpretation</font> of     these <font color="blue">decisions</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, a number of states, as well as the US Congress,     have been considering <font color="blue">various <font color="blue">initiatives</font></font> that <font color="blue">could limit</font> or supersede the     Supreme Court’s position regarding sales and <font color="blue">use taxes on</font> Internet sales</td>
+    </tr>
+    <tr>
+      <td>If     any  state  or  local  taxing  <font color="blue">jurisdiction</font>  were to disagree with our     <font color="blue">interpretation</font> of the Supreme Court’s <font color="blue">current position</font> regarding state and     <font color="blue">local taxation</font> of Internet sales, or if any of these <font color="blue">initiatives</font> were to     address the Supreme Court’s <font color="blue">constitutional concerns</font> and result in a reversal     of its <font color="blue">current position</font>, we could be required to <font color="blue">collect sales</font> and use taxes     <font color="blue">from purchasers located</font> in states other than Washington</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">imposition by</font>     state and <font color="blue">local governments</font> of <font color="blue">various taxes upon</font> Internet <font color="blue">commerce could</font>     create <font color="blue">administrative burdens</font> for us and <font color="blue">could decrease</font> our <font color="blue">future net</font>     sales</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>regulation <font color="blue">of the Internet </font>and e-commerce is evolving and     unfavorable changes could <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  are not currently subject to <font color="blue">direct federal</font>, state or local     regulation other than <font color="blue">regulations</font> applicable to <font color="blue">businesses</font> <font color="blue">generally</font> or     directly  applicable to retailing and <font color="blue">online commerce</font></td>
+    </tr>
+    <tr>
+      <td>However, as the     Internet  becomes  <font color="blue">increasingly</font>  popular, it is possible that laws and     <font color="blue">regulations</font> may be <font color="blue">adopted with respect</font> to the Internet, <font color="blue">which may impede</font>     the growth <font color="blue">of the Internet </font>or other <font color="blue">online services</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulations</font> and     laws may cover issues such as taxation, <font color="blue">advertising</font>, <font color="blue">intellectual</font> property     rights, freedom of expression, pricing, <font color="blue">restrictions</font> on imports and exports,     customs, tariffs, information security, privacy, data protection, content,     <font color="blue">distribution</font>, electronic contracts and other <font color="blue">communications</font>, the provision     of <font color="blue">online payment</font>                                         18       _________________________________________________________________    [69]Table of <font color="blue">Contents       </font>services, broadband residential Internet access and the <font color="blue">characteristics</font> and     quality of products and services</td>
+    </tr>
+    <tr>
+      <td>Several states     have <font color="blue">proposed legislation</font> to limit the uses of <font color="blue">personal user</font> information     gathered online or require <font color="blue">online companies</font> to <font color="blue">establish privacy policies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Federal Trade Commission </font>has <font color="blue">also initiated action against at least one</font>     online  company  regarding the manner in <font color="blue">which personal</font> information is     collected  from  users  and provided to <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td>The adoption of     <font color="blue">additional privacy</font> or <font color="blue">consumer protection laws could</font> create <font color="blue">uncertainty</font> in     Internet usage and reduce the demand for our products and services</td>
+    </tr>
+    <tr>
+      <td>We are not <font color="blue">certain how</font> our business may be <font color="blue">affected by</font> the <font color="blue">application</font>     of existing laws governing issues such as property ownership, copyrights,     personal  property, encryption and other <font color="blue">intellectual</font> property issues,     taxation, libel, obscenity, qualification to do business and export or     <font color="blue">import matters</font></td>
+    </tr>
+    <tr>
+      <td>The vast majority of these laws were <font color="blue">adopted prior</font> to the     advent of the Internet</td>
+    </tr>
+    <tr>
+      <td>As a result, they do not contemplate or address the     unique issues <font color="blue">of the Internet </font>and related <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>Changes in laws     intended  to  address  these issues could create <font color="blue">uncertainty</font> for those     conducting <font color="blue">online commerce</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">uncertainty</font> could reduce demand for our     products and services or increase the cost of doing business as a result of     <font color="blue">litigation</font> costs or increased <font color="blue">fulfillment</font> costs and may <font color="blue"><font color="blue">substantially</font> harm</font>     our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to address risks <font color="blue">associated with</font> payment methods, credit card     fraud and other <font color="blue">consumer fraud could damage</font> our reputation and brand and may     cause our business and results of <font color="blue">operations</font> to suffer</td>
+    </tr>
+    <tr>
+      <td>Under current credit <font color="blue">card practices</font>, we are liable for <font color="blue">fraudulent</font>     credit card <font color="blue">transactions</font> because we do not obtain a cardholder’s signature</td>
+    </tr>
+    <tr>
+      <td>We do not currently carry <font color="blue">insurance against</font> this risk</td>
+    </tr>
+    <tr>
+      <td>To date, we have     experienced <font color="blue">minimal losses from</font> credit card fraud, but we face the risk of     <font color="blue">significant</font> losses from this type of fraud as our <font color="blue">net sales increase</font> and as     we expand <font color="blue">international</font>ly</td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">adequately</font> control <font color="blue">fraudulent</font>     credit  card  <font color="blue">transactions</font>  could  damage our reputation and brand and     <font color="blue"><font color="blue">substantially</font> harm</font> our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, for     certain payment <font color="blue">transactions</font>, including credit and debit cards, we pay     interchange and other fees, which may increase over time and raise our     operating costs and lower our operating margins</td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue">accounting</font> standards and/or our <font color="blue">accounting</font> policy relating to     stock-based <font color="blue">compensation</font> may <font color="blue">negatively</font> affect our reported results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Prior to January </font>2, 2006, we accounted for stock-based employee     <font color="blue">compensation</font> <font color="blue">arrangements</font> in <font color="blue">accordance with</font> the provisions of Accounting     Principles Board Opinion (“APB”) Nodtta 25, “<font color="blue">Accounting for Stock Issued </font>to     Employees”  (“APB 25”),  and  related  <font color="blue">interpretation</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under APB </font>25,     <font color="blue">compensation</font> expense was recognized for the <font color="blue">difference between</font> the fair     value of our stock on the date of grant and the <font color="blue">exercise price</font></td>
+    </tr>
+    <tr>
+      <td>Had <font color="blue">compensation</font> cost for the Company’s <font color="blue">stock options been</font>     determined <font color="blue">based on</font> the <font color="blue">fair value</font> of the <font color="blue">options at</font> the date of <font color="blue">grant under</font>     SFAS 123, our net income for <font color="blue">periods prior</font> to January 2, 2006 would have     been  as  set forth in Note 1 to our <font color="blue">consolidated financial statements</font>     included elsewhere in this report</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>has adopted the provisions of     SFAS Nodtta 123R, “Share-Based Payment” (“SFAS 123R”), commencing with the     <font color="blue">first quarter</font> of 2006 using the <font color="blue">modified prospective transition method</font></td>
+    </tr>
+    <tr>
+      <td>We     are using the Black-Scholes <font color="blue">option pricing model</font> to <font color="blue">value <font color="blue">options granted</font></font></td>
+    </tr>
+    <tr>
+      <td>The  adoption of this <font color="blue">statement will</font> result in <font color="blue">significant</font> stock-based     <font color="blue">compensation</font> expense as we will be required to expense the <font color="blue">fair value</font> of     <font color="blue">options granted</font></td>
+    </tr>
+    <tr>
+      <td>Actual <font color="blue">future expense</font> may <font color="blue">vary <font color="blue">significant</font>ly</font> from our     estimates <font color="blue">based on</font> the amount and timing of <font color="blue">options granted</font>, the <font color="blue">assumptions</font>     used in valuing these options and other factors</td>
+    </tr>
+    <tr>
+      <td>We may need to implement <font color="blue">additional finance</font> and <font color="blue">accounting</font> systems,     procedures and <font color="blue">controls as</font> we grow our business and <font color="blue">organization</font> and to     <font color="blue">satisfy new</font> reporting <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>As a public reporting company, we are required to comply with the     Sarbanes-Oxley Act of 2002 and the related rules and <font color="blue">regulations</font> of the SEC,     including <font color="blue">expanded disclosures</font> and <font color="blue">accelerated</font> reporting                                         19       _________________________________________________________________    [70]Table of <font color="blue">Contents       </font><font color="blue">requirements</font> and more complex <font color="blue">accounting</font> rules</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with Section 404     of the Sarbanes-Oxley Act of 2002 and other <font color="blue">requirements</font> may increase our     costs and require additional <font color="blue">management</font> time and resources</td>
+    </tr>
+    <tr>
+      <td>We may need to     continue to implement <font color="blue">additional finance</font> and <font color="blue">accounting</font> systems, procedures     and controls to <font color="blue">satisfy new</font> reporting <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>If our internal controls     <font color="blue">over financial</font> reporting are determined to be ineffective, investors could     <font color="blue">lose confidence</font> in the <font color="blue">re<font color="blue">liability</font></font> of our internal control <font color="blue">over financial</font>     reporting, <font color="blue">which could</font> <font color="blue">adversely affect</font> our stock price</td>
+    </tr>
+  </tbody>
+</table>

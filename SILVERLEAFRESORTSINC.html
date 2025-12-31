@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: assumptions", fill: "#dea5a4"},
+{source: "1: assumptions", target: "1: negatively impacted", fill: "#dea5a4"},
+{source: "1: assumptions", target: "3: assumptions", fill: "#483c32"},
+{source: "3: assumptions", target: "3: Vacation Intervals ", fill: "#483c32"},
+{source: "3: Vacation Intervals ", target: "3: future periods", fill: "#483c32"},
+{source: "3: future periods", target: "3: availability", fill: "#483c32"},
+{source: "3: availability", target: "3: facilities necessary", fill: "#483c32"},
+{source: "3: facilities necessary", target: "3: operations", fill: "#483c32"},
+{source: "3: operations", target: "3: services as", fill: "#483c32"},
+{source: "3: services as", target: "3: market conditions allow", fill: "#483c32"},
+{source: "3: assumptions", target: "14: delinquencies", fill: "#ffb7c5"},
+{source: "14: delinquencies", target: "14: in the Vacation Interval ", fill: "#ffb7c5"},
+{source: "14: in the Vacation Interval ", target: "14: promissory", fill: "#ffb7c5"},
+{source: "14: delinquencies", target: "22: purchase price", fill: "#6b8e23"},
+{source: "22: purchase price", target: "22: Vacation Intervals ", fill: "#6b8e23"},
+{source: "22: Vacation Intervals ", target: "22: uncollectible", fill: "#6b8e23"},
+{source: "22: uncollectible", target: "22: December ", fill: "#6b8e23"},
+{source: "22: purchase price", target: "29: would only recover", fill: "#848482"},
+{source: "29: would only recover", target: "29: indebtedness owed", fill: "#848482"},
+{source: "29: indebtedness owed", target: "29: market value", fill: "#848482"},
+{source: "29: would only recover", target: "31: At December ", fill: "#0bda51"},
+{source: "31: At December ", target: "31: Vacation Interval ", fill: "#0bda51"},
+{source: "31: Vacation Interval ", target: "31: approximate principal amount", fill: "#0bda51"},
+{source: "31: approximate principal amount", target: "31: uncollectible", fill: "#0bda51"},
+{source: "31: At December ", target: "49: historically", fill: "#e8000d"},
+{source: "49: historically", target: "49: net interest income from", fill: "#e8000d"},
+{source: "49: net interest income from", target: "49: financing activities", fill: "#e8000d"},
+{source: "49: financing activities", target: "49: interest rates", fill: "#e8000d"},
+{source: "49: interest rates", target: "49: Vacation Intervals ", fill: "#e8000d"},
+{source: "49: Vacation Intervals ", target: "49: senior lenders", fill: "#e8000d"},
+{source: "49: historically", target: "START_HERE", fill: "#e8000d"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Protest demonstrations</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Assumption_of_Mary">Assumption of Mary</a></td>
+      <td>The Assumption of Mary is one of the four Marian dogmas of the Catholic Church. (The word 'assumption' derives from the Latin word assūmptiō meaning "taking up").</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Strategic_assumptions">Strategic assumptions</a></td>
+      <td>Strategic assumptions are the assumptions that are held by decision-makers when building a strategic plan. All strategic plans should be built upon a grounded, validated and accepted set of strategic assumptions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_assumption">Statistical assumption</a></td>
+      <td>Statistics, like all mathematical disciplines, does not infer valid conclusions from nothing. Inferring interesting conclusions about real statistical populations almost always requires some background assumptions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shattered_assumptions_theory">Shattered assumptions theory</a></td>
+      <td>In social psychology, shattered assumptions theory proposes that experiencing traumatic events can change how victims and survivors view themselves and the world. Specifically, the theory – developed by Ronnie Janoff-Bulman in 1992 – concerns the effect that negative events have on three inherent assumptions: overall benevolence of the world, meaningfulness of the world, and self worth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Root_Assumptions">Root Assumptions</a></td>
+      <td>Root Assumptions is a solo percussion album by Jerome Cooper. It was recorded in April 1978 in New York City, and was released by Anima Productions in 1982.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Economic_entity">Economic entity</a></td>
+      <td>In accounting, an economic entity is one of the assumptions made in generally accepted accounting principles. Almost any type of organization or unit in society can be an economic entity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Assumption-based_planning">Assumption-based planning</a></td>
+      <td>Assumption-based planning in project management is a post-planning method that helps companies to deal with uncertainty. It is used to identify the most important assumptions in a company's business plans, to test these assumptions, and to accommodate unexpected outcomes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hilton_Grand_Vacations">Hilton Grand Vacations</a></td>
+      <td>Hilton Grand Vacations Inc. is based in Orlando, Florida, United States, with regional offices located in Las Vegas, Nevada, Oahu, Hawaii, New York City, Marco Island, Florida and Sanibel Island, Florida.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/ILG,_Inc.">ILG, Inc.</a></td>
+      <td>ILG, Inc. is an American timeshare company and a subsidiary of Marriott Vacations Worldwide.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vacation_rental">Vacation rental</a></td>
+      <td>A vacation rental is the renting out of a furnished apartment, house, or professionally managed resort-condominium complex on a temporary basis to tourists as an alternative to a hotel.  The term vacation rental is mainly used in the US. Other terms used are self-catering rentals, holiday homes, holiday lets (in the United Kingdom), cottage holidays (for rentals of smaller accommodation in rural locations) and gites (in rural locations in France).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marriott_Vacation_Club">Marriott Vacation Club</a></td>
+      <td>Marriott Vacation Club is the primary timeshare brand of Marriott Vacations Worldwide Corporation. The brand comprises around 70 Marriott Vacation Club properties throughout the United States, Caribbean, Central America, Europe, and Asia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Disney_Vacation_Club">Disney Vacation Club</a></td>
+      <td>The Disney Vacation Club (DVC) is a vacation timeshare program owned and operated by Disney Vacation Development, Inc., a subsidiary of Disney Signature Experiences, a division of Disney Parks, Experiences and Products, a segment of The Walt Disney Company. It allows buying a real estate interest in a DVC resort via a flexible points-based membership system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Drug_holiday">Drug holiday</a></td>
+      <td>A drug holiday (sometimes also called a drug vacation, medication vacation, structured treatment interruption, tolerance break, treatment break or strategic treatment interruption) is when a patient stops taking a medication(s) for a period of time; anywhere from a few days to many months or even years if the doctor or medical provider feel it is in the patients best interests. It is important not to discontinue any medication without the close supervision of the prescribing party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Promissory_note">Promissory note</a></td>
+      <td>A promissory note, sometimes referred to as a note payable, is a legal instrument (more particularly, a financing instrument and a debt instrument), in which one party (the maker or issuer) promises in writing to pay a determinate sum of money to the other (the payee), either at a fixed or determinable future time or on demand of the payee, under specific terms and conditions.\n\n\n== Overview ==\nThe terms of a note usually include the principal amount, the interest rate if any, the parties, the date, the terms of repayment (which could include interest) and the maturity date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Estoppel">Estoppel</a></td>
+      <td>Estoppel is a judicial device in common law legal systems whereby a court may prevent or "estop" a person from making assertions or from going back on his or her word; the person being sanctioned is "estopped". Estoppel may prevent someone from  bringing a particular claim.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Central_London_Property_Trust_Ltd_v_High_Trees_House_Ltd">Central London Property Trust Ltd v High Trees House Ltd</a></td>
+      <td>Central London Property Trust Ltd v High Trees House Ltd [1947] KB 130 is a famous English contract law decision in the High Court. It reaffirmed and extended the doctrine of promissory estoppel in contract law in England and Wales.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Promissory_Oaths_Act_1871">Promissory Oaths Act 1871</a></td>
+      <td>The Promissory Oaths Act 1871 (34 &amp; 35 Vict c 48) is an Act of the Parliament of the United Kingdom.\nIt was passed with a view to the revision of the statute law, and particularly to the preparation of the revised edition of the statutes then in progress.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collier_v_P_&amp;_MJ_Wright_(Holdings)_Ltd">Collier v P &amp; MJ Wright (Holdings) Ltd</a></td>
+      <td>Collier v P &amp; MJ Wright (Holdings) Ltd [2007] EWCA 1329 is an English contract law case, concerning the doctrine of consideration and promissory estoppel in relation to "alteration promises".\n\n\n== Facts ==\nMr Collier was one of three partners of a property developer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loan">Loan</a></td>
+      <td>A man is an adult male human. Prior to adulthood, a male human is referred to as a boy (a male child or adolescent).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December">December</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_17">December 17</a></td>
+      <td>December 17 is the 351st day of the year (352nd in leap years) in the Gregorian calendar;  14 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n497 BC – The first Saturnalia festival was celebrated in ancient Rome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_10">December 10</a></td>
+      <td>December 10 is the 344th day of the year (345th in leap years) in the Gregorian calendar;  21 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n1317 – The "Nyköping Banquet": King Birger of Sweden treacherously seizes his two brothers Valdemar, Duke of Finland and Eric, Duke of Södermanland, who were subsequently starved to death in the dungeon of Nyköping Castle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1924_German_federal_election">December 1924 German federal election</a></td>
+      <td>Federal elections were held in Germany on 7 December 1924, the second that year after the Reichstag had been dissolved on 20 October. The Social Democratic Party remained the largest party in the Reichstag, receiving an increased share of the vote and winning 131 of the 493 seats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1">December 1</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_31">December 31</a></td>
+      <td>December 3 is the 337th day of the year (338th in leap years) in the Gregorian calendar;  28 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n915 – Pope John X crowns Berengar I of Italy as Holy Roman Emperor (probable date).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bond_(finance)">Bond (finance)</a></td>
+      <td>In finance, a bond is a type of security under which the issuer (debtor) owes the holder (creditor) a debt, and is obliged – depending on the terms – to repay the principal (i.e. amount borrowed) of the bond at the maturity date as well as interest (called the coupon) over a specified amount of time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_8">December 8</a></td>
+      <td>December 3 is the 337th day of the year (338th in leap years) in the Gregorian calendar;  28 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n915 – Pope John X crowns Berengar I of Italy as Holy Roman Emperor (probable date).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Compound_interest">Compound interest</a></td>
+      <td>Compound interest is the addition of interest to the principal sum of a loan or deposit, or in other words, interest on principal plus interest. It is the result of reinvesting interest, or adding it to the loaned capital rather than paying it out, or requiring payment from borrower, so that interest in the next period is then earned on the principal sum plus previously accumulated interest.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Earnings_before_interest_and_taxes">Earnings before interest and taxes</a></td>
+      <td>In accounting and finance, earnings before interest and taxes (EBIT) is a measure of a firm's profit that includes all incomes and expenses (operating and non-operating) except interest expenses and income tax expenses (for individuals).Operating income and operating profit are sometimes used as a synonym for EBIT when a firm does not have non-operating income and non-operating expenses.\n\n\n== Formula ==\nEBIT = Net income + Interest + Taxes = EBITDA – Depreciation and Amortization expensesOperating income = Gross income – Operating expenses (OPEX) = EBIT – non-operating profit + non-operating expenses\n\n\n== Overview ==\nA professional investor contemplating a change to the capital structure of a firm (e.g., through a leveraged buyout) first evaluates a firm's fundamental earnings potential (reflected by earnings before interest, taxes, depreciation and amortization (EBITDA) and EBIT), and then determines the optimal use of debt versus equity (equity value).</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SILVERLEAF RESORTS INC      ITEM 1A RISK FACTORS        If our <font color="blue">assumptions</font> and estimates in our business model are wrong, our future     results could be <font color="blue">negatively impacted</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">financial covenants</font> in our credit <font color="blue">facilities</font> are <font color="blue">based upon</font> a business     model  prepared by our <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We used a number of <font color="blue">assumptions</font> and     estimates in preparing the business model, including:       o We estimated that we will sell our existing and planned inventory of     <font color="blue"><font color="blue">Vacation Interval</font>s </font>within 15 years;       o We assumed that our level of sales and operating profits and costs can be     maintained and will grow in <font color="blue">future periods</font>;       o We assumed the <font color="blue">availability</font> of credit <font color="blue">facilities</font> <font color="blue">necessary</font> to sustain our     <font color="blue">operations</font> and anticipated growth; and       o We assumed that we can raise the prices on our products and <font color="blue">services as</font>     <font color="blue">market conditions allow</font></td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">assumptions</font>  and estimates are subject to <font color="blue">significant</font> business,     economic and <font color="blue">competitive risks</font> and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">assumptions</font> and     estimates  are  wrong,  our  <font color="blue">future financial condition</font> and results of     <font color="blue">operations</font> may vary <font color="blue">significant</font>ly from those projected in the business     model</td>
+    </tr>
+    <tr>
+      <td>Neither our <font color="blue">past nor present in<font color="blue">dependent</font> auditors</font> have reviewed or expressed     an <font color="blue">opinion about</font> our business model or our ability to achieve it</td>
+    </tr>
+    <tr>
+      <td>Changes in the <font color="blue"><font color="blue">timeshare industry</font> could affect</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We operate <font color="blue">solely within</font> the <font color="blue">timeshare industry</font></td>
+    </tr>
+    <tr>
+      <td>Our results of <font color="blue">operations</font>     and <font color="blue">financial position could</font> be <font color="blue">negatively affected by</font> any of the following     events:       o An <font color="blue">oversupply</font> of <font color="blue">timeshare units</font>,       o A reduction in demand for <font color="blue">timeshare units</font>,       o Changes in travel and vacation patterns,       o A decrease in <font color="blue">popularity</font> of our <font color="blue">resorts with</font> our consumers,       o <font color="blue">Governmental </font><font color="blue">regulations</font> or taxation of the <font color="blue">timeshare industry</font>, and       o Negative <font color="blue">publicity about</font> the <font color="blue">timeshare industry</font></td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">impacted by general economic conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customers may</font> be more vulnerable to <font color="blue">deteriorating economic conditions</font>     <font color="blue">than consumers</font> in the luxury or <font color="blue">upscale timeshare markets</font></td>
+    </tr>
+    <tr>
+      <td>An economic     slowdown in the <font color="blue">United States </font><font color="blue">could depress consumer spending</font> for Vacation     Intervals</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">significant</font> increases in the cost of <font color="blue">transportation</font>     may limit the number of <font color="blue">potential customers</font> who travel to our resorts for a     sales  <font color="blue">presentation</font></td>
+    </tr>
+    <tr>
+      <td>During  an economic slowdown we could experience     increased <font color="blue">delinquencies</font> in the payment of <font color="blue"><font color="blue">Vacation Interval</font> </font><font color="blue">promissory</font> notes     and monthly Club dues</td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________       We are at risk for <font color="blue"><font color="blue">defaults</font> by</font> our customers</td>
+    </tr>
+    <tr>
+      <td>We offer financing to the buyers of <font color="blue"><font color="blue">Vacation Interval</font>s </font>at our resorts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Notes     </font>receivable from timeshare buyers constitute one of our <font color="blue">principal assets</font></td>
+    </tr>
+    <tr>
+      <td>These buyers make <font color="blue">down payments</font> of at least 10prca of the <font color="blue">purchase price</font> and     deliver  <font color="blue">promissory</font> notes to us for the balances</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">promissory</font> notes     <font color="blue"><font color="blue">generally</font> <font color="blue">bear interest at</font></font> a fixed rate, are <font color="blue">payable over</font> a seven-year to     ten-year  period,  and are <font color="blue">secured by</font> a <font color="blue">first mortgage on</font> the Vacation     Interval</td>
+    </tr>
+    <tr>
+      <td>We bear the risk of <font color="blue"><font color="blue">defaults</font> on</font> these <font color="blue">promissory</font> notes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although     </font>we <font color="blue">prescreen prospects by</font> credit <font color="blue">scoring them</font> in the <font color="blue">early stages</font> of the     marketing and <font color="blue">sales process</font>, we <font color="blue">generally</font> do not perform a detailed credit     <font color="blue">history review</font> of our customers, as is the <font color="blue">case with most</font> other timeshare     <font color="blue">developers</font></td>
+    </tr>
+    <tr>
+      <td>We recorded 16dtta2prca of the <font color="blue">purchase price</font> of <font color="blue"><font color="blue">Vacation Interval</font>s </font>as a provision     for <font color="blue">uncollectible</font> notes for the year ended <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Our sales were     decreased by dlra2dtta6 million for <font color="blue">customer returns</font> in 2005</td>
+    </tr>
+    <tr>
+      <td>When a buyer of a     Vacation  Interval <font color="blue">defaults</font>, we <font color="blue">foreclose on</font> the <font color="blue"><font color="blue">Vacation Interval</font> </font>and     attempt to resell it</td>
+    </tr>
+    <tr>
+      <td>The associated marketing, selling, and <font color="blue">administrative</font>     <font color="blue">costs from</font> the <font color="blue">original sale</font> are not recovered; and we <font color="blue">will incur such costs</font>     again when we resell the <font color="blue">Vacation Interval</font></td>
+    </tr>
+    <tr>
+      <td>Although we may have recourse     against a <font color="blue"><font color="blue">Vacation Interval</font> </font>buyer for the unpaid price, certain states have     laws that limit our ability to <font color="blue">recover personal judgments against customers</font>     who have <font color="blue">defaulted on</font> their loans</td>
+    </tr>
+    <tr>
+      <td>For example, if we were to file a lawsuit     to  collect  the  balance  owed  to  us  by a customer in Texas (where     <font color="blue">approximately</font>  52prca of <font color="blue"><font color="blue">Vacation Interval</font> </font>sales took place in 2005), the     <font color="blue">customer could file</font> a <font color="blue">court proceeding</font> to determine the <font color="blue">fair <font color="blue">market value</font></font> of     the <font color="blue">property foreclosed upon</font></td>
+    </tr>
+    <tr>
+      <td>In such event, we may not recover a personal     <font color="blue">judgment against</font> the customer for the full amount of the <font color="blue">deficiency</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">would only recover</font> an amount that the <font color="blue"><font color="blue">indebtedness</font> owed</font> to us exceeds the     fair  <font color="blue">market value</font> of the property</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we have <font color="blue">generally</font> not     pursued this remedy</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, we had <font color="blue"><font color="blue">Vacation Interval</font> </font>customer notes receivable in     the <font color="blue">approximate <font color="blue">principal amount</font></font> of dlra230dtta5 million, and had an allowance for     <font color="blue">uncollectible</font> notes of <font color="blue">approximately</font> dlra52dtta5 million</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must borrow funds</font> to finance our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  business  is  <font color="blue">dependent</font>  on our ability to <font color="blue">finance customer</font> notes     <font color="blue">receivable through</font> our banks</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, we owed <font color="blue">approximately</font>     dlra174dtta9 million of principal to our <font color="blue"><font color="blue">senior lender</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Borrowing Base</font></td>
+    </tr>
+    <tr>
+      <td>We have receivable-based loan <font color="blue">agreements</font> with <font color="blue"><font color="blue">senior lender</font>s</font>     to  <font color="blue">borrow up</font> to <font color="blue">approximately</font> dlra243dtta1 million</td>
+    </tr>
+    <tr>
+      <td>We pledged our customer     <font color="blue">promissory</font> notes and <font color="blue">mortgages as security under</font> these <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>Our     senior  lenders  typically  lend us 75prca of the <font color="blue">principal amount</font> of our     customers &amp;apos  notes, and <font color="blue">payments from</font> <font color="blue">Silverleaf Owners </font>on such notes are     credited directly to the <font color="blue">senior lender</font> and <font color="blue">applied against</font> our loan balance</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, we had a portfolio of <font color="blue">approximately</font> 30cmam293 Vacation     Interval customer notes receivable in the <font color="blue">approximate <font color="blue">principal amount</font></font> of     dlra230dtta5 million</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>dlra337cmam000 in <font color="blue">principal amount</font> of our customers &amp;apos      notes  were  61  days  or  more past due and, therefore, ineligible as     collateral</td>
+    </tr>
+    <tr>
+      <td>The amount of customer notes <font color="blue">receivable eligible as collateral</font>     in the <font color="blue">future may</font> not be sufficient to support the <font color="blue">borrowings</font> we may require     for our liquidity and <font color="blue">continued growth</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Negative Cash Flow</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">ordinarily</font> receive only 10prca to 15prca of the purchase     price as a <font color="blue">down payment on</font> the sale of a <font color="blue">Vacation Interval</font>, but we must pay     in full the costs of development, marketing, and sale of the interval</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Maximum  </font><font color="blue">borrowings</font>  available  under our credit <font color="blue">facilities</font> may not be     sufficient to cover these costs, thereby straining our <font color="blue">capital resources</font>,     liquidity, and <font color="blue">capacity</font> to grow</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Interest Rate Mismatch</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, our portfolio of customer     loans had a <font color="blue">weighted average</font> fixed <font color="blue">interest rate</font> of 15dtta3prca</td>
+    </tr>
+    <tr>
+      <td>At such date, our     <font color="blue">borrowings</font> (which bear interest predominantly at variable rates) against the     portfolio had a <font color="blue">weighted average</font> cost of funds of 8dtta1prca</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">historically</font>     derived  <font color="blue">net interest income from</font> our <font color="blue">financing <font color="blue">activities</font></font> because the     <font color="blue">interest rate</font>s we charge our customers who finance the purchase of their     <font color="blue"><font color="blue">Vacation Interval</font>s </font>exceed the <font color="blue">interest rate</font>s we pay to our <font color="blue"><font color="blue">senior lender</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Because our existing <font color="blue">indebtedness</font> currently bears interest at variable rates     and our customer notes receivable <font color="blue">bear interest at</font> fixed rates, increases in     <font color="blue">interest rate</font>s charged by our <font color="blue"><font color="blue">senior lender</font>s</font> would erode the spread in     interest  rates  that we have <font color="blue">historically</font> enjoyed and could cause the     <font color="blue">interest expense on</font> our <font color="blue">borrowings</font> to exceed our <font color="blue">interest income on</font> our     portfolio of customer notes receivable</td>
+    </tr>
+    <tr>
+      <td>Therefore, any increase in interest     rates, <font color="blue">particularly</font> if sustained, could have a material adverse effect on     our results of <font color="blue">operations</font>, liquidity, and financial position</td>
+    </tr>
+    <tr>
+      <td>To the extent     <font color="blue">interest rate</font>s decrease on loans available to our customers, we face an     increased risk that customers will pre-pay their loans, which would reduce     our income from <font color="blue">financing <font color="blue">activities</font></font></td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">partially offset</font> an increase in <font color="blue">interest rate</font>s, we have engaged in one     <font color="blue">interest rate</font> hedging transaction related to our <font color="blue">conduit loan through</font> SF-II,     with a balance of dlra58dtta1 million on <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>In addition, the     Series 2005-A Notes related to our off-balance sheet special purpose finance     subsidiary, SF-III, had a balance of dlra89dtta1 million at <font color="blue">December </font>31, 2005 and     <font color="blue">bear interest at</font> fixed rates ranging from 4dtta857prca to 6dtta756prca</td>
+    </tr>
+    <tr>
+      <td>23       _________________________________________________________________       <font color="blue">Maturity Mismatch</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">typically <font color="blue">provide financing</font></font> to our <font color="blue">customers over</font> a     seven-year to ten-year period</td>
+    </tr>
+    <tr>
+      <td>Our customer notes had an <font color="blue">average maturity</font> of     5dtta5 years at <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Our senior credit <font color="blue">facilities</font> have scheduled     <font color="blue">maturity dates between</font> March 2007 and March 2014</td>
+    </tr>
+    <tr>
+      <td>Additionally, should our     revolving credit <font color="blue">facilities</font> be declared in default, the <font color="blue">amount outstanding</font>     could be declared to be <font color="blue">immediately due</font> and payable</td>
+    </tr>
+    <tr>
+      <td>Accordingly, there     could  be  a  mismatch  between our anticipated cash receipts and cash     <font color="blue">disbursements</font> in 2006 and <font color="blue">subsequent periods</font></td>
+    </tr>
+    <tr>
+      <td>Although we have <font color="blue">historically</font>     been able to <font color="blue">secure financing sufficient</font> to fund our <font color="blue">operations</font>, we do not     presently have <font color="blue">agreements</font> with our <font color="blue"><font color="blue">senior lender</font>s</font> to extend the term of our     <font color="blue">existing funding <font color="blue">commitments</font> beyond</font> their <font color="blue">scheduled maturity dates</font> or to     replace  such  <font color="blue">commitments</font>  upon their expiration</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     refinance our <font color="blue">existing loans</font>, we could be required to sell our portfolio of     customer notes receivable, probably at a substantial discount, or to seek     other  <font color="blue">alternatives</font> to <font color="blue">enable us</font> to continue in business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Limitations </font>on the <font color="blue">availability</font> of <font color="blue">financing would inhibit</font>     sales of <font color="blue"><font color="blue">Vacation Interval</font>s </font>due to (i) the lack of funds to finance the     <font color="blue">initial negative <font color="blue">cash flow</font></font> that results from sales that we finance and (ii)     reduced  demand if we are unable to <font color="blue">provide financing</font> to purchasers of     <font color="blue">Vacation Interval</font>s</td>
+    </tr>
+    <tr>
+      <td>We may not be able to obtain <font color="blue"><font color="blue">additional</font> financing</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Several  </font>unpredictable  <font color="blue">factors may</font> cause our <font color="blue">adjusted earnings</font> before     interest, income taxes, <font color="blue">depreciation</font> and <font color="blue">amortization</font> to be insufficient to     <font color="blue">meet debt service <font color="blue">requirements</font></font> or satisfy <font color="blue">financial covenants</font></td>
+    </tr>
+    <tr>
+      <td>We incurred     net losses in one of the <font color="blue">past three years</font> and in two of the <font color="blue">past five years</font></td>
+    </tr>
+    <tr>
+      <td>Should we <font color="blue">record net losses</font> in <font color="blue">future periods</font>, our <font color="blue">cash flow</font> and our ability     to obtain <font color="blue"><font color="blue">additional</font> financing</font> could be <font color="blue">materially</font> and <font color="blue">adversely impacted</font></td>
+    </tr>
+    <tr>
+      <td>Many  of  the  factors  that will determine whether or not we generate     sufficient  earnings  before  interest, income taxes, <font color="blue">depreciation</font> and     <font color="blue">amortization</font> to meet current or future debt service <font color="blue">requirements</font> and satisfy     <font color="blue">financial covenants</font> are <font color="blue">inherently</font> <font color="blue">difficult</font> to predict</td>
+    </tr>
+    <tr>
+      <td>These factors     include:         o       the number of sales of <font color="blue">Vacation Interval</font>s;         o       the average <font color="blue">purchase price</font> per interval;         o       the number of customer <font color="blue">defaults</font>;         o                               our cost of borrowing;         o          our sales and <font color="blue">marketing costs</font> and other operating expenses; and         o                      the <font color="blue">continued sale</font> of notes receivable</td>
+    </tr>
+    <tr>
+      <td>Our current and planned expenses and <font color="blue">debt repayment levels</font> are and will be     to a large extent fixed in the short term, and are based in part on past     <font color="blue"><font color="blue">expectations</font> as</font> to <font color="blue">future revenues</font> and <font color="blue">cash flow</font>s</td>
+    </tr>
+    <tr>
+      <td>We may be unable to     <font color="blue">reduce spending</font> in a <font color="blue">timely manner</font> to compensate for any past or future     revenue or <font color="blue">cash flow</font> shortfall</td>
+    </tr>
+    <tr>
+      <td>It is possible that our revenue, <font color="blue">cash flow</font>     or operating results may not meet the <font color="blue">expectations</font> of our business model,     and may even result in our being unable to meet the <font color="blue">debt repayment schedules</font>     or <font color="blue">financial covenants</font> contained in the various <font color="blue">agreements</font> which evidence     our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>Our leverage is <font color="blue">significant</font> and may impair our ability to obtain <font color="blue">additional</font>     financing, reduce the amount of <font color="blue">cash available</font> for <font color="blue">operations</font>, and make us     more vulnerable to <font color="blue">financial downturns</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">agreements</font> with our <font color="blue">various lenders may</font>:         o       require a substantial portion of our <font color="blue">cash flow</font> to be used to <font color="blue">pay interest</font>     expense and principal;         o       impair our ability to obtain on acceptable terms, if at all, <font color="blue">additional</font>     financing that might be <font color="blue">necessary</font> for working capital, capital expenditures     or other purposes; and         o       limit our ability to <font color="blue">further refinance</font> or amend the terms of our existing     <font color="blue">debt obligations</font>, if <font color="blue">necessary</font> or advisable</td>
+    </tr>
+    <tr>
+      <td>We may not be able to manage our <font color="blue">financial leverage</font> as we intend, and we may     not be able to achieve an <font color="blue">appropriate balance between</font> the rate of growth     which we consider acceptable and <font color="blue">future reductions</font> in <font color="blue">financial leverage</font></td>
+    </tr>
+    <tr>
+      <td>If     we are not able to achieve growth in <font color="blue">adjusted earnings</font> before interest,     income taxes, <font color="blue">depreciation</font> and <font color="blue">amortization</font>, we may not be able to refinance     our  existing  <font color="blue">debt obligations</font> and we may be <font color="blue">precluded from incurring</font>     <font color="blue">additional</font>  <font color="blue">indebtedness</font>  due to <font color="blue">cash flow</font> coverage <font color="blue">requirements</font> under     existing or <font color="blue">future debt instruments</font></td>
+    </tr>
+    <tr>
+      <td>24       _________________________________________________________________       Our business is <font color="blue">highly regulated</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to substantial <font color="blue">governmental regulation</font> in the conduct of our     business</td>
+    </tr>
+  </tbody>
+</table>

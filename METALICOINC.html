@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: operations", fill: "#8c92ac"},
+{source: "1: operations", target: "4: December ", fill: "#fff700"},
+{source: "4: December ", target: "4: outstanding net", fill: "#fff700"},
+{source: "4: outstanding net", target: "4: cash equivalents", fill: "#fff700"},
+{source: "4: December ", target: "25: international economy", fill: "#99badd"},
+{source: "25: international economy", target: "25: would likely materially", fill: "#99badd"},
+{source: "25: would likely materially", target: "25: adversely affect", fill: "#99badd"},
+{source: "25: adversely affect", target: "25: operations", fill: "#99badd"},
+{source: "25: operations", target: "25: financial condition", fill: "#99badd"},
+{source: "25: international economy", target: "43: environment", fill: "#7cfc00"},
+{source: "43: environment", target: "43: competitive", fill: "#7cfc00"},
+{source: "43: competitive", target: "43: conditions", fill: "#7cfc00"},
+{source: "43: environment", target: "51: significant", fill: "#fafad2"},
+{source: "51: significant", target: "51: outbound product distribution", fill: "#fafad2"},
+{source: "51: significant", target: "76: previous operations by others at", fill: "#d8bfd8"},
+{source: "76: previous operations by others at", target: "76: facilities", fill: "#d8bfd8"},
+{source: "76: facilities", target: "76: significant government", fill: "#d8bfd8"},
+{source: "76: significant government", target: "76: stringent environmental laws", fill: "#d8bfd8"},
+{source: "76: stringent environmental laws", target: "76: regulations", fill: "#d8bfd8"},
+{source: "76: previous operations by others at", target: "77: Among ", fill: "#c04000"},
+{source: "77: Among ", target: "77: regulations", fill: "#c04000"},
+{source: "77: regulations", target: "77: comprehensive", fill: "#c04000"},
+{source: "77: comprehensive", target: "77: supranational", fill: "#c04000"},
+{source: "77: supranational", target: "77: regulatory", fill: "#c04000"},
+{source: "77: regulatory", target: "77: requirements", fill: "#c04000"},
+{source: "77: requirements", target: "77: concerning", fill: "#c04000"},
+{source: "77: concerning", target: "77: acceptance", fill: "#c04000"},
+{source: "77: acceptance", target: "77: identification", fill: "#c04000"},
+{source: "77: identification", target: "77: transportation", fill: "#c04000"},
+{source: "77: transportation", target: "77: byproducts", fill: "#c04000"},
+{source: "77: byproducts", target: "77: hazardous", fill: "#c04000"},
+{source: "77: hazardous", target: "77: contamination", fill: "#c04000"},
+{source: "77: contamination", target: "77: containment", fill: "#c04000"},
+{source: "77: Among ", target: "START_HERE", fill: "#c04000"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Censorship</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_environment">Natural environment</a></td>
+      <td>The natural environment or natural world encompasses all living and non-living things occurring naturally, meaning in this case not artificial. The term is most often applied to the Earth or some parts of Earth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Integrated_development_environment">Integrated development environment</a></td>
+      <td>An integrated development environment (IDE) is a software application that provides comprehensive facilities to computer programmers for software development. An IDE normally consists of at least a source code editor, build automation tools and a debugger.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Social_environment">Social environment</a></td>
+      <td>The social environment, social context, sociocultural context or milieu refers to the immediate physical and social setting in which people live or in which something happens or develops. It includes the culture that the individual was educated or lives in, and the people and institutions with whom they interact.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deployment_environment">Deployment environment</a></td>
+      <td>In software deployment, an environment, or tier is a computer system or set of systems in which a computer program or software component is deployed and executed. In simple cases, such as developing and immediately executing a program on the same machine, there may be a single environment, but in industrial use, the development environment (where changes are originally made) and production environment (what end users use) are separated, often with several stages in between.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environment_and_Planning">Environment and Planning</a></td>
+      <td>The Environment and Planning journals are five academic journals. They are interdisciplinary journals with a spatial focus of primary interest to human geographers and city planners.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environment_variable">Environment variable</a></td>
+      <td>An environment variable is a dynamic-named value that can affect the way running processes will behave on a computer. They are part of the environment in which a process runs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Superfund">Superfund</a></td>
+      <td>The United States federal Superfund law, officially the Comprehensive Environmental Response, Compensation, and Liability Act of 1980 (CERCLA), established the federal Superfund program, administered by the Environmental Protection Agency (EPA). The program is designed to investigate and clean up sites contaminated with hazardous substances.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Soil_contamination">Soil contamination</a></td>
+      <td>Soil contamination, soil pollution, or land pollution as a part of land degradation is caused by the presence of xenobiotic (human-made) chemicals or other alteration in the natural soil environment.  It is typically caused by industrial activity, agricultural chemicals or improper disposal of waste.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interplanetary_contamination">Interplanetary contamination</a></td>
+      <td>Interplanetary contamination refers to biological contamination of a planetary body by a space probe or spacecraft, either deliberate or unintentional.\nThere are two types of interplanetary contamination:\n\nForward contamination is the transfer of life and other forms of contamination from Earth to another celestial body.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contamination_control">Contamination control</a></td>
+      <td>Contamination control is the generic term for all activities aiming to control the existence, growth and proliferation of contamination in certain areas. Contamination control may refer to the atmosphere as well as to surfaces, to particulate matter as well as to microbes and to contamination prevention as well as to decontamination.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Telluric_contamination">Telluric contamination</a></td>
+      <td>Telluric contamination is contamination of the astronomical spectra by the Earth's atmosphere.\n\n\n== Interference with astronomical observations ==\nMost astronomical observations are conducted by measuring photons (electromagnetic waves) which originate beyond the sky.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>METALICO INC      Item 1A Risk Factors          Set forth below are risks that we believe are material to our business     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and <font color="blue">uncertainties</font> not known to us or that we     currently deem <font color="blue">immaterial may also impair</font> our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">highly leveraged</font></td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue">December </font>31,  2005,  we  had  dlra27dtta5 million of total debt     outstanding, net of cash and <font color="blue">cash equivalents</font> of dlra1dtta9 million</td>
+    </tr>
+    <tr>
+      <td>Subject to     certain <font color="blue">restrictions</font>, <font color="blue">exceptions</font> and <font color="blue">financial tests</font> set forth in certain of     our debt <font color="blue">instruments</font>, we may incur <font color="blue">additional</font> <font color="blue">indebtedness</font> in the future</td>
+    </tr>
+    <tr>
+      <td>We     anticipate our <font color="blue">debt service payment <font color="blue">obligations</font> during</font> the next twelve     months to be <font color="blue">approximately</font> dlra13dtta1 million, comprised of <font color="blue">principal coming due</font>     within  the  next  twelve  months  of  dlra11dtta0 million  <font color="blue">plus interest</font> of     dlra2dtta1 million</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, <font color="blue">approximately</font> dlra17dtta8 million of our     debt  bears  interest at variable rates and we may experience material     increases  in our <font color="blue"><font color="blue">interest expense</font> as</font> a result of increases in general     <font color="blue">interest rate levels</font></td>
+    </tr>
+    <tr>
+      <td>Based <font color="blue">on actual amounts outstanding as</font> of <font color="blue">December </font>31,     2005, if the <font color="blue">interest rate on</font> our <font color="blue">variable rate debt</font> were to increase by 1prca,     our annual debt service payment <font color="blue">obligations</font> would increase by <font color="blue">approximately</font>     dlra178cmam000</td>
+    </tr>
+    <tr>
+      <td>The degree to which we are <font color="blue">leveraged could</font> have <font color="blue">important negative</font>     <font color="blue">consequences</font> to the holders of our securities, including the following:          • a substantial portion of our cash flow from <font color="blue">operations</font> will be needed     to <font color="blue">pay debt service</font> and will not be available to fund future <font color="blue">operations</font>;          • our ability to obtain <font color="blue">additional</font> future financing for <font color="blue"><font color="blue">acquisition</font>s</font>,     <font color="blue"><font color="blue">capital expenditure</font>s</font>, working capital or <font color="blue">general corporate purposes could</font> be     limited;          • we have <font color="blue">increased vulnerability</font> to <font color="blue">adverse general economic</font> and     <font color="blue"><font color="blue">metals recycling industry</font> <font color="blue">conditions</font></font>; and          • we are vulnerable to <font color="blue">higher interest rates</font> because <font color="blue">interest expense</font>     <font color="blue">on <font color="blue">borrowings</font> under</font> our credit <font color="blue">agreement</font> (the “<font color="blue">Credit Agreement</font>”) is based     <font color="blue">on margins over</font> a <font color="blue">variable base rate</font></td>
+    </tr>
+    <tr>
+      <td>Our business may not generate sufficient cash flow from <font color="blue">operations</font> and     future  working  capital  <font color="blue"><font color="blue">borrowings</font> may</font> not be available in an amount     sufficient to <font color="blue">enable us</font> to service our <font color="blue">indebtedness</font>, or make <font color="blue">necessary</font>     <font color="blue"><font color="blue">capital expenditure</font>s</font></td>
+    </tr>
+    <tr>
+      <td>All  <font color="blue">borrowings</font>  under our <font color="blue"><font color="blue">Credit Agreement</font> </font><font color="blue">will come due</font> when it     terminates in May 2009 and we may be unable to <font color="blue">find replacement financing</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">indebtedness</font> <font color="blue">contains covenants</font> that restrict our ability to engage     in <font color="blue">certain transactions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">Credit Agreement</font> </font><font color="blue">contains covenants</font> that, among other things,     restrict our ability to:          • incur <font color="blue">additional</font> <font color="blue">indebtedness</font>;                                         13       _________________________________________________________________    [62]Table of <font color="blue">Contents       </font>     • <font color="blue">pay dividends</font>;          • prepay subordinated <font color="blue">indebtedness</font>;          • dispose of some types of assets;          • make <font color="blue"><font color="blue">capital expenditure</font>s</font>;          • create liens and make <font color="blue"><font color="blue">acquisition</font>s</font>; and          • engage in some <font color="blue">fundamental corporate transactions</font></td>
+    </tr>
+    <tr>
+      <td>Under  our <font color="blue">Credit Agreement</font>, we are required to <font color="blue">satisfy specified</font>     <font color="blue">financial covenants</font>, including an EBITDA covenant and a <font color="blue">capital expenditure</font>     covenant</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>we  currently expect to be in <font color="blue">compliance with</font> the     covenants and to satisfy our <font color="blue">financial tests</font>, our ability to <font color="blue">comply with</font>     these <font color="blue">covenants may</font> be affected by general economic <font color="blue">conditions</font>, industry     <font color="blue">conditions</font>, severe negative market <font color="blue">fluctuations</font> in <font color="blue">metal prices</font>, and other     <font color="blue">events beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Our breach of any of these <font color="blue">covenants could</font> result     in a <font color="blue">default under</font> our <font color="blue">Credit Agreement</font></td>
+    </tr>
+    <tr>
+      <td>In the event of a default, the     <font color="blue">lender could elect</font> not to make <font color="blue">additional</font> loans to us and to declare all     <font color="blue">amounts borrowed under</font> our <font color="blue">Credit Agreement</font>, <font color="blue">together with accrued interest</font>,     to be due and payable</td>
+    </tr>
+    <tr>
+      <td>In that event we <font color="blue">would likely</font> be unable to repay all     such accelerated <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">metals recycling industry</font> is <font color="blue">highly cyclical</font></td>
+    </tr>
+    <tr>
+      <td>The  operating  results of the scrap <font color="blue">metals recycling industry</font> in     general, and our <font color="blue">operations</font> specifically, are <font color="blue">highly cyclical</font> in nature</td>
+    </tr>
+    <tr>
+      <td>They tend to reflect and be amplified by general economic <font color="blue">conditions</font>, both     <font color="blue">domestically</font> and <font color="blue">internationally</font></td>
+    </tr>
+    <tr>
+      <td>Historically, in periods of national     recession or periods of <font color="blue">slowing economic growth</font>, the <font color="blue">operations</font> of scrap     metals recycling companies have been <font color="blue">materially</font> and <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>For     example,  <font color="blue">during recessions</font> or periods of <font color="blue">slowing economic growth</font>, the     automobile  and the <font color="blue">construction industries typically</font> experience major     cutbacks in production, resulting in <font color="blue">decreased demand</font> for steel, copper and     aluminum</td>
+    </tr>
+    <tr>
+      <td>This leads to <font color="blue"><font color="blue">significant</font> <font color="blue">fluctuations</font></font> in demand and pricing for     our products</td>
+    </tr>
+    <tr>
+      <td>Economic downturns in the national and <font color="blue">international economy</font>     <font color="blue">would likely</font> <font color="blue">materially</font> and <font color="blue">adversely</font> affect our results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">withstand <font color="blue">significant</font> economic downturns</font>     in  the  <font color="blue">future will depend</font> in part on our levels of capital, debt and     liquidity</td>
+    </tr>
+    <tr>
+      <td>Our business may be <font color="blue">adversely</font> affected by increases in <font color="blue">steel imports</font>     into  the <font color="blue">United States </font><font color="blue">which will <font color="blue">generally</font></font> have an <font color="blue">adverse impact on</font>     <font color="blue"><font color="blue">domestic steel</font> production</font> and a corresponding <font color="blue">adverse impact on</font> the demand     for scrap metals</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could also</font> be <font color="blue"><font color="blue">negatively</font> affected by strengthening</font> in     the US Dollar</td>
+    </tr>
+    <tr>
+      <td>For example, beginning in July 1998, the <font color="blue">domestic steel</font>     industry and, in turn, the <font color="blue">metals recycling industry</font> suffered a dramatic and     <font color="blue">precipitous collapse</font>, resulting in a <font color="blue"><font color="blue">significant</font> decline</font> in the price and     demand for scrap metals</td>
+    </tr>
+    <tr>
+      <td>The decline in the steel and scrap <font color="blue">metal sectors</font>     was the result, in large part, of the increase in <font color="blue">steel imports</font> flowing into     the <font color="blue">United States </font>                                        14       _________________________________________________________________    [63]Table of <font color="blue">Contents       </font>during  the <font color="blue">last six months</font> of 1998 and our results of <font color="blue">operations</font> were     <font color="blue">adversely</font> impacted by reduced steel production in the <font color="blue">United States </font>during     fiscal 1999</td>
+    </tr>
+    <tr>
+      <td>Export markets, including Asia and in particular China, are     important  to the scrap <font color="blue"><font color="blue">metal recycling</font> industry</font></td>
+    </tr>
+    <tr>
+      <td>Weakness in economic     <font color="blue">conditions</font>  in  Asia  and  in particular slowing growth in China could     <font color="blue"><font color="blue">negatively</font> affect us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changing </font><font color="blue">lead markets may impact</font> the Company’s ability to secure the     volume of <font color="blue">raw materials</font> needed at pricing considered sustainable before     <font color="blue">driving consumers</font> to <font color="blue">substitute products</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">lead fabrication</font> and recycling     <font color="blue"><font color="blue">facilities</font> may</font> be <font color="blue">adversely</font> impacted by increases or <font color="blue">decreases</font> in lead     pricing</td>
+    </tr>
+    <tr>
+      <td>A drop in the commodity price of <font color="blue">lead would reduce revenues at</font> the     <font color="blue">secondary lead smelter</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">lead smelter may</font> not be able to <font color="blue">reduce costs</font>     enough to offset the impact of <font color="blue">lost revenues</font></td>
+    </tr>
+    <tr>
+      <td>An increase in the cost of     lead, the raw material of our <font color="blue">lead fabrication</font> and <font color="blue">recycling <font color="blue">facilities</font></font>,     <font color="blue">could reduce</font> the demand for <font color="blue">product by</font> making nonlead-bearing <font color="blue">alternatives</font>     more <font color="blue">cost attractive</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">fluctuations</font> in <font color="blue">lead pricing could</font>     <font color="blue">negatively</font>  impact  the  supply of raw material for either or both the     <font color="blue">secondary lead smelter</font> and the <font color="blue">fabricators</font></td>
+    </tr>
+    <tr>
+      <td>Prices of <font color="blue">commodities</font> we own may be volatile</td>
+    </tr>
+    <tr>
+      <td>Although we seek to turn over our inventory of raw or processed scrap     <font color="blue">metals as rapidly as possible</font>, we are exposed to commodity <font color="blue">price risk during</font>     the period that we have title to products that are held in inventory for     processing and/or resale</td>
+    </tr>
+    <tr>
+      <td>Prices of <font color="blue">commodities</font>, including scrap metals, can     be volatile due to numerous factors beyond our control, including:          • general economic <font color="blue">conditions</font>;          • labor costs;          • <font color="blue">competition</font>;          • <font color="blue">financial condition</font> of our major customers;          • the <font color="blue">availability</font> of imports;          • the <font color="blue">availability</font> and relative pricing of scrap metal <font color="blue">substitutes</font>;          • import duties; and          • tariffs and currency exchange rates</td>
+    </tr>
+    <tr>
+      <td>In an increasing price <font color="blue">environment</font>, <font color="blue">competitive</font> <font color="blue">conditions</font> may limit     our ability to pass on price increases to our customers</td>
+    </tr>
+    <tr>
+      <td>In a <font color="blue">decreasing</font>     price <font color="blue">environment</font>, we may not have the ability to fully recoup the cost of     raw scrap we process and sell to our customers</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">profitability</font> of our scrap recycling <font color="blue">operations</font> depends, in part,     on the <font color="blue">availability</font> of an <font color="blue">adequate source</font> of supply</td>
+    </tr>
+    <tr>
+      <td>We acquire our scrap <font color="blue">inventory from numerous sources</font></td>
+    </tr>
+    <tr>
+      <td>These suppliers     <font color="blue">generally</font> are not bound by long-term contracts and have <font color="blue">no obligation</font> to     sell scrap metals to us</td>
+    </tr>
+    <tr>
+      <td>In periods of low industry prices, suppliers may     elect to hold scrap waiting for <font color="blue">higher prices</font></td>
+    </tr>
+    <tr>
+      <td>If a substantial number of     scrap suppliers cease selling scrap metals to us, we would be unable to     recycle metals at desired                                         15       _________________________________________________________________    [64]Table of <font color="blue">Contents       </font>levels  and  our results of <font color="blue">operations</font> or <font color="blue">financial condition</font> would be     <font color="blue">materially</font> and <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>We depend on third-party carriers for a <font color="blue">significant</font> portion of our     <font color="blue">outbound product distribution</font></td>
+    </tr>
+    <tr>
+      <td>Our products are <font color="blue">usually transported</font> to <font color="blue">consumers from</font> our <font color="blue">facilities</font>     by  third-party  truck and <font color="blue">rail carriers</font></td>
+    </tr>
+    <tr>
+      <td>Any interruption or delay in     <font color="blue"><font color="blue">transportation</font> services</font> or any <font color="blue">significant</font> change in <font color="blue"><font color="blue">transportation</font> costs</font>     could <font color="blue">adversely</font> affect our results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The loss of any member of our <font color="blue">senior <font color="blue"><font color="blue">management</font> team</font></font> or a <font color="blue">significant</font>     number  of  our  managers  could have a material adverse effect on our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> depend heavily on the skills and efforts of our senior     <font color="blue"><font color="blue">management</font> team</font>, including Carlos E Aguero, our Chairman, President and     Chief Executive Officer, Michael J Drury, our Executive Vice-President and     four  other employees who <font color="blue">constitute</font> our <font color="blue">Executive Management Team</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, we <font color="blue">rely substantially on</font> the experience of the <font color="blue">management</font> of our     <font color="blue">subsidiaries with</font> regard to day-to-day <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>While we have <font color="blue">employment</font>     <font color="blue">agreement</font>s with Messrs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Aguero and Drury </font>and certain other members of our     <font color="blue"><font color="blue">management</font> team</font>, we may <font color="blue">nevertheless</font> be unable to retain the services of any     of those <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>The loss of any member of our <font color="blue">senior <font color="blue"><font color="blue">management</font> team</font></font>     or a <font color="blue">significant</font> number of <font color="blue">managers could</font> have a material adverse effect on     our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">concentration</font> of our customers and our exposure to credit risk     could  have  a material adverse effect on our results of <font color="blue">operations</font> or     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Sales to the Company’s <font color="blue">ten largest customers represented <font color="blue">approximately</font></font>     26dtta6prca of <font color="blue"><font color="blue">consolidated</font> net sales</font> for the year ended <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Sales     </font>to our largest customer represented <font color="blue">approximately</font> 6dtta4prca of <font color="blue">consolidated</font> net     sales  for the year ended <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>The loss of a <font color="blue">significant</font>     customer or our <font color="blue">inability</font> to collect accounts receivable would <font color="blue">negatively</font>     impact our revenues and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The loss of <font color="blue">export markets utilized by</font> the industry could <font color="blue">adversely</font>     affect our results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The  loss of any <font color="blue">significant</font> customers could <font color="blue">adversely</font> affect our     results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In  <font color="blue">connection with</font> the sale of our products, we <font color="blue">generally</font> do not     require <font color="blue">collateral as security</font> for <font color="blue">customer <font color="blue">receivables</font></font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">significant</font>     <font color="blue">balances owing from</font> some customers that operate in <font color="blue">cyclical industries</font> and     under leveraged <font color="blue">conditions</font> that may impair the <font color="blue">collectibility</font> of those     <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>Failure to collect a <font color="blue">significant</font> portion of amounts due on     those <font color="blue">receivables</font> could have a material adverse effect on our results of     <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>A  <font color="blue">significant</font> increase in the use of scrap <font color="blue">metal <font color="blue">alternatives</font> by</font>     <font color="blue">current consumers</font> of processed scrap metals <font color="blue">could reduce</font> demand for our     products</td>
+    </tr>
+    <tr>
+      <td>During periods of high demand for scrap metals, tightness can develop     in the supply and <font color="blue">demand balance</font> for ferrous scrap</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">relative scarcity</font> of     ferrous scrap, <font color="blue">particularly</font> the “cleaner” grades, and its <font color="blue">high price during</font>     <font color="blue">such periods</font> have created <font color="blue">opportunities</font> for producers of <font color="blue">alternatives</font> to     scrap metals, such as pig iron and <font color="blue">direct reduced iron pellets</font>, to offer     their products to                                         16       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>our consumers</td>
+    </tr>
+    <tr>
+      <td>Although these <font color="blue">alternatives</font> have not been a major factor in     the industry to date, we <font color="blue">cannot assure</font> you that the use of <font color="blue">alternatives</font> to     scrap <font color="blue">metals may</font> not proliferate in the future if the prices for scrap     <font color="blue">metals rise</font> or if the levels of <font color="blue">available unprepared ferrous</font> scrap decrease</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to stringent <font color="blue">regulations</font>, <font color="blue">particularly</font> under     applicable <font color="blue">environment</font>al laws</td>
+    </tr>
+    <tr>
+      <td>We believe that we are currently in material <font color="blue">compliance with</font> applicable     statutes and <font color="blue"><font color="blue">regulations</font> governing</font> the protection of <font color="blue">human health</font> and the     <font color="blue">environment</font>, including <font color="blue">employee health</font> and safety</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">give no assurance</font>,     however, that we <font color="blue">will continue</font> to be in compliance or to avoid material     fines, penalties and <font color="blue">expenses associated with compliance issues</font> in the     future</td>
+    </tr>
+    <tr>
+      <td>The  nature  of our business and previous <font color="blue">operations</font> by others at     <font color="blue">facilities</font> owned or operated by us make us subject to <font color="blue">significant</font> government     regulation, including stringent <font color="blue">environment</font>al laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Among     </font>other things, these laws and <font color="blue">regulations</font> impose <font color="blue">comprehensive</font> local, state,     federal, foreign and <font color="blue">supranational</font> statutory and <font color="blue">regulatory</font> <font color="blue">requirements</font>     <font color="blue">concerning</font>, among other matters, the treatment, <font color="blue">acceptance</font>, <font color="blue">identification</font>,     storage, handling, <font color="blue">transportation</font> and disposal of industrial by-products,     <font color="blue">hazardous</font> and solid waste materials, waste water, storm water effluent, air     emissions, soil <font color="blue">contamination</font>, surface and ground water pollution, employee     health  and  safety,  operating permit standards, monitoring and spill     <font color="blue">containment</font> <font color="blue">requirements</font>, zoning, and land use, among others</td>
+    </tr>
+    <tr>
+      <td>Various laws     and <font color="blue">regulations</font> set prohibitions or <font color="blue">limits on</font> the release of <font color="blue"><font color="blue">contaminant</font>s</font>     into the <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Such laws and <font color="blue">regulations</font> also require permits to be     obtained and <font color="blue">manifests</font> to be completed and delivered in <font color="blue">connection with</font> the     <font color="blue">operations</font>  of  our <font color="blue">businesses</font>, and in <font color="blue">connection with</font> any shipment of     <font color="blue">prescribed materials</font> so that the movement and disposal of such material can     be traced and the <font color="blue">persons responsible</font> for any <font color="blue">mishandling</font> of such material     can be identified</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">regulatory</font> framework imposes <font color="blue">significant</font> actual,     day-to-day compliance burdens, costs and <font color="blue">risks on us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Violation </font>of such laws     and <font color="blue">regulations</font> may and do give rise to <font color="blue">significant</font> <font color="blue">liability</font>, including     fines, damages, fees and expenses, and closure of a site</td>
+    </tr>
+    <tr>
+      <td>Generally, the     <font color="blue">governmental</font> <font color="blue">authorities</font> are empowered to act to <font color="blue">clean up</font> and remediate     releases and <font color="blue">environment</font>al damage and to charge the costs of <font color="blue">such cleanup</font> to     one or more of the owners of the property, the person responsible for the     release, the <font color="blue">generator</font> of the <font color="blue">contaminant</font> and certain other parties or to     direct the <font color="blue">responsible party</font> to take <font color="blue">such action</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">authorities</font> may also     impose  a  tax  or  other  liens  to secure the parties’ reimbursement     <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental </font><font color="blue">legislation</font> and <font color="blue">regulations</font> have changed rapidly in     recent  years, and it is possible that we will be subject to even more     stringent <font color="blue">environment</font>al standards in the future</td>
+    </tr>
+    <tr>
+      <td>For these reasons, future     capital  <font color="blue">expenditures</font>  for  <font color="blue">environment</font>al control <font color="blue">facilities</font> cannot be     predicted with accuracy; however, if <font color="blue">environment</font>al control standards become     more stringent, one may expect that the <font color="blue">expenditures</font> <font color="blue">necessary</font> to comply     with  <font color="blue">them could increase substantially</font></td>
+    </tr>
+    <tr>
+      <td>Due to the nature of our Lead     Fabrication and Recycling and Scrap Metal Recycling <font color="blue">businesses</font>, it is likely     that inquiries or claims based upon <font color="blue">environment</font>al laws may be made in the     future by <font color="blue">governmental</font> bodies or <font color="blue">individuals</font> against us and any other scrap     <font color="blue"><font color="blue">metal recycling</font> entities</font> that <font color="blue">the Company </font>may acquire</td>
+    </tr>
+    <tr>
+      <td>The location of some     of our <font color="blue">facilities</font> in <font color="blue">urban areas may increase</font> the risk of scrutiny and     claims</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict whether</font> any <font color="blue">such future inquiries</font> or claims will     in  fact arise or the outcome of <font color="blue">such matters</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, it is not     possible  to predict the amounts of all <font color="blue"><font color="blue">capital expenditure</font>s</font> or of any     increases in operating costs or other expenses that we may incur to comply     with applicable <font color="blue">environment</font>al <font color="blue">requirements</font>, or whether these costs can be     passed on to <font color="blue">customers through product price increases</font></td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [66]Table of <font color="blue">Contents       </font>     Moreover, <font color="blue">environment</font>al <font color="blue">legislation</font> has been enacted, and may in the     future be enacted, to create <font color="blue">liability</font> for <font color="blue">past actions</font> that were <font color="blue">lawful at</font>     the time <font color="blue">taken but</font> that have <font color="blue">been found</font> to affect the <font color="blue">environment</font> and to     create <font color="blue">public rights</font> of action for <font color="blue">environment</font>al <font color="blue">conditions</font> and <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>As is the case with <font color="blue">lead fabrication</font> and recycling and scrap <font color="blue">metal recycling</font>     <font color="blue">businesses</font> in general, if damage to persons or the <font color="blue">environment</font> has been     caused, or is in the future caused, by <font color="blue">hazardous</font> materials <font color="blue">activities</font> of the     Company or its <font color="blue">predecessors</font>, <font color="blue">the Company </font>may be fined and held liable for     such damage</td>
+    </tr>
+    <tr>
+      <td>In addition, we may be required to remedy such <font color="blue">conditions</font>     and/or change procedures</td>
+    </tr>
+    <tr>
+      <td>Thus, there can be no assurance that potential     liabilities, <font color="blue">expenditures</font>, fines and penalties associated with <font color="blue">environment</font>al     laws and <font color="blue">regulations</font> will not be <font color="blue">imposed on us</font> in the future or that such     liabilities, <font color="blue">expenditures</font>, fines or <font color="blue">penalties will</font> not have a material     adverse effect on our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to potential <font color="blue">liability</font> and may also be required from     time to time to <font color="blue">clean up</font> or take <font color="blue">certain remedial action with</font> regard to     sites  currently  or  <font color="blue">formerly used</font> in <font color="blue">connection with</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, we may be required to pay for all or a portion of the costs to     <font color="blue">clean up</font> or <font color="blue">remediate sites</font> we never owned or on which we never operated if     we are found to have arranged for <font color="blue">transportation</font>, treatment or disposal of     <font color="blue">pollutants</font> or <font color="blue">hazardous</font> or <font color="blue">toxic substances on</font> or to such sites</td>
+    </tr>
+    <tr>
+      <td>We are also     subject to potential <font color="blue">liability</font> for <font color="blue">environment</font>al damage that our assets or     <font color="blue">operations</font> may cause nearby landowners, <font color="blue">particularly</font> as a result of any     <font color="blue">contamination</font> of <font color="blue">drinking water sources</font> or soil, including damage resulting     from  <font color="blue">conditions</font>  existing  prior to the <font color="blue">acquisition</font> of <font color="blue">such assets</font> or     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Any  substantial <font color="blue">liability</font> for <font color="blue">environment</font>al damage could     <font color="blue">materially</font> <font color="blue">adversely</font> affect our operating results and <font color="blue">financial condition</font>,     and could <font color="blue">materially</font> <font color="blue">adversely</font> affect the <font color="blue">marketability</font> and price of our     stock</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Contamination </font>exists at certain of our sites, and we are responsible     for  certain  off-site  <font color="blue">contamination</font>  as  well</td>
+    </tr>
+    <tr>
+      <td>Such  sites  require     <font color="blue">investigation</font>,  monitoring  and  <font color="blue">remediation</font></td>
+    </tr>
+    <tr>
+      <td>The  existence  of such     <font color="blue">contamination</font> typically results in federal, state, local and/or private     <font color="blue">enforcement</font> or <font color="blue">cost recovery actions against</font> the Company, possibly resulting     in  <font color="blue">disruption</font> of our <font color="blue">operations</font>, and/or substantial fines, penalties,     damages, costs and expenses being <font color="blue">imposed against us</font></td>
+    </tr>
+    <tr>
+      <td>We expect to require     future  cash  <font color="blue">outlays as</font> we <font color="blue">incur costs</font> relating to the <font color="blue">remediation</font> of     <font color="blue">environment</font>al liabilities and post-<font color="blue">remediation</font> compliance</td>
+    </tr>
+    <tr>
+      <td>These costs may     have a material adverse effect on the Company’s results of operation and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental </font>impairment <font color="blue">liability</font> insurance, which we carry on our     <font color="blue">lead smelting facility</font>, is <font color="blue">prohibitively expensive</font> and limited in the scope     of its coverage</td>
+    </tr>
+    <tr>
+      <td>Our general <font color="blue">liability</font> insurance policies in most cases do     not cover <font color="blue">environment</font>al damage</td>
+    </tr>
+    <tr>
+      <td>If we were to incur <font color="blue">significant</font> <font color="blue">liability</font>     for <font color="blue">environment</font>al damage not <font color="blue">covered by insurance</font>; or for which we have not     <font color="blue">adequately reserved</font>; or for which we are not <font color="blue">adequately indemnified by third</font>     parties;  our  results  of <font color="blue">operations</font> and <font color="blue">financial condition</font> could be     <font color="blue">materially</font> <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In the past we have upon occasion <font color="blue">been found</font> not to be in compliance     with certain <font color="blue">environment</font>al laws and <font color="blue">regulations</font>, and have incurred fines     associated with such violations which have not been material in amount</td>
+    </tr>
+    <tr>
+      <td>We     may in the future incur <font color="blue">additional</font> fines associated with similar violations</td>
+    </tr>
+    <tr>
+      <td>We have also paid a portion of the costs of certain <font color="blue">remediation</font> actions at     <font color="blue">certain sites</font></td>
+    </tr>
+    <tr>
+      <td>No assurance can be given that material fines, penalties,     damages  and  expenses resulting from <font color="blue">additional</font> compliance issues and     <font color="blue">liabilities will</font> not be <font color="blue">imposed on us</font> in the future</td>
+    </tr>
+    <tr>
+      <td>18       _________________________________________________________________    [67]Table of <font color="blue">Contents       </font>     There are risks associated with certain by-products of our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">operations</font>  produce <font color="blue">recurring amounts</font> of wastes</td>
+    </tr>
+    <tr>
+      <td>For example, our     secondary  lead  <font color="blue">smelter generates slag as</font> a <font color="blue">waste product</font> of the lead     smelting  process</td>
+    </tr>
+    <tr>
+      <td>The  slag is tested for <font color="blue">hazardous</font> materials and if     determined non-<font color="blue">hazardous</font>, disposed of at a <font color="blue">local sanitary landfill</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Slag     </font>that  tests <font color="blue">hazardous</font> is <font color="blue">put back into</font> the furnace feedstock and rerun     through the furnace</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">give no assurance</font>, however, that such a process     will be successful in continuing to remove <font color="blue">hazardous</font> <font color="blue"><font color="blue">contaminant</font>s</font> or that     <font color="blue">higher charges</font> for <font color="blue">waste handling</font> and <font color="blue">disposal will</font> be avoided</td>
+    </tr>
+    <tr>
+      <td>Due <font color="blue">diligence reviews</font> in <font color="blue">connection with</font> our <font color="blue"><font color="blue">acquisition</font>s</font> to date and     <font color="blue">environment</font>al assessments of our operating sites conducted by independent     <font color="blue">environment</font>al consulting firms have revealed that some soil, surface water     and/or  <font color="blue">groundwater</font>  <font color="blue">contamination</font>, including various metals, arsenic,     petrochemical <font color="blue">byproducts</font>, waste oils, and <font color="blue">volatile organic compounds</font>, is     <font color="blue">present at certain</font> of our operating sites</td>
+    </tr>
+    <tr>
+      <td>Based on our review of these     reports, we believe that it is possible that migratory <font color="blue">contamination</font> at     <font color="blue">varying levels may</font> exist at some of our sites, and we anticipate that some     of our <font color="blue">sites could</font> require <font color="blue">investigation</font>, monitoring and <font color="blue">remediation</font> in the     future</td>
+    </tr>
+    <tr>
+      <td>Moreover, the costs of such <font color="blue">remediation</font> could be material</td>
+    </tr>
+    <tr>
+      <td>The     existence of <font color="blue">contamination</font> at some of our <font color="blue">facilities</font> could <font color="blue">adversely</font> affect     our ability to sell our properties, and, will <font color="blue">generally</font> require us to incur     <font color="blue">significant</font> costs to take advantage of selling <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Descriptions</font></td>
+    </tr>
+  </tbody>
+</table>

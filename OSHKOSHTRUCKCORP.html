@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: financial position", fill: "#f984e5"},
+{source: "1: financial position", target: "1: operations", fill: "#f984e5"},
+{source: "1: operations", target: "1: various risks", fill: "#f984e5"},
+{source: "1: various risks", target: "1: exclusively within", fill: "#f984e5"},
+{source: "1: exclusively within", target: "1: Companys ", fill: "#f984e5"},
+{source: "1: Companys ", target: "1: actual performance", fill: "#f984e5"},
+{source: "1: actual performance", target: "1: materially from historical", fill: "#f984e5"},
+{source: "1: materially from historical", target: "1: future performance", fill: "#f984e5"},
+{source: "1: financial position", target: "8: markets face downturns then there could", fill: "#de3163"},
+{source: "8: markets face downturns then there could", target: "8: net sales financial condition profitability", fill: "#de3163"},
+{source: "8: net sales financial condition profitability", target: "8: andor cash flows", fill: "#de3163"},
+{source: "8: markets face downturns then there could", target: "12: Accordingly ", fill: "#73c2fb"},
+{source: "12: Accordingly ", target: "12: cannot provide", fill: "#73c2fb"},
+{source: "12: cannot provide", target: "12: conflict will continue", fill: "#73c2fb"},
+{source: "12: Accordingly ", target: "15: acquisition", fill: "#483c32"},
+{source: "15: acquisition", target: "15: December ", fill: "#483c32"},
+{source: "15: December ", target: "15: cyclical market", fill: "#483c32"},
+{source: "15: acquisition", target: "17: acquisition", fill: "#c04000"},
+{source: "17: acquisition", target: "17: JLG in December ", fill: "#c04000"},
+{source: "17: JLG in December ", target: "17: merger agreement", fill: "#c04000"},
+{source: "17: merger agreement", target: "17: conditions", fill: "#c04000"},
+{source: "17: conditions", target: "17: terminations provisions", fill: "#c04000"},
+{source: "17: acquisition", target: "19: acquisition", fill: "#002e63"},
+{source: "19: acquisition", target: "19: realization", fill: "#002e63"},
+{source: "19: realization", target: "19: integration", fill: "#002e63"},
+{source: "19: integration", target: "19: distribution manufacturing engineering", fill: "#002e63"},
+{source: "19: distribution manufacturing engineering", target: "19: administrative organizations", fill: "#002e63"},
+{source: "19: acquisition", target: "23: high leverage", fill: "#ffba00"},
+{source: "23: high leverage", target: "23: debt service obligations could increase", fill: "#ffba00"},
+{source: "23: debt service obligations could increase", target: "23: vulnerability", fill: "#ffba00"},
+{source: "23: vulnerability", target: "23: general adverse economic", fill: "#ffba00"},
+{source: "23: general adverse economic", target: "23: industry conditions", fill: "#ffba00"},
+{source: "23: industry conditions", target: "23: future financing", fill: "#ffba00"},
+{source: "23: high leverage", target: "26: interest on", fill: "#95b"},
+{source: "26: interest on", target: "26: debt will depend on", fill: "#95b"},
+{source: "26: debt will depend on", target: "26: future performance which", fill: "#95b"},
+{source: "26: future performance which", target: "26: certain extent", fill: "#95b"},
+{source: "26: certain extent", target: "26: general economic financial competitive", fill: "#95b"},
+{source: "26: interest on", target: "32: dependency on contracts with", fill: "#6b8e23"},
+{source: "32: dependency on contracts with", target: "32: government", fill: "#6b8e23"},
+{source: "32: government", target: "32: could materially reduce", fill: "#6b8e23"},
+{source: "32: dependency on contracts with", target: "51: successfully introduce", fill: "#0f0"},
+{source: "51: successfully introduce", target: "51: Revolution ", fill: "#0f0"},
+{source: "51: Revolution ", target: "51: concrete mixer drum then", fill: "#0f0"},
+{source: "51: concrete mixer drum then", target: "51: adversely impacted", fill: "#0f0"},
+{source: "51: successfully introduce", target: "START_HERE", fill: "#0f0"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Disapprove</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Display_resolution">Display resolution</a></td>
+      <td>The display resolution or display modes of a digital television, computer monitor or display device is the number of distinct pixels in each dimension that can be displayed. It can be an ambiguous term especially as the displayed resolution is controlled by different factors in cathode ray tube (CRT) displays, flat-panel displays (including liquid-crystal displays) and projection displays using fixed picture-element (pixel) arrays.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/KOI-8">KOI-8</a></td>
+      <td>KOI-8 (КОИ-8) is an 8-bit character set standardized in GOST 19768-74. It is an extension of KOI-7 which allows the use of the Latin alphabet along with the Russian alphabet, both the upper and lower case letters; however, the letter Ёё and the uppercase Ъ are missed, the latter to avoid conflicts with the delete character (both are added in most extensions, see KOI8-B).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Human_milk_bank">Human milk bank</a></td>
+      <td>A human milk bank, breast milk bank or lactarium is a service that collects, screens, processes, and dispenses by prescription human milk donated by nursing mothers who are not biologically related to the recipient infant. The optimum nutrition for newborn infants is breastfeeding, if possible, for the first year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Rationalism">Rationalism</a></td>
+      <td>Rationality is the quality or state of being rational – that is, being based on or agreeable to reason. Rationality implies the conformity of one's beliefs with one's reasons to believe, and of one's actions with one's reasons for action.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/USS_Michael_Monsoor">USS Michael Monsoor</a></td>
+      <td>USS Michael Monsoor (DDG-1001) is the second ship of the three-ship  Zumwalt class of guided missile destroyers. The Zumwalt-class was designed as a multi-mission surface combatant for land attack and littoral operations with a mission of supporting both ground campaigns and the joint/naval battlespace.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/HTML5">HTML5</a></td>
+      <td>The HyperText Markup Language or HTML is the standard markup language for documents designed to be displayed in a web browser. It can be assisted by technologies such as Cascading Style Sheets (CSS) and scripting languages such as JavaScript.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Giuoco_Piano">Giuoco Piano</a></td>
+      <td>The Giuoco Piano (Italian: "Quiet Game"; pronounced [dʒwɔːko ˈpjaːno]), also called the Italian Game, is a chess opening beginning with the moves:\n\n1.e4 e5\n2.Nf3 Nc6\n3.Bc4 Bc5"White aims to develop quickly – but so does Black. White can construct a pawn centre but in unfavourable conditions a centre which cannot provide a basis for further active play." (Marović &amp; Sušić 1975:53)\nThe name Italian Game is used by some authors(Pinski 2005:5); however that name is also used to describe all openings starting 1.e4 e5 2.Nf3 Nc6 3.Bc4, including 3...Nf6 (the Two Knights Defence) and other less common replies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Google_Account">Google Account</a></td>
+      <td>A Google Account is a user account that is required for access, authentication and authorization to certain online Google services. It is also often used as single sign on for third party services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Data_acquisition">Data acquisition</a></td>
+      <td>Data acquisition is the process of sampling signals that measure real world physical conditions and converting the resulting samples into digital numeric values that can be manipulated by a computer. Data acquisition systems, abbreviated by the initialisms DAS, DAQ, or DAU, typically convert analog waveforms into digital values for processing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Target_acquisition">Target acquisition</a></td>
+      <td>Target acquisition is the detection and identification of the location of a target in sufficient detail to permit the effective employment of lethal and non-lethal means. The term is used for a broad area of applications.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Resource_acquisition_is_initialization">Resource acquisition is initialization</a></td>
+      <td>Resource acquisition is initialization (RAII) is a programming idiom used in several object-oriented, statically-typed programming languages to describe a particular language behavior.  In RAII, holding a resource is a class invariant, and is tied to object lifetime.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second-language_acquisition">Second-language acquisition</a></td>
+      <td>Second-language acquisition (SLA), sometimes called second-language learning — otherwise referred to as L2 (language 2) acquisition, is the process by which people learn a second language. Second-language acquisition is also the scientific discipline devoted to studying that process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Language_acquisition_device">Language acquisition device</a></td>
+      <td>The Language Acquisition Device (LAD) is a claim from language acquisition research proposed by Noam Chomsky in the 1960s. The LAD concept is a purported instinctive mental capacity which enables an infant to acquire and produce language.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Oshkosh_Corporation">Oshkosh Corporation</a></td>
+      <td>Oshkosh Corporation, formerly Oshkosh Truck, is an American industrial company that designs and builds specialty trucks, military vehicles, truck bodies, airport fire apparatus, and access equipment. The corporation also owns Pierce Manufacturing, a fire apparatus manufacturer in Appleton, Wisconsin, and JLG Industries, a leading manufacturer of lift equipment, including aerial lifts, boom lifts, scissor lifts, telehandlers and low-level access lifts.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_agency">Government agency</a></td>
+      <td>A government or state agency, sometimes an appointed commission, is a permanent or semi-permanent organization in the machinery of government that is responsible for the oversight and administration of specific functions, such as an administration. There is a notable variety of agency types.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government">Government</a></td>
+      <td>A government is the system or group of people governing an organized community, generally a state.\nIn the case of its broad associative definition, government normally consists of legislature, executive, and judiciary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_India">Government of India</a></td>
+      <td>The Government of India (ISO: Bhārat Sarkār) (often abbreviated as GoI; also known as the Central or Union Government), or simply the Centre, is the federal governing authority of the Republic of India created by the Constitution of India as the legislative, executive and judicial authority to govern the union of twenty eight states and eight union territories. The president acts as the head of state and is the highest figure of authority, nominally, of the nation however it is the prime minister who is the chief executive.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_(government)">Executive (government)</a></td>
+      <td>The executive (short for executive branch or executive power) is the part of government that enforces law, and has responsibility for the governance of a state.\nIn political systems based on the principle of separation of powers, authority is distributed among several branches (executive, legislative, judicial)—an attempt to prevent the concentration of power in the hands of a single group of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Revolution">Revolution</a></td>
+      <td>In political science, a revolution (Latin: revolutio, "a turn around") is a fundamental and relatively sudden change in political power and political organization which occurs when the population revolts against the government, typically due to perceived oppression (political, social, economic) or political incompetence.Revolutions have occurred throughout human history and vary widely in terms of methods, duration, and motivating ideology. Their results include major changes in culture, economy, and socio-political institutions, usually in response to perceived overwhelming autocracy or plutocracy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/REvolution">REvolution</a></td>
+      <td>In political science, a revolution (Latin: revolutio, "a turn around") is a fundamental and relatively sudden change in political power and political organization which occurs when the population revolts against the government, typically due to perceived oppression (political, social, economic) or political incompetence.Revolutions have occurred throughout human history and vary widely in terms of methods, duration, and motivating ideology. Their results include major changes in culture, economy, and socio-political institutions, usually in response to perceived overwhelming autocracy or plutocracy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/French_Revolution">French Revolution</a></td>
+      <td>The French Revolution (French: Révolution française [ʁevɔlysjɔ̃ fʁɑ̃sɛːz]) was a period of radical political and societal change in France that began with the Estates General of 1789 and ended with the formation of the French Consulate in November 1799. Many of its ideas are considered fundamental principles of liberal democracy, while phrases like liberté, égalité, fraternité reappeared in other revolts, such as the 1917 Russian Revolution, and inspired campaigns for the abolition of slavery and universal suffrage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/American_Revolution">American Revolution</a></td>
+      <td>The American Revolution was an ideological and political revolution that occurred in British America between 1765 and 1791. The Americans in the Thirteen Colonies formed independent states that defeated the British in the American Revolutionary War (1775–1783), gaining independence from the British Crown, establishing the constitution that created the United States of America, the first modern constitutional liberal democracy.American colonists objected to being taxed by the British Parliament, a body in which they had no direct representation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Russian_Revolution">Russian Revolution</a></td>
+      <td>The Russian Revolution was a period of political and social revolution that took place in the former Russian Empire which began during the First World War. This period saw Russia abolish its monarchy and adopt a socialist form of government following two successive revolutions and a bloody civil war.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Iranian_Revolution">Iranian Revolution</a></td>
+      <td>The Iranian Revolution (Persian: انقلاب ایران, romanized: Enqelâb-e Irân, pronounced [ʔeɴɢeˌlɒːbe ʔiːɾɒːn]), also known as the Islamic Revolution (Persian: انقلاب اسلامی, romanized: Enqelâb-e Eslâmī) was a series of events that culminated in the overthrow of the Pahlavi dynasty under Shah Mohammad Reza Pahlavi, and the replacement of his government with an Islamic republic under the rule of Ayatollah Ruhollah Khomeini, a leader of one of the factions in the revolt. The revolution was supported by various leftist and Islamist organizations.After the 1953 Iranian coup d'état, Pahlavi had aligned with the United States and the Western Bloc to rule more firmly as an absolute monarch.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/February_Revolution">February Revolution</a></td>
+      <td>The February Revolution (Russian: Февра́льская револю́ция, tr. Fevral'skaya revolyutsiya, IPA: [fʲɪvˈralʲskəjə rʲɪvɐˈlʲutsɨjə]), known in Soviet historiography as the February Bourgeois Democratic Revolution and sometimes as the March Revolution, was the first of two revolutions which took place in Russia in 1917.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OSHKOSH TRUCK CORP      ITEM 1A RISK FACTORS                                         15  ITEM 1A RISK FACTORS               The Company’s <font color="blue">financial position</font>, results of <font color="blue">operations</font> and cash     flows are subject to <font color="blue">various risks</font>, many of which are not <font color="blue">exclusively within</font>     the  Company’s  control,  that  may cause <font color="blue">actual performance</font> to differ     <font color="blue">materially from historical</font> or projected <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Information </font>in     this Form 10-K should be considered <font color="blue">carefully by investors</font> in light of the     <font color="blue">risk factors described</font> below and the information <font color="blue">set forth under</font> the caption     “Management’s Discussion and Analysis of Financial Condition and Results of     Operations — Certain Assumptions</td>
+    </tr>
+    <tr>
+      <td>”    Our markets are <font color="blue">highly cyclical</font> and a decline in these <font color="blue">markets could</font> have a  material adverse effect on our operating performance</td>
+    </tr>
+    <tr>
+      <td>A decline in <font color="blue">overall customer demand</font> in our <font color="blue">cyclical commercial</font> and     fire and emergency <font color="blue">markets could</font> have a material adverse effect on our     operating performance</td>
+    </tr>
+    <tr>
+      <td>The ready-mix concrete market that we serve is highly     cyclical  and  impacted  by  the strength of the <font color="blue">economy <font color="blue">generally</font></font>, by     <font color="blue">prevailing mortgage</font> and other <font color="blue">interest rates</font>, by the number of housing     starts and by other factors that may have an effect on the level of concrete     placement activity, either regionally or <font color="blue">nationally</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Domestic and European     </font><font color="blue">refuse markets</font> are also <font color="blue">highly cyclical</font> and <font color="blue">impacted by</font> the strength of the     <font color="blue">economy <font color="blue">generally</font></font> and <font color="blue">municipal tax receipts</font></td>
+    </tr>
+    <tr>
+      <td>Fire and emergency markets are     modestly cyclical and are <font color="blue">impacted by</font> the <font color="blue">economy <font color="blue">generally</font></font> and municipal     tax  receipts</td>
+    </tr>
+    <tr>
+      <td>If these markets face downturns, then <font color="blue">there could</font> be a     material adverse effect on our net sales, <font color="blue">financial condition</font>, <font color="blue">profitability</font>     and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>Furthermore, our commercial business saw an increase in     orders  in  fiscal  2006  as  customers pre-purchased truck chassis in     <font color="blue">anticipation</font> of changes in <font color="blue">diesel engine <font color="blue">emissions standards</font> effective</font>     January 1, 2007, which we believe is likely to result in a reduction in     sales in 2007</td>
+    </tr>
+    <tr>
+      <td>-15-       _________________________________________________________________               Additionally, the <font color="blue">recent surge</font> in our defense business is due in     <font color="blue">significant</font>  part  to demand for defense trucks, <font color="blue">replacement</font> parts and     services and truck <font color="blue">re<font color="blue">manufacturing</font></font> arising from the conflict in Iraq</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Events     </font>such as this are unplanned, and we <font color="blue">cannot predict how long</font> this conflict     will last or the demand for our products that will arise out of such an     event</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we <font color="blue">cannot provide</font> any assurance that the increased     defense business as a result of this <font color="blue">conflict <font color="blue">will continue</font></font></td>
+    </tr>
+    <tr>
+      <td>Finally, JLG operates in a <font color="blue">highly cyclical</font> market <font color="blue">impacted by</font> the     strength of the <font color="blue">economy <font color="blue">generally</font></font>, by <font color="blue">prevailing mortgage</font> and other interest     rates, by non-residential construction spending and by other factors</td>
+    </tr>
+    <tr>
+      <td>In     addition, JLG’s business is <font color="blue">highly seasonal with</font> the majority of its sales     occurring in the spring and summer months, which constitute the traditional     <font color="blue">construction season</font></td>
+    </tr>
+    <tr>
+      <td>If we complete the <font color="blue">acquisition</font> of JLG as anticipated in     <font color="blue">December </font>2006, then we will be subject to the risk of a downturn in JLG’s     <font color="blue">cyclical market</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to complete or <font color="blue"><font color="blue">successfully</font> integrate</font> the <font color="blue">acquisition</font> of  JLG, which may have a material <font color="blue">adverse impact on</font> our <font color="blue">future growth</font> and  operating performance</td>
+    </tr>
+    <tr>
+      <td>Although we anticipate closing the <font color="blue">acquisition</font> of JLG in <font color="blue">December </font>    2006, the <font color="blue">merger agreement</font> is subject to standard closing <font color="blue">conditions</font> and     <font color="blue"><font color="blue">termination</font>s provisions</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to complete the <font color="blue">acquisition</font> of     JLG, <font color="blue">which <font color="blue">could adversely affect</font></font> our <font color="blue">future growth</font></td>
+    </tr>
+    <tr>
+      <td>If we complete the     <font color="blue">acquisition</font>  of  JLG, <font color="blue">realization</font> of the benefits and synergies of the     <font color="blue">acquisition</font>  will  require  <font color="blue">integration</font>  of JLG’s sales and marketing,     <font color="blue">distribution</font>, <font color="blue">manufacturing</font>, engineering and <font color="blue">administrative organizations</font></td>
+    </tr>
+    <tr>
+      <td>The successful <font color="blue">integration</font> of JLG will require substantial <font color="blue">attention from</font>     our <font color="blue">management team</font></td>
+    </tr>
+    <tr>
+      <td>The diversion of management attention, as well as any     other <font color="blue">difficulties</font> we <font color="blue">may encounter</font> in the <font color="blue">integration</font> process, could have a     material adverse effect on our net sales, <font color="blue">financial condition</font>, <font color="blue">profitability</font>     and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide</font> any assurance that we will be able to     integrate  the <font color="blue">operations</font> of JLG <font color="blue">successfully</font>, that we will be able to     realize anticipated <font color="blue">synergies from</font> the <font color="blue">acquisition</font> or that we will be able     to  operate  the  JLG  business <font color="blue">as profitably as</font> anticipated after the     <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">high leverage</font> and <font color="blue"><font color="blue">debt service</font> obligations could increase</font> our <font color="blue">vulnerability</font>  to <font color="blue">general adverse economic</font> and industry <font color="blue">conditions</font> and limit our ability to  obtain <font color="blue">future financing</font></td>
+    </tr>
+    <tr>
+      <td>As a result of financing the JLG <font color="blue">acquisition</font>, we will be highly     leveraged, <font color="blue">which will</font> cause us to <font color="blue">incur <font color="blue">additional</font> interest expense</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">After     </font>the <font color="blue">completion</font> of the <font color="blue">acquisition</font> of JLG, we expect to have <font color="blue">approximately</font>     dlra3dtta3 billion of <font color="blue">debt outstanding</font>, and we <font color="blue">may increase debt</font> in the future to     fund <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to make required payments of principal and     <font color="blue">interest on</font> our <font color="blue">debt will depend on</font> our <font color="blue">future performance</font>, which, to a     <font color="blue">certain extent</font>, is subject to general economic, financial, <font color="blue">competitive</font> and     other factors that are beyond our control</td>
+    </tr>
+    <tr>
+      <td>Based upon our <font color="blue">current level</font> of     <font color="blue">operations</font>, we believe that <font color="blue">cash flow from</font> <font color="blue">operations</font>, available cash and     <font color="blue">available <font color="blue">borrowings</font> under</font> the new credit <font color="blue">facilities</font> we plan to <font color="blue">enter into</font>     in <font color="blue">connection with</font> the <font color="blue">acquisition</font> of JLG will be adequate to meet our     <font color="blue">future liquidity</font> needs</td>
+    </tr>
+    <tr>
+      <td>However, we <font color="blue">cannot provide</font> any assurance that our     business will generate sufficient <font color="blue">cash flow from</font> <font color="blue">operations</font> or that future     <font color="blue">borrowings</font>  will be <font color="blue">available under</font> our credit <font color="blue">facilities</font> in an amount     sufficient to <font color="blue">enable us</font> to service our <font color="blue">indebtedness</font> or to fund our other     liquidity  needs</td>
+    </tr>
+    <tr>
+      <td>In addition, our new credit <font color="blue">facilities</font> will contain     financial and <font color="blue">restrictive covenants</font> that may limit our ability to, among     other  things,  borrow  <font color="blue"><font color="blue">additional</font> funds</font> or take advantage of business     <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue"><font color="blue">comply with</font> such covenants could</font> result in an     event of default that, if not cured or waived, could have a material adverse     effect on our <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue">debt service</font>     <font color="blue">capability</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">high level</font> of debt and the <font color="blue">covenants contained</font> in our credit     <font color="blue">facilities</font> could have <font color="blue">important consequences</font> for our <font color="blue">operations</font>, including:         – Increase our <font color="blue">vulnerability</font> to <font color="blue">general adverse economic</font> and industry     <font color="blue">conditions</font> and <font color="blue">detract from</font> our ability to withstand <font color="blue">successfully</font> a downturn     in our markets or the <font color="blue">economy <font color="blue">generally</font></font>;         – Require us to dedicate a substantial portion of our <font color="blue">cash flow from</font>     <font color="blue">operations</font> to required payments on debt, thereby reducing the <font color="blue">availability</font>     of <font color="blue">such cash flow</font> to fund working capital, capital expenditures, research     and <font color="blue">development</font> and other <font color="blue">general corporate</font> activities;         – Limit our ability to obtain <font color="blue"><font color="blue">additional</font> financing</font> in the future to fund     working capital, capital expenditures and other <font color="blue">general corporate</font>     <font color="blue">requirements</font>;         – Limit our <font color="blue">flexibility</font> in planning for, or reacting to, changes in our     business and the markets we serve;         – Place us at a <font color="blue"><font color="blue">competitive</font> disadvantage compared</font> to <font color="blue">less leveraged</font>     <font color="blue">competitors</font>; and         – Make us vulnerable to increases in <font color="blue">interest rates</font> because <font color="blue">debt under</font> our     credit <font color="blue">facilities</font> may be <font color="blue">at variable rates</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">dependency on contracts with</font> US and foreign <font color="blue">government</font> agencies subjects  us to a variety of risks that <font color="blue">could materially reduce</font> our revenues or profits</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> US and foreign <font color="blue">government</font> contracts for a     substantial  portion  of our business</td>
+    </tr>
+    <tr>
+      <td>That business is subject to the     following risks, among others, that could have a material adverse effect on     our operating performance:                                        -16-       _________________________________________________________________         – Our business is susceptible to changes in the US defense budget, which     <font color="blue">may reduce revenues</font> that we expect from our defense business</td>
+    </tr>
+    <tr>
+      <td>– The US <font color="blue">government</font> may not <font color="blue">appropriate funding</font> that we expect for our     US <font color="blue">government</font> contracts, which may prevent us from realizing revenues     <font color="blue">under current contracts</font> or receiving <font color="blue"><font color="blue">additional</font> orders</font> that we anticipate we     will receive</td>
+    </tr>
+    <tr>
+      <td>– Most of our <font color="blue">government</font> contracts are fixed-price contracts, and our     actual costs may exceed our projected costs, which could result in lower     profits or net losses under these contracts</td>
+    </tr>
+    <tr>
+      <td>– We are required to spend <font color="blue">significant</font> sums on product <font color="blue">development</font> and     testing, bid and <font color="blue">proposal activities</font> and pre-contract engineering, tooling     and <font color="blue">design activities</font> in <font color="blue">competitions</font> to have the <font color="blue">opportunity</font> to be awarded     these contracts</td>
+    </tr>
+    <tr>
+      <td>– <font color="blue">Competitions </font>for the award of <font color="blue">defense truck contracts</font> are intense, and     we <font color="blue">cannot provide</font> any assurance that we will be successful in the defense     truck procurement <font color="blue">competitions</font> in which we <font color="blue">participate</font></td>
+    </tr>
+    <tr>
+      <td>– Certain of our <font color="blue">government</font> contracts could be suspended or terminated and     all <font color="blue">such contracts</font> expire in the future and may not be replaced, which could     reduce expected <font color="blue">revenues from</font> these contracts</td>
+    </tr>
+    <tr>
+      <td>– Our <font color="blue">defense products undergo rigorous testing by</font> the customer and are     subject to highly technical <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Any failure to pass these tests or     to <font color="blue">comply with</font> these <font color="blue">requirements</font> could result in <font color="blue">unanticipated retrofit</font>     costs, delayed acceptance of trucks or late or <font color="blue">no payments under such</font>     contracts</td>
+    </tr>
+    <tr>
+      <td>– Our <font color="blue">government</font> contracts are subject to audit, which could result in     <font color="blue">adjustments</font> of our costs and <font color="blue">prices under</font> these contracts</td>
+    </tr>
+    <tr>
+      <td>– Our <font color="blue">defense truck contracts</font> are large in size and require <font color="blue">significant</font>     personnel and <font color="blue">production resources</font>, and when <font color="blue">such contracts</font> end, we must     make <font color="blue">adjustments</font> to personnel and <font color="blue">production resources</font></td>
+    </tr>
+    <tr>
+      <td>– We are <font color="blue">also currently</font> experiencing <font color="blue">difficulties</font> with sourcing sufficient     <font color="blue">vehicle carcasses</font> to maintain our defense truck <font color="blue">re<font color="blue">manufacturing</font></font> schedule,     which creates <font color="blue">uncertainty</font> for this area of our business in the short-term</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">successfully</font> turnaround the <font color="blue">profitability</font> of our Geesink  Norba Group, then we may be required to record a non-cash impairment charge for  <font color="blue">Geesink Norba Group </font>goodwill</td>
+    </tr>
+    <tr>
+      <td>During fiscal 2004 and 2005, the <font color="blue">Geesink Norba Group </font>operated at a     loss due to the weak European economy, declines in <font color="blue">selling prices</font> in its     markets,  <font color="blue">operational inefficiencies</font> and increased material, labor and     <font color="blue">warranty costs</font> related to the launch of a new Geesink-branded rear loader</td>
+    </tr>
+    <tr>
+      <td>Although the <font color="blue">Geesink Norba Group </font>operated at a profit in fiscal 2006 and we     have taken steps to turn around the business of the Geesink Norba Group,     including reducing its work force, installing new executive leadership,     implementing lean <font color="blue">manufacturing</font> practices, introducing new products and     <font color="blue">outsourcing <font color="blue">components</font></font> to <font color="blue">lower cost <font color="blue">manufacturing</font> sites</font>, we <font color="blue">cannot provide</font>     any  assurance  that  the <font color="blue">Geesink Norba Group </font><font color="blue">will continue</font> to operate     profitably or that <font color="blue">such activities will</font> be successful</td>
+    </tr>
+    <tr>
+      <td>In fiscal 2007, we     anticipate that <font color="blue">slowing demand</font> in the <font color="blue">United Kingdom </font>and chassis supply     issues <font color="blue">in France </font>will delay the <font color="blue">Geesink Norba Group </font>turnaround</td>
+    </tr>
+    <tr>
+      <td>In addition,     we <font color="blue">may incur costs</font> to continue to implement any <font color="blue">such turnaround beyond</font> our     <font color="blue">current <font color="blue">expectations</font></font> for <font color="blue">such costs</font></td>
+    </tr>
+    <tr>
+      <td>Further, if we are unable to continue     to  turnaround the business of the Geesink Norba Group, then we may be     required to record a non-cash impairment charge for <font color="blue">Geesink Norba Group </font>    goodwill, and <font color="blue">there could</font> be other material <font color="blue">adverse effects on</font> our net     sales, <font color="blue">financial condition</font>, <font color="blue">profitability</font> and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">successfully</font> introduce or produce the <font color="blue">Revolution </font>composite  concrete mixer drum, then the revenues and earnings of our commercial segment  may be <font color="blue">adversely impacted</font></td>
+    </tr>
+    <tr>
+      <td>We have made and <font color="blue">will continue</font> to make <font color="blue">significant</font> <font color="blue">investments</font> in     <font color="blue">technology</font> and <font color="blue">manufacturing</font> <font color="blue">facilities</font> relating to the <font color="blue">Revolution </font>composite     concrete  <font color="blue">mixer drum product</font>, and we anticipate that this <font color="blue">product will</font>     contribute to growth in revenues and earnings of our commercial segment</td>
+    </tr>
+    <tr>
+      <td>However, we <font color="blue">cannot provide</font> any assurance that <font color="blue">such growth will</font> result</td>
+    </tr>
+    <tr>
+      <td>Without <font color="blue">limitation</font>:         – The <font color="blue">Revolution </font>drum is a new product in the <font color="blue">concrete placement market</font>     that uses new <font color="blue">technology</font>, and we <font color="blue">cannot provide</font> any assurance that the     <font color="blue">concrete placement market</font> will broadly accept this product</td>
+    </tr>
+    <tr>
+      <td>– Even if <font color="blue">market demand</font> for the <font color="blue">Revolution </font>drum meets our <font color="blue">expectations</font>, we     may not be able to <font color="blue">sustain high volume production</font> of this <font color="blue">product at</font>     projected costs and on projected delivery schedules, which could result in     <font color="blue">lower profits</font> or net losses relating to this product</td>
+    </tr>
+    <tr>
+      <td>– Our plans include taking <font color="blue">additional</font> actions and making <font color="blue">additional</font>     <font color="blue">investments</font> to introduce different versions of the <font color="blue">Revolution </font>drum and to     introduce the product in <font color="blue">markets outside</font> the United States, and there will     be <font color="blue">additional</font> <font color="blue">risks associated</font> with these efforts</td>
+    </tr>
+    <tr>
+      <td>– We <font color="blue">cannot provide</font> any assurance that <font color="blue">competitors</font> will not <font color="blue">offer products</font>     in the future that <font color="blue">compete with</font> the <font color="blue">Revolution </font>drum, which would impact our     ability to sell this <font color="blue">product at</font> targeted prices</td>
+    </tr>
+    <tr>
+      <td>– Because the <font color="blue">Revolution </font>drum is a new product, we have experienced and     <font color="blue">may continue</font> to experience <font color="blue">higher costs</font> for warranty and other product     related claims</td>
+    </tr>
+    <tr>
+      <td>-17-       _________________________________________________________________    We have expanding <font color="blue">international</font> <font color="blue">operations</font>, the conduct of which subject us to  risks that may have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>For the fiscal year ended <font color="blue">September </font>30, 2006, <font color="blue">approximately</font> 17dtta7prca of     our net sales were <font color="blue">attributable</font> to <font color="blue">products sold outside</font> of the United     States, and expanding <font color="blue">international</font> sales, including through the pending     <font color="blue">acquisition</font> of JLG, which had dlra610dtta7 million of <font color="blue">revenues from</font> outside of the     <font color="blue">United States </font>in its fiscal year ended July 31, 2006, is a part of our     <font color="blue">growth strategy</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font><font color="blue">operations</font> and sales are subject to various     risks, including political, religious and economic instability, local labor     market  <font color="blue">conditions</font>,  the imposition of <font color="blue">foreign tariffs</font> and other trade     barriers, the impact of foreign <font color="blue">government</font> regulations and the effects of     income and withholding taxes, <font color="blue">government</font>al expropriation and <font color="blue">differences</font> in     business practices</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may incur increased costs</font> and experience delays or     <font color="blue"><font color="blue">disruption</font>s</font>  in  product  <font color="blue">deliveries</font>  and  payments in <font color="blue">connection with</font>     <font color="blue">international</font> <font color="blue">manufacturing</font> and sales that could cause loss of revenues and     earnings</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font>changes in the political, regulatory and business     <font color="blue">climate could</font> have a material adverse effect on our net sales, financial     condition, <font color="blue">profitability</font> and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">fluctuations</font> in <font color="blue">exchange rates</font> and other <font color="blue">risks associated</font>  with our non-US <font color="blue">operations</font> that <font color="blue">could adversely affect</font> our results of  <font color="blue">operations</font> and may <font color="blue">significant</font>ly affect the <font color="blue">comparability</font> of our results  <font color="blue">between financial periods</font></td>
+    </tr>
+    <tr>
+      <td>The  results  of  <font color="blue">operations</font>  and  financial  condition of our     <font color="blue">subsidiaries</font> that conduct <font color="blue">operations</font> in foreign countries are reported in     the <font color="blue">relevant <font color="blue">foreign currencies</font></font> and <font color="blue">then translated into</font> US dollars at the     applicable  <font color="blue">exchange rates</font> for inclusion in our <font color="blue">consolidated financial</font>     statements, which are stated in US dollars</td>
+    </tr>
+    <tr>
+      <td>In addition, we have certain     <font color="blue">firm orders</font> in backlog that are <font color="blue">denominated</font> in <font color="blue">UK Pounds Sterling </font>and     certain <font color="blue">agreements</font> with <font color="blue">subcontractors</font> <font color="blue">denominated</font> in <font color="blue">UK Pounds Sterling </font>    and Euros, <font color="blue">which will</font> subject us to <font color="blue">foreign currency transaction risk</font> to the     extent they are not hedged</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">completion</font> of our pending <font color="blue">acquisition</font> of JLG     <font color="blue">will increase</font> our exposure to <font color="blue">foreign currency transaction risk</font> as JLG     generates a portion of its revenues in <font color="blue">foreign currencies</font>, including Euros,     <font color="blue">UK Pounds Sterling </font>and Australian Dollars</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">exchange rates</font> between many     of these currencies and the US dollar have fluctuated <font color="blue">significant</font>ly in     recent  years  and  may  fluctuate  <font color="blue">significant</font>ly  in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Such     </font><font color="blue">fluctuations</font>, in particular those <font color="blue">with respect</font> to the Euro and the UK     Pound Sterling, may have a material effect on our net sales, financial     condition, <font color="blue">profitability</font> and/or cash flows and may <font color="blue">significant</font>ly affect the     <font color="blue">comparability</font> of our results <font color="blue">between financial periods</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>in our <font color="blue">industries</font> is intense and we may not be able to continue to  compete <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>We  operate  in  highly <font color="blue">competitive</font> <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>Several of our     <font color="blue">competitors</font>  have  greater  financial,  marketing,  <font color="blue">manufacturing</font>  and     <font color="blue">distribution</font> resources than us and we are facing <font color="blue">competitive</font> pricing from     new entrants in certain markets</td>
+    </tr>
+    <tr>
+      <td>Our products may not continue to compete     <font color="blue">successfully</font> with the products of <font color="blue">competitors</font>, and we may not be able to     retain or increase our <font color="blue">customer base</font> or to improve or maintain our profit     <font color="blue">margins on sales</font> to our customers, all of <font color="blue">which <font color="blue">could adversely affect</font></font> our     net sales, <font color="blue">financial condition</font>, <font color="blue">profitability</font> and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">disruption</font> or <font color="blue">termination</font> of the supply of parts, materials, <font color="blue">components</font> and  <font color="blue">final assemblies</font> from third-party suppliers could delay sales of our vehicles  and <font color="blue">vehicle bodies</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced, and may in the future experience, <font color="blue">significant</font>     <font color="blue">disruption</font> or <font color="blue">termination</font> of the supply of some of our parts, materials,     <font color="blue">components</font> and <font color="blue">final assemblies</font> that we obtain <font color="blue">from sole source suppliers</font> or     <font color="blue">subcontractors</font> or incur a <font color="blue">significant</font> increase in the cost of these parts,     materials, <font color="blue">components</font> or <font color="blue">final assemblies</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">disruption</font>s</font>, <font color="blue">termination</font>s or     <font color="blue">cost increases could delay sales</font> of our vehicles and <font color="blue">vehicle bodies</font> and     could  result in a material adverse effect on our net sales, financial     condition, <font color="blue">profitability</font> and/or cash flows</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">recent surge</font> in over-the-road     <font color="blue">vehicle sales</font> has created shortages of certain <font color="blue">components</font> we utilize</td>
+    </tr>
+    <tr>
+      <td>The     shortages have also caused <font color="blue">periodic delays</font> or <font color="blue">limitation</font>s on the receipt of     <font color="blue">chassis scheduled</font> for mounting of our <font color="blue">vehicle bodies</font> across both our fire     and emergency and <font color="blue">commercial segments</font></td>
+    </tr>
+    <tr>
+      <td>It is likely that some or all of such     shortages  could  diminish during fiscal 2007 due to <font color="blue">new diesel engine</font>     <font color="blue">emissions standards</font> taking effect on January 1, 2007, but such <font color="blue">conditions</font>     could re-occur later in fiscal 2007 or fiscal 2008 as customers resume their     <font color="blue">normal procurement patterns</font></td>
+    </tr>
+  </tbody>
+</table>

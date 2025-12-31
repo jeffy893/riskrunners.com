@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: risk factors", fill: "#fc9"},
+{source: "1: risk factors", target: "1: described elsewhere", fill: "#fc9"},
+{source: "1: described elsewhere", target: "1: Cautionary Statements ", fill: "#fc9"},
+{source: "1: Cautionary Statements ", target: "1: risks associated with", fill: "#fc9"},
+{source: "1: risks associated with", target: "1: investment", fill: "#fc9"},
+{source: "1: investment", target: "1: of the Trust", fill: "#fc9"},
+{source: "1: risk factors", target: "2: distributions", fill: "#b2ffff"},
+{source: "2: distributions", target: "2: highly dependent upon", fill: "#b2ffff"},
+{source: "2: highly dependent upon", target: "2: natural gas", fill: "#b2ffff"},
+{source: "2: distributions", target: "3: Trust and the Working Interest Owner", fill: "#324ab2"},
+{source: "3: Trust and the Working Interest Owner", target: "10: preliminary", fill: "#8a2be2"},
+{source: "10: preliminary", target: "10: interrupted", fill: "#8a2be2"},
+{source: "10: interrupted", target: "10: facilities", fill: "#8a2be2"},
+{source: "10: facilities", target: "10: abandonment", fill: "#8a2be2"},
+{source: "10: abandonment", target: "10: decision by", fill: "#8a2be2"},
+{source: "10: decision by", target: "10: in the Working Interest Owner ", fill: "#8a2be2"},
+{source: "10: in the Working Interest Owner ", target: "10: distributable", fill: "#8a2be2"},
+{source: "10: distributable", target: "10: to the Trust ", fill: "#8a2be2"},
+{source: "10: to the Trust ", target: "10: amounts otherwise distributable", fill: "#8a2be2"},
+{source: "10: amounts otherwise distributable", target: "10: of the Unitholders in November ", fill: "#8a2be2"},
+{source: "10: preliminary", target: "17: development", fill: "#da2c43"},
+{source: "17: development", target: "17: attributable", fill: "#da2c43"},
+{source: "17: attributable", target: "17: to the Overriding Royalties ", fill: "#da2c43"},
+{source: "17: to the Overriding Royalties ", target: "17: calculation", fill: "#da2c43"},
+{source: "17: development", target: "19: development", fill: "#654321"},
+{source: "19: development", target: "19: production costs", fill: "#654321"},
+{source: "19: production costs", target: "19: Overriding Royalties ", fill: "#654321"},
+{source: "19: Overriding Royalties ", target: "19: production from", fill: "#654321"},
+{source: "19: production from", target: "19: excess costs plus accrued interest during", fill: "#654321"},
+{source: "19: excess costs plus accrued interest during", target: "19: deficit period", fill: "#654321"},
+{source: "19: development", target: "39: termination", fill: "#d40000"},
+{source: "39: termination", target: "39: Overriding Royalties ", fill: "#d40000"},
+{source: "39: Overriding Royalties ", target: "39: abandoned well", fill: "#d40000"},
+{source: "39: termination", target: "45: termination", fill: "#a50b5e"},
+{source: "45: termination", target: "45: of the Trust the Trustee ", fill: "#a50b5e"},
+{source: "45: of the Trust the Trustee ", target: "45: the Trustee ", fill: "#a50b5e"},
+{source: "45: the Trustee ", target: "45: of a Units ", fill: "#a50b5e"},
+{source: "45: of a Units ", target: "45: consideration", fill: "#a50b5e"},
+{source: "45: consideration", target: "45: discretion", fill: "#a50b5e"},
+{source: "45: discretion", target: "45: in the Unit ", fill: "#a50b5e"},
+{source: "45: termination", target: "START_HERE", fill: "#a50b5e"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trust_law">Trust law</a></td>
+      <td>A trust is a legal relationship in which the holder of a right gives it to another person or entity who must keep and use it solely for another's benefit. In Anglo-American common law, the party who entrusts the right is known as the "settlor", the party to whom the right is entrusted is known as the "trustee", the party for whose benefit the property is entrusted is known as the "beneficiary", and the entrusted property itself is known as the "corpus" or "trust property".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Linux_distribution">Linux distribution</a></td>
+      <td>A Linux distribution (often abbreviated as distro) is an operating system made from a software collection that includes the Linux kernel and, often, a package management system. Linux users usually obtain their operating system by downloading one of the Linux distributions, which are available for a wide variety of systems ranging from embedded devices (for example, OpenWrt) and personal computers (for example, Linux Mint) to powerful supercomputers (for example, Rocks Cluster Distribution).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pareto_distribution">Pareto distribution</a></td>
+      <td>The Pareto distribution, named after the Italian civil engineer, economist, and sociologist Vilfredo Pareto, (Italian: [paˈreːto] US:  pə-RAY-toh), is a power-law probability distribution that is used in description of social, quality control, scientific, geophysical, actuarial, and many other types of observable phenomena. Originally applied to describing the distribution of wealth in a society, fitting the trend that a large portion of wealth is held by a small fraction of the population.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Linux_distributions">List of Linux distributions</a></td>
+      <td>This page provides general information about notable Linux distributions in the form of a categorized list. Distributions are organized into sections by the major distribution or package management system they are based on.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heavy-tailed_distribution">Heavy-tailed distribution</a></td>
+      <td>In probability theory, heavy-tailed distributions are probability distributions whose tails are not exponentially bounded: that is, they have heavier tails than the exponential distribution.  In many applications it is the right tail of the distribution that is of interest, but a distribution may have a heavy left tail, or both tails may be heavy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exponential_distribution">Exponential distribution</a></td>
+      <td>In probability theory and statistics, the exponential distribution is the probability distribution of the time between events in a Poisson point process, i.e., a process in which events occur continuously and independently at a constant average rate. It is a particular case of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Multimodal_distribution">Multimodal distribution</a></td>
+      <td>In statistics, a bimodal distribution is a probability distribution with two different modes, which may also be referred to as a bimodal distribution.  These appear as distinct peaks (local maxima) in the probability density function, as shown in Figures 1 and 2.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liquefied_natural_gas">Liquefied natural gas</a></td>
+      <td>Liquefied natural gas (LNG) is natural gas (predominantly methane, CH4, with some mixture of ethane, C2H6) that has been cooled down to liquid form for ease and safety of non-pressurized storage or transport. It takes up about 1/600th the volume of natural gas in the gaseous state (at standard conditions for temperature and pressure).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Compressed_natural_gas">Compressed natural gas</a></td>
+      <td>Compressed natural gas (CNG) is a fuel gas made of petrol which is mainly composed of methane (CH4), compressed to less than 1% of the volume it occupies at standard atmospheric pressure. It is stored and distributed in hard containers at a pressure of 20–25 MPa (2,900–3,600 psi), usually in cylindrical or spherical shapes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_countries_by_natural_gas_production">List of countries by natural gas production</a></td>
+      <td>This is a list of countries by natural gas production  based on statistics from The World Factbook, and OECD members natural gas production by International Energy Agency (down) \n\n\n== Countries by natural gas production ==\nThe data in the following table comes from The World Factbook.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_processing">Natural-gas processing</a></td>
+      <td>Natural-gas processing is a range of industrial processes designed to purify raw natural gas by removing impurities, contaminants and higher molecular mass hydrocarbons to produce what is known as pipeline quality dry natural gas. Natural gas has to be processed in order to prepare it for final use and ensure that elimination of contaminants.Natural-gas processing starts underground or at the well-head.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_vehicle">Natural gas vehicle</a></td>
+      <td>A natural gas vehicle (NGV) is an alternative fuel vehicle that uses compressed natural gas (CNG) or liquefied natural gas (LNG). Natural gas vehicles should not be confused with autogas vehicles powered by liquefied petroleum gas (LPG), mainly propane, a fuel with a fundamentally different composition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_in_Ukraine">Natural gas in Ukraine</a></td>
+      <td>Ukraine has been estimated to possess natural gas reserves of over 1 trillion cubic meters and in 2018 was ranked 26th among countries with proved reserves of natural gas. Its total gas reserves have been estimated at 5.4 trillion cubic meters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_condensate">Natural-gas condensate</a></td>
+      <td>Natural-gas condensate, also called natural gas liquids, is a low-density mixture of hydrocarbon liquids that are present as gaseous components in the raw natural gas produced from many natural gas fields. Some gas species within the raw natural gas will condense to a liquid state if the temperature is reduced to below the hydrocarbon dew point temperature at a set pressure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_prices">Natural gas prices</a></td>
+      <td>Natural gas prices, as with other commodity prices, are mainly driven by supply and demand fundamentals.  However, natural gas prices may also be linked to the price of crude oil and petroleum products, especially in continental Europe.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beneficial_ownership">Beneficial ownership</a></td>
+      <td>In domestic and international commercial law, a beneficial owner is a natural person or persons who ultimately owns or controls an interest in a legal entity or arrangement, such as a company, a trust, or a foundation. Legal owners (i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conflict_of_interest">Conflict of interest</a></td>
+      <td>A conflict of interest (COI) is a situation in which a person or organization is involved in multiple interests, financial or otherwise, and serving one interest could involve working against another. Typically, this relates to situations in which the personal interest of an individual or organization might adversely affect a duty owed to make decisions for the benefit of a third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adam_Neumann">Adam Neumann</a></td>
+      <td>Adam Neumann (Hebrew: אדם נוימן; born April 25, 1979) is an Israeli-American businessman and investor. In 2010, he co-founded WeWork with Miguel McKelvey.Following mounting pressure from investors based on disclosures made in its S-1 filing, Neumann resigned as CEO of WeWork and gave up majority voting control as of September 26, 2019.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Earnings_before_interest,_taxes,_depreciation_and_amortization">Earnings before interest, taxes, depreciation and amortization</a></td>
+      <td>A company's earnings before interest, taxes, depreciation, and amortization (commonly abbreviated EBITDA, pronounced , , or ) is a measure of a company's profitability of the operating business only, thus before any effects of indebtedness, state-mandated payments, and costs required to maintain its asset base. It is derived by subtracting from revenues all costs of the operating business (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Passive_income">Passive income</a></td>
+      <td>Passive income is a type of unearned income that is acquired automatically with minimal labor to earn or maintain. It is often combined with another source of income, such as a side hustle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development/For!">Development/For!</a></td>
+      <td>Development/For! (Latvian: Attīstībai/Par!, AP!) is a liberal political alliance in Latvia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Human_Development_Index">Human Development Index</a></td>
+      <td>The Human Development Index (HDI) is a statistic composite index of life expectancy, education (mean years of schooling completed and expected years of schooling upon entering the education system), and per capita income indicators, which are used to rank countries into four tiers of human development. A country scores a higher level of HDI when the lifespan is higher, the education level is higher, and the gross national income GNI (PPP) per capita is higher.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Permian_Basin_Royalty_Trust">Permian Basin Royalty Trust</a></td>
+      <td>The Permian Basin Royalty Trust (NYSE: PBT) is a United States oil and natural gas royalty trust based in Dallas, Texas.  With a market capitalization of US $790,000,000, and an average daily trading volume of about 186,000 shares at the end of 2007, it was one of the largest royalty trusts in the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dabney_Oil_Syndicate">Dabney Oil Syndicate</a></td>
+      <td>The Dabney Oil Syndicate refers to a number of petroleum-drilling enterprises in California involving Joseph B. Dabney and his associates.\n\n\n== History ==\n\n\n=== Dabney Oil Company ===\nJoseph Benjamin Dabney, born 1858 in Madison County, Iowa, was in California at the turn of the 20th century when interest was being awakened in the possibilities of drilling for oil.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Thunderbolt_(interface)">Thunderbolt (interface)</a></td>
+      <td>Thunderbolt is the brand name of a hardware interface for the connection of external peripherals to a computer. It has been developed by Intel, in collaboration with Apple.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Termination_fee">Termination fee</a></td>
+      <td>An early termination fee is a charge levied when a party wants to break the term of an agreement or long-term contract. They are stipulated in the contract or agreement itself, and provide an incentive for the party subject to them to abide by the agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Indian_termination_policy">Indian termination policy</a></td>
+      <td>Indian termination is a phrase describing United States policies relating to Native Americans from the mid-1940s to the mid-1960s. It was shaped by a series of laws and practices with the intent of assimilating Native Americans into mainstream American society.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Late_termination_of_pregnancy">Late termination of pregnancy</a></td>
+      <td>Late termination of pregnancy (also referred to as late-term abortion) describes the termination of pregnancy by induced abortion during a late stage of gestation. "Late", in this context, is not precisely defined, and different medical publications use varying gestational age thresholds.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electrical_termination">Electrical termination</a></td>
+      <td>In electronics, electrical termination is the practice of ending a transmission line with a device that matches the characteristic impedance of the line. Termination prevents signals from reflecting off the end of the transmission line.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_termination">Network termination</a></td>
+      <td>A network termination (NT) (also NTE for network termination equipment) is a device that connects the customer's data or telephone equipment to a carrier's line that comes into a building or an office. The NT device provides a connection for terminal equipment (TE) and terminal adapter (TA) equipment to the local loop.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>LL&amp;E ROYALTY TRUST    ITEM 1A  RISK FACTORS         Although <font color="blue">risk factors</font> are <font color="blue">described elsewhere</font> in this Form 10-K together  with specific Cautionary Statements, the following is a summary of the principal  <font color="blue">risks associated with</font> an <font color="blue">investment</font> in units in the Trust</td>
+    </tr>
+    <tr>
+      <td>NATURAL GAS AND OIL PRICES FLUCTUATE DUE TO A NUMBER OF FACTORS, AND LOWER  PRICES WILL REDUCE NET PROCEEDS AVAILABLE TO THE TRUST AND DISTRIBUTIONS TO  TRUST UNIT HOLDERS         The Trustapstas <font color="blue">distributions</font> are <font color="blue">highly <font color="blue">dependent upon</font></font> the prices realized  from the sale of <font color="blue">natural gas</font> and oil</td>
+    </tr>
+    <tr>
+      <td>Natural gas and oil prices can fluctuate  widely on a month-to-month basis in response to a variety of factors that are  beyond the control <font color="blue">of the Trust</font> and the Working Interest Owner</td>
+    </tr>
+    <tr>
+      <td>Factors that  contribute to price fluctuation include, <font color="blue">among others</font>:         - <font color="blue">political conditions worldwide</font>, in particular political disruption, war         or other <font color="blue">armed conflicts</font> in oil producing regions;         - <font color="blue">worldwide economic conditions</font>;         - <font color="blue">weather conditions</font>;         - the supply and price of foreign <font color="blue">natural gas</font> and oil;         - the level of <font color="blue">consumer demand</font>;         - the price and <font color="blue">availability</font> of <font color="blue">alternative fuels</font>;         - the proximity to, and <font color="blue">capacity</font> of, <font color="blue"><font color="blue">transportation</font> <font color="blue">facilities</font></font>; and         - the effect of <font color="blue">worldwide energy conservation measures</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, government <font color="blue">regulations</font>, such as regulation of <font color="blue">natural gas</font>  <font color="blue">transportation</font> and <font color="blue">price controls</font>, can <font color="blue">affect product prices</font> in the long term</td>
+    </tr>
+    <tr>
+      <td>Lower <font color="blue">natural gas</font> and oil prices may reduce the amount of <font color="blue">natural gas</font> and  oil that is economic to produce and <font color="blue">reduce net profits available</font> to the Trust</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">volatility</font> of <font color="blue">energy prices reduces</font> the <font color="blue">predictability</font> of <font color="blue">future cash</font>  <font color="blue">distributions</font> to <font color="blue">unitholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of the <font color="blue">natural gas</font>, oil and  <font color="blue">natural gas</font> liquids produced from the properties are being sold under short-term  or multi-month contracts at market clearing prices or on the spot market</td>
+    </tr>
+    <tr>
+      <td>DAMAGE FROM HURRICANES KATRINA, RITA AND DENNIS AND TROPICAL STORM CINDY WILL  HAVE A MATERIAL ADVERSE EFFECT ON DISTRIBUTIONS FROM THE TRUST FOR THE  FORSEEABLE FUTURE         The damage caused by Hurricanes Katrina, Rita and Dennis as well as  Tropical Storm Cindy, to production <font color="blue">facilities</font> for properties in which the Trust  has an interest, is expected to have a material adverse effect on <font color="blue">distributions</font>  from the Trust for the <font color="blue">forseeable future</font></td>
+    </tr>
+    <tr>
+      <td>While the information available  remains <font color="blue">preliminary</font> and subject to change, the damage has <font color="blue">interrupted</font>  production, damaged production <font color="blue">facilities</font>, increased expenses, increased  <font color="blue">abandonment</font> costs, and resulted in the <font color="blue">decision by</font> the <font color="blue">Working Interest Owner </font>to  begin escrowing all funds otherwise <font color="blue">distributable</font> <font color="blue">to the Trust </font>from the Offshore  Louisiana and South Pass 89 properties, as well as the <font color="blue">decision by</font> <font color="blue">the Trustee </font> to escrow all of the amounts otherwise <font color="blue">distributable</font> to Unitholders in November  2005 and January -- March 2006</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>information regarding the damage to  these properties are included under Managementapstas Discussion and Analysis</td>
+    </tr>
+    <tr>
+      <td>PENDING LITIGATION AGAINST THE WORKING INTEREST OWNER COULD ADVERSELY IMPACT  CASH DISTRIBUTIONS         <font color="blue">The Trustee </font>has <font color="blue">been informed by</font> the <font color="blue">Working Interest Owner </font>that the  <font color="blue">Working Interest Owner </font>has <font color="blue">been named as one</font> of many <font color="blue">defendants</font> in certain  lawsuits alleging the <font color="blue">underpayment</font> of <font color="blue">royalties on</font> the production of <font color="blue">natural gas</font>  and <font color="blue">natural gas</font> liquids through the use of below-<font color="blue">market prices</font>, improper  deductions, improper measurement techniques and <font color="blue">transactions with affiliated</font>  companies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Plaintiffs </font>in some of the lawsuits allege that the <font color="blue">underpayment</font> of  royalties, among other things, resulted in <font color="blue">false forms</font> being filed by                                          40  <PAGE>    the <font color="blue">Working Interest Owner </font>with the Minerals Management Service, thereby  violating the civil <font color="blue">False Claims Act</font></td>
+    </tr>
+    <tr>
+      <td>If the plaintiffs are successful in the <font color="blue">matters described</font> above, revenues  <font color="blue">to the Trust </font><font color="blue">could decrease</font></td>
+    </tr>
+    <tr>
+      <td>A judgment or <font color="blue">settlement could entitle</font> the Working  Interest Owner to <font color="blue">reimbursements</font> for past periods <font color="blue">attributable</font> to properties  covered by the Trustapstas interest, which <font color="blue">could decrease</font> future royalty payments to  the Trust</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Working Interest Owner </font>has informed <font color="blue">the Trustee </font>that at this  time, the <font color="blue">Working Interest Owner </font>is not able to <font color="blue">reasonably</font> estimate the amount  of any <font color="blue">potential loss</font> or <font color="blue">settlement allocable</font> to the Trustapstas interest</td>
+    </tr>
+    <tr>
+      <td>INCREASED PRODUCTION AND DEVELOPMENT COSTS FOR THE OVERRIDING ROYALTIES WILL  RESULT IN DECREASED TRUST DISTRIBUTIONS         Production and <font color="blue">development</font> costs <font color="blue">attributable</font> <font color="blue">to the <font color="blue"><font color="blue">Overriding Royalties</font> </font> </font>are deducted in the <font color="blue">calculation</font> <font color="blue">of the Trust</font>apstas share of net proceeds</td>
+    </tr>
+    <tr>
+      <td>Accordingly, higher or <font color="blue">lower production</font> and <font color="blue">development</font> costs, without  <font color="blue">concurrent increases</font> in revenues, directly decrease or increase the amount  received by the <font color="blue">Trust for the <font color="blue">Overriding Royalties</font></font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">development</font> and <font color="blue"><font color="blue">production cost</font>s</font> of the <font color="blue"><font color="blue">Overriding Royalties</font> </font>exceed the  proceeds of <font color="blue">production from</font> the properties, the Trust will not receive net  proceeds for those properties until future proceeds from production exceed the  total of the <font color="blue">excess costs plus accrued interest during</font> the <font color="blue">deficit period</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Development </font><font color="blue">activities may</font> not <font color="blue">generate sufficient <font color="blue">additional</font> revenue</font> to repay  the costs</td>
+    </tr>
+    <tr>
+      <td>TRUST RESERVE ESTIMATES DEPEND ON MANY ASSUMPTIONS THAT MAY PROVE TO BE  INACCURATE, WHICH COULD CAUSE BOTH ESTIMATED RESERVES AND ESTIMATED FUTURE  REVENUES TO BE TOO HIGH         The value of the units of <font color="blue">beneficial interest</font> <font color="blue">of the Trust</font> <font color="blue">depends upon</font>,  among other things, the amount of reserves <font color="blue">attributable</font> to the Overriding  Royalties and the estimated <font color="blue">future value</font> of the reserves</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Estimating </font>reserves is  <font color="blue">inherently uncertain</font></td>
+    </tr>
+    <tr>
+      <td>Ultimately, actual production, revenues and <font color="blue">expenditures</font>  for the <font color="blue"><font color="blue">underlying properties</font> will vary from</font> estimates and those <font color="blue">variations</font>  could be material</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Petroleum </font>engineers consider many factors and make  <font color="blue">assumptions</font> in estimating reserves</td>
+    </tr>
+    <tr>
+      <td>Those factors and <font color="blue">assumptions</font> include:         - historical <font color="blue">production from</font> the <font color="blue">area compared with production rates from</font>         similar producing areas;         - the assumed effect of <font color="blue">governmental regulation</font>; and         - <font color="blue">assumptions</font> about future commodity prices, production and <font color="blue">development</font>         costs, severance and <font color="blue">excise taxes</font>, and capital <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>Changes in these <font color="blue">assumptions</font> can <font color="blue">materially</font> change reserve estimates</td>
+    </tr>
+    <tr>
+      <td>The reserve quantities <font color="blue">attributable</font> to the <font color="blue"><font color="blue">Overriding Royalties</font> </font>and  revenues are based on estimates of reserves and revenues for the underlying  properties</td>
+    </tr>
+    <tr>
+      <td>The method of <font color="blue">allocating</font> a portion of those reserves <font color="blue">to the Trust </font>is  complicated because the Trust holds an interest in the <font color="blue"><font color="blue">Overriding Royalties</font> </font>and  does not own a specific percentage of the <font color="blue">natural gas</font> reserves</td>
+    </tr>
+    <tr>
+      <td><font color="blue">OPERATING RISKS FOR THE WORKING INTEREST OWNER </font>&amp;apos S INTERESTS IN THE PROPERTIES CAN  ADVERSELY AFFECT TRUST DISTRIBUTIONS         The occurrence of drilling, production or <font color="blue">transportation</font> accidents and  other <font color="blue">natural disasters at</font> any of the <font color="blue">properties will reduce</font> Trust <font color="blue">distributions</font>  by the amount of <font color="blue">uninsured costs</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">occurrences</font> include blowouts, cratering,  explosives and other <font color="blue">environmental</font> damage that may result in <font color="blue">personal injuries</font>,  property damage, damage to <font color="blue">productive formations</font> or equipment and <font color="blue">environmental</font>  damages</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">uninsured costs</font> would be <font color="blue">deducted as</font> a <font color="blue">production cost</font> in  <font color="blue">calculating <font color="blue">net proceeds payable</font></font> to the Trust</td>
+    </tr>
+    <tr>
+      <td>41  <PAGE>    THE OPERATORS OF THE PROPERTIES ARE SUBJECT TO EXTENSIVE GOVERNMENTAL  REGULATION         Oil and gas <font color="blue">operations</font> have been, and in the <font color="blue">future will</font> be, <font color="blue">affected by</font>  federal, state and <font color="blue">local laws</font> and <font color="blue">regulations</font> and other political <font color="blue">development</font>s,  <font color="blue">such as price</font> or gathering <font color="blue">rate controls</font> and <font color="blue">environmental</font> protection  <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>NONE OF THE TRUSTEE, THE TRUST NOR THE UNIT HOLDERS CONTROL THE OPERATION OR  DEVELOPMENT OF THE PROPERTIES OR HAVE ANY INFLUENCE OVER OPERATION OR  DEVELOPMENT         <font color="blue">Neither <font color="blue">the Trustee </font></font>nor the Unit holders can influence or control the  operation or future <font color="blue">development</font> of the <font color="blue">underlying properties</font></td>
+    </tr>
+    <tr>
+      <td>The properties are  operated <font color="blue">by independent third parties</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Working Interest Owner </font>does not  operate any of the properties</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Neither <font color="blue">the Trustee </font></font>nor the Unit holders have any  right to replace an operator</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Working Interest Owner </font><font color="blue">handles receipt</font> and  payment of funds relating to the <font color="blue">Properties </font>and payments <font color="blue">to the Trust </font>for the  <font color="blue">Overriding Royalties</font></td>
+    </tr>
+    <tr>
+      <td>THE OWNER OF ANY PROPERTIES MAY ABANDON ANY PROPERTY, TERMINATING THE RELATED  OVERRIDING ROYALTIES         The operators of the <font color="blue">properties may abandon</font> any well or property if they  <font color="blue">reasonably</font> believes that the well or property can no longer produce in  <font color="blue">commercially economic quantities</font></td>
+    </tr>
+    <tr>
+      <td>This could result in <font color="blue">termination</font> of the  <font color="blue"><font color="blue">Overriding Royalties</font> </font>relating to the <font color="blue">abandoned well</font> or property</td>
+    </tr>
+    <tr>
+      <td>THE OVERRIDING ROYALTIES CAN BE SOLD AND THE TRUST CAN BE TERMINATED         <font color="blue">The Trust </font>Agreement provides that the Trust <font color="blue">will terminate</font> in the event  that the <font color="blue"><font color="blue">net revenues</font> fall</font> below dlra5 million for <font color="blue">two successive years</font></td>
+    </tr>
+    <tr>
+      <td>Unless  <font color="blue">sooner terminated</font>, the Trust <font color="blue"><font color="blue">will continue</font> until such</font> time as its <font color="blue">net revenues</font>  (<font color="blue">cash earnings</font>) for each of <font color="blue">two successive years</font> are less than dlra5 million per  year</td>
+    </tr>
+    <tr>
+      <td>Net revenues are <font color="blue">calculated as royalty revenues</font> after <font color="blue">administrative</font>  expenses <font color="blue">of the Trust</font> and as if the Trust had received its pro rata portion of  any amounts being <font color="blue">withheld by</font> the <font color="blue">Working Interest Owners or the Partnership  </font><font color="blue">under escrow arrangements</font> or to make <font color="blue">refund payments pursuant</font> to the Conveyance  (the Trustapstas pro rata portion of <font color="blue">escrowed amounts</font> relating to the future  <font color="blue">dismantlement</font> of platforms are included in the net revenue <font color="blue">calculation</font> for this  purpose)</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Trust </font>may be <font color="blue">terminated at</font> any time by a vote of Unit holders  owning a majority of the Units</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Trust </font>may also be <font color="blue">terminated at</font> the  expiration of twenty-one (21) years after the death of the last to die of all of  the <font color="blue">issue living at</font> the date of execution of this Trust Agreement of John D  Rockefeller, Jr, <font color="blue">late father</font> of the <font color="blue">late former</font> Vice President of the United  States, Nelson A Rockefeller</td>
+    </tr>
+    <tr>
+      <td>Upon the <font color="blue">termination</font> <font color="blue">of the Trust</font>, <font color="blue">the Trustee </font>will sell the assets of the  Trust for cash (unless authorized by the holders of a majority of the Units to  sell such assets for non-cash <font color="blue">consideration</font> consisting of personal property)  upon such terms as the Trustee, in its sole <font color="blue">discretion</font>, deems to be in the best  interest <font color="blue">of the Unit </font>holders</td>
+    </tr>
+    <tr>
+      <td>After paying or making provisions for all then  <font color="blue">existing liabilities</font> <font color="blue">of the Trust</font>, including fees <font color="blue">of the Trust</font>ee, <font color="blue">the Trustee </font> will distribute all cash then held by it <font color="blue">as promptly as practicable</font> in its  <font color="blue">capacity</font> as Trustee an, if <font color="blue">necessary</font>, will set up reserves in the amounts the  Trustee deems <font color="blue">appropriate</font> to provide for payment of <font color="blue">contingent liabilities</font></td>
+    </tr>
+    <tr>
+      <td>After the <font color="blue">termination</font> <font color="blue">of the Trust</font>, <font color="blue">the Trustee </font><font color="blue">will continue</font> to act as Trustee  for purposes of <font color="blue">liquidating</font> and winding up the affairs <font color="blue">of the Trust</font></td>
+    </tr>
+    <tr>
+      <td>If any asset required to be sold has not been sold within three years after  the <font color="blue">termination</font> <font color="blue">of the Trust</font>, <font color="blue">the Trustee </font>will cause the asset to be sold at  <font color="blue">public auction</font> to the <font color="blue">highest cash bidder</font></td>
+    </tr>
+    <tr>
+      <td>Except in <font color="blue">connection with</font> any  proposed non-cash sale as described above, no approval <font color="blue">of the Unit </font><font color="blue">holders will</font>  be required or solicited in <font color="blue">connection with</font> the sale <font color="blue">of the Trust</font>apstas assets after  <font color="blue">termination</font> <font color="blue">of the Trust</font></td>
+    </tr>
+    <tr>
+      <td>TRUST ASSETS ARE DEPLETING ASSETS AND, IF THE OPERATORS OF THE PROPERTIES DO NOT  PERFORM ADDITIONAL DEVELOPMENT PROJECTS, THE ASSETS MAY DEPLETE FASTER THAN  EXPECTED         The <font color="blue">net proceeds payable</font> <font color="blue">to the Trust </font>are <font color="blue">derived from</font> the sale of  <font color="blue">depleting assets</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, the portion of the <font color="blue">distributions</font> to Unit holders  <font color="blue">attributable</font> to <font color="blue">depletion may</font> be considered a return of capital</td>
+    </tr>
+    <tr>
+      <td>The reduction  in <font color="blue">proved reserve quantities</font> is a common measure of depletion</td>
+    </tr>
+    <tr>
+      <td>Future  maintenance and                                            42  <PAGE>    <font color="blue">development</font> projects on the <font color="blue">properties will affect</font> the quantity of proved  reserves</td>
+    </tr>
+    <tr>
+      <td>The timing and size of these projects <font color="blue">will depend on</font> the <font color="blue">market prices</font>  of <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>If operators of the <font color="blue">Properties </font>do not implement <font color="blue">additional</font>  maintenance and <font color="blue">development</font> projects, the <font color="blue">future rate</font> of <font color="blue">production decline</font> of  <font color="blue">proved reserves may</font> be <font color="blue">higher than</font> the <font color="blue">rate currently</font> expected by the Trust</td>
+    </tr>
+    <tr>
+      <td>For  federal income tax purposes, depletion is <font color="blue">reflected as</font> a deduction, which is  <font color="blue">dependent upon</font> the <font color="blue">purchase price</font> of a unit</td>
+    </tr>
+    <tr>
+      <td>Please see the section entitled   &amp;quote -- Tax Considerations to Owners of Units -- Federal Income Tax Considerations &amp;quote   under Item 1 of this Form 10-K    UNIT HOLDERS HAVE LIMITED VOTING RIGHTS         Voting rights as a Unit holder are more limited than those of <font color="blue">stockholders</font>  of <font color="blue">most public corporations</font></td>
+    </tr>
+    <tr>
+      <td>For example, there is <font color="blue">no requirement</font> for annual  meetings of Unit holders or for an annual or other periodic re-election of the  Trustee</td>
+    </tr>
+    <tr>
+      <td>Unlike <font color="blue">corporations which</font> are <font color="blue">generally governed by boards</font> of <font color="blue">directors</font>  <font color="blue">elected by</font> their <font color="blue">equity holders</font>, the Trust is <font color="blue">administered by</font> a corporate  Trustee in <font color="blue">accordance</font> with <font color="blue">the Trust Agreement </font>and other <font color="blue">organizational</font>  <font color="blue">documents</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Trustee </font>has extremely limited <font color="blue">discretion</font> in its <font color="blue">administration</font> of  the Trust</td>
+    </tr>
+    <tr>
+      <td>UNIT HOLDERS HAVE LIMITED ABILITY TO ENFORCE THE TRUST &amp;apos S RIGHTS AGAINST THE  CURRENT OR FUTURE OWNERS OF THE PROPERTIES         <font color="blue">The Trust </font>Agreement and related trust law permit <font color="blue">the Trustee </font>and the Trust  to sue the <font color="blue">Working Interest Owner </font>to compel it to fulfill the terms of the  <font color="blue">Conveyances </font>of the <font color="blue">Overriding Royalties</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">the Trustee </font>does not take  <font color="blue">appropriate</font> action to <font color="blue">enforce provisions</font> of the Conveyances, the recourse of a  Unit <font color="blue">holder would likely</font> be limited to bringing a <font color="blue">lawsuit against</font> <font color="blue">the Trustee </font>to  compel <font color="blue">the Trustee </font>to take specified actions</td>
+    </tr>
+    <tr>
+      <td>Unit <font color="blue">holders probably would</font> not be  able to sue the <font color="blue">Working Interest Owner </font>directly</td>
+    </tr>
+  </tbody>
+</table>

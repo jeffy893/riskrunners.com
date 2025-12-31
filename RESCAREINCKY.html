@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "10: government", fill: "#cd5b45"},
+{source: "10: government", target: "10: appropriation", fill: "#cd5b45"},
+{source: "10: appropriation", target: "10: obligations", fill: "#cd5b45"},
+{source: "10: obligations", target: "10: reimbursement", fill: "#cd5b45"},
+{source: "10: government", target: "31: through acquisitions involves risks", fill: "#00416a"},
+{source: "31: through acquisitions involves risks", target: "31: acquisition there", fill: "#00416a"},
+{source: "31: acquisition there", target: "31: possibility", fill: "#00416a"},
+{source: "31: possibility", target: "31: unforeseen difficulties may", fill: "#00416a"},
+{source: "31: unforeseen difficulties may", target: "31: integrating", fill: "#00416a"},
+{source: "31: integrating", target: "31: operations", fill: "#00416a"},
+{source: "31: operations", target: "31: accounting controls", fill: "#00416a"},
+{source: "31: accounting controls", target: "31: efficiencies synergies economies", fill: "#00416a"},
+{source: "31: efficiencies synergies economies", target: "31: reductions may", fill: "#00416a"},
+{source: "31: reductions may", target: "31: generate income at", fill: "#00416a"},
+{source: "31: generate income at", target: "31: same historical levels on which", fill: "#00416a"},
+{source: "31: same historical levels on which", target: "31: acquisition decision", fill: "#00416a"},
+{source: "31: acquisition decision", target: "31: management may", fill: "#00416a"},
+{source: "31: management may", target: "31: distracted from overseeing existing operations by", fill: "#00416a"},
+{source: "31: distracted from overseeing existing operations by", target: "31: unexpected liabilities", fill: "#00416a"},
+{source: "31: unexpected liabilities", target: "31: unanticipated costs", fill: "#00416a"},
+{source: "31: unanticipated costs", target: "31: assimilate key employees", fill: "#00416a"},
+{source: "31: assimilate key employees", target: "31: acquisition by additional debt", fill: "#00416a"},
+{source: "31: acquisition by additional debt", target: "31: highly leveraged", fill: "#00416a"},
+{source: "31: highly leveraged", target: "31: match well with", fill: "#00416a"},
+{source: "31: through acquisitions involves risks", target: "44: government regulation", fill: "#ef98aa"},
+{source: "44: government regulation", target: "44: comply with", fill: "#ef98aa"},
+{source: "44: comply with", target: "44: regulations", fill: "#ef98aa"},
+{source: "44: regulations", target: "44: could suffer penalties", fill: "#ef98aa"},
+{source: "44: could suffer penalties", target: "44: significant", fill: "#ef98aa"},
+{source: "44: significant", target: "44: operations", fill: "#ef98aa"},
+{source: "44: government regulation", target: "45: health care", fill: "#002e63"},
+{source: "45: health care", target: "45: complex laws", fill: "#002e63"},
+{source: "45: complex laws", target: "45: regulations at", fill: "#002e63"},
+{source: "45: regulations at", target: "45: local government levels", fill: "#002e63"},
+{source: "45: local government levels", target: "45: certification", fill: "#002e63"},
+{source: "45: certification", target: "45: health care services", fill: "#002e63"},
+{source: "45: health care services", target: "45: qualifications", fill: "#002e63"},
+{source: "45: qualifications", target: "45: support personnel", fill: "#002e63"},
+{source: "45: support personnel", target: "45: confidentiality maintenance", fill: "#002e63"},
+{source: "45: confidentiality maintenance", target: "45: security issues associated with", fill: "#002e63"},
+{source: "45: security issues associated with", target: "45: medical records", fill: "#002e63"},
+{source: "45: medical records", target: "45: relationships with referral sources", fill: "#002e63"},
+{source: "45: relationships with referral sources", target: "45: facilities", fill: "#002e63"},
+{source: "45: health care", target: "72: thirdparty insurance coverage", fill: "#779ecb"},
+{source: "72: thirdparty insurance coverage", target: "72: operations", fill: "#779ecb"},
+{source: "72: operations", target: "72: obligations under", fill: "#779ecb"},
+{source: "72: obligations under", target: "72: indebtedness", fill: "#779ecb"},
+{source: "72: thirdparty insurance coverage", target: "START_HERE", fill: "#779ecb"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Health Care Supplies</td>
+    </tr>
+    <tr>
+      <td>Health Care</td>
+    </tr>
+    <tr>
+      <td>Health Care Equipment and Services</td>
+    </tr>
+    <tr>
+      <td>Managed Health Care</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Obligation">Obligation</a></td>
+      <td>An obligation is a course of action that someone is required to take, whether legal or moral.  Obligations are constraints; they limit freedom.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Law_of_obligations">Law of obligations</a></td>
+      <td>The law of obligations is one branch of private law under the civil law legal system and so-called "mixed" legal systems. It is the body of rules that organizes and regulates the rights and duties arising between individuals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Positive_obligations">Positive obligations</a></td>
+      <td>Positive obligations in human rights law denote a State's obligation to engage in an activity to secure the effective enjoyment of a fundamental right, as opposed to the classical negative obligation to merely abstain from human rights violations.\nClassical human rights, such as the right to life or freedom of expression, are formulated or understood as prohibitions for the State to act in a way that would violate these rights.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Debt">Debt</a></td>
+      <td>Death is the irreversible cessation of all biological functions that sustain an organism. Brain death is sometimes used as a legal definition of death.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Flight_Facilities">Flight Facilities</a></td>
+      <td>Flight Facilities is an Australian electronic producer duo that also performs as Hugo &amp; Jimmy. In 2009, they began mixing songs by other artists before crafting their own original material.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NASA_facilities">NASA facilities</a></td>
+      <td>There are NASA facilities across the United States and around the world. NASA Headquarters in Washington, DC provides overall guidance and political leadership to the agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pedestrian_facilities">Pedestrian facilities</a></td>
+      <td>Pedestrian facilities include retail shops, museums, mass events (such as festivals or concert halls), hospitals, transport hubs (such as train stations or airports), sports infrastructure (such as stadiums) and religious infrastructures. The transport mode in such infrastructures is mostly walking, with rare exceptions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Essential_facilities_doctrine">Essential facilities doctrine</a></td>
+      <td>The essential facilities doctrine (sometimes also referred to as the essential facility doctrine) is a legal doctrine which describes a particular type of claim of monopolization made under competition laws.  In general, it refers to a type of anti-competitive behavior in which a firm with market power uses a "bottleneck" in a market to deny competitors entry into the market.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zubieta_Facilities">Zubieta Facilities</a></td>
+      <td>The Zubieta Facilities (Basque: Zubietako Kirol-instalakuntzak, Spanish: Instalaciones de Zubieta), is the training ground of the Primera Division club Real Sociedad. Located in Zubieta, an enclave of San Sebastian (adjacent to the San Sebastián Hippodrome), it was opened in 2004 in its modernised form, although was originally inaugurated in 1981.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Attacks_on_U.S._diplomatic_facilities">Attacks on U.S. diplomatic facilities</a></td>
+      <td>The United States maintains numerous embassies and consulates around the world, many of which are in war-torn countries or other dangerous areas.\n\n\n== Diplomatic Security ==\nThe Regional Security Office is staffed by Special Agents of the Diplomatic Security Service (DSS), and is responsible for all security, protection, and law enforcement operations in the embassy or consulate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facilities_engineering">Facilities engineering</a></td>
+      <td>Facilities engineering evolved from "plant engineering" in the early 1990s as U.S. workplaces became more specialized. Practitioners preferred this term because it more accurately reflected the multidisciplinary demands for specialized conditions in a wider variety of indoor environments, not merely manufacturing plants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Facilities_Society">The Facilities Society</a></td>
+      <td>The Facilities Society was founded in the UK on 9 December 2008 as a not-for-profit company limited by guarantee (registered in England nr. 6769050).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Force_majeure">Force majeure</a></td>
+      <td>Force majeure (lit. superior force, with the sense of overwhelming force, from French)\nis a common clause in contracts which essentially frees both parties from liability or obligation when an extraordinary event or circumstance beyond the control of the parties, such as a war, strike, riot, crime, epidemic or sudden legal changes prevents one or both parties from fulfilling their obligations under the contract.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Breach_of_contract">Breach of contract</a></td>
+      <td>Breach of contract is a legal cause of action and a type of civil wrong, in which a binding agreement or bargained-for exchange is not honored by one or more of the parties to the contract by non-performance or interference with the other party's performance. Breach occurs when a party to a contract fails to fulfill its obligation(s), whether partially or wholly, as described in the contract, or communicates an intent to fail the obligation or otherwise appears not to be able to perform its obligation under the contract.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nicaragua_v._United_States">Nicaragua v. United States</a></td>
+      <td>The Republic of Nicaragua v. The United States of America (1986) was a case where the International Court of Justice (ICJ) held that the U.S. had violated international law by supporting the Contras in their rebellion against the Sandinistas and by mining Nicaragua's harbors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bosnian_genocide_case">Bosnian genocide case</a></td>
+      <td>Bosnia and Herzegovina v Serbia and Montenegro [2007] ICJ 2 (also called the Application of the Convention on the Prevention and Punishment of the Crime of Genocide) is a public international law case decided by the International Court of Justice.\n\n\n== Facts ==\nSerbia was alleged to have attempted to exterminate the Bosniak (Bosnian Muslim) population of Bosnia and Herzegovina.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lapland_War">Lapland War</a></td>
+      <td>During World War II, the Lapland War (Finnish: Lapin sota; Swedish: Lapplandskriget; German: Lapplandkrieg) saw fighting between Finland and Nazi Germany – effectively from September to November 1944 – in Finland's northernmost region, Lapland. Though the Finns and the Germans had been fighting against the Soviet Union since 1941 during the Continuation War (1941–1944), peace negotiations had already been conducted intermittently during 1943–1944 between Finland, the Western Allies and the USSR, but no agreement had been reached.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RES CARE INC /KY/      Item 1A Risk Factors          Changes  in federal, state and local <font color="blue">reimbursement</font> policies could     <font color="blue">adversely</font> affect our revenues and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">derive virtually</font> all of our <font color="blue">revenues from federal</font>, state and local     <font color="blue">government</font>  agencies,  including state Medicaid programs</td>
+    </tr>
+    <tr>
+      <td>Our revenues     therefore  depend  to  a  large <font color="blue">degree on</font> the size of the <font color="blue">government</font>al     <font color="blue"><font color="blue">appropriation</font>s</font> for the services we provide</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Budgetary </font>pressures, as well as     economic, industry, political and other factors, could influence <font color="blue">government</font>s     not to increase and in some cases, to decrease <font color="blue"><font color="blue">appropriation</font>s</font> for these     services, which could reduce our <font color="blue">revenues materially</font></td>
+    </tr>
+    <tr>
+      <td>In fact, in <font color="blue">connection</font>     with Medicaid, a Medicaid <font color="blue">commission</font> has <font color="blue">been established</font> to advise the     Secretary of the Department of Health and Human Services on, among other     things, ways to achieve dlra10 billion in Medicaid <font color="blue">savings over five years</font></td>
+    </tr>
+    <tr>
+      <td>Many state <font color="blue">government</font>s also continue to experience shortfalls in their     Medicaid <font color="blue">budgets despite cost containment efforts</font></td>
+    </tr>
+    <tr>
+      <td>Future federal or state     <font color="blue"><font color="blue">initiatives</font> could institute <font color="blue">managed care</font> programs</font> for <font color="blue">individuals</font> we serve     or otherwise make material changes to the Medicaid <font color="blue">program as</font> it now exists</td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue">revenues may</font> be <font color="blue">affected by</font> changes in rate-setting structures,     <font color="blue">methodologies</font>  or  <font color="blue"><font color="blue">interpretation</font>s</font>  that  may be proposed or are under     <font color="blue">consideration</font> in states where we operate</td>
+    </tr>
+    <tr>
+      <td>Furthermore, federal, state and     local <font color="blue">government</font> agencies generally condition their <font color="blue">contracts with us upon</font> a     <font color="blue">sufficient <font color="blue">budgetary</font> <font color="blue">appropriation</font></font></td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">government</font> agency does not receive     an <font color="blue">appropriation</font> sufficient to cover its contractual <font color="blue">obligations</font> with us, it     may terminate a contract or defer or reduce our <font color="blue">reimbursement</font></td>
+    </tr>
+    <tr>
+      <td>Additionally,     there is risk that <font color="blue">previously appropriated funds could</font> be <font color="blue">reduced through</font>     <font color="blue">subsequent legislation</font></td>
+    </tr>
+    <tr>
+      <td>For example, President Bush’s <font color="blue">proposed budget</font> for     fiscal 2007 proposes substantial cuts in <font color="blue">federal spending</font> for workforce     <font color="blue">employment</font> and training</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict whether</font> any of the <font color="blue">proposed cuts</font>     will  be  made  or  how  they <font color="blue">will impact us</font></td>
+    </tr>
+    <tr>
+      <td>The loss or reduction of     <font color="blue">reimbursement</font> under our <font color="blue">contracts could</font> have a material adverse effect on     our business, <font color="blue">financial condition</font> and operating results</td>
+    </tr>
+    <tr>
+      <td>Our revenues and operating <font color="blue">profitability</font> depend on our <font color="blue">reimbursement</font>     rates</td>
+    </tr>
+    <tr>
+      <td>Our revenues and operating <font color="blue">profitability</font> depend on our ability to     maintain our existing <font color="blue">reimbursement</font> levels, to obtain <font color="blue">periodic increases</font> in     <font color="blue">reimbursement</font> rates to <font color="blue">meet higher costs</font> and demand for more services, and     to  receive  timely  payment</td>
+    </tr>
+    <tr>
+      <td>If we do not receive or <font color="blue">cannot negotiate</font>     increases in <font color="blue">reimbursement</font> rates at approximately the same time as our costs     of <font color="blue">providing services increase</font>, our revenues and <font color="blue">profitability</font> could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Labor  shortages  could  reduce our margins and <font color="blue">profitability</font> and     <font color="blue">adversely</font> affect the quality of our care</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">cost structure</font> and ultimate operating <font color="blue">profitability</font> are directly     related to our <font color="blue">labor costs</font></td>
+    </tr>
+    <tr>
+      <td>Labor costs may be <font color="blue">adversely</font> <font color="blue">affected by</font> a     variety of factors, including limited <font color="blue">availability</font> of <font color="blue">qualified personnel</font> in     each geographic area, local <font color="blue">competitive</font> forces, the <font color="blue">ineffective utilization</font>     of our <font color="blue">labor force</font>, changes in <font color="blue">minimum wages</font> or other <font color="blue">direct personnel</font>     costs, strikes or work <font color="blue">stoppages by employees represented by labor unions</font>,     and changes in client services models, such as the <font color="blue">trends toward supported</font>     living and <font color="blue">managed care</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">difficult</font>y</font> experienced in <font color="blue">hiring direct service</font>     staff and <font color="blue">nursing staff</font> in <font color="blue">certain markets from</font> time to time has resulted in     higher <font color="blue">labor costs</font> in some of our operating units</td>
+    </tr>
+    <tr>
+      <td>These higher <font color="blue">labor costs</font>     are associated with increased overtime, recruitment and retention, training     programs, and use of <font color="blue">temporary staffing personnel</font> and <font color="blue">outside clinical</font>     <font color="blue">consultants</font></td>
+    </tr>
+    <tr>
+      <td>We face substantial <font color="blue">competition</font> in attracting and retaining experienced     personnel, and we may be unable to grow our business if we <font color="blue">cannot attract</font>     and <font color="blue">return qualified employees</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font> to a <font color="blue">significant</font> <font color="blue">degree on</font> our ability to attract     and retain <font color="blue">highly qualified</font> and experienced <font color="blue">social <font color="blue">service <font color="blue">professional</font>s</font></font> who     possess the skills and experience <font color="blue">necessary</font> to deliver <font color="blue">high <font color="blue">quality service</font>s</font>     to our clients</td>
+    </tr>
+    <tr>
+      <td>These employees are in great demand and are likely to remain     a limited resource for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Contractual </font><font color="blue">requirements</font> and     client needs determine the number, <font color="blue">education</font> and experience levels of social     <font color="blue">service <font color="blue">professional</font>s</font> we hire</td>
+    </tr>
+    <tr>
+      <td>Our ability to attract and retain employees     with  the  requisite  experience and <font color="blue">skills depends on several factors</font>     including, but not limited to, our ability to <font color="blue">offer <font color="blue">competitive</font> wages</font>,     benefits and <font color="blue"><font color="blue">professional</font> growth opportunities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">inability</font> to attract and     retain experienced <font color="blue">personnel could</font> have a material adverse effect on our     business</td>
+    </tr>
+    <tr>
+      <td>16       _________________________________________________________________    [49]Table of Contents            We may not realize the anticipated benefit of any <font color="blue">future <font color="blue"><font color="blue">acquisition</font>s</font></font>     and we may experience <font color="blue"><font color="blue">difficult</font>ies</font> in <font color="blue">integrating</font> these <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As  part  of  our  growth  strategy,  we intend to make selective     <font color="blue"><font color="blue">acquisition</font>s</font>, including the January 3, 2006 <font color="blue">acquisition</font> of ACS Workforce     Services</td>
+    </tr>
+    <tr>
+      <td>Growing our business through <font color="blue"><font color="blue">acquisition</font>s</font> involves risks because     with any <font color="blue"><font color="blue">acquisition</font> there</font> is the <font color="blue">possibility</font> that:       •   we may be unable to maintain and renew the contracts of the acquired     business;          •   unforeseen <font color="blue"><font color="blue">difficult</font>ies</font> may arise when <font color="blue">integrating</font> the acquired     <font color="blue">operations</font>, including information systems and <font color="blue">accounting controls</font>;          •    operating efficiencies, synergies, economies of scale and cost     <font color="blue"><font color="blue">reductions</font> may</font> not be achieved as expected;         •   the business we acquire may not continue to <font color="blue">generate income at</font> the     <font color="blue">same historical levels on which</font> we based our <font color="blue"><font color="blue">acquisition</font> decision</font>;         •   <font color="blue"><font color="blue">management</font> may</font> be distracted from overseeing existing <font color="blue">operations</font> by     the need to integrate the acquired business;         •   we may acquire or assume <font color="blue">unexpected liabilities</font> or there may be other     <font color="blue">unanticipated costs</font>;         •   we may fail to retain and <font color="blue">assimilate <font color="blue">key employees</font></font> of the acquired     business;         •   we may finance the <font color="blue"><font color="blue">acquisition</font> by <font color="blue">additional</font> debt</font> and may become     <font color="blue">highly leveraged</font>; and         •   the culture of the acquired business may not <font color="blue">match well with</font> our     culture</td>
+    </tr>
+    <tr>
+      <td>As a result of these risks, there can be no assurance that any future     <font color="blue">acquisition</font> will be successful or that it will not have a material adverse     effect on our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">insurance coverage</font> and self-insurance reserves may not <font color="blue">cover future</font>     claims</td>
+    </tr>
+    <tr>
+      <td>Changes in the market for <font color="blue">insurance may affect</font> our ability to obtain     <font color="blue">insurance coverage</font> at reasonable rates</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">professional</font> and <font color="blue">general liability coverage provides</font>     for  a dlra1 million deductible per occurrence for <font color="blue">policy year commencing</font>     July 1,  2005,  and claims limits of dlra5 million per <font color="blue">occurrence up</font> to a     dlra6 million annual <font color="blue">aggregate limit</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">automobile coverage provides</font> for a     dlra1 million deductible per occurrence and claims limits of dlra5 million per     <font color="blue">occurrence up</font> to a dlra5 million <font color="blue">aggregate limit</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we purchased     <font color="blue">excess liability coverage with limits</font> of dlra15 million effective July 1, 2005,     to bring the <font color="blue">total liability coverage limits</font> to dlra20 million</td>
+    </tr>
+    <tr>
+      <td>The excess     <font color="blue">liability policy covers</font> the general and <font color="blue">professional</font> liability program, as     well as the <font color="blue">automobile liability program</font></td>
+    </tr>
+    <tr>
+      <td>Our workers’ compensation coverage     provides  for a dlra1 million deductible per occurrence, and claims up to     <font color="blue">statutory limits</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">property coverage provides</font> for an <font color="blue">aggregate limit</font> of     dlra100 million, with varying deductibles and sub-limits depending on the type     of  loss</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">utilize historical data</font> to estimate our reserves for our     insurance  programs</td>
+    </tr>
+    <tr>
+      <td>If  losses on asserted claims exceed the current     insurance  coverage  and  accrued  reserves,  our business, results of     <font color="blue">operations</font>, <font color="blue">financial condition</font> and ability to meet <font color="blue">obligations</font> under our     <font color="blue"><font color="blue">indebtedness</font> could</font> be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [50]Table of Contents            Our industry is subject to substantial <font color="blue">government</font> regulation and if we     fail to <font color="blue">comply with</font> those <font color="blue">regulations</font>, we <font color="blue">could suffer penalties</font> or be     required to make <font color="blue">significant</font> changes to our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">health care</font> industry, including our company, is required to comply     with extensive and <font color="blue">complex laws</font> and <font color="blue">regulations</font> at the federal, state and     local <font color="blue">government</font> levels relating to, among other things:       •   licensure and <font color="blue">certification</font>;         •   adequacy and quality of <font color="blue">health care</font> services;         •   <font color="blue">qualifications</font> of <font color="blue">health care</font> and <font color="blue">support personnel</font>;         •   confidentiality, maintenance and <font color="blue">security issues associated with</font>     <font color="blue">medical records</font> and claims processing;         •   <font color="blue"><font color="blue">relationships</font> with referral sources</font>;         •   operating policies and procedures;         •   addition of <font color="blue">facilities</font> and services; and         •   billing for services</td>
+    </tr>
+    <tr>
+      <td>Many of these laws and <font color="blue">regulations</font> are expansive, and we do not always     have the benefit of <font color="blue">significant</font> <font color="blue">regulatory</font> or judicial <font color="blue">interpretation</font> of     them</td>
+    </tr>
+    <tr>
+      <td>In the future, <font color="blue">different</font> <font color="blue"><font color="blue">interpretation</font>s</font> or <font color="blue">enforcement</font> of these laws     and <font color="blue">regulations</font> could subject our current or past practices to <font color="blue">allegations</font>     of <font color="blue">impropriety</font> or <font color="blue">illegality</font> or could require us to make changes in our     <font color="blue">facilities</font>, equipment, personnel, services, capital <font color="blue">expenditure</font> programs and     operating expenses</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> applicable laws and <font color="blue">regulations</font>, we could be     subject to <font color="blue">various sanctions</font>, including <font color="blue">criminal penalties</font>, civil penalties     (including  the  loss  of  our  licenses to operate one or more of our     <font color="blue">facilities</font>)  and  exclusion  of  one  or  more  of our <font color="blue">facilities</font> from     <font color="blue">participation</font> in the Medicare, Medicaid and other federal and state health     <font color="blue">care programs</font></td>
+    </tr>
+    <tr>
+      <td>For example, one of our operating <font color="blue">subsidiaries</font> is subject to     <font color="blue">criminal charges brought by</font> the <font color="blue">Attorney General </font>in one of the states in     which we operate arising from the death of a client</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">subsidiary served</font>     approximately 125 clients</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">voluntarily surrendered</font> the license of the     <font color="blue">subsidiary involved</font> and settled the related civil <font color="blue">litigation</font>, which was     <font color="blue"><font color="blue">covered by</font> insurance</font></td>
+    </tr>
+    <tr>
+      <td>We believe we have <font color="blue">viable defenses</font> to the criminal     <font color="blue">allegations</font> against this subsidiary and an <font color="blue">adverse outcome would</font> not affect     the  <font color="blue">participation</font> of our other <font color="blue">facilities</font> in federal and state health     programs</td>
+    </tr>
+    <tr>
+      <td>If similar <font color="blue">allegations</font> were to arise in the future in respect of a     more <font color="blue">significant</font> subsidiary or in respect of ResCare, an adverse outcome     could have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>Both  federal  and  state <font color="blue">government</font> agencies have heightened and     <font color="blue">coordinated civil</font> and criminal <font color="blue">enforcement</font> efforts as part of numerous     <font color="blue">ongoing <font color="blue">investigations</font></font> of <font color="blue">health care</font> companies</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">investigations</font> relate     to a wide variety of topics, including:       •   <font color="blue">billing practices</font>;         •   quality of care;         •   financial <font color="blue"><font color="blue">relationships</font> with referral sources</font>; and         •   <font color="blue">medical necessity</font> of <font color="blue">services provided</font></td>
+    </tr>
+    <tr>
+      <td>18       _________________________________________________________________    [51]Table of Contents            Like  other  <font color="blue">participants</font> in the <font color="blue">health care</font> industry, we receive     requests for information from <font color="blue">government</font> agencies in <font color="blue">connection</font> with the     <font color="blue">regulatory</font> or <font color="blue">investigational authority</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, <font color="blue">health care</font> providers are     also subject to “qui tam” whistleblower lawsuits and false claims provisions     at both the state and <font color="blue">federal level</font></td>
+    </tr>
+    <tr>
+      <td>We are required to <font color="blue">comply with</font> laws governing the <font color="blue">transmission</font> of     privacy of health information</td>
+    </tr>
+    <tr>
+      <td>The  Health  Insurance Portability and Accountability Act of 1996     (HIPAA) requires us to <font color="blue">comply with</font> standards for the exchange of health     information within our company and with third parties, such as payors,     business <font color="blue">associates</font> and patients</td>
+    </tr>
+    <tr>
+      <td>These include standards for <font color="blue">common health</font>     care transactions, such as:       •   claims information, plan <font color="blue">eligibility</font>, payment information and the use     of <font color="blue">electronic signatures</font>;          •     <font color="blue">unique identifiers</font> for providers, employers, health plans and     <font color="blue">individuals</font>; and         •   security, privacy and <font color="blue">enforcement</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Department of Health and Human Services </font>has <font color="blue">released final rules</font> to     implement a number of these <font color="blue">requirements</font>, and several HIPAA <font color="blue">initiatives</font> have     <font color="blue">become effective</font>, including privacy protections, transaction standards and     <font color="blue">security standards</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> these standards, we could be     subject to <font color="blue">criminal penalties</font> and <font color="blue">civil sanctions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in <font color="blue">regulatory</font> oversight can result in higher operating costs</td>
+    </tr>
+    <tr>
+      <td>Although we are operating in <font color="blue"><font color="blue">compliance with</font> established laws</font> and     <font color="blue">regulations</font>, state <font color="blue">regulatory</font> agencies often have <font color="blue">broad powers</font> to mandate     the types and levels of services we provide to <font color="blue">individuals</font> without providing     <font color="blue">appropriate funding</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced this unfunded, increased <font color="blue">regulatory</font>     oversight in the <font color="blue">District of Columbia</font></td>
+    </tr>
+    <tr>
+      <td>This increased <font color="blue">regulatory</font> oversight     has resulted in higher operating costs, including labor, consulting and     maintenance <font color="blue">expenditure</font>s, and <font color="blue">historical losses</font></td>
+    </tr>
+    <tr>
+      <td>This, in turn, led to our     decision to cease providing <font color="blue">disabilities</font> services <font color="blue">in the District </font>in the     first half of 2006</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> may subject us to substantial <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">management</font> of residential, training, <font color="blue">education</font>al and support     programs for our clients exposes us to potential claims or <font color="blue">litigation</font> by our     clients or other <font color="blue">individuals</font> for wrongful death, personal injury or other     damages resulting <font color="blue">from contact with</font> our <font color="blue">facilities</font>, programs, personnel or     other clients</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font><font color="blue">agencies may initiate administrative proceedings</font>     alleging violations of statutes and <font color="blue">regulations</font> arising from our programs     and <font color="blue">facilities</font> and seeking to <font color="blue">impose monetary penalties on us</font></td>
+    </tr>
+    <tr>
+      <td>We could be     required  to pay substantial amounts of money to respond to <font color="blue">regulatory</font>     <font color="blue">investigations</font> or, if we do not prevail, in damages or penalties arising     from these <font color="blue">legal proceedings</font> and some awards of damages or <font color="blue">penalties may</font> not     be <font color="blue">covered by</font> any insurance</td>
+    </tr>
+    <tr>
+      <td>If our third-party <font color="blue">insurance coverage</font> and     self-insurance reserves are not adequate to cover these claims, it could     have a material adverse effect on our business, results of <font color="blue">operations</font>,     financial  condition  and ability to satisfy our <font color="blue">obligations</font> under our     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>Media <font color="blue">coverage critical</font> of us or our industry may harm our results</td>
+    </tr>
+    <tr>
+      <td>Media coverage of the industry, including operators of <font color="blue">facilities</font> and     programs for <font color="blue">individuals</font> with mental retardation and other <font color="blue"><font color="blue">development</font>al</font>     <font color="blue">disabilities</font>, has, from time to time, included reports critical of the     <font color="blue">current trend toward <font color="blue">privatization</font></font> and of the operation of certain of these     <font color="blue">facilities</font> and programs</td>
+    </tr>
+    <tr>
+      <td>Adverse <font color="blue">media coverage about providers</font> of these     services  in  general,  and  us in particular, could lead to increased     <font color="blue">regulatory</font> scrutiny in some areas, and could <font color="blue">adversely</font> affect our revenues     and <font color="blue">profitability</font> by, among other things, <font color="blue">adversely</font> affecting our ability to     obtain  or  retain  contracts,  <font color="blue">discouraging</font>  <font color="blue">government</font> agencies from     privatizing <font color="blue">facilities</font> and programs, increasing regulation and resulting     <font color="blue">compliance costs</font>, or <font color="blue">discouraging</font> clients from using our services</td>
+    </tr>
+    <tr>
+      <td>19       _________________________________________________________________    [52]Table of Contents            Our <font color="blue">facility</font> and <font color="blue">program expenses fluctuate</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">facility</font> and <font color="blue"><font color="blue">program expenses may</font> also fluctuate from period</font> to     period, due in large part to changes in <font color="blue">labor costs</font> and <font color="blue">insurance costs</font></td>
+    </tr>
+    <tr>
+      <td>Labor costs are <font color="blue">affected by</font> a number of factors, including the <font color="blue">availability</font>     of <font color="blue">qualified personnel</font>, effective <font color="blue">management</font> of our programs, changes in     <font color="blue">service models</font>, state <font color="blue">budgetary</font> pressures, severity of weather and other     <font color="blue">natural disasters</font></td>
+    </tr>
+    <tr>
+      <td>Our annual <font color="blue">insurance costs</font> and self-insured retention     limits can rise due to <font color="blue"><font color="blue">development</font>s</font> in the <font color="blue">insurance market</font> or our claims     history</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font><font color="blue">fluctuations</font> in our <font color="blue">facility</font> and <font color="blue">program expenses may</font>     <font color="blue">adversely</font>  affect  our  business,  results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>Our quarterly operating results may fluctuate <font color="blue">significant</font>ly</td>
+    </tr>
+    <tr>
+      <td>Our revenues and <font color="blue">net income may fluctuate from quarter</font> to quarter, in     part  because annual Medicaid <font color="blue">rate <font color="blue">adjustments</font> may</font> be announced by the     various states at <font color="blue">different</font> times of the year and are <font color="blue">usually retroactive</font> to     the beginning of the particular state’s fiscal reporting period</td>
+    </tr>
+    <tr>
+      <td>Generally,     future  <font color="blue">adjustments</font> in <font color="blue">reimbursement</font> rates in most states <font color="blue">will consist</font>     primarily of cost-of-living <font color="blue">adjustments</font>, <font color="blue">adjustments</font> based upon reported     historical  costs of <font color="blue">operations</font>, or other negotiated changes in rates</td>
+    </tr>
+    <tr>
+      <td>However,  many  states  in which we operate are experiencing <font color="blue">budgetary</font>     pressures and certain of these states, from time to time, have initiated     service  <font color="blue">reductions</font>,  or  rate  freezes  and/or  rate <font color="blue">reductions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Some     </font><font color="blue">reimbursement</font> rate increases must be paid to our <font color="blue">direct care staff</font> in the     form of wage pass-throughs</td>
+    </tr>
+    <tr>
+      <td>Additionally, some states have, from time to     time, revised their rate-setting <font color="blue">methodologies</font>, which has resulted in rate     <font color="blue">decreases as well as rate increases</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">inability</font>  to renew our <font color="blue">existing contracts</font> with <font color="blue">government</font>al     agencies and to obtain <font color="blue"><font color="blue">additional</font> contracts</font> would <font color="blue">adversely</font> affect our     revenues</td>
+    </tr>
+    <tr>
+      <td>Our  Job  Corps  contracts  are  re-bid,  <font color="blue">regardless</font> of operating     performance, at least every five years</td>
+    </tr>
+    <tr>
+      <td>We may not be successful in bidding     for contracts to operate, or to continue operating, <font color="blue">Job Corps </font>centers</td>
+    </tr>
+    <tr>
+      <td>Changes in the market for services and contracts, including increasing     <font color="blue">competition</font>, transition costs or costs to implement awarded contracts, could     <font color="blue">adversely</font>  affect  the  timing  and/or viability of <font color="blue">future <font color="blue">development</font></font>     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, many of our contracts are subject to state or     federal <font color="blue">government</font> <font color="blue">procurement</font> rules and procedures</td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue">procurement</font>     policies that may be adopted by one or more of these agencies could also     <font color="blue">adversely</font> affect our ability to obtain and retain these contracts</td>
+    </tr>
+    <tr>
+      <td>If downsizing, <font color="blue">privatization</font> and <font color="blue">consolidation</font> in our industry do not     continue, our business may not continue to grow</td>
+    </tr>
+    <tr>
+      <td>The  maintenance  and  expansion  of our <font color="blue">operations</font> depend on the     <font color="blue">continuation</font> of trends toward downsizing, <font color="blue">privatization</font> and <font color="blue">consolidation</font>,     and our ability to tailor our services to meet the specific needs of the     <font color="blue">populations</font> we serve</td>
+    </tr>
+    <tr>
+      <td>Our success in a changing <font color="blue">operational environment</font> is     subject to a variety of political, economic, social and <font color="blue">legal pressures</font>,     virtually all of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>Such pressures include a     desire of <font color="blue">government</font>al agencies to <font color="blue">reduce costs</font> and <font color="blue">increase levels</font> of     services; federal, state and local <font color="blue">budgetary</font> constraints; political pressure     <font color="blue">from unions opposed</font> to <font color="blue">privatization</font> or for-profit service providers; and     <font color="blue">actions brought by advocacy groups</font> and the courts to change <font color="blue">existing service</font>     <font color="blue">delivery systems</font></td>
+    </tr>
+    <tr>
+      <td>Material changes resulting from these trends and pressures     could <font color="blue">adversely</font> affect the demand for and <font color="blue">reimbursement</font> of our services and     our operating <font color="blue">flexibility</font>, and ultimately our revenues and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to establish and maintain <font color="blue"><font color="blue">relationships</font> <font color="blue">with officials</font></font> of     <font color="blue">government</font> agencies, we may not be able to <font color="blue">successfully procure</font> or retain     <font color="blue">government</font>-sponsored <font color="blue">contracts which</font> could negatively impact our revenues</td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">facilitate</font> our ability to procure or retain <font color="blue">government</font>-sponsored     contracts, we rely in part <font color="blue">on establishing</font> and maintaining <font color="blue">relationships</font>     <font color="blue">with officials</font> of various <font color="blue">government</font> agencies</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">relationships</font> enable us     to  maintain and <font color="blue">renew <font color="blue">existing contracts</font></font> and obtain <font color="blue">new contracts</font> and     referrals</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">relationships</font> also enable us to <font color="blue">provide informal input</font> and     advice to the <font color="blue">government</font> agencies prior to the <font color="blue">development</font> of a “request for     proposal” or program for <font color="blue">privatization</font> of <font color="blue">social services</font> and enhance our     chances of <font color="blue">procuring contracts with</font> these payors</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">effectiveness</font> of our     <font color="blue">relationships</font> may be reduced or <font color="blue">eliminated with</font> changes in the personnel     holding various <font color="blue">government</font> offices or <font color="blue">staff positions</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also may lose key</font>     personnel who have these <font color="blue">relationships</font></td>
+    </tr>
+    <tr>
+      <td>Any failure to establish, maintain     or manage <font color="blue">relationships</font> with <font color="blue">government</font> and <font color="blue">agency personnel may hinder</font> our     ability to procure or retain <font color="blue">government</font>-sponsored contracts</td>
+    </tr>
+    <tr>
+      <td>20       _________________________________________________________________    [53]Table of Contents            Events that harm our reputation with <font color="blue">government</font>al agencies and advocacy     <font color="blue">groups could reduce</font> our revenues and operating results</td>
+    </tr>
+    <tr>
+      <td>Our success in obtaining <font color="blue">new contracts</font> and renewals of our existing     <font color="blue">contracts depends upon</font> maintaining our <font color="blue">reputation as</font> a <font color="blue">quality service</font>     provider among <font color="blue">government</font>al authorities, advocacy groups for <font color="blue">individuals</font>     with <font color="blue"><font color="blue">development</font>al</font> <font color="blue">disabilities</font> and their families, and the public</td>
+    </tr>
+    <tr>
+      <td>We also     rely on <font color="blue">government</font> entities to <font color="blue">refer clients</font> to our <font color="blue">facilities</font> and programs</td>
+    </tr>
+    <tr>
+      <td>Negative publicity, changes in <font color="blue">public perception</font>, the actions of clients     under our care or <font color="blue">investigations</font> with respect to our industry, <font color="blue">operations</font> or     policies could increase <font color="blue">government</font> scrutiny, increase <font color="blue">compliance costs</font>,     hinder  our  ability  to obtain or retain contracts, reduce referrals,     discourage <font color="blue">privatization</font> of <font color="blue">facilities</font> and programs, and <font color="blue">discourage clients</font>     from using our services</td>
+    </tr>
+    <tr>
+      <td>Any of these <font color="blue">events could</font> have a material adverse     effect  on our business, results of <font color="blue">operations</font>, <font color="blue">financial condition</font> or     ability to satisfy our <font color="blue">obligations</font> under our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>A loss of our status as a <font color="blue">licensed service provider</font> in any <font color="blue">jurisdiction</font>     could result in the <font color="blue">termination</font> of <font color="blue">existing service</font>s and our <font color="blue">inability</font> to     market our services in that <font color="blue">jurisdiction</font></td>
+    </tr>
+    <tr>
+      <td>We operate in numerous <font color="blue">jurisdiction</font>s and are required to maintain     licenses and <font color="blue">certification</font>s in order to conduct our <font color="blue">operations</font> in each of     them</td>
+    </tr>
+    <tr>
+      <td>Each  state  and  county  has its own <font color="blue">regulations</font>, which can be     complicated, and each of our <font color="blue">service lines</font> can be regulated <font color="blue">different</font>ly     within a particular <font color="blue">jurisdiction</font></td>
+    </tr>
+    <tr>
+      <td>As a result, maintaining the <font color="blue">necessary</font>     licenses and <font color="blue">certification</font>s to conduct our <font color="blue">operations</font> can be <font color="blue">cumbersome</font></td>
+    </tr>
+    <tr>
+      <td>Our     licenses and <font color="blue">certification</font>s could be suspended, revoked or terminated for a     number of reasons, including: the failure by some of our <font color="blue">facilities</font> or     employees  to  properly care for clients; the failure to submit proper     <font color="blue">documentation</font> to the <font color="blue">government</font> agency, including <font color="blue">documentation</font> supporting     <font color="blue">reimbursement</font>s  for costs; the failure by our programs to <font color="blue">abide by</font> the     applicable <font color="blue">regulations</font> relating to the provisions of <font color="blue">human services</font>; or the     failure of our <font color="blue">facilities</font> to <font color="blue">abide by</font> the applicable building, health and     safety  codes  and  ordinances</td>
+    </tr>
+    <tr>
+      <td>We  have  had some of our licenses or     <font color="blue">certification</font>s temporarily suspended in the past</td>
+    </tr>
+    <tr>
+      <td>If we lost our status as a     licensed  provider  of <font color="blue">human services</font> in any <font color="blue">jurisdiction</font> or any other     required <font color="blue">certification</font>, we would be unable to market our services in that     <font color="blue">jurisdiction</font>, and the <font color="blue">contracts under which</font> we <font color="blue">provide services</font> in that     <font color="blue">jurisdiction</font> could be subject to <font color="blue">termination</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, such an <font color="blue">event could</font>     <font color="blue">constitute</font> a violation of provisions of contracts in other <font color="blue">jurisdiction</font>s,     resulting in other contract <font color="blue">termination</font>s</td>
+    </tr>
+    <tr>
+      <td>Any of these <font color="blue">events could</font> have a     material adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Expenses incurred under <font color="blue">government</font> contracts are subject to scrutiny</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">derive virtually</font> all of our revenues from state and local <font color="blue">government</font>     agencies, and a substantial portion of these revenues are state-funded with     federal Medicaid <font color="blue">matching dollars</font></td>
+    </tr>
+    <tr>
+      <td>As a result of our <font color="blue">participation</font> in these     <font color="blue">government</font> funded programs, we are often subject to <font color="blue">government</font>al reviews,     audits and <font color="blue">investigations</font> to verify our <font color="blue">compliance with</font> applicable laws and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>As a result of these reviews, audits and <font color="blue">investigations</font>, these     <font color="blue">government</font> payors may be entitled to, in their <font color="blue">discretion</font>:       •   terminate or modify our <font color="blue">existing contracts</font>;         •   suspend or <font color="blue">prevent us from</font> receiving <font color="blue">new contracts</font> or extending     <font color="blue">existing contracts</font> because of violations or suspected violations of     <font color="blue">procurement</font> laws or <font color="blue">regulations</font>;         •   impose fines, penalties or other <font color="blue">sanctions on us</font>;         •   reduce the amount we are <font color="blue">paid under</font> our <font color="blue">existing contracts</font>; and/or         •   require us to <font color="blue">refund amounts</font> we have <font color="blue">previously been paid</font></td>
+    </tr>
+    <tr>
+      <td>21       _________________________________________________________________    [54]Table of Contents            In some states, we operate on a cost <font color="blue">reimbursement</font> model in which     revenues are recognized at the time costs are incurred</td>
+    </tr>
+    <tr>
+      <td>In these states,     payors  audit  our  historical  costs on a <font color="blue">regular basis</font>, and if it is     determined that we do not have <font color="blue">enough costs</font> to justify our rates, our rates     may be reduced, or we may be required to <font color="blue">retroactively return fees paid</font> to     us</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that our <font color="blue">rates will</font> be maintained, or that we will     be able to keep all payments made to us until an audit of the relevant     period is complete</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">revenue growth</font> has been related to increases in the number of     <font color="blue">individuals</font> served in each of our operating segments</td>
+    </tr>
+    <tr>
+      <td>Our  historical  growth  in revenues has <font color="blue">been directly</font> related to     increases in the number of <font color="blue">individuals</font> served in each of our operating     segments</td>
+    </tr>
+    <tr>
+      <td>This  growth  has  depended largely upon <font color="blue">development</font>-driven     <font color="blue">activities</font>, including the <font color="blue"><font color="blue">acquisition</font>s</font> of other <font color="blue">businesses</font> or <font color="blue">facilities</font>,     the <font color="blue">acquisition</font> of <font color="blue">management</font> contract rights to operate <font color="blue">facilities</font>, the     award of contracts to open new <font color="blue">facilities</font> or start new <font color="blue">operations</font> or to     assume <font color="blue">management</font> of <font color="blue">facilities</font> previously operated by <font color="blue">government</font>al agencies     or other <font color="blue">organizations</font>, and the extension or renewal of <font color="blue">contracts previously</font>     awarded to us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future revenues will depend primarily upon</font> our ability to     maintain, expand and renew <font color="blue">existing service</font> contracts and leases, and to a     <font color="blue">lesser extent upon</font> our ability to obtain <font color="blue"><font color="blue">additional</font> contracts</font> to provide     services  to the special needs <font color="blue">populations</font> we serve, through awards in     response to requests for proposals for <font color="blue">new programs</font>, in <font color="blue">connection</font> with     <font color="blue">facilities</font>  being  privatized by <font color="blue">government</font>al agencies, or by selected     <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend upon</font> the <font color="blue">continued services</font> of <font color="blue">certain members</font> of our senior     <font color="blue">management</font> team, without whom our business <font color="blue">operations</font> would be <font color="blue">significant</font>ly     disrupted</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font>, in part, on the <font color="blue">continued contributions</font> of our     executive  officers  and  other <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">management</font> team has     <font color="blue">significant</font> industry experience and would be <font color="blue">difficult</font> to replace</td>
+    </tr>
+    <tr>
+      <td>If we     lose or suffer an <font color="blue">extended interruption</font> in the service of one or more of our     <font color="blue">senior officers</font>, our <font color="blue">financial condition</font> and operating results could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Moreover, the market for qualified <font color="blue">individuals</font> is highly     <font color="blue">competitive</font> and we may not be able to attract and retain <font color="blue">qualified personnel</font>     to  replace  or  succeed members of our senior <font color="blue">management</font> or other key     employees, should the need arise</td>
+    </tr>
+    <tr>
+      <td>Much of our revenue is derived from state and local <font color="blue">government</font> and     <font color="blue">government</font> procedures can be complex</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font><font color="blue">reimbursement</font>, group <font color="blue">home credentialing</font> and client <font color="blue">Medicaid     </font><font color="blue">eligibility</font> and <font color="blue">service authorization procedures</font> are <font color="blue">often complicated</font> and     burdensome, and delays can result from, among other reasons, <font color="blue"><font color="blue">difficult</font>ies</font> in     timely  securing  <font color="blue">documentation</font> and coordinating <font color="blue">necessary</font> <font color="blue">eligibility</font>     paperwork  <font color="blue">between agencies</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">reimbursement</font> and <font color="blue">procedural issues</font>     <font color="blue">occasionally</font>  cause us to have to resubmit claims <font color="blue">several times</font> before     payment is remitted and are <font color="blue">primarily responsible</font> for our <font color="blue">aged receivables</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the manner in which state <font color="blue">agencies interpret program policies</font> and     procedures, and review and <font color="blue">audit billings</font> and <font color="blue">costs could also affect</font> our     business, results of <font color="blue">operations</font>, <font color="blue">financial condition</font> and our ability to meet     <font color="blue">obligations</font> under our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>If we cannot maintain our controls and procedures for managing our     billing and collecting, our business, results of <font color="blue">operations</font>, financial     condition and ability to satisfy our <font color="blue">obligations</font> under our <font color="blue">indebtedness</font>     could be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">collection</font> of <font color="blue">accounts receivable</font> is a <font color="blue">significant</font> <font color="blue">management</font>     challenge  and requires <font color="blue">continual focus</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">limitations</font> of some state     information systems and procedures, such as the ability to obtain timely     <font color="blue">documentation</font> or disperse funds electronically, may limit the benefits we     <font color="blue">derive from</font> our <font color="blue">automated billing</font> and <font color="blue">collection</font> system</td>
+    </tr>
+    <tr>
+      <td>We must maintain     our  controls  and  procedures for managing our billing and <font color="blue">collection</font>     <font color="blue">activities</font> if we are to collect our <font color="blue">accounts receivable</font> on a <font color="blue">timely basis</font></td>
+    </tr>
+    <tr>
+      <td>An  <font color="blue">inability</font> to do so could <font color="blue">adversely</font> affect our business, results of     <font color="blue">operations</font>, <font color="blue">financial condition</font> and ability to satisfy our <font color="blue">obligations</font> under     our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________    [55]Table of Contents            We may not be able to <font color="blue">generate sufficient <font color="blue">cash flow</font>s</font> to meet our debt     service <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">generate sufficient <font color="blue">cash flow</font>s</font> from <font color="blue">operations</font> to make     <font color="blue">scheduled payments on</font> our debt <font color="blue">obligations</font> and maintain <font color="blue">compliance with</font>     <font color="blue">various financial covenants contained</font> in our <font color="blue">debt arrangements will depend</font>     on our future financial performance, which will be <font color="blue">affected by</font> a range of     economic, <font color="blue">competitive</font> and business factors, many of which are outside of our     control</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">generate sufficient <font color="blue">cash flow</font>s</font> from <font color="blue">operations</font> to     satisfy our debt <font color="blue">obligations</font> and maintain <font color="blue">covenant compliance</font>, we may have     to  undertake  <font color="blue">alternative</font>  financing  plans,  such  <font color="blue">as refinancing</font> or     <font color="blue">restructuring</font>  our  debt, selling assets, reducing or <font color="blue">delaying capital</font>     <font color="blue">investments</font> or seeking to <font color="blue">raise <font color="blue">additional</font> capital</font></td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">provide no assurance</font> that any <font color="blue">refinancing would</font> be possible,     that any <font color="blue">assets could</font> be sold, or, if sold, of the timing of the sales and     the  amount  of proceeds realized from those sales, or that <font color="blue">additional</font>     <font color="blue">financing could</font> be obtained on acceptable terms, if at all</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to     <font color="blue">generate sufficient <font color="blue">cash flow</font>s</font> to satisfy our debt <font color="blue">obligations</font>, maintain     <font color="blue">covenant compliance</font> or refinance our <font color="blue">obligations</font> on commercially reasonable     terms  would have a material adverse effect on our business, financial     condition and results of <font color="blue">operations</font>, as well as on our ability to satisfy     our <font color="blue">obligations</font> under our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>We have a <font color="blue">significant</font> amount of debt, which could <font color="blue">adversely</font> affect our     business <font color="blue">financial condition</font> and results of <font color="blue">operations</font> and <font color="blue">could prevent us</font>     from fulfilling our <font color="blue">obligations</font> under the notes</td>
+    </tr>
+    <tr>
+      <td>Our level of <font color="blue"><font color="blue">indebtedness</font> could</font> have <font color="blue">important consequences</font>, including:       •   making it more <font color="blue">difficult</font> for us to satisfy our <font color="blue">obligations</font> under our     <font color="blue">indebtedness</font>, which could result in an event of <font color="blue">default under</font> the debt;         •   requiring us to dedicate a substantial portion of our <font color="blue">cash flow</font> from     <font color="blue">operations</font> to make required payments on <font color="blue">indebtedness</font>, thereby reducing the     <font color="blue">availability</font> of <font color="blue">cash flow</font> for working capital, capital <font color="blue">expenditure</font>s and     other <font color="blue">general corporate purposes</font>;         •   limiting our ability to obtain <font color="blue">additional</font> financing in the future;         •   limiting our <font color="blue">flexibility</font> in planning for, or reacting to, changes in     our business and the industry in which we operate;         •   impairing our ability to withstand a downturn in our business or in     the <font color="blue">economy generally</font>; and         •   <font color="blue">placing us at</font> a <font color="blue">competitive</font> disadvantage against other <font color="blue">less leveraged</font>     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>The occurrence of any one of these <font color="blue">events could</font> have a material adverse     effect on our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font>, as     well as our ability to satisfy our <font color="blue">obligations</font> under our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>We operate in a highly <font color="blue">competitive</font> industry, which can <font color="blue">adversely</font> affect     our results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> other for-profit companies, not-for-profit entities,     and <font color="blue">government</font>al agencies for contracts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitive </font><font color="blue">factors may favor</font> other     providers, thereby reducing our success in obtaining contracts, which in     turn <font color="blue">would hinder</font> our growth</td>
+    </tr>
+    <tr>
+      <td>Non-profit <font color="blue">providers may</font> be <font color="blue">affiliated with</font>     advocacy groups, health <font color="blue">organizations</font>, or religious <font color="blue">organizations</font> that have     substantial <font color="blue">influence with legislators</font> and <font color="blue">government</font> agencies</td>
+    </tr>
+    <tr>
+      <td>States may     give  <font color="blue">preferences</font>  to  non-profit <font color="blue">organizations</font> in <font color="blue">awarding contracts</font></td>
+    </tr>
+    <tr>
+      <td>Non-profit  providers  also  may  have access to <font color="blue">government</font> subsidies,     foundation  grants,  tax  <font color="blue">deductible contributions</font> and other financial     resources  not  available  to us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Governmental </font>agencies and non-profit     <font color="blue">providers may</font> be subject to <font color="blue">limits on liability</font> that do not apply to us</td>
+    </tr>
+    <tr>
+      <td>In     some markets, smaller local companies may have a better understanding of     <font color="blue">local conditions</font> and may have more political and <font color="blue">public influence than</font> we     do</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">competitive</font> advantages enjoyed by other <font color="blue">providers may</font> decrease our     ability to <font color="blue">procure contracts</font> and limit our revenues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font>     may also result in pricing pressures, loss of or failure to <font color="blue">gain market</font>     share or loss of clients or payors, any of <font color="blue">which could harm</font> our business</td>
+    </tr>
+  </tbody>
+</table>

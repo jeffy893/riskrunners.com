@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: depend heavily on defense electronics programs", fill: "#00ced1"},
+{source: "1: depend heavily on defense electronics programs", target: "1: products which may", fill: "#00ced1"},
+{source: "1: products which may", target: "1: only partially funded", fill: "#00ced1"},
+{source: "1: only partially funded", target: "1: termination", fill: "#00ced1"},
+{source: "1: termination", target: "1: reductions", fill: "#00ced1"},
+{source: "1: reductions", target: "1: government spending", fill: "#00ced1"},
+{source: "1: depend heavily on defense electronics programs", target: "3: computer systems", fill: "#645452"},
+{source: "3: computer systems", target: "3: different", fill: "#645452"},
+{source: "3: different", target: "3: international programs", fill: "#645452"},
+{source: "3: computer systems", target: "4: different", fill: "#8b008b"},
+{source: "4: different", target: "4: subcontracts", fill: "#8b008b"},
+{source: "4: subcontracts", target: "4: products requirements", fill: "#8b008b"},
+{source: "4: different", target: "10: termination", fill: "#c19a6b"},
+{source: "10: termination", target: "10: commit additional funds", fill: "#c19a6b"},
+{source: "10: commit additional funds", target: "10: involved could negatively impact", fill: "#c19a6b"},
+{source: "10: involved could negatively impact", target: "10: financial condition", fill: "#c19a6b"},
+{source: "10: financial condition", target: "10: operations", fill: "#c19a6b"},
+{source: "10: termination", target: "28: accept certain", fill: "#f984e5"},
+{source: "28: accept certain", target: "28: programs which could", fill: "#f984e5"},
+{source: "28: programs which could", target: "28: thirdparty vendors", fill: "#f984e5"},
+{source: "28: thirdparty vendors", target: "28: with components", fill: "#f984e5"},
+{source: "28: with components", target: "28: components", fill: "#f984e5"},
+{source: "28: components", target: "28: comply with", fill: "#f984e5"},
+{source: "28: comply with", target: "28: requirements", fill: "#f984e5"},
+{source: "28: requirements", target: "28: procure compliant substitutes", fill: "#f984e5"},
+{source: "28: procure compliant substitutes", target: "28: otherwise qualify", fill: "#f984e5"},
+{source: "28: otherwise qualify", target: "28: fall outside", fill: "#f984e5"},
+{source: "28: accept certain", target: "31: significant decrease", fill: "#a32638"},
+{source: "31: significant decrease", target: "31: customers would", fill: "#a32638"},
+{source: "31: customers would", target: "31: operations", fill: "#a32638"},
+{source: "31: significant decrease", target: "41: Additionally ", fill: "#e1ad21"},
+{source: "41: Additionally ", target: "41: acquisition", fill: "#e1ad21"},
+{source: "41: acquisition", target: "41: to the SoHard AG Siemens AG ", fill: "#e1ad21"},
+{source: "41: to the SoHard AG Siemens AG ", target: "41: Siemens AG ", fill: "#e1ad21"},
+{source: "41: Siemens AG ", target: "41: significant customer", fill: "#e1ad21"},
+{source: "41: Additionally ", target: "42: will significantly decrease over", fill: "#ffa6c9"},
+{source: "42: will significantly decrease over", target: "42: customers transition", fill: "#ffa6c9"},
+{source: "42: customers transition", target: "42: manufactures", fill: "#ffa6c9"},
+{source: "42: will significantly decrease over", target: "51: customers provide products", fill: "#ffddf4"},
+{source: "51: customers provide products", target: "51: both economic", fill: "#ffddf4"},
+{source: "51: both economic", target: "51: technological cycles", fill: "#ffddf4"},
+{source: "51: customers provide products", target: "52: medical imaging devices", fill: "#ecebbd"},
+{source: "52: medical imaging devices", target: "52: products unnecessary", fill: "#ecebbd"},
+{source: "52: products unnecessary", target: "52: technology", fill: "#ecebbd"},
+{source: "52: technology", target: "52: devices could", fill: "#ecebbd"},
+{source: "52: medical imaging devices", target: "77: Workstation ", fill: "#fe4164"},
+{source: "77: Workstation ", target: "77: manufacturers", fill: "#fe4164"},
+{source: "77: manufacturers", target: "77: board computer companies", fill: "#fe4164"},
+{source: "77: board computer companies", target: "77: competitors", fill: "#fe4164"},
+{source: "77: competitors", target: "77: may attempt", fill: "#fe4164"},
+{source: "77: may attempt", target: "77: highperformance market", fill: "#fe4164"},
+{source: "77: highperformance market", target: "77: defense electronics systems which could", fill: "#fe4164"},
+{source: "77: Workstation ", target: "START_HERE", fill: "#fe4164"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Formally complain</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Termination_fee">Termination fee</a></td>
+      <td>An early termination fee is a charge levied when a party wants to break the term of an agreement or long-term contract. They are stipulated in the contract or agreement itself, and provide an incentive for the party subject to them to abide by the agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_termination">Network termination</a></td>
+      <td>A network termination (NT) (also NTE for network termination equipment) is a device that connects the customer's data or telephone equipment to a carrier's line that comes into a building or an office. The NT device provides a connection for terminal equipment (TE) and terminal adapter (TA) equipment to the local loop.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electrical_termination">Electrical termination</a></td>
+      <td>In electronics, electrical termination is the practice of ending a transmission line with a device that matches the characteristic impedance of the line. Termination prevents signals from reflecting off the end of the transmission line.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology">Information technology</a></td>
+      <td>Information technology (IT) is the use of computers to create, process, store, retrieve, and exchange all kinds of electronic data and information. IT is typically used within the context of business operations as opposed to personal or entertainment technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirement">Requirement</a></td>
+      <td>In product development and process optimization, a requirement is a singular documented physical or functional need that a particular design, product or process aims to satisfy. It is commonly used in a formal sense in engineering design, including for example in systems engineering, software engineering, or enterprise engineering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_engineering">Requirements engineering</a></td>
+      <td>Requirements engineering (RE) is the process of defining, documenting, and maintaining requirements in the engineering design process. It is a common role in systems engineering and software engineering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_analysis">Requirements analysis</a></td>
+      <td>In systems engineering and software engineering, requirements analysis focuses on the tasks that determine the needs or conditions to meet the new or altered product or project, taking account of the possibly conflicting requirements of the various stakeholders, analyzing, documenting, validating and managing software or system requirements.Requirements analysis is critical to the success or failure of a systems or software project. The requirements should be documented, actionable, measurable, testable, traceable, related to identified business needs or opportunities, and defined to a level of detail sufficient for system design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-functional_requirement">Non-functional requirement</a></td>
+      <td>In systems engineering and requirements engineering, a non-functional requirement (NFR) is a requirement that specifies criteria that can be used to judge the operation of a system, rather than specific behaviours. They are contrasted with functional requirements that define specific behavior or functions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Functional_requirement">Functional requirement</a></td>
+      <td>In software engineering and systems engineering, a functional requirement defines a function of a system or its component, where a function is described as a specification of behavior between inputs and outputs.Functional requirements may involve calculations, technical details, data manipulation and processing, and other specific functionality that define what a system is supposed to accomplish. Behavioral requirements describe all the cases where the system uses the functional requirements, these are captured in use cases.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Visa_requirements_for_British_citizens">Visa requirements for British citizens</a></td>
+      <td>Visa requirements for British citizens are administrative entry restrictions by the authorities of other states placed on citizens of the United Kingdom. As of 30 April 2022, British citizens had visa-free or visa on arrival access to 187 countries and territories, ranking their passport 5th in terms of travel freedom (tied with France, Ireland and Portugal) according to the Henley Passport Index.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_relationship_management">Customer relationship management</a></td>
+      <td>Customer relationship management (CRM) is a process in which a business or other organization administers its interactions with customers, typically using data analysis to study large amounts of information.CRM systems compile data from a range of different communication channels, including a company's website, telephone, email, live chat, marketing materials and more recently, social media. They allow businesses to learn more about their target audiences and how to best cater for their needs, thus retaining customers and driving sales growth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_price">List price</a></td>
+      <td>The list price, also known as the manufacturer's suggested retail price (MSRP), or the recommended retail price (RRP), or the suggested retail price (SRP) of a product is the price at which its manufacturer notionally recommends that a retailer sell the product.\nSuggested pricing methods may conflict with competition theory, as they allow prices to be set higher than would be established by supply and demand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automotive_industry">Automotive industry</a></td>
+      <td>The automotive industry comprises a wide range of companies and organizations involved in the design, development, manufacturing, marketing, and selling of motor vehicles. It is one of the world's largest industries by revenue (from 16 % such as in France up to 40 % to countries like Slovakia).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology">Technology</a></td>
+      <td>Technology is the result of accumulated knowledge and application of skills, methods, and processes used in industrial production and scientific research. Technology is embedded in the operation of all machines, with or without detailed knowledge of their function, for the intended purpose of an organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Educational_technology">Educational technology</a></td>
+      <td>Educational technology (commonly abbreviated as edutech, or edtech) is the combined use of computer hardware, software, and educational theory and practice to facilitate learning. When referred to with its abbreviation, edtech, it is often referring to the industry of companies that create educational technology.In addition to practical educational experience, educational technology is based on theoretical knowledge from various disciplines such as communication, education, psychology, sociology, artificial intelligence, and computer science.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_technology">Financial technology</a></td>
+      <td>Financial technology (abbreviated fintech or FinTech) is the technology and innovation that aims to compete with traditional financial methods in the delivery of financial services. It is an emerging industry that uses technology to improve activities in finance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology_management">Technology management</a></td>
+      <td>Technology management is a set of management disciplines that allows organizations to manage their technological fundamentals to create customer advantage. Typical concepts used in technology management are:\n\nTechnology strategy (a logic or role of technology in organization),\nTechnology forecasting (identification of possible relevant technologies for the organization, possibly through technology scouting),\nTechnology roadmap (mapping technologies to business and market needs), and\nTechnology project portfolio (a set of projects under development) and technology portfolio (a set of technologies in use).The role of the technology management function in an organization is to understand the value of certain technology for the organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Language_technology">Language technology</a></td>
+      <td>Language technology, often called human language technology (HLT), studies methods of how computer programs or electronic devices can analyze, produce, modify or respond to human texts and speech. Working with language technology often requires broad knowledge not only about linguistics but also about computer science.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Space_technology">Space technology</a></td>
+      <td>Space technology is technology for use in outer space, in travel (astronautics) or other activities beyond Earth's atmosphere, for purposes such as spaceflight, space exploration, and Earth observation. Space technology includes space vehicles such as spacecraft, satellites, space stations and orbital launch vehicles; deep-space communication; in-space propulsion; and a wide variety of other technologies including support infrastructure equipment, and procedures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology_consulting">Information technology consulting</a></td>
+      <td>In management, information technology consulting (also called IT consulting, computer consultancy, business and technology services, computing consultancy, technology consulting, and IT advisory) is a field of activity which focuses on advising organizations on how best to use information technology (IT) in achieving their business objectives.\nOnce a business owner defines the needs to take a business to the next level, a decision maker will define a scope, cost and a time frame of the project.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_aircraft_manufacturers">List of aircraft manufacturers</a></td>
+      <td>This is a list of aircraft manufacturers sorted alphabetically by International Civil Aviation Organization (ICAO)/common name. It contains the ICAO/common name, manufacturers name(s), country and other data, with the known years of operation in parentheses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_modern_armament_manufacturers">List of modern armament manufacturers</a></td>
+      <td>The following list of modern armament manufacturers presents major companies producing modern weapons and munitions for military, paramilitary, government agency and civilian use. The companies are listed by their full name followed by the short form, or common acronym, if any, in parentheses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_computer_hardware_manufacturers">List of computer hardware manufacturers</a></td>
+      <td>Current notable computer hardware manufacturers:\n\n\n== Cases ==\nList of computer case manufacturers:\n\n\n=== Rack-mount computer cases ===\n\n\n== Laptop computer cases ==\nClevo\nMSI\n\n\n== Motherboards ==\nTop motherboard manufacturers:\n\nList of motherboard manufacturers:\n\nDefunct:\n\n\n== Chipsets for motherboards ==\n\n\n== Central processing units (CPUs) ==\nNote: most of these companies only make designs, and do not manufacture their own designs. \nTop x86 CPU manufacturers:\n\nList of CPU manufacturers (most of the companies sell ARM-based CPUs, assumed if nothing else stated):\n\nAcquired or defunct:\n\n\n== Hard disk drives (HDDs) ==\n\n\n=== Internal ===\nList of current hard disk drive manufacturers:\n\nSeagate Technology\nToshiba\nWestern Digital\n\n\n=== External ===\nNote: the HDDs internal to these devices are manufactured only by the internal HDD manufacturers listed above.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Original_equipment_manufacturer">Original equipment manufacturer</a></td>
+      <td>An original equipment manufacturer (OEM) is generally perceived as a company that produces parts and equipment that may be marketed by another manufacturer.\nHowever, the term is also used in several other ways, which causes ambiguity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturers_Hanover_Corporation">Manufacturers Hanover Corporation</a></td>
+      <td>Manufacturers Hanover Corporation  was the bank holding company formed as parent of Manufacturers Hanover Trust Company, a large New York bank formed by a merger in 1961.  After 1969, Manufacturers Hanover Trust became a subsidiary of Manufacturers Hanover Corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_automobile_manufacturers_of_Japan">List of automobile manufacturers of Japan</a></td>
+      <td>This is a list of current and defunct automobile manufacturers of Japan.\n\n\n== Major current manufacturers ==\nHonda (1946–present)\nAcura (1986–present)\nHonda Verno (former dealer network)\nHonda Clio (former dealer network)\nIsuzu (1853–present; spun off from IHI in 1916)\nMazda (1920–present)\nAutorama (former dealer network)\nAutozam (former dealer network)\nEfini (former dealer network)\nEunos (former dealer network)\nXedos (former dealer network)\nMitsubishi (1873–1950; 1964–present)\nNissan (formerly Datsun) (1933–present)\nDatsun (formerly Kaishinsha Motorcar Works) (1925–1986; 2013–2022)\nKaishinsha Motorcar Works (1911–1925)\nInfiniti (1989–present)\nNissan Blue Stage (dealer network)\nNissan Red Stage (dealer network)\nNissan Cherry (dealer network, c.1970–2009)\nNissan Motor (dealer network, c.1968–2009)\nNissan Prince (dealer network, c.1968–2009)\nNissan Sunny/Satio (dealer network, c.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MERCURY COMPUTER SYSTEMS INC      ITEM 1A RISK FACTORS        We <font color="blue">depend heavily on defense electronics programs</font> that <font color="blue">incorporate</font> our     products, which may be <font color="blue">only partially funded</font> and are subject to potential     <font color="blue">termination</font> and <font color="blue">reductions</font> and delays in <font color="blue"><font color="blue">government</font> spending</font></td>
+    </tr>
+    <tr>
+      <td>Sales of our <font color="blue">computer systems</font>, primarily as an indirect <font color="blue">sub<font color="blue">contractor</font></font> or     team member with prime <font color="blue"><font color="blue">contractor</font>s</font> and in some <font color="blue">cases directly</font>, to the US     Government and its agencies, as well as foreign <font color="blue"><font color="blue">government</font>s</font> and agencies,     accounted for <font color="blue">approximately</font> 55prca, 59prca and 68prca of our <font color="blue">total revenues</font> in fiscal     2006, 2005 and 2004, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">computer systems</font> are included in many     <font color="blue">different</font>  domestic and <font color="blue"><font color="blue">international</font> programs</font></td>
+    </tr>
+    <tr>
+      <td>Over the lifetime of a     program, the award of many <font color="blue">different</font> individual contracts and <font color="blue">subcontracts</font>     may  impact our products’ <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>The funding of <font color="blue"><font color="blue">US Government </font>    </font>programs is subject to <font color="blue">Congressional </font><font color="blue">appropriations</font></td>
+    </tr>
+    <tr>
+      <td>Although multiple-year     <font color="blue">contracts may</font> be planned in <font color="blue"><font color="blue">connection with</font> major procurements</font>, <font color="blue"><font color="blue">Congress </font>    </font><font color="blue"><font color="blue">generally</font> appropriates funds on</font> a <font color="blue">fiscal year basis even though</font> a program     may  continue for <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, programs are <font color="blue">often only</font>     <font color="blue">partially funded initially</font>, and <font color="blue">additional funds</font> are <font color="blue">committed only as</font>     <font color="blue">Congress </font>makes further <font color="blue">appropriations</font> and prime contracts receive such     funding</td>
+    </tr>
+    <tr>
+      <td>The reduction or delay in funding or <font color="blue">termination</font> of a <font color="blue">government</font>     program in which we are <font color="blue">involved would</font> result in a loss of or delay in     receiving anticipated <font color="blue">future revenues attributable</font> to that program and     contracts or orders received</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">US Government </font></font><font color="blue">could reduce</font> or terminate     a  prime  contract  under  which we are a <font color="blue">sub<font color="blue">contractor</font></font> or team member     <font color="blue">irrespective</font> of the quality of our products or services</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">termination</font> of     a program or the reduction in or failure to commit <font color="blue">additional funds</font> to a     program in which we are <font color="blue">involved <font color="blue">could negatively impact</font></font> our revenues and     have a material adverse effect on our <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, delays in funding of a program, or of the defense     appropriation <font color="blue">generally</font>, <font color="blue">could negatively impact</font> our revenues and have a     material adverse effect on our <font color="blue">financial condition</font> and results of <font color="blue">operations</font>     for the period in <font color="blue">which such revenues</font> were <font color="blue">originally</font> anticipated</td>
+    </tr>
+    <tr>
+      <td>We  face other risks and <font color="blue">uncertainties</font> associated with defense-related     contracts, which may have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>Whether our contracts are <font color="blue">directly with</font> the US Government, a foreign     <font color="blue">government</font>  or  one  of  its  respective  agencies, or indirectly as a     <font color="blue">sub<font color="blue">contractor</font></font> or team member, our contracts and <font color="blue">subcontracts</font> are subject to     special risks, including:           •   Changes in <font color="blue">government</font> <font color="blue">administration</font> and national and <font color="blue">international</font>     priorities, including <font color="blue"><font color="blue">development</font>s</font> in the geo-political environment such as     the current “War on Terrorism,” “Operation Enduring Freedom,” “Operation     Iraqi Freedom,” and the threat of <font color="blue">nuclear proliferation</font> in <font color="blue">North Korea </font>and     Iran, could have a <font color="blue"><font color="blue">significant</font> <font color="blue">impact on</font> national</font> or <font color="blue">international</font> defense     <font color="blue">spending priorities</font> and the <font color="blue">efficient handling</font> of <font color="blue">routine contractual</font>     matters</td>
+    </tr>
+    <tr>
+      <td>These changes could have a <font color="blue">negative <font color="blue">impact on</font></font> our business in the     future</td>
+    </tr>
+    <tr>
+      <td>14     ______________________________________________________________________    [55]Table of <font color="blue">Contents       </font>  •   Our <font color="blue">contracts with</font> the US and foreign <font color="blue"><font color="blue">government</font>s</font> and their prime     <font color="blue"><font color="blue">contractor</font>s</font> and <font color="blue">sub<font color="blue">contractor</font></font>s are subject to <font color="blue">termination</font> either upon     default by us or at the convenience of the <font color="blue">government</font> or <font color="blue">contractor</font> if,     among other reasons, the <font color="blue">program itself</font> has <font color="blue">been terminated</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Termination </font>for     convenience provisions <font color="blue">generally</font> entitle us to recover costs incurred,     settlement expenses and profit on work completed prior to <font color="blue">termination</font>, but     there can be no assurance in this regard</td>
+    </tr>
+    <tr>
+      <td>•   Because we contract to supply goods and services to the US and     foreign <font color="blue"><font color="blue">government</font>s</font> and their prime and <font color="blue">sub<font color="blue">contractor</font></font>s, we compete for     contracts in a <font color="blue"><font color="blue">competitive</font> <font color="blue">bidding process</font></font> and, in the event we are awarded     a contract, we are subject to <font color="blue">protests by disappointed bidders</font> of contract     awards that can result in the reopening of the <font color="blue">bidding process</font> and changes     in <font color="blue">government</font>al policies or <font color="blue">regulations</font> and other <font color="blue">political factors</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Consolidation </font>among defense industry <font color="blue"><font color="blue">contractor</font>s</font> has resulted in a few     large <font color="blue"><font color="blue">contractor</font>s</font> with increased bargaining power relative to us</td>
+    </tr>
+    <tr>
+      <td>The     increased bargaining power of these <font color="blue"><font color="blue">contractor</font>s</font> <font color="blue">may adversely affect</font> our     ability to compete for contracts and, as a result, <font color="blue">may adversely affect</font> our     business or results of <font color="blue">operations</font> in the future</td>
+    </tr>
+    <tr>
+      <td>•   Our customers include <font color="blue">US Government </font><font color="blue"><font color="blue">contractor</font>s</font> who <font color="blue">must <font color="blue">comply with</font></font>     and are <font color="blue">affected by laws</font> and <font color="blue">regulations</font> relating to the formation,     <font color="blue">administration</font> and performance of <font color="blue">US Government </font>contracts</td>
+    </tr>
+    <tr>
+      <td>A violation of     these laws and <font color="blue">regulations</font> could result in the imposition of fines and     penalties to our customer or the <font color="blue">termination</font> of its <font color="blue">contract with</font> the US     Government</td>
+    </tr>
+    <tr>
+      <td>As a result, there could be a delay in our receipt of orders     from our customer or a <font color="blue">termination</font> of <font color="blue">such orders</font></td>
+    </tr>
+    <tr>
+      <td>•   We <font color="blue">sell products</font> to US and <font color="blue">international</font> defense <font color="blue"><font color="blue">contractor</font>s</font> and     also directly to the <font color="blue">US Government </font>as a <font color="blue">commercial supplier such</font> that cost     data is not supplied</td>
+    </tr>
+    <tr>
+      <td>To the extent that there are <font color="blue"><font color="blue">interpretation</font>s</font> or     changes in the Federal Acquisition Regulations (FARs) regarding the     <font color="blue">qualifications necessary</font> to be a commercial supplier, there could be a     material adverse effect on our business and operating results</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Defense Federal Acquisition Regulations </font>require that certain     “specialty metals” (as defined in the <font color="blue">regulations</font>) <font color="blue">incorporate</font>d in articles     delivered under <font color="blue">Department of Defense </font><font color="blue">contracts must</font> be melted in the United     States or a “<font color="blue">qualifying country</font>,” subject to <font color="blue">certain exceptions</font></td>
+    </tr>
+    <tr>
+      <td>While these     <font color="blue">regulations</font> <font color="blue">generally</font> do not apply to <font color="blue">sub<font color="blue">contractor</font></font>s such as the Company,     they do apply to <font color="blue">sub<font color="blue">contractor</font></font>s in <font color="blue"><font color="blue">connection with</font> certain types</font> of military     programs</td>
+    </tr>
+    <tr>
+      <td>Certain of the products we have <font color="blue"><font color="blue">historically</font> sold</font> to US     Government defense <font color="blue"><font color="blue">contractor</font>s</font> may contain third-party <font color="blue">components</font> which     <font color="blue"><font color="blue">incorporate</font> specialty metals</font> that are non-compliant with these <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Our customers may not <font color="blue">accept certain</font> of our products for the affected     programs, which could have a material adverse effect on our business and     operating results, if (a) our third-party vendors are not able to supply us     <font color="blue">with <font color="blue">components</font></font> that <font color="blue">comply with</font> these <font color="blue">requirements</font>, or (b) we are not able     to <font color="blue">procure compliant <font color="blue">substitutes</font></font> for these <font color="blue">components</font>, or (c) our products     do not <font color="blue">otherwise qualify</font> for an exception to, or <font color="blue">fall outside</font> the scope of,     these <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>The loss of one or more of our <font color="blue">largest customers <font color="blue">could adversely affect</font></font> our     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> a small number of customers for a large portion of our     revenues</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">significant</font> decrease</font> in the sales to or loss of any of our major     <font color="blue">customers would</font> have a material adverse effect on our business and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>For fiscal 2006 four customers, Argon ST, Inc, Northrop     Grumman Corporation, KLA-Tencor Corporation and <font color="blue">GE Healthcare </font>(formerly GE     Medical Systems) accounted for 15prca, 12prca, 11prca and 10prca, <font color="blue">respectively</font>, of our     <font color="blue">total revenues</font></td>
+    </tr>
+    <tr>
+      <td>In fiscal 2005, KLA-Tencor Corporation, Argon ST, Inc,     Northrop Grumman Corporation and GE Medical Systems accounted for 14prca, 14prca,     11prca and 11prca of our <font color="blue">total revenues</font>, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers in the Defense     </font>market  <font color="blue">generally</font>  purchase our products in <font color="blue">connection with</font> <font color="blue">government</font>     programs that have a limited duration, leading to <font color="blue">fluctuating sales</font> to any     <font color="blue">particular customer</font> in this <font color="blue">market from year</font> to year</td>
+    </tr>
+    <tr>
+      <td>In addition, our     revenues are <font color="blue">largely dependent upon</font> the ability of customers to develop and     <font color="blue">sell products</font> that <font color="blue">incorporate</font> our products</td>
+    </tr>
+    <tr>
+      <td>No assurance can be given that     our <font color="blue">customers will</font> not experience financial, technical or other <font color="blue">difficulties</font>     that <font color="blue">could adversely affect</font> their <font color="blue">operations</font> and, in turn, our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>15     ______________________________________________________________________    [56]Table of <font color="blue">Contents       </font>Our CIV, <font color="blue">Advanced Solutions </font>and MPS revenues currently come from a small     number of customers and <font color="blue">modalities</font>, and any <font color="blue"><font color="blue">significant</font> decrease</font> in revenue     from  one  of these customers or <font color="blue">modalities</font> could adversely impact our     operating results</td>
+    </tr>
+    <tr>
+      <td>If a major CIV, <font color="blue">Advanced Solutions </font>or MPS <font color="blue">customer <font color="blue">significant</font>ly reduces</font> the     amount of business it does with us, there would likely be an <font color="blue">adverse impact</font>     on  our  operating  results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">GE Healthcare </font>and Philips Medical Systems     accounted for <font color="blue">substantially</font> all of our CIV revenues for the <font color="blue">fiscal years</font>     ended June 30, 2006, 2005 and 2004</td>
+    </tr>
+    <tr>
+      <td>In particular, <font color="blue">GE Healthcare </font>accounted     for 44prca, 56prca and 60prca of our aggregate CIV sales in fiscal 2006, fiscal 2005     and fiscal 2004, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, in fiscal 2006, due to the     <font color="blue">acquisition</font> of SoHard AG, <font color="blue">Siemens AG </font>became a <font color="blue"><font color="blue">significant</font> customer</font> of CIV     In fiscal 2006, <font color="blue">Siemens AG </font>accounted for 13prca of our aggregate CIV sales</td>
+    </tr>
+    <tr>
+      <td>Further, we are currently expecting that our 2D business with GE Healthcare,     Motorola GmbH and Philips Medical Systems <font color="blue">will <font color="blue">significant</font>ly decrease over</font>     the next 12-months as these <font color="blue">customers transition</font> to new platforms and new     component <font color="blue">manufactures</font></td>
+    </tr>
+    <tr>
+      <td>We expect that this <font color="blue">forecasted decline</font> in our 2D     business will be offset, either partially or fully, by an increase in our 3D     business</td>
+    </tr>
+    <tr>
+      <td>KLA-Tencor Corporation accounted for 63prca, 72prca and 66prca of our total     sales in the <font color="blue">Advanced Solutions </font>market in fiscal 2006, fiscal 2005 and     fiscal 2004</td>
+    </tr>
+    <tr>
+      <td>Additionally, for the MPS segment, which was <font color="blue">consolidated into</font>     our <font color="blue">company starting</font> in the <font color="blue">second quarter</font> of 2005, Motorola Computer Group,     SS8 Networks Inc, Continuous Computing Corporation and Lockheed Martin     Corporation  accounted for 27prca, 15prca, 10prca and 10prca, <font color="blue">respectively</font>, of the     aggregate  MPS sales for the year ended June 30, 2006</td>
+    </tr>
+    <tr>
+      <td>Although we are     seeking to broaden our <font color="blue">commercial customer base</font>, we expect to continue to     <font color="blue">depend on sales</font> to a <font color="blue">relatively</font> small number of <font color="blue">major customers</font> in both the     <font color="blue">Advanced Solutions </font>and MPS markets</td>
+    </tr>
+    <tr>
+      <td>Because it often takes <font color="blue">significant</font> time     and <font color="blue">added cost</font> to <font color="blue">replace lost</font> business, it is likely that our operating     results would be <font color="blue">adversely affected</font> if one or more of our <font color="blue">major customers</font>     were  to cancel, delay or reduce <font color="blue">significant</font> orders in the future</td>
+    </tr>
+    <tr>
+      <td>Our     customer agreements typically permit the customer to <font color="blue">discontinue future</font>     <font color="blue">purchases without</font> cause after timely notice</td>
+    </tr>
+    <tr>
+      <td>Our  sales to the CIV <font color="blue">market could</font> be <font color="blue">adversely affected</font> by changes in     <font color="blue">technology</font>, strength of the economy, and <font color="blue">health care reforms</font></td>
+    </tr>
+    <tr>
+      <td>The economic and <font color="blue"><font color="blue">technological</font> conditions affecting</font> our industry in general     or  any major CIV OEM customer in particular, <font color="blue">may adversely affect</font> our     operating results</td>
+    </tr>
+    <tr>
+      <td>CIV OEM <font color="blue">customers provide products</font> to markets that are     subject to <font color="blue">both economic</font> and <font color="blue"><font color="blue">technological</font> cycles</font></td>
+    </tr>
+    <tr>
+      <td>Any change in the demand     for <font color="blue">medical imaging devices</font> that renders any of our <font color="blue">products unnecessary</font> or     obsolete, or any change in the <font color="blue">technology</font> in these devices, could result in     a decrease in our revenues</td>
+    </tr>
+    <tr>
+      <td>In addition to our CIV OEM customers, the end     users of their products and the health care industry <font color="blue">generally</font> are subject     to extensive federal, state and <font color="blue">local regulation</font> in the United States, as     well as in other countries</td>
+    </tr>
+    <tr>
+      <td>Changes in applicable health care laws and     <font color="blue">regulations</font> or new <font color="blue"><font color="blue">interpretation</font>s</font> of existing laws and <font color="blue">regulations</font> could     cause these customers or end users to demand fewer CIV products</td>
+    </tr>
+    <tr>
+      <td>There can     be no assurance that <font color="blue">future health care regulation</font> or <font color="blue">budgetary legislation</font>     or other changes in the <font color="blue">administration</font> or <font color="blue">interpretation</font> of <font color="blue">government</font>al     <font color="blue">health care programs both</font> in the <font color="blue">United States </font>and abroad will not have a     material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font><font color="blue">from existing</font> or new companies in the CIV business could cause     us to experience downward pressure on prices, fewer <font color="blue">customer orders</font>, reduced     margins, the <font color="blue">inability</font> to take advantage of new business <font color="blue">opportunities</font> and     the loss of market share</td>
+    </tr>
+    <tr>
+      <td>CIV competes in <font color="blue">highly <font color="blue">competitive</font> industries</font>, and our CIV OEM customers     <font color="blue">generally</font>  extend the <font color="blue"><font color="blue">competitive</font> pressures</font> they <font color="blue">face throughout</font> their     <font color="blue">respective supply chains</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue"><font color="blue">competition</font> based upon product</font>     design, performance, pricing, quality and services</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">product performance</font>,     embedded  <font color="blue">systems engineering expertise</font>, and <font color="blue">product quality</font> have been     important  factors in our growth</td>
+    </tr>
+    <tr>
+      <td>While we try to maintain <font color="blue">competitive</font>     pricing  on  those  products  that are <font color="blue">directly comparable</font> to products     <font color="blue">manufactured by others</font>, in many instances our <font color="blue"><font color="blue">products will</font> conform</font> to more     <font color="blue">exacting <font color="blue">specifications</font></font> and carry a <font color="blue">higher price than analogous products</font></td>
+    </tr>
+    <tr>
+      <td>Many of our CIV OEM customers and potential CIV OEM customers have the     <font color="blue">capacity</font> to design and <font color="blue">internally manufacture products</font> that are similar to     our products</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face <font color="blue">competition</font> from research</font> and <font color="blue">product <font color="blue">development</font></font>     groups and the <font color="blue">manufacturing</font> <font color="blue">operations</font> of current and <font color="blue">potential customers</font>,     who <font color="blue">continually</font>                                           16     ______________________________________________________________________    [57]Table of <font color="blue">Contents       </font>evaluate the benefits of <font color="blue">internal research</font> and <font color="blue">product <font color="blue">development</font></font> and     <font color="blue"><font color="blue">manufacturing</font> versus outsourcing</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue"><font color="blue">competition</font> could</font> result in fewer     <font color="blue">customer orders</font> and a loss of market share</td>
+    </tr>
+    <tr>
+      <td>Our sales in the defense <font color="blue">market could</font> be <font color="blue">adversely affected</font> by the emergence     of commodity-type products as acceptable <font color="blue">substitutes</font> for certain of the     Company’s  products  and <font color="blue">by <font color="blue">uncertainty</font></font> created by emerging changes in     standards that may cause customers to <font color="blue">delay purchases</font> or <font color="blue">seek alternative</font>     solutions</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">computing products</font> for the <font color="blue">defense market</font> are designed for operating     <font color="blue">under physical constraints such as</font> limited volume, weight, and electrical     power</td>
+    </tr>
+    <tr>
+      <td>Furthermore, these products are <font color="blue">often designed</font> to be “rugged,” that     is, to withstand enhanced environmental stress such as extended temperature     range, shock, vibration, and exposure to sand or <font color="blue">salt spray</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Historically     </font>these <font color="blue">requirements</font> have often precluded the use of less expensive, readily     available commodity-type systems typically found in more benign non-military     settings</td>
+    </tr>
+    <tr>
+      <td>Factors that may increase the <font color="blue">acceptability</font> of commodity-type     products in some <font color="blue">defense platforms</font> that we serve include <font color="blue">improvements</font> in the     physical properties and <font color="blue">durability</font> of such alternative products, combined     with the <font color="blue">relaxation</font> of physical and ruggedness <font color="blue">requirements</font> by the military     due to either a <font color="blue">reevaluation</font> of those <font color="blue">requirements</font> or the <font color="blue">installation</font> of     <font color="blue">computing products</font> in a more <font color="blue">highly environmentally isolated setting</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, recent proposed changes in the VMEbus <font color="blue">computer infrastructure</font>     standard, to which a majority of our defense products adhere, may cause     program managers with the <font color="blue">US Government </font>and prime <font color="blue"><font color="blue">contractor</font>s</font> to delay     <font color="blue">decisions</font>  on  new program <font color="blue">implementations</font> in order to determine which     emerging standards and <font color="blue">configurations</font> will be the dominant design in the     market,  and may result in <font color="blue">program managers selecting new standards</font> or     <font color="blue">configurations</font> that we have not chosen to invest in</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">development</font>s</font>     <font color="blue">could negatively impact</font> our revenues and have a material adverse effect on     our business and operating results</td>
+    </tr>
+    <tr>
+      <td>If we are unable to respond <font color="blue">adequately</font> to our <font color="blue">competition</font>, we may lose     <font color="blue">existing customers</font> and fail to win future business <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>The markets for our products are highly <font color="blue">competitive</font> and are <font color="blue">characterized by</font>     rapidly changing <font color="blue">technology</font>, frequent <font color="blue">product performance</font> <font color="blue">improvements</font> and     evolving  industry  standards</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitors  </font>may be able to offer more     <font color="blue">attractive pricing</font> or develop products that <font color="blue">could offer performance</font> features     that are superior to our products, resulting in <font color="blue">reduced demand</font> for our     products</td>
+    </tr>
+    <tr>
+      <td>Due to the rapidly changing nature of <font color="blue">technology</font>, we may not     become  aware  in advance of the emergence of <font color="blue">new <font color="blue">competitors</font> into</font> our     markets</td>
+    </tr>
+    <tr>
+      <td>The emergence of <font color="blue">new <font color="blue">competitors</font> into</font> markets <font color="blue">historically</font> targeted     by us could result in the loss of <font color="blue">existing customers</font> and may have a negative     <font color="blue">impact on</font> our ability to win future business <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>With continued     microprocessor evolution, low-end systems could become adequate to meet the     <font color="blue">requirements</font> of an increased number of the lesser-demanding <font color="blue">applications</font>     within our <font color="blue">target markets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Workstation </font><font color="blue">manufacturers</font> and other low-end     single-board  computer  or  merchant  <font color="blue">board computer companies</font>, or new     <font color="blue">competitors</font>,  <font color="blue">may attempt</font> to penetrate the high-performance market for     defense <font color="blue">electronics systems</font>, which could have a material adverse effect on     our business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> the <font color="blue">consequences</font> of future terrorist <font color="blue">activities</font>, but they     <font color="blue">may adversely affect</font> the markets in which we operate, our ability to insure     <font color="blue">against risks</font>, and our <font color="blue">operations</font> or <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The terrorist attacks in the <font color="blue">United States </font>on <font color="blue">September </font>11, 2001, as well as     the US-led response, including ongoing military <font color="blue">operations</font> in Iraq and     Afghanistan,  the  potential  for future terrorist <font color="blue">activities</font>, and the     <font color="blue">development</font> of a Homeland Security <font color="blue">organization</font> have created economic and     political  <font color="blue">uncertainties</font>  that could have a material adverse effect on     business  and the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>These matters have caused     <font color="blue">uncertainty</font> in the world’s financial and <font color="blue">insurance markets</font> and may increase     <font color="blue">significant</font>ly  the  political,  economic and <font color="blue">social instability</font> in the     <font color="blue">geographic areas</font> in which we operate</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">development</font>s</font> may adversely     affect our business and <font color="blue">profitability</font> and the prices of our securities in     ways that cannot be <font color="blue">predicted at</font> this time</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">growth strategy</font> includes developing <font color="blue">new products</font> and <font color="blue">entering new</font>     markets, as well as identifying and integrating <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>Our ability to     compete in <font color="blue">new markets</font> will depend upon a number of factors including, among     others:           •   our ability to create demand for products in <font color="blue">new markets</font>;           •   our ability to <font color="blue">manage growth effectively</font>;           •   our ability to <font color="blue"><font color="blue">successfully</font> integrate</font> any <font color="blue">acquisition</font>s that we make;           •   our ability to respond to changes in our customers’ businesses by     <font color="blue">updating existing products</font> and introducing, in a timely fashion, new     <font color="blue">products which meet</font> the needs of our customers;           •   the quality of our <font color="blue">new products</font>; and           •   our ability to respond rapidly to <font color="blue">technological</font> change</td>
+    </tr>
+    <tr>
+      <td>The failure to do any of the <font color="blue">foregoing could</font> have a material adverse effect     on our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     we may face <font color="blue">competition</font> in these <font color="blue">new markets</font> from various companies that may     have <font color="blue">substantially</font> greater research and <font color="blue">development</font> resources, marketing and     financial  resources,  <font color="blue">manufacturing</font>  <font color="blue">capability</font>  and <font color="blue">customer support</font>     <font color="blue">organization</font>s</td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue"><font color="blue">successfully</font> integrate</font> <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>We completed the <font color="blue">acquisition</font>s of SoHard and Echotek in fiscal year 2006, MCI     in fiscal year 2005 <font color="blue">and TGS Group and ARC </font>in fiscal year 2004</td>
+    </tr>
+    <tr>
+      <td>We may in the     future acquire or make <font color="blue">investments</font> in complementary companies, products or     <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font><font color="blue">may pose risks</font> to our <font color="blue">operations</font>, including:           •   problems and <font color="blue">increased costs</font> in <font color="blue">connection with</font> the <font color="blue">integration</font> of the     personnel, <font color="blue">operations</font>, <font color="blue">technologies</font> or products of the acquired companies;           •   <font color="blue">unanticipated costs</font>;           •   diversion of <font color="blue">management</font>’s attention from our core business;           •   <font color="blue">adverse effects on</font> business <font color="blue">relationships with suppliers</font> and customers     and those of the acquired company;           •   acquired <font color="blue">assets becoming impaired as</font> a result of technical     <font color="blue">advancements</font> or worse-than-expected performance by the acquired company;           •   <font color="blue">entering markets</font> in which we have no, or limited, prior experience;     and           •   <font color="blue">potential loss</font> of <font color="blue">key employees</font>, particularly those of the acquired     <font color="blue">organization</font></td>
+    </tr>
+    <tr>
+      <td>In addition, in <font color="blue">connection with</font> any <font color="blue">acquisition</font>s or <font color="blue">investments</font> we could:           •   <font color="blue">issue stock</font> that <font color="blue">would dilute</font> our existing shareholders’ percentage     ownership;           •   incur debt and assume <font color="blue">liabilities</font>;           •   obtain <font color="blue">financing on unfavorable terms</font>;           •   <font color="blue">incur amortization expenses</font> related to acquired <font color="blue">intangible assets</font> or     incur large and immediate write-offs;           •   incur large <font color="blue">expenditures</font> related to <font color="blue">office closures</font> of the acquired     companies, including costs relating to <font color="blue">termination</font> of employees and <font color="blue">facility</font>     and <font color="blue">leasehold improvement charges</font> relating to vacating the acquired     companies’ premises; and           •   reduce the cash that <font color="blue">would otherwise</font> be available to fund <font color="blue">operations</font>     or to use for other purposes</td>
+    </tr>
+    <tr>
+      <td>18     ______________________________________________________________________    [59]Table of <font color="blue">Contents       </font>The failure to <font color="blue"><font color="blue">successfully</font> integrate</font> any <font color="blue">acquisition</font> or for <font color="blue">acquisition</font>s to     yield expected results <font color="blue">may negatively impact</font> our <font color="blue">financial condition</font> and     operating results</td>
+    </tr>
+    <tr>
+      <td>We may be unable to obtain critical <font color="blue">components</font> from suppliers, which could     disrupt or delay our ability to deliver products to our customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Several  </font><font color="blue">components</font>  used  in our products are currently obtained from     sole-source suppliers</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> key vendors like LSI Logic,     Xilinx and Toshiba for custom-designed ASICs and FPGAs; Freescale and IBM     for PowerPC <font color="blue">microprocessors</font>; IBM for a specific SRAM; and Arrow, Hybricon,     and Motorola for chassis and chassis <font color="blue">components</font></td>
+    </tr>
+    <tr>
+      <td>Generally, <font color="blue">suppliers may</font>     terminate their <font color="blue">contracts with</font> us without cause upon 30 days’ notice and may     cease  offering  their  products  upon 180 days’ notice</td>
+    </tr>
+    <tr>
+      <td>If any of our     sole-source suppliers limits or reduces the sale of these <font color="blue">components</font>, we may     be  unable to fulfill <font color="blue">customer orders</font> in a <font color="blue">timely manner</font> or at all</td>
+    </tr>
+    <tr>
+      <td>In     addition, if these or other component suppliers, some of which are small     companies,  experienced  financial <font color="blue">difficulties</font> or other problems that     <font color="blue"><font color="blue">prevented them from</font> supplying us with</font> the necessary <font color="blue">components</font>, we could     experience a loss of <font color="blue">revenues due</font> to our <font color="blue">inability</font> to fulfill orders</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>sole-source and other suppliers are each subject to quality and performance     issues, materials shortages, excess demand, reduction in <font color="blue">capacity</font> and other     factors that <font color="blue">may disrupt</font> the flow of goods to us or to our customers, which     <font color="blue">would adversely affect</font> our business and <font color="blue">customer relationships</font></td>
+    </tr>
+    <tr>
+      <td>We have no     guaranteed  <font color="blue"><font color="blue">supply arrangements</font> with</font> our suppliers and there can be no     assurance that these <font color="blue">suppliers will continue</font> to meet our <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>If     <font color="blue">supply arrangements</font> are <font color="blue">interrupted</font>, we may not be able to find another     <font color="blue">supplier on</font> a timely or satisfactory basis</td>
+    </tr>
+    <tr>
+      <td>We may incur <font color="blue">significant</font> set-up     costs and delays in <font color="blue">manufacturing</font> should it <font color="blue">become necessary</font> to replace any     <font color="blue">key vendors due</font> to work stoppages, shipping delays, financial <font color="blue">difficulties</font>     or other factors</td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">effectively manage</font> our <font color="blue">relationships with contract</font>     <font color="blue">manufacturers</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">effectively manage</font> our <font color="blue">relationship with contract</font>     <font color="blue">manufacturers</font>,  and  the  contract  <font color="blue">manufacturers</font>  may not <font color="blue">meet future</font>     <font color="blue">requirements</font> for <font color="blue">timely delivery</font></td>
+    </tr>
+    <tr>
+      <td>We rely on contract <font color="blue">manufacturers</font> to build     hardware  sub-assemblies  for  our  products  in  <font color="blue">accordance</font>  with our     <font color="blue">specifications</font></td>
+    </tr>
+    <tr>
+      <td>During the normal course of business, we may provide demand     forecasts to contract <font color="blue">manufacturers</font> up to five months prior to scheduled     delivery of our products to customers</td>
+    </tr>
+    <tr>
+      <td>If we overestimate <font color="blue">requirements</font>, the     contract <font color="blue">manufacturers</font> may assess cancellation penalties or we may be left     with excess inventory, which <font color="blue">may negatively impact</font> our earnings</td>
+    </tr>
+    <tr>
+      <td>If we     underestimate <font color="blue">requirements</font>, the contract <font color="blue">manufacturers</font> may have inadequate     inventory, which could interrupt <font color="blue">manufacturing</font> of our products and result in     delays  in  shipment  to  customers  and <font color="blue">revenue recognition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Contract     </font><font color="blue">manufacturers</font> also build products for other companies, and they may not have     sufficient  quantities  of  <font color="blue">inventory available</font> or <font color="blue">sufficient internal</font>     resources to fill our orders on a <font color="blue">timely basis</font> or at all</td>
+    </tr>
+    <tr>
+      <td>In addition, there have been a number of major <font color="blue">acquisition</font>s within the     contract <font color="blue">manufacturing</font> industry in <font color="blue">recent periods</font></td>
+    </tr>
+    <tr>
+      <td>While there has been no     <font color="blue">significant</font>  impact  on  our  contract  <font color="blue">manufacturers</font>  to date, future     <font color="blue">acquisition</font>s  could  <font color="blue">potentially</font> have an adverse effect on our working     <font color="blue">relationships with contract</font> <font color="blue">manufacturers</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, we <font color="blue">currently rely</font>     primarily on two contract <font color="blue">manufacturers</font></td>
+    </tr>
+    <tr>
+      <td>The failure of these contract     <font color="blue">manufacturers</font> to fill our orders on a <font color="blue">timely basis</font> or in <font color="blue">accordance</font> with our     customers’ <font color="blue">specifications</font> could result in a loss of revenues and damage to     our reputation</td>
+    </tr>
+    <tr>
+      <td>We may not be able to replace these contract <font color="blue">manufacturers</font>     in a <font color="blue">timely manner</font> or without <font color="blue">significant</font>ly increasing our costs if such     contract <font color="blue">manufacturers</font> were to experience financial <font color="blue">difficulties</font> or other     problems that <font color="blue">prevented them from</font> fulfilling our order <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Our performance and <font color="blue">stock price may decline</font> if we are unable to retain and     <font color="blue">attract key personnel</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">largely dependent upon</font> the skills and efforts of <font color="blue">senior <font color="blue">management</font></font>     including James R Bertelli, our president and chief executive officer, as     well as our senior managerial, sales and <font color="blue">technical employees</font></td>
+    </tr>
+    <tr>
+      <td>None of our     <font color="blue">senior <font color="blue">management</font></font> or other <font color="blue">key employees</font> is subject to <font color="blue">employment contracts</font></td>
+    </tr>
+    <tr>
+      <td>The loss of services of any executive or other <font color="blue">key personnel could</font> have a     material adverse effect on our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font> and stock price</td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">future success will depend</font> to a     <font color="blue">significant</font> extent on the                                           19     ______________________________________________________________________    [60]Table of <font color="blue">Contents       </font>ability to attract, train, motivate and retain <font color="blue">highly skilled technical</font>     professionals, particularly project managers, engineers and other senior     <font color="blue">technical personnel</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that we will be successful in     retaining current or <font color="blue">future employees</font></td>
+    </tr>
+    <tr>
+      <td>We  are  exposed to risks associated with <font color="blue">international</font> <font color="blue">operations</font> and     markets</td>
+    </tr>
+    <tr>
+      <td>We market and <font color="blue">sell products</font> in <font color="blue">international</font> markets, and have established     offices and <font color="blue">subsidiaries</font> in the United Kingdom, Japan, France and Germany</td>
+    </tr>
+    <tr>
+      <td>Revenues from <font color="blue">international</font> <font color="blue">operations</font> accounted for 7prca, 9prca and 9prca of total     revenues for <font color="blue">fiscal years</font> 2006, 2005 and 2004, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>From our US     <font color="blue">operations</font>,  we  also  <font color="blue">ship directly</font> to <font color="blue">international</font> customers, which     <font color="blue">shipments accounted</font> for 5prca, 12prca and 10prca of <font color="blue">total revenues</font> for <font color="blue">fiscal years</font>     2006, 2005 and 2004, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>There are inherent risks in transacting     business <font color="blue">international</font>ly, including:           •   changes in <font color="blue">applicable laws</font> and regulatory <font color="blue">requirements</font>;           •   export and <font color="blue">import restrictions</font>;           •   <font color="blue">export controls</font> relating to <font color="blue">technology</font>;           •   tariffs and other <font color="blue">trade barriers</font>;           •   less favorable <font color="blue"><font color="blue">intellectual property</font> laws</font>;           •   <font color="blue">difficulties</font> in staffing and managing foreign <font color="blue">operations</font>;           •   <font color="blue">longer payment cycles</font>;           •   problems in <font color="blue">collecting accounts receivable</font>;           •   <font color="blue">political instability</font>;           •   <font color="blue">fluctuations</font> in <font color="blue">currency exchange rates</font>;           •   <font color="blue">expatriation controls</font>; and           •   potential adverse tax <font color="blue">consequences</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that one or more of these <font color="blue">factors will</font> not have a     material  adverse  effect  on our future <font color="blue">international</font> <font color="blue">activities</font> and,     consequently, on our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be exposed to <font color="blue">unfavorable currency</font> exchange rate <font color="blue">fluctuations</font>, which     may lead to lower operating margins, or may cause us to <font color="blue">raise prices which</font>     could result in <font color="blue">reduced sales</font></td>
+    </tr>
+    <tr>
+      <td>Currency exchange rate <font color="blue">fluctuations</font> could have an adverse effect on our net     sales and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font>currency <font color="blue">fluctuations</font> could     require us to increase prices to foreign customers, which could result in     <font color="blue">lower net sales by us</font> to <font color="blue">such customers</font></td>
+    </tr>
+    <tr>
+      <td>Alternatively, if we do not adjust     the  prices  for  our  products  in  response  to <font color="blue">unfavorable currency</font>     <font color="blue">fluctuations</font>, our results of <font color="blue">operations</font> could be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, most sales made by our foreign <font color="blue">subsidiaries</font> are <font color="blue">denominated</font> in the     currency of the country in which these products are sold, and the currency     they receive in payment for <font color="blue">such sales could</font> be less valuable at the time of     <font color="blue">receipt as</font> a result of exchange rate <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td>We do not <font color="blue">currently hedge</font>     our <font color="blue">foreign currency exchange rate exposure</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to respond to <font color="blue">technological</font> <font color="blue"><font color="blue">development</font>s</font> and changing     customer  needs  on  a timely and cost-effective basis, our results of     <font color="blue">operations</font> may be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success will depend</font> in part on our ability to <font color="blue">enhance current</font>     products and to develop <font color="blue">new products</font> on a timely and cost-effective basis in     order to respond to <font color="blue">technological</font> <font color="blue"><font color="blue">development</font>s</font> and changing customer needs</td>
+    </tr>
+    <tr>
+      <td>Military planners have     <font color="blue">historically</font> funded <font color="blue">significant</font>ly more design projects than                                           20     ______________________________________________________________________    [61]Table of <font color="blue">Contents       </font><font color="blue">actual deployments</font> of <font color="blue">new equipment</font>, and those systems that are deployed     tend to contain the <font color="blue">components</font> of the <font color="blue">sub<font color="blue">contractor</font></font>s selected to <font color="blue">participate</font>     in the <font color="blue">design process</font></td>
+    </tr>
+    <tr>
+      <td>In order to <font color="blue">participate</font> in the design of new defense     <font color="blue">electronics systems</font>, we <font color="blue">must demonstrate</font> the ability to deliver superior     <font color="blue">technological</font> performance on a timely and cost-effective basis</td>
+    </tr>
+    <tr>
+      <td>There can be     no assurance that we will secure an adequate number of <font color="blue">defense design wins</font>     in the future, that the equipment in which our products are intended to     <font color="blue">function will <font color="blue">eventually</font></font> be deployed in the field, or that our <font color="blue">products will</font>     be included in <font color="blue">such equipment</font> if it <font color="blue">eventually</font> is deployed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers  </font>in  our  CIV  and <font color="blue">Advanced Solutions </font>markets, including the     semiconductor imaging market, also seek <font color="blue">technological</font> <font color="blue">improvements</font> through     <font color="blue">product enhancements</font> and <font color="blue">new generations</font> of products</td>
+    </tr>
+    <tr>
+      <td>OEMs <font color="blue">historically</font> have     <font color="blue">selected certain suppliers whose products</font> have been included in the OEMs’     machines for a <font color="blue">significant</font> portion of the products’ life cycles</td>
+    </tr>
+    <tr>
+      <td>We may not     be  selected  to  <font color="blue">participate</font>  in  the <font color="blue">future design</font> of any medical or     <font color="blue">semiconductor imaging equipment</font>, or if selected, we may not generate any     revenues for such design work</td>
+    </tr>
+    <tr>
+      <td>The design-in process is <font color="blue">typically lengthy</font> and expensive, and there can be     no  assurance  that  we  will  be able to continue to meet the product     <font color="blue">specifications</font>  of  OEM  customers in a timely and <font color="blue">adequate manner</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, any failure to anticipate or respond <font color="blue">adequately</font> to changes in     <font color="blue">technology</font> and <font color="blue">customer preferences</font>, or any <font color="blue">significant</font> delay in product     <font color="blue"><font color="blue">development</font>s</font>  or  introductions, <font color="blue">could negatively impact</font> our financial     condition  and  results of <font color="blue">operations</font>, including the risk of inventory     obsolescence</td>
+    </tr>
+    <tr>
+      <td>Because of the <font color="blue">complexity</font> of our products, we have experienced     <font color="blue">delays from</font> time to time in completing <font color="blue">products on</font> a <font color="blue">timely basis</font></td>
+    </tr>
+    <tr>
+      <td>If we are     unable to design, develop or introduce <font color="blue">competitive</font> <font color="blue">new products</font> on a timely     basis, our future operating results may be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>Our products are complex, and <font color="blue">undetected defects may increase</font> our costs,     harm our <font color="blue">reputation with customers</font> or lead to <font color="blue">costly <font color="blue">litigation</font></font></td>
+    </tr>
+    <tr>
+      <td>Our  products are <font color="blue">extremely complex</font> and must operate <font color="blue"><font color="blue">successfully</font> with</font>     <font color="blue">complex products</font> of other vendors</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">products may contain undetected</font>     errors  when <font color="blue">first introduced</font> or as we <font color="blue">introduce product upgrades</font></td>
+    </tr>
+    <tr>
+      <td>The     pressures we face to be the first to market <font color="blue">new products</font> or <font color="blue">functionality</font>     increases the <font color="blue">possibility</font> that we <font color="blue">will offer products</font> in which we or our     <font color="blue">customers later discover problems</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced new product and     product  <font color="blue">upgrade errors</font> in the past and expect similar problems in the     future</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">problems may</font> cause us to incur <font color="blue">significant</font> costs to support     our <font color="blue">service contracts</font> and other costs and divert the attention of personnel     from our <font color="blue">product <font color="blue">development</font></font> efforts</td>
+    </tr>
+    <tr>
+      <td>If we are unable to repair these     problems in a <font color="blue">timely manner</font>, we may experience a loss of or delay in revenue     and <font color="blue">significant</font> damage to our reputation and business prospects</td>
+    </tr>
+    <tr>
+      <td>Many of our     customers rely upon our products for business-critical <font color="blue">applications</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because     </font>of this reliance, errors, defects or other <font color="blue">performance problems</font> in our     <font color="blue">products could</font> result in <font color="blue">significant</font> financial and other damage to our     customers</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customers could attempt</font> to recover those <font color="blue">losses by pursuing</font>     <font color="blue">products liability</font> claims against us which, even if <font color="blue">unsuccessful</font>, would     likely be time-consuming and costly to defend and <font color="blue">could adversely affect</font> our     reputation</td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">unsuccessful</font> in protecting our <font color="blue"><font color="blue">intellectual property</font> rights</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">compete effectively against</font> other companies in our industry     depends,  in  part,  on  our ability to protect our current and future     <font color="blue">proprietary</font> <font color="blue">technology</font> under patent, copyright, trademark, trade secret and     unfair <font color="blue">competition</font> laws</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that our means of protecting our     <font color="blue">proprietary</font> rights in the <font color="blue">United States </font>or abroad will be adequate, or that     others will not develop <font color="blue">technologies</font> similar or superior to our <font color="blue">technology</font>     or design around the <font color="blue">proprietary</font> rights we own</td>
+    </tr>
+    <tr>
+      <td>In addition, we may incur     substantial costs in attempting to protect our <font color="blue">proprietary</font> rights</td>
+    </tr>
+    <tr>
+      <td>Also, despite the steps <font color="blue">taken by us</font> to protect our <font color="blue">proprietary</font> rights, it     may be possible for <font color="blue">unauthorized</font> third parties to copy or reverse-engineer     aspects  of  our products, develop similar <font color="blue">technology</font> independently or     otherwise obtain and use information that we regard as <font color="blue">proprietary</font> and we     may be unable to <font color="blue">successfully</font> identify                                           21     ______________________________________________________________________    [62]Table of <font color="blue">Contents       </font>or prosecute <font color="blue">unauthorized</font> uses of our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, <font color="blue">with respect</font>     to our issued patents and patent <font color="blue">applications</font>, we <font color="blue">cannot assure</font> you that any     <font color="blue">patents from</font> any pending patent <font color="blue">applications</font> (or from any <font color="blue">future patent</font>     <font color="blue">applications</font>) will be issued, that the scope of any <font color="blue">patent protection will</font>     exclude <font color="blue">competitors</font> or provide <font color="blue">competitive</font> advantages to us, that any of our     <font color="blue">patents will</font> be held valid if <font color="blue">subsequently challenged</font> or that others will     not claim rights in or ownership of the patents (and patent <font color="blue">applications</font>)     and other <font color="blue">proprietary</font> rights held by us</td>
+    </tr>
+    <tr>
+      <td>If we become subject to <font color="blue"><font color="blue">intellectual property</font> infringement</font> claims, we could     incur <font color="blue">significant</font> expenses and could be <font color="blue">prevented from selling specific</font>     products</td>
+    </tr>
+    <tr>
+      <td>We may become subject to claims that we infringe the <font color="blue">intellectual property</font>     rights of others in the future</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that, if made, these claims     will not be successful</td>
+    </tr>
+    <tr>
+      <td>Any claim of <font color="blue">infringement could</font> cause us to incur     substantial <font color="blue">costs defending against</font> the claim even if the claim is invalid,     and could distract <font color="blue">management</font> from other business</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">judgment against us</font>     could require substantial payment in damages and <font color="blue">could also</font> include an     injunction or other court order that <font color="blue">could prevent us from offering certain</font>     products</td>
+    </tr>
+    <tr>
+      <td>For a description of certain pending <font color="blue">litigation</font> in which we are</td>
+    </tr>
+  </tbody>
+</table>

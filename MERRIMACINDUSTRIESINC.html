@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: operations may", fill: "#0bda51"},
+{source: "3: operations may", target: "3: impaired by", fill: "#0bda51"},
+{source: "3: impaired by", target: "3: additional", fill: "#0bda51"},
+{source: "3: additional", target: "3: uncertainties", fill: "#0bda51"},
+{source: "3: operations may", target: "4: operations", fill: "#bd33a4"},
+{source: "4: operations", target: "4: cash flows may", fill: "#bd33a4"},
+{source: "4: cash flows may", target: "4: adversely affected", fill: "#bd33a4"},
+{source: "4: adversely affected", target: "4: following risks actually", fill: "#bd33a4"},
+{source: "4: operations", target: "15: generated revenues", fill: "#fada5e"},
+{source: "15: generated revenues", target: "15: customer base", fill: "#fada5e"},
+{source: "15: customer base", target: "15: competitive product", fill: "#fada5e"},
+{source: "15: competitive product", target: "15: decreased consumer demand", fill: "#fada5e"},
+{source: "15: decreased consumer demand", target: "15: significant decrease", fill: "#fada5e"},
+{source: "15: significant decrease", target: "15: investment", fill: "#fada5e"},
+{source: "15: investment", target: "15: product assets could", fill: "#fada5e"},
+{source: "15: product assets could", target: "15: negatively impacted", fill: "#fada5e"},
+{source: "15: negatively impacted", target: "15: impairment charge", fill: "#fada5e"},
+{source: "15: generated revenues", target: "20: enter into joint ventures research", fill: "#00bfff"},
+{source: "20: enter into joint ventures research", target: "20: development", fill: "#00bfff"},
+{source: "20: development", target: "20: distribution", fill: "#00bfff"},
+{source: "20: distribution", target: "20: arrangements with third party", fill: "#00bfff"},
+{source: "20: arrangements with third party", target: "20: contractors universities", fill: "#00bfff"},
+{source: "20: contractors universities", target: "20: research institutions", fill: "#00bfff"},
+{source: "20: research institutions", target: "20: successfully", fill: "#00bfff"},
+{source: "20: enter into joint ventures research", target: "38: engineering", fill: "#f77fbe"},
+{source: "38: engineering", target: "38: development", fill: "#f77fbe"},
+{source: "38: development", target: "38: challenges", fill: "#f77fbe"},
+{source: "38: challenges", target: "38: manufacturing", fill: "#f77fbe"},
+{source: "38: manufacturing", target: "38: additional", fill: "#f77fbe"},
+{source: "38: engineering", target: "97: concentrated", fill: "#98817b"},
+{source: "97: concentrated", target: "97: armaments", fill: "#98817b"},
+{source: "97: armaments", target: "97: development", fill: "#98817b"},
+{source: "97: development", target: "97: applications", fill: "#98817b"},
+{source: "97: applications", target: "97: the Companys ", fill: "#98817b"},
+{source: "97: the Companys ", target: "97: core strengths", fill: "#98817b"},
+{source: "97: core strengths", target: "97: revenue generators", fill: "#98817b"},
+{source: "97: concentrated", target: "126: The Company ", fill: "#002fa7"},
+{source: "126: The Company ", target: "126: first quarter", fill: "#002fa7"},
+{source: "126: first quarter", target: "126: statement prospectively", fill: "#002fa7"},
+{source: "126: statement prospectively", target: "126: newly issued modified", fill: "#002fa7"},
+{source: "126: newly issued modified", target: "126: settled award", fill: "#002fa7"},
+{source: "126: settled award", target: "126: adoption as well as", fill: "#002fa7"},
+{source: "126: adoption as well as", target: "126: granted prior", fill: "#002fa7"},
+{source: "126: granted prior", target: "126: requisite service period", fill: "#002fa7"},
+{source: "126: requisite service period", target: "126: been provided as", fill: "#002fa7"},
+{source: "126: been provided as", target: "126: adoption date", fill: "#002fa7"},
+{source: "126: The Company ", target: "START_HERE", fill: "#002fa7"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Material Aid</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development/For!">Development/For!</a></td>
+      <td>Development/For! (Latvian: Attīstībai/Par!, AP!) is a liberal political alliance in Latvia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_development">Software development</a></td>
+      <td>Software development is the process of conceiving, specifying, designing, programming, documenting, testing, and bug fixing involved in creating and maintaining applications, frameworks, or other software components. Software development involves writing and maintaining the source code, but in a broader sense, it includes all processes from the conception of the desired software through to the final manifestation of the software, typically in a planned and structured process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Child_development">Child development</a></td>
+      <td>Child development involves the biological, psychological and emotional changes that occur in human beings between birth and the conclusion of adolescence. Childhood is divided into 3 stages of life which include early childhood, middle childhood, late childhood ( preadolescence).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Personal_development">Personal development</a></td>
+      <td>Personal development or self improvement consists of activities that develop a person's capabilities and potential, build human capital, facilitate employability, and enhance quality of life and the realization of dreams and aspirations. Personal development may take place over the course of an individual's entire lifespan and is not limited to one stage of a person's life.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing_Consent">Manufacturing Consent</a></td>
+      <td>Manufacturing Consent: The Political Economy of the Mass Media is a 1988 book by Edward S. Herman and Noam Chomsky. It argues that the mass communication media of the U.S. "are effective and powerful ideological institutions that carry out a system-supportive propaganda function, by reliance on market forces, internalized assumptions, and self-censorship, and without overt coercion", by means of the propaganda model of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing_cost">Manufacturing cost</a></td>
+      <td>Manufacturing cost is the sum of costs of all resources consumed in the process of making a product. The manufacturing cost is classified into three categories: direct materials cost, direct labor cost and manufacturing overhead.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automotive_industry">Automotive industry</a></td>
+      <td>The automotive industry comprises a wide range of companies and organizations involved in the design, development, manufacturing, marketing, and selling of motor vehicles. It is one of the world's largest industries by revenue (from 16 % such as in France up to 40 % to countries like Slovakia).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Textile_manufacturing">Textile manufacturing</a></td>
+      <td>Textile manufacturing is a major industry. It is largely based on the conversion of fibre into yarn, then yarn into fabric.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Murata_Manufacturing">Murata Manufacturing</a></td>
+      <td>Murata Manufacturing Co., Ltd. (株式会社村田製作所, Kabushiki-gaisha Murata Seisakusho) is a Japanese manufacturer of electronic components, based in Nagaokakyo, Kyoto.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Design_for_manufacturability">Design for manufacturability</a></td>
+      <td>Design for manufacturability (also sometimes known as design for manufacturing or DFM) is the general engineering practice of designing products in such a way that they are easy to manufacture. The concept exists in almost all engineering disciplines, but the implementation differs widely depending on the manufacturing technology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Company">Company</a></td>
+      <td>A company, abbreviated as co., is a legal entity representing an association of people, whether natural, legal or a mixture of both, with a specific objective. Company members share a common purpose and unite to achieve specific, declared goals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Walt_Disney_Company">The Walt Disney Company</a></td>
+      <td>The Walt Disney Company, commonly known as Disney (), is an American multinational mass media and entertainment conglomerate headquartered at the Walt Disney Studios complex in Burbank, California.\nDisney was originally founded on October 16, 1923, by brothers Walt and Roy O. Disney as the Disney Brothers Cartoon Studio; it also operated under the names the Walt Disney Studio and Walt Disney Productions before changing its name to the Walt Disney Company in 1986.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/East_India_Company">East India Company</a></td>
+      <td>The East India Company (EIC) was an English, and later British, joint-stock company founded in 1600. It was formed to trade in the Indian Ocean region, initially with the East Indies (the Indian subcontinent and Southeast Asia), and later with East Asia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Pokémon_Company">The Pokémon Company</a></td>
+      <td>The Pokémon Company (株式会社ポケモン, Kabushiki gaisha Pokémon) is a Japanese company responsible for brand management, production, publishing, marketing and licensing of the Pokémon franchise, which consists of video game software, a trading card game, anime television series, films, manga, home entertainment products, merchandise, and other ventures. It was established through a joint investment by the three businesses holding the copyright of Pokémon: Nintendo, Game Freak, and Creatures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Weather_Company">The Weather Company</a></td>
+      <td>The Weather Company is a weather forecasting and information technology company that owns and operates weather.com and Weather Underground. The Weather Company has been a subsidiary of the Watson &amp; Cloud Platform business unit of IBM since 2016.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Honest_Company">The Honest Company</a></td>
+      <td>The Honest Company, Inc. is an American consumer goods company, founded by actress Jessica Alba.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Longaberger_Company">The Longaberger Company</a></td>
+      <td>The Longaberger Company is an American manufacturer and distributor of handcrafted maple wood baskets and other home and lifestyle products. The company opened in 1973, was acquired in 2013 by CVSL, Inc., and closed in 2018.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MERRIMAC INDUSTRIES INC          ITEM 1A  RISK FACTORS       You <font color="blue">should carefully</font> consider the <font color="blue">matters described</font> below before making an     <font color="blue"><font color="blue">investment</font> decision</font></td>
+    </tr>
+    <tr>
+      <td>The risks and <font color="blue"><font color="blue">uncertainties</font> described</font> below are not the     <font color="blue">only ones facing</font> our company</td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue"><font color="blue">operations</font> may</font> be <font color="blue">impaired by</font>     <font color="blue">additional</font>  risks and <font color="blue">uncertainties</font> of which we are unaware or that we     currently consider immaterial</td>
+    </tr>
+    <tr>
+      <td>13     _________________________________________________________________       Our business, results of <font color="blue">operations</font> or <font color="blue">cash flows may</font> be <font color="blue"><font color="blue">adversely affect</font>ed</font>     if any of the <font color="blue">following risks actually</font> occur</td>
+    </tr>
+    <tr>
+      <td>In such case, the trading     price of our <font color="blue"><font color="blue">common stock</font> could decline</font>, and you may lose part or all of     your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The market for our products, in particular our Multi-Mix^® products, is new     and <font color="blue">rapidly evolving</font></td>
+    </tr>
+    <tr>
+      <td>If we are not able to develop or enhance our products,     or to respond to customer needs, our <font color="blue">net sales will suffer</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future <font color="blue">success depends</font></font> in large part on our ability to develop and     market our new line of Multi-Mix^® modules, filters, couplers and delay     lines  products,  <font color="blue">particularly</font> to the <font color="blue">wireless basestation</font> and defense     sectors</td>
+    </tr>
+    <tr>
+      <td>We will also need to <font color="blue">continually enhance</font> our <font color="blue">existing core products</font>     (passive RF and microwave component assemblies, power dividers and other     micro circuitry products), lower product cost and develop <font color="blue">new products</font> that     maintain <font color="blue"><font color="blue">technological</font> <font color="blue">competitive</font>ness</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">core products must meet</font> changing     customer,  <font color="blue">regulatory</font>  and  particular  <font color="blue"><font color="blue">technological</font> <font color="blue">requirements</font></font> and     standards, and our Multi-Mix^® <font color="blue">products especially must</font> respond to the     changing needs of our customers, <font color="blue">particularly</font> our OEM customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">customer <font color="blue">requirements</font> might</font> or might not be <font color="blue">compatible with</font> our current or     future  <font color="blue">product offerings</font></td>
+    </tr>
+    <tr>
+      <td>We might not be successful in modifying our     products and services to address these <font color="blue">requirements</font> and standards and our     business <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>We have made capital <font color="blue">investment</font>s of approximately dlra14dtta2 million in our     <font color="blue"><font color="blue">proprietary</font> line</font> of Multi-Mix^® Micro<font color="blue">technology</font> products</td>
+    </tr>
+    <tr>
+      <td>While we have <font color="blue">generated revenues</font> and developed a <font color="blue">customer base</font> for our     Multi-Mix^® products, if a <font color="blue"><font color="blue">competitive</font> product</font> or <font color="blue">decreased consumer demand</font>     for our Multi-Mix^® products resulted in <font color="blue"><font color="blue">significant</font> decrease</font> in those     revenues,  our  ability  to  recover our <font color="blue">investment</font> in our Multi-Mix^®     Micro<font color="blue">technology</font> <font color="blue">product assets could</font> be <font color="blue">negatively impacted</font> and result in a     write off of the carrying value of these assets and an <font color="blue">impairment charge</font> to     our earnings</td>
+    </tr>
+    <tr>
+      <td>In  addition,  we  have invested <font color="blue">significant</font> <font color="blue">engineering</font>, research and     <font color="blue">development</font>, personnel and other resources in developing our Multi-Mix     Zapper^® product line, introduced in June 2004</td>
+    </tr>
+    <tr>
+      <td>While revenues to date have     not been material, we intend to incur <font color="blue">significant</font> <font color="blue">additional</font> expenses,     including sales and <font color="blue">marketing costs</font>, in <font color="blue">implementing</font> our strategic plan to     <font color="blue">commercialize various <font color="blue">applications</font></font> of our Multi-Mix^® <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>products are direct drop-in <font color="blue">replacements</font> for competing <font color="blue">technologies</font> used in     virtually  all <font color="blue">wireless basestation</font>s</td>
+    </tr>
+    <tr>
+      <td>There are competing <font color="blue">technologies</font>     already in the marketplace, and in order to obtain market share we will have     to <font color="blue">convince customers</font> to convert to our <font color="blue">products from</font> those that are already     in use</td>
+    </tr>
+    <tr>
+      <td>We  may  seek  to <font color="blue">enter into</font> joint ventures, research and <font color="blue">development</font>,     <font color="blue">distribution</font>  and  other  <font color="blue">arrangements with <font color="blue">third party</font></font> OEM’s, defense     contractors, universities and <font color="blue">research institutions</font> and others in order to     <font color="blue">successfully</font>  market our Multi-Mix^® products</td>
+    </tr>
+    <tr>
+      <td>In fact, we may find it     <font color="blue">necessary</font>  to  enter  into  <font color="blue">such arrangements</font> if our own resources are     inadequate to develop <font color="blue">recurring revenues</font> and a <font color="blue">sustained <font color="blue">commercial market</font></font>     for these products</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance we will be able to <font color="blue">enter into</font>     <font color="blue">such arrangements</font>, or do so <font color="blue">on commercially attractive terms</font>, if <font color="blue">necessary</font></td>
+    </tr>
+    <tr>
+      <td>Our  business  plan  anticipates  <font color="blue"><font color="blue">significant</font> future revenues from</font> our     Multi-Mix^® products</td>
+    </tr>
+    <tr>
+      <td>Due to economic and market <font color="blue">conditions</font> in the wireless     <font color="blue">industry over</font> the past several years, tele<font color="blue">communications</font> system service     <font color="blue">providers <font color="blue">substantially</font> reduced</font> their <font color="blue">capital equipment purchases from</font> our     customers</td>
+    </tr>
+    <tr>
+      <td>While  these  <font color="blue">circumstances</font>  have resulted in the delay or     <font color="blue">cancellation</font> of Multi-Mix^® Micro<font color="blue">technology</font> <font color="blue">product purchases</font> that had been     anticipated <font color="blue">from certain specific customers</font> or programs, in <font color="blue">connection with</font>     the improved <font color="blue">conditions</font> in the industry, the Company has implemented a     strategic plan <font color="blue">utilizing product knowledge</font> and <font color="blue">customer focus</font> to expand     <font color="blue">specific sales <font color="blue">opportunities</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Continued </font><font color="blue">extended delay</font> or <font color="blue">reduction from</font>     planned levels in new orders expected <font color="blue">from customers</font> for these products     could require the Company to pursue <font color="blue"><font color="blue">alternative</font>s</font> related to the <font color="blue">utilization</font>     or <font color="blue">realization</font> of these assets and <font color="blue">commitments</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to generate     <font color="blue"><font color="blue">significant</font> future revenues from</font> these Multi-Mix^® products or identify     <font color="blue">alternative</font> uses, sufficient to recover our <font color="blue">investment</font>, we could have to     write  down  the  carrying value of these assets, thereby incurring an     <font color="blue">impairment charge</font> to earnings, which would <font color="blue">significant</font>ly harm our <font color="blue">operations</font>     and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>14     _________________________________________________________________       Our products are intended for use in <font color="blue">various sectors</font> of the satellite,     defense and <font color="blue">tele<font color="blue">communications</font> <font color="blue">industries</font></font>, which produces <font color="blue"><font color="blue">technological</font>ly</font>     <font color="blue">advanced products with</font> short <font color="blue">life cycles</font></td>
+    </tr>
+    <tr>
+      <td>Factors <font color="blue">affecting</font> the satellite, defense and <font color="blue">tele<font color="blue">communications</font> <font color="blue">industries</font></font>,     in particular the short life cycle of certain products, could seriously harm     our customers and reduce the volume of products they <font color="blue">purchase from us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>factors include:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the <font color="blue">inability</font> of our customers to adapt to rapidly changing <font color="blue">technology</font>     and <font color="blue">evolving industry standards</font> that result in short product <font color="blue">life cycles</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the <font color="blue">inability</font> of our customers to develop and market their products, some     of which are new and untested; and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the potential that our customers’ products may become obsolete or the     failure of our customers’ products to <font color="blue">gain widespread commercial acceptance</font></td>
+    </tr>
+    <tr>
+      <td>The expenses relating to our products might increase, which could reduce our     gross margins</td>
+    </tr>
+    <tr>
+      <td>In  the  past,  developing <font color="blue">engineering</font> solutions, meeting research and     <font color="blue">development</font> <font color="blue">challenges</font> and overcoming production and <font color="blue">manufacturing</font> issues     have resulted in <font color="blue">additional</font> expenses</td>
+    </tr>
+    <tr>
+      <td>These expenses create <font color="blue">pressure on</font> our     <font color="blue">average selling prices</font> and may result in <font color="blue">decreased margins</font> of our products</td>
+    </tr>
+    <tr>
+      <td>We  expect  that  this <font color="blue">will continue</font></td>
+    </tr>
+    <tr>
+      <td>In the future, <font color="blue">competition</font> could     increase, and we anticipate this may result in <font color="blue">additional</font> <font color="blue">pressure on</font> our     pricing</td>
+    </tr>
+    <tr>
+      <td>We also may not be able to increase the price of our products in     the event that the cost of <font color="blue">components</font> or <font color="blue">overhead increase</font></td>
+    </tr>
+    <tr>
+      <td>Changes in     <font color="blue">exchange rates</font> between <font color="blue">the United States and Canadian </font>dollars, and other     currencies, might result in <font color="blue">further disparity between</font> our costs and selling     price and hurt our ability to maintain gross margins</td>
+    </tr>
+    <tr>
+      <td>We  carry inventory and there is a risk we may be unable to dispose of     <font color="blue">certain items</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">procure inventory <font color="blue">based on</font> specific <font color="blue">customer orders</font></font> and forecasts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers </font>have <font color="blue">certain rights</font> of <font color="blue">modification with respect</font> to these orders     and forecasts</td>
+    </tr>
+    <tr>
+      <td>As a result, customer <font color="blue">modifications</font> to orders and forecasts     <font color="blue">affecting</font> inventory <font color="blue">previously</font> procured by us and our purchases of inventory     beyond customer needs may result in excess and obsolete inventory for the     related customers</td>
+    </tr>
+    <tr>
+      <td>Although we may be able to use some of these excess     <font color="blue">components</font> and <font color="blue">raw materials</font> in other products we <font color="blue">manufacture</font>, a portion of     the cost of this <font color="blue">excess inventory may</font> not be recoverable <font color="blue">from customers</font>, nor     may any <font color="blue">excess quantities</font> be returned to the vendors</td>
+    </tr>
+    <tr>
+      <td>We also may not be     able to recover the cost of <font color="blue">obsolete inventory from vendors</font> or customers</td>
+    </tr>
+    <tr>
+      <td>Write offs or <font color="blue">write downs</font> of <font color="blue">inventory <font color="blue">generally</font></font> arise from:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]                •  declines in the <font color="blue">market value</font> of inventory;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  changes in <font color="blue">customer demand</font> for inventory, such as <font color="blue">cancellation</font> of orders;     and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  our purchases of inventory beyond customer needs that result in excess     <font color="blue">quantities on hand</font> and that we are not able to return to the vendor or     <font color="blue">charge back</font> to the customer</td>
+    </tr>
+    <tr>
+      <td>Our products and therefore our <font color="blue">inventories</font> are subject to <font color="blue">technological</font>     risk</td>
+    </tr>
+    <tr>
+      <td>At any time either <font color="blue">new products</font> may enter the market or prices of     <font color="blue"><font color="blue">competitive</font> product</font>s may be introduced with more attractive features or at     lower  prices  than ours</td>
+    </tr>
+    <tr>
+      <td>There is a risk we may be unable to sell our     inventory in a <font color="blue">timely manner</font> and avoid it <font color="blue">becoming obsolete</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of <font color="blue">December </font>    </font>31, 2005, our <font color="blue">inventories</font> including <font color="blue">raw materials</font>, work-in-process and     finished goods, were valued at dlra3dtta7 million reflecting <font color="blue">reductions</font> due to     <font color="blue">valuation allowances</font> for obsolescence of approximately dlra1dtta1 million against     these <font color="blue">inventories</font></td>
+    </tr>
+    <tr>
+      <td>In the event we are required to <font color="blue">substantially</font> discount     our inventory or are unable to sell our inventory in a <font color="blue">timely manner</font>, we     would be required to increase our <font color="blue">valuation allowances</font> and our operating     results could be <font color="blue">substantially</font> <font color="blue"><font color="blue">adversely affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">generally</font> do not obtain long-term volume purchase <font color="blue">commitments</font> from     customers,  and,  therefore,  <font color="blue">cancellation</font>s,  <font color="blue">reductions</font> in production     quantities and delays in <font color="blue">production by</font> our <font color="blue">customers could <font color="blue">adversely affect</font></font>     our operating results</td>
+    </tr>
+    <tr>
+      <td>15     _________________________________________________________________       We <font color="blue">generally</font> do not obtain firm, long-term purchase <font color="blue">commitments</font> from our     customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Customers </font>may cancel their orders, choose not to <font color="blue">exercise options</font>     for  further  <font color="blue">product purchases</font>, reduce production quantities or delay     production for a number of reasons</td>
+    </tr>
+    <tr>
+      <td>In the event our customers experience     <font color="blue">significant</font>  <font color="blue">decreases</font>  in demand for their products and services, our     customers may <font color="blue">cancel orders</font>, delay the delivery of some of the products that     we  <font color="blue">manufacture</font>d  or  place <font color="blue">purchase orders</font> for <font color="blue">fewer products than</font> we     <font color="blue">previously</font> anticipated</td>
+    </tr>
+    <tr>
+      <td>Even when our customers are <font color="blue">contractually obligated</font>     to  purchase <font color="blue">products from</font> us, we may be unable or, for other business     reasons,  choose not to enforce our <font color="blue">contractual rights</font></td>
+    </tr>
+    <tr>
+      <td>Cancellations,     <font color="blue">reductions</font> or delays of <font color="blue">orders by customers would</font>:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">adversely affect</font> our operating results by reducing the volumes of     products that we <font color="blue">manufacture</font> for our customers;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  delay or <font color="blue">eliminate recoupment</font> of our <font color="blue">expenditures</font> for <font color="blue">inventory purchased</font>     in <font color="blue">preparation</font> for <font color="blue">customer orders</font>; and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  lower our asset <font color="blue">utilization</font>, which would result in lower gross margins</td>
+    </tr>
+    <tr>
+      <td>Products we <font color="blue">manufacture</font> may contain design or <font color="blue">manufacturing</font> defects that     could result in <font color="blue">reduced demand</font> for our services and <font color="blue">liability</font> claims against     us</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">manufacture</font> products to our customers’ specifications that are highly     complex and <font color="blue">may at times contain design</font> or <font color="blue">manufacturing</font> defects</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Defects     </font>have <font color="blue">been discovered</font> in products we <font color="blue">manufacture</font>d in the past and despite our     <font color="blue">quality control</font> and quality assurance efforts, <font color="blue">defects may</font> occur in the     future</td>
+    </tr>
+    <tr>
+      <td>Defects in the products we <font color="blue">manufacture</font>, whether caused by design,     <font color="blue">manufacturing</font> or component defects, may result in <font color="blue">delayed shipments</font> to     customers or reduced or cancelled <font color="blue">customer orders</font></td>
+    </tr>
+    <tr>
+      <td>Should these defects     occur in large quantities or <font color="blue">frequently</font>, our business <font color="blue">reputation may also</font> be     tarnished</td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">defects may</font> result in <font color="blue">liability</font> claims against     us</td>
+    </tr>
+    <tr>
+      <td>Even  if customers are responsible for the defects, we may assume     <font color="blue">responsibility</font> for any costs or payments</td>
+    </tr>
+    <tr>
+      <td>We are subject to risks of <font color="blue">currency fluctuations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Canadian     </font><font color="blue">operations</font> were <font color="blue">adversely impacted</font> in fiscal 2005 and 2004 as a result of     changes in the <font color="blue">Canadian and US Dollar </font><font color="blue">exchange rates</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font>     the impact of <font color="blue">future exchange rate fluctuations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, certain of our     <font color="blue">subsidiaries</font>  that have non-US dollar functional currencies transact     business in US dollars</td>
+    </tr>
+    <tr>
+      <td>We rely on a small number of customers for a substantial portion of our net     sales, and declines in sales to these <font color="blue">customers could <font color="blue">adversely affect</font></font> our     operating results</td>
+    </tr>
+    <tr>
+      <td>Sales to our five largest customers accounted for 47dtta3prca of our net sales in     the fiscal year ended <font color="blue">December </font>31, 2005 and our <font color="blue">three largest customers</font>,     Israel Aircraft Industries Ltd, Lockheed Martin Corporation and Raytheon     Company, accounted for 11dtta2prca, 10dtta9prca and 10dtta5prca, respectively, of our 2005     sales</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> the continued growth, viability and <font color="blue">financial stability</font>     of our customers, <font color="blue">substantially</font> all of which operate in an <font color="blue">environment</font>     characterized by rapid <font color="blue">technological</font> change, short <font color="blue">product life cycle</font>,     <font color="blue">consolidation</font>, and pricing and <font color="blue">margin pressures</font></td>
+    </tr>
+    <tr>
+      <td>We expect to continue to     depend  upon  a <font color="blue">relatively</font> small number of customers for a <font color="blue">significant</font>     percentage of our revenue</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consolidation </font>among our customers may further     <font color="blue">concentrate</font> our business in a limited number of customers and expose us to     <font color="blue">increased risks</font> relating to <font color="blue">dependence on</font> a small number of customers</td>
+    </tr>
+    <tr>
+      <td>In     addition, a <font color="blue">significant</font> reduction in sales to any of our large customers or     <font color="blue">significant</font> pricing and <font color="blue">margin pressures</font> exerted by a <font color="blue">key customer would</font>     <font color="blue">adversely affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>In the past, some of our large     customers have <font color="blue">significant</font>ly reduced or delayed the volume of products     ordered from us as a result of changes in their business, <font color="blue">consolidation</font> or     <font color="blue">divestitures</font> or for other reasons</td>
+    </tr>
+    <tr>
+      <td>We cannot be certain that present or     future large <font color="blue">customers will</font> not terminate their <font color="blue">arrangements with us</font> or     <font color="blue">significant</font>ly change, reduce or delay the amount of <font color="blue">products ordered from</font>     us, any of which would <font color="blue">adversely affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>16     _________________________________________________________________       A  substantial  portion of our revenues are related to the defense and     <font color="blue">military <font color="blue">communications</font> sectors</font></td>
+    </tr>
+    <tr>
+      <td>However, in times of armed conflict or war,     military spending is <font color="blue">concentrate</font>d on <font color="blue">armaments</font> build up, maintenance and     troop  support,  and not on the research and <font color="blue">development</font> and specialty     <font color="blue">applications</font> that are the Company’s <font color="blue">core strengths</font> and <font color="blue">revenue generators</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our defense and <font color="blue">military product revenues may decrease</font>, and     should not be expected to increase, at times of <font color="blue">armed conflicts</font> or war</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Variations </font>in our quarterly operating results could occur due to factors     including changes in demand for our products, the timing of shipments and     changes in our mix of <font color="blue">net revenues</font></td>
+    </tr>
+    <tr>
+      <td>Our quarterly <font color="blue">net revenues</font>, expenses and operating results have varied in     the past and might vary <font color="blue">significant</font>ly from quarter to quarter in the future</td>
+    </tr>
+    <tr>
+      <td>Quarter-to-quarter <font color="blue">comparisons</font> of our operating results are not a good     <font color="blue">indication</font> of our <font color="blue">future performance</font>, and should not be relied on to predict     our <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td>Our short-term expense levels and <font color="blue">manufacturing</font> and     <font color="blue">production facilities infrastructure overhead</font> are <font color="blue">relatively</font> fixed and are     <font color="blue">based on</font> our <font color="blue">expectations</font> of <font color="blue">future <font color="blue">net revenues</font></font></td>
+    </tr>
+    <tr>
+      <td>If we were to experience a     reduction in <font color="blue">net revenues</font> in a quarter, we could have <font color="blue"><font color="blue"><font color="blue">difficult</font>y</font> adjusting</font>     our short-term <font color="blue">expenditures</font> and absorbing our <font color="blue">excess capacity expenses</font></td>
+    </tr>
+    <tr>
+      <td>If     this  were  to  occur, our operating results for that <font color="blue">quarter would</font> be     <font color="blue">negatively impacted</font></td>
+    </tr>
+    <tr>
+      <td>Other factors that might cause our operating results to     <font color="blue">fluctuate on</font> a <font color="blue">quarterly basis</font> include</td>
+    </tr>
+    <tr>
+      <td>gif]                •  <font color="blue">customer decisions</font> to defer, accelerate or <font color="blue">cancel orders</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  changes in the mix of <font color="blue">net revenues</font> attributable to higher-margin and     lower-margin products;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  changes in <font color="blue">product mix which could</font> cause unexpected <font color="blue">engineering</font> or     research and <font color="blue">development</font> costs;    [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]             •  <font color="blue">announcements</font> or <font color="blue"><font color="blue">introduction</font>s</font> of <font color="blue">new products</font> by our <font color="blue">competitors</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">engineering</font> or <font color="blue">production delays due</font> to <font color="blue">product defects</font> or quality     problems and <font color="blue">production yield issues</font>; and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">dynamic defense budgets which could</font> cause <font color="blue">military program delays</font> or     <font color="blue">cancellation</font>s</td>
+    </tr>
+    <tr>
+      <td>Recent changes in <font color="blue">accounting</font> for equity-related <font color="blue">compensation</font> could impact     our <font color="blue">financial statements</font></td>
+    </tr>
+    <tr>
+      <td>On  <font color="blue">December </font>16, 2004, the <font color="blue">Financial <font color="blue">Accounting </font>Standards Board </font>issued     <font color="blue">Statement  </font>of  Financial  <font color="blue">Accounting </font>Standards Nodtta 123 (Revised 2004),     ‘‘Share-Based  Payment’’  (‘‘SFAS  123R’’)</td>
+    </tr>
+    <tr>
+      <td>SFAS 123R is a revision of     Financial  <font color="blue">Accounting </font> Standards Nodtta 123, as amended, ‘‘<font color="blue">Accounting </font>for     Stock-Based  Compensation’’  (‘‘SFAS  123’’) and supercedes <font color="blue">Accounting </font>    Principles  Board  Opinion  Nodtta 25,  ‘‘<font color="blue">Accounting </font> for Stock Issued to     Employees’’</td>
+    </tr>
+    <tr>
+      <td>SFAS 123R eliminates the <font color="blue">alternative</font> to use the <font color="blue">intrinsic value</font>     method of <font color="blue">accounting</font> that was provided in SFAS 123, which <font color="blue">generally</font> resulted     in  <font color="blue">no <font color="blue">compensation</font> expense</font> being recorded in the <font color="blue">financial statements</font>     related to the issuance of <font color="blue">equity awards</font> to employees</td>
+    </tr>
+    <tr>
+      <td>SFAS 123R requires     the Company to measure all employee stock-based <font color="blue">compensation</font> awards using a     fair value method and to <font color="blue">record such expense</font> in the <font color="blue">consolidated financial</font>     statements, as opposed to the pro forma note presentation <font color="blue">previously</font> used</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>adopted SFAS 123R at the beginning of its <font color="blue">first quarter</font> in     fiscal 2006, and will apply the provisions of the <font color="blue">statement prospectively</font>     for any newly issued, modified or <font color="blue">settled award</font> after the date of initial     adoption, as well as for any awards that were <font color="blue">granted prior</font> to the adoption     date for which the <font color="blue">requisite service period</font> has not <font color="blue">been provided as</font> of the     <font color="blue">adoption date</font></td>
+    </tr>
+    <tr>
+      <td>We intend to continue to use the Black-Scholes <font color="blue">option pricing</font>     model to calculate total stock <font color="blue">compensation</font> expense</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>expects the     adoption of this <font color="blue">statement will</font> have a non-cash material effect on its     <font color="blue">financial statements</font>, but the Company <font color="blue">cannot reasonably</font> estimate the impact     of the <font color="blue">adoption with respect</font> to <font color="blue">future grants</font> because <font color="blue">certain assumptions</font>     used in the <font color="blue">calculation</font> of the value of share-based payments may change</td>
+    </tr>
+    <tr>
+      <td>As     of <font color="blue">December </font>31, 2005 the total future <font color="blue">compensation</font> cost related to vested     and non-vested stock options and the <font color="blue">employee stock purchase</font> plan not yet     recognized in the statement of <font color="blue">operations</font> was dlra185cmam000</td>
+    </tr>
+    <tr>
+      <td>The microwave component and <font color="blue">subsystems industry continues</font> to be highly     <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font><font color="blue">competes against</font> many companies, both foreign and     domestic, many of which are larger and have <font color="blue">greater financial</font> and other     resources</td>
+    </tr>
+    <tr>
+      <td>Direct <font color="blue">competitors</font> for Merrimac in the <font color="blue">commercial market</font> are     Anaren, Sirenza, Vari-L, Radiall and Sochen</td>
+    </tr>
+    <tr>
+      <td>Major <font color="blue">competitors</font> for <font color="blue">Merrimac     </font>in the <font color="blue">military market</font> are Anaren, M/A Com, L-3 Communications (Narda),     Sage, TRM and KW Microwave</td>
+    </tr>
+    <tr>
+      <td>Major <font color="blue">competitors</font> for Filtran in the microwave     micro-circuitry market are Labtech, MPC and Precision Instruments</td>
+    </tr>
+    <tr>
+      <td>As a     direct supplier to OEMs, the Company also faces <font color="blue">significant</font> <font color="blue">competition</font> from     the in-house capabilities of its customers</td>
+    </tr>
+    <tr>
+      <td>Thus,  the  Company believes that internal customer <font color="blue">competition</font> exists     <font color="blue">predominantly</font> in its defense and <font color="blue">satellite businesses</font></td>
+    </tr>
+    <tr>
+      <td>In  the  wireless  market, increased price pressure from the Company’s     customers is a <font color="blue">continuing challenge</font></td>
+    </tr>
+    <tr>
+      <td>It is anticipated that this pricing     pressure <font color="blue">will continue</font> <font color="blue">indefinitely</font></td>
+    </tr>
+    <tr>
+      <td>The principal <font color="blue">competitive</font> factors are technical performance, re<font color="blue">liability</font>,     ability to produce in volume, on-time delivery and price</td>
+    </tr>
+    <tr>
+      <td>Based on these     factors, the Company believes that it <font color="blue">competes favorably</font> in its markets</td>
+    </tr>
+    <tr>
+      <td>The     Company believes that it is <font color="blue">particularly</font> strong in the areas of technical     performance and on-time delivery in the <font color="blue">wireless marketplace</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>    believes that it <font color="blue">competes favorably</font> on price as well</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The RF Microwave </font><font color="blue">components</font> industry is highly <font color="blue">competitive</font> and has become     more  so  as  defense  spending has changed <font color="blue">program spending profiles</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, current <font color="blue">Department of Defense </font>efforts are shifting funds to     <font color="blue">support troops</font> engaged in <font color="blue">existing hostilities around</font> the world</td>
+    </tr>
+    <tr>
+      <td>We compete     <font color="blue">against numerous</font> US and foreign providers with global <font color="blue">operations</font>, as well     as those who operate on a local or regional basis</td>
+    </tr>
+    <tr>
+      <td>In addition, current and     <font color="blue">prospective customers continually evaluate</font> the merits of <font color="blue">manufacturing</font>     <font color="blue">products internally</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the <font color="blue">industries</font> and sectors we <font color="blue">service could</font>     <font color="blue">significant</font>ly harm our ability to compete, and <font color="blue">consolidation</font> trends could     result in larger <font color="blue">competitors</font> that may have <font color="blue">significant</font>ly greater resources     with which to <font color="blue">compete <font color="blue">against us</font></font></td>
+    </tr>
+    <tr>
+      <td>We may be operating at a <font color="blue">cost disadvantage compared</font> to <font color="blue">manufacture</font>rs who     have <font color="blue">greater direct buying power from</font> component suppliers, distributors and     raw material suppliers or who have <font color="blue">lower cost structures</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">manufacturing</font>     processes are <font color="blue">generally</font> not subject to <font color="blue">significant</font> <font color="blue">proprietary</font> protection,     and <font color="blue">companies with greater resources</font> or a <font color="blue">greater market presence may enter</font>     our market or increase their <font color="blue">competition</font> with us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font>     could result in price <font color="blue">reductions</font>, reduced sales and margins or loss of     market share</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Intellectual </font>property</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantial </font><font color="blue">litigation</font> regarding <font color="blue"><font color="blue">intellectual property</font> rights</font> exists in our     industry</td>
+    </tr>
+    <tr>
+      <td>We do not believe our <font color="blue">intellectual properties infringe</font> those of     others,  and  are  not  aware  that  any <font color="blue">third party</font> is infringing our     <font color="blue"><font color="blue">intellectual property</font> rights</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">risk always</font> exists that <font color="blue">third parties</font>,     including current and potential <font color="blue">competitors</font>, could claim that our products,     or our customers’ products, infringe on their <font color="blue"><font color="blue">intellectual property</font> rights</font>     or that we have <font color="blue">misappropriated</font> their <font color="blue">intellectual property</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may discover</font>     that a <font color="blue">third party</font> is <font color="blue">infringing upon</font> our <font color="blue"><font color="blue">intellectual property</font> rights</font>, or     has <font color="blue">been issued</font> an <font color="blue">infringing patent</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Infringement </font>suits are time consuming, complex, and expensive to litigate</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">litigation</font> could cause a delay in the <font color="blue">introduction</font> of <font color="blue">new products</font>,     require us to develop non-infringing <font color="blue">technology</font>, require us to <font color="blue">enter into</font>     royalty  or  license  <font color="blue"><font color="blue">agreement</font>s</font>,  if  available, or require us to pay     substantial damages</td>
+    </tr>
+    <tr>
+      <td>We have agreed to <font color="blue">indemnify certain customers</font> for     <font color="blue">infringement</font> of third-party <font color="blue"><font color="blue">intellectual property</font> rights</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could incur</font>     substantial expenses and costs in case of a <font color="blue">successful indemnification</font>     claim</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> negative impact would result if a successful claim of     <font color="blue">infringement</font> were made <font color="blue">against us</font> and we could not develop non-infringing     <font color="blue">technology</font> or license the infringed or similar <font color="blue">technology</font> on a timely and     cost-effective basis</td>
+    </tr>
+    <tr>
+      <td>The Company’s <font color="blue">success depends</font> to a <font color="blue">significant</font> degree upon the <font color="blue">preservation</font>     and protection of its product and <font color="blue">manufacturing</font> process designs and other     <font color="blue">proprietary</font> <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>To protect its       18     _________________________________________________________________       <font color="blue">proprietary</font>  <font color="blue">technology</font>,  the  <font color="blue">Company  </font><font color="blue">generally</font> limits access to its     <font color="blue">technology</font>, treats portions of such <font color="blue">technology</font> as trade secrets, and obtains     <font color="blue"><font color="blue">confidential</font>ity</font> or non-disclosure <font color="blue"><font color="blue">agreement</font>s</font> from persons with access to the     <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>The Company’s <font color="blue"><font color="blue">agreement</font>s</font> with its <font color="blue">employees prohibits employees</font>     from disclosing any <font color="blue">confidential</font> information, <font color="blue">technology</font> <font color="blue">development</font>s and     business  practices,  and from disclosing any <font color="blue">confidential</font> information     entrusted  to the Company by other parties</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consultants </font>engaged by the     <font color="blue">Company  </font>who have access to <font color="blue">confidential</font> information <font color="blue">generally</font> sign an     <font color="blue">agreement</font>  requiring  them  to  keep <font color="blue">confidential</font> and not disclose any     non-public <font color="blue">confidential</font> information</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>currently has 16 active patents and has received a Notice of     <font color="blue">Allowance </font>from the <font color="blue">US Patent and Trademark Office </font>for a new patent that is     expected to be <font color="blue">issued shortly</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>plans to <font color="blue">pursue intellectual</font>     property  protection  in  foreign  countries, primarily in the form of     <font color="blue">international</font>  patents,  in  instances where the <font color="blue">technology</font> covered is     considered <font color="blue">important enough</font> to justify the <font color="blue">added expense</font></td>
+    </tr>
+    <tr>
+      <td>By <font color="blue">agreement</font>,     Company employees who initiate or contribute to a <font color="blue">patentable design</font> or     process are obligated to assign their interest in any <font color="blue">potential patent</font> to     the Company</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">executive officers</font>, engineers, research and <font color="blue">development</font> and technical     personnel are critical to our business, and <font color="blue">without them</font> we might not be     able to execute our business strategy</td>
+    </tr>
+    <tr>
+      <td>Our financial performance depends <font color="blue">substantially</font> on the performance of our     <font color="blue">executive officers</font> and <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> in <font color="blue">particular on</font>     Mason N Carter, who serves as our Chief Executive Officer, Reynold Green,     our  Chief  Operating  Officer, Robert Condon, who serves as our Chief     Financial Officer and James Logothetis, our <font color="blue">Chief Technology Officer</font></td>
+    </tr>
+    <tr>
+      <td>We are     also <font color="blue">dependent</font> upon our other highly skilled <font color="blue">engineering</font>, research and     <font color="blue">development</font> and technical personnel, due to the <font color="blue">specialized technical</font> nature     of our business</td>
+    </tr>
+    <tr>
+      <td>If we lose the services of any of our <font color="blue">key personnel</font> and are     not able to <font color="blue">find <font color="blue">replacements</font></font> in a <font color="blue">timely manner</font>, our business could be     disrupted, other <font color="blue">key personnel</font> might decide to leave, and we <font color="blue">might incur</font>     increased  operating <font color="blue">expenses associated with finding</font> and <font color="blue">compensating</font>     <font color="blue">replacements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>regulation</td>
+    </tr>
+    <tr>
+      <td>The  Company’s  products  are  <font color="blue">incorporated</font>  <font color="blue">into telecom</font> and wireless     <font color="blue">communications</font>  systems that are subject to <font color="blue">regulation domestically by</font>     <font color="blue">various <font color="blue">government</font> agencies</font>, including the <font color="blue">Federal Communications Commission     </font>and <font color="blue">international</font>ly by other <font color="blue">government</font> agencies</td>
+    </tr>
+    <tr>
+      <td>In addition, because of     its <font color="blue">participation</font> in the satellite and <font color="blue">defense industry</font>, the Company is     subject  to  audit  from  time  to time for <font color="blue">compliance with</font> <font color="blue">government</font>     <font color="blue">regulations</font> by various <font color="blue">government</font>al agencies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>is also subject to     a variety of local, state and federal <font color="blue">government</font> <font color="blue">regulations</font> relating to     <font color="blue">environment</font>al laws, as they relate to toxic or other <font color="blue">hazardous substances</font>     used to <font color="blue">manufacture</font> the Company’s products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>believes that it     operates  its business in material <font color="blue"><font color="blue">compliance with</font> applicable laws</font> and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>However, any failure to <font color="blue">comply with</font> existing or future laws or     <font color="blue">regulations</font> could have a material adverse affect on the Company’s business,     <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The Companyapstas products are subject to the Export Administration Regulations     (‘‘EAR’’)  <font color="blue">administered by</font> the <font color="blue">US Department of Commerce </font>and may, in     certain  instances,  be  subject  to the International Traffic in Arms     Regulations (‘‘ITAR’’) <font color="blue">administered by</font> the <font color="blue">US Department of State</font></td>
+    </tr>
+    <tr>
+      <td>EAR     restricts the export of dual-use products and <font color="blue">technical data</font> to certain     countries, while ITAR restricts the export of defense products, technical     data and <font color="blue">defense services</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>believes that it has implemented     internal export procedures and controls in order to achieve <font color="blue">compliance with</font>     the applicable US export control <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>However, the US <font color="blue">government</font>     agencies  responsible  for <font color="blue">administering</font> <font color="blue">EAR and ITAR </font>have <font color="blue">significant</font>     <font color="blue">discretion</font> in the <font color="blue">interpretation</font> and <font color="blue">enforcement</font> of these <font color="blue">regulations</font>, and     it is possible that these <font color="blue">regulations</font> could <font color="blue">adversely affect</font> the Companyapstas     ability to sell its products to non-US customers</td>
+    </tr>
+    <tr>
+      <td>Risks of <font color="blue">international</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> percentage of the Company’s revenues is <font color="blue">derived from</font> the     <font color="blue">operations</font> of its wholly-owned <font color="blue">subsidiaries</font> in <font color="blue"><font color="blue">Costa Rica </font>and Canada</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>revenues are subject to the <font color="blue">risks normally</font>       19     _________________________________________________________________       associated with <font color="blue">international</font> <font color="blue">operations</font> which include, <font color="blue">without limitation</font>,     <font color="blue">fluctuating</font>  currency  <font color="blue">exchange rates</font>, changing political and economic     <font color="blue">conditions</font>,  <font color="blue"><font color="blue">difficult</font>ies</font> in staffing and managing foreign <font color="blue">operations</font>,     greater  <font color="blue"><font color="blue">difficult</font>y</font>  and  expense  in  <font color="blue">administering</font>  business abroad,     <font color="blue">complications</font> in <font color="blue">complying with foreign laws</font> and changes in <font color="blue">regulatory</font>     <font color="blue">requirements</font>, and <font color="blue">cultural differences</font> in the conduct of business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">While the Company </font>believes that current political and economic <font color="blue">conditions</font> in     <font color="blue">Canada and <font color="blue">Costa Rica </font></font>are <font color="blue">relatively</font> stable, such <font color="blue">conditions</font> may adversely     change so as to effect underlying business <font color="blue">assumptions about</font> the current     <font color="blue">opportunities</font>  which  exist  for doing business in those countries</td>
+    </tr>
+    <tr>
+      <td>In     particular, the <font color="blue">government</font> in <font color="blue">Costa Rica </font>could change, the <font color="blue">currency exchange</font>     <font color="blue">rate between</font> the <font color="blue">US and Canadian </font><font color="blue">dollars may</font> change adversely (as occurred     in 2005 and 2004), or the cost of labor and/or goods and services <font color="blue">necessary</font>     to the <font color="blue">operations</font> of the Company may increase</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Recently </font>enacted changes in the <font color="blue">Securities Laws and Regulations </font>are likely     to <font color="blue">increase costs</font></td>
+    </tr>
+    <tr>
+      <td>The Sarbanes-Oxley Act of 2002 (the ‘‘Sarbanes-Oxley Act’’) has required     changes in some of our corporate governance, securities disclosure and     <font color="blue">compliance practice</font></td>
+    </tr>
+    <tr>
+      <td>In response to the <font color="blue">requirements</font> of the Sarbanes-Oxley     Act, the SEC and the American Stock Exchange have <font color="blue">promulgated new rules</font> in a     variety of subjects</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these new rules has increased our legal     and  <font color="blue">accounting</font> costs, and we expect these <font color="blue">increased costs</font> to continue     <font color="blue">indefinitely</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">development</font>s may also make it more <font color="blue">difficult</font> for us to     attract and retain qualified members of our board of <font color="blue">directors</font> or qualified     <font color="blue">executive officers</font></td>
+    </tr>
+    <tr>
+      <td>If we receive other than an <font color="blue">unqualified opinion on</font> the adequacy of our     <font color="blue">internal control over financial</font> reporting as of <font color="blue">December </font>29, 2007 and future     year-ends as required by Section 404 of the Sarbanes-Oxley Act, investors     could lose confidence in the re<font color="blue">liability</font> of our <font color="blue">financial statements</font>, which     could result in a decrease in the value of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>As required by Section 404 of the Sarbanes-Oxley Act, the SEC <font color="blue">adopted rules</font>     requiring  public  companies  to include a report of <font color="blue">management on</font> the     companyapstas <font color="blue">internal control over financial</font> reporting in their annual reports     on Form 10-K or 10-KSB that contains an <font color="blue"><font color="blue">assessment</font> by management</font> of the     <font color="blue">effectiveness</font> of the Companyapstas <font color="blue">internal control over financial</font> reporting</td>
+    </tr>
+    <tr>
+      <td>In     addition,  the  public  <font color="blue">accounting</font> firm auditing a companyapstas financial     <font color="blue">statements must attest</font> to and report on both managementapstas <font color="blue">assessment</font> as to     whether the company maintained effective <font color="blue">internal control over financial</font>     reporting and on the <font color="blue">effectiveness</font> of the companyapstas internal control over     financial reporting</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">currently undergoing</font> a <font color="blue">comprehensive effort</font> to <font color="blue">comply with</font> <font color="blue">Section     </font>404 of the Sarbanes-Oxley Act</td>
+    </tr>
+    <tr>
+      <td>If we are unable to complete our <font color="blue">assessment</font>     in  a <font color="blue">timely manner</font> or if our in<font color="blue">dependent</font> auditors issue other than an     <font color="blue">unqualified opinion on</font> the design, operating <font color="blue">effectiveness</font> or management’s     <font color="blue">assessment</font> of <font color="blue">internal control over financial</font> reporting, this could result     in an <font color="blue">adverse reaction</font> in the <font color="blue">financial markets due</font> to a loss of confidence     in the re<font color="blue">liability</font> of our <font color="blue">financial statements</font>, which could cause the market     price of our shares to decline</td>
+    </tr>
+  </tbody>
+</table>

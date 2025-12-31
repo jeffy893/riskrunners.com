@@ -1,0 +1,1447 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: attract subscribers", fill: "#0892d0"},
+{source: "3: attract subscribers", target: "3: revenues will", fill: "#0892d0"},
+{source: "3: revenues will", target: "3: affected adversely", fill: "#0892d0"},
+{source: "3: attract subscribers", target: "4: must continue", fill: "#060"},
+{source: "4: must continue", target: "4: attract new subscribers", fill: "#060"},
+{source: "4: must continue", target: "5: must continue", fill: "#f7f"},
+{source: "5: must continue", target: "5: subscribers", fill: "#f7f"},
+{source: "5: subscribers", target: "5: traditionally used video", fill: "#f7f"},
+{source: "5: traditionally used video", target: "5: HBO and Showtime ", fill: "#f7f"},
+{source: "5: HBO and Showtime ", target: "5: payperview", fill: "#f7f"},
+{source: "5: payperview", target: "5: entertainment", fill: "#f7f"},
+{source: "5: must continue", target: "16: subscribers cancel", fill: "#568203"},
+{source: "16: subscribers cancel", target: "16: attract new subscribers", fill: "#568203"},
+{source: "16: attract new subscribers", target: "16: adversely", fill: "#568203"},
+{source: "16: subscribers cancel", target: "20: technologies", fill: "#fff8dc"},
+{source: "20: technologies", target: "20: inhome filmed", fill: "#fff8dc"},
+{source: "20: inhome filmed", target: "20: entertainment such as", fill: "#fff8dc"},
+{source: "20: entertainment such as", target: "20: the Internet ", fill: "#fff8dc"},
+{source: "20: the Internet ", target: "20: media attention", fill: "#fff8dc"},
+{source: "20: technologies", target: "57: exclusivity", fill: "#cfb53b"},
+{source: "57: exclusivity", target: "57: each window", fill: "#cfb53b"},
+{source: "57: each window", target: "57: each distribution", fill: "#cfb53b"},
+{source: "57: each distribution", target: "57: studio releasing", fill: "#cfb53b"},
+{source: "57: studio releasing", target: "57: cannot assure", fill: "#cfb53b"},
+{source: "57: cannot assure", target: "57: studios will", fill: "#cfb53b"},
+{source: "57: studios will", target: "57: operations", fill: "#cfb53b"},
+{source: "57: exclusivity", target: "START_HERE", fill: "#cfb53b"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Home Entertainment Software</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Computer Hardware</td>
+    </tr>
+    <tr>
+      <td>Telecommunications Equipment</td>
+    </tr>
+    <tr>
+      <td>IT Consulting and Other Services</td>
+    </tr>
+    <tr>
+      <td>General Merchandise Stores</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Bombings</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arthur_Cecil_Pigou">Arthur Cecil Pigou</a></td>
+      <td>Arthur Cecil Pigou (; 18 November 1877 – 7 March 1959) was an English economist. As a teacher and builder of the School of Economics at the University of Cambridge, he trained and influenced many Cambridge economists who went on to take chairs of economics around the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agricultural_expansion">Agricultural expansion</a></td>
+      <td>Agricultural expansion describes the growth of agricultural land (arable land, pastures, etc.) especially in the 20th and 21st centuries.\nThe agricultural expansion is often explained as a direct consequence of the global increase in food and energy requirements due to continuing population growth (both which in turn have been attributed to agricultural expansion itself), with an estimated expectation of 10 to 11 billion humans on Earth by end of this century.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Canada_jay">Canada jay</a></td>
+      <td>Canada Day (French: Fête du Canada) is the national day of Canada. A federal statutory holiday, it celebrates the anniversary of Canadian Confederation which occurred on July 1, 1867, with the passing of the British North America Act, 1867 where the three separate colonies of the United Canadas, Nova Scotia, and New Brunswick were united into a single Dominion within the British Empire called Canada.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Spider">Spider</a></td>
+      <td>Sider is the surname of several people:\n\nRon Sider (born 17 September 1939), Canadian-born American theologian and social activist.\nTheodore Sider ("Ted"), American philosopher specializing in metaphysics and philosophy of language.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sharad_Pawar">Sharad Pawar</a></td>
+      <td>Sharad Govindrao Pawar (Marathi pronunciation: [ʃəɾəd̪ pəʋaːɾ], born 12 December 1940) is an Indian politician. He has served as the Chief Minister of Maharashtra on three occasions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jim_Crow_laws">Jim Crow laws</a></td>
+      <td>Jim Crow laws were state and local laws enforcing racial segregation in the Southern United States. Other areas of the United States were affected by formal and informal policies of segregation as well, but many states outside the South had adopted laws, beginning in the late 19th century, banning discrimination in public accommodations and voting.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Code_of_ethics_in_media">Code of ethics in media</a></td>
+      <td>The code of ethics in media was created by a suggestion from the 1947 Hutchins Commission. They suggested that newspapers, broadcasters and journalists had started to become more responsible for journalism and thought they should be held accountable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loadmaster">Loadmaster</a></td>
+      <td>A loadmaster is an aircrew member on civilian aircraft or military transport aircraft tasked with the safe loading, transport and unloading of aerial cargoes. Loadmasters serve in the militaries and  civilian airlines of many nations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PewDiePie">PewDiePie</a></td>
+      <td>Felix Arvid Ulf Kjellberg ( SHEL-burg, Swedish: [ˈfěːlɪks ˈǎrːvɪd ɵlf ˈɕɛ̂lːbærj] (listen); born 24 October 1989), better known as PewDiePie ( PEW-dee-py), is a Swedish YouTuber known for his Let's Play videos and comedic formatted videos and shows. Kjellberg's popularity on YouTube and extensive media coverage have made him one of the most noted online personalities and content creators.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subscription_business_model">Subscription business model</a></td>
+      <td>The subscription business model is a business model in which a customer must pay a recurring price at regular intervals for access to a product or service. The model was pioneered by publishers of books and periodicals in the 17th century, and is now used by many businesses, websites and even pharmaceutical companies in partnership with the government.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_most-subscribed_YouTube_channels">List of most-subscribed YouTube channels</a></td>
+      <td>On the video platform YouTube, a subscriber to a channel is a user who, by selecting that channel's "Subscribe" button, has chosen to receive content released by the channel. Each user's subscription feed consists of videos recently published by channels to which the account is subscribed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_streaming_media_services">List of streaming media services</a></td>
+      <td>An over-the-top media service is a streaming media service offered directly to viewers via the Internet. OTT bypasses cable, broadcast, and satellite television platforms, the companies that traditionally act as a controller or distributors of such content.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Netflix">Netflix</a></td>
+      <td>Netflix, Inc. is an American subscription streaming service and production company.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_direct_dialing">International direct dialing</a></td>
+      <td>International direct dialing (IDD) or international subscriber dialling (ISD) is placing an international telephone call that is dialed directly by a telephone subscriber, rather than by a telephone operator.\nThe term international subscriber dialling was used in the United Kingdom and Australia until the terminology was changed to international direct dialling.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_possession">Adverse possession</a></td>
+      <td>Adverse possession, sometimes colloquially described as "squatter's rights", is a legal principle in the Anglo-American common law under which a person who does not have legal title to a piece of property—usually land (real property)—may acquire legal ownership based on continuous possession or occupation of the property without the permission (licence) of its legal owner. The possession by a person is not adverse if they are in possession as a tenant or licensee of the legal owner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_food_reaction">Adverse food reaction</a></td>
+      <td>An adverse food reaction is an adverse response by the body to food or a specific type of food.The most common adverse reaction is a food allergy, which is an adverse immune response to either a specific type or a range of food proteins.\nHowever, other adverse responses to food are not allergies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_party">Adverse party</a></td>
+      <td>An adverse party is an opposing party in a lawsuit under an adversary system of law.  In general, an adverse party is a party against whom judgment is sought or "a party interested in sustaining a judgment or decree." For example, the adverse party for a defendant is the plaintiff.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Material_adverse_change">Material adverse change</a></td>
+      <td>In the fields of mergers and acquisitions and corporate finance, a material adverse change (abbreviated MAC), material adverse event (MAE), or material adverse effect (also MAE) is a change in circumstances that significantly reduces the value of a company. A contract to acquire, invest in, or lend money to a company often contains a  term that allows the acquirer, investor, or lender to cancel the transaction if a material adverse change occurs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology">Technology</a></td>
+      <td>Technology is the result of accumulated knowledge and application of skills, methods, and processes used in industrial production and scientific research. Technology is embedded in the operation of all machines, with or without detailed knowledge of their function, for the intended purpose of an organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Information_technology">Information technology</a></td>
+      <td>Information technology (IT) is the use of computers to create, process, store, retrieve, and exchange all kinds of electronic data and information. IT is typically used within the context of business operations as opposed to personal or entertainment technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NETFLIX INC      Item 1A Risk Factors          If any of the <font color="blue">following risks actually</font> occurs, our business, financial     condition and results of <font color="blue"><font color="blue">operations</font> could</font> be harmed</td>
+    </tr>
+    <tr>
+      <td>In that case, the     <font color="blue">trading price</font> of our <font color="blue"><font color="blue">common stock</font> could decline</font>, and you <font color="blue">could lose</font> all or     part of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Business          If our efforts to <font color="blue">attract <font color="blue">subscribers</font></font> are not successful, our <font color="blue">revenues will</font>     be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must continue</font> to <font color="blue">attract new <font color="blue">subscribers</font></font></td>
+    </tr>
+    <tr>
+      <td>To succeed, we <font color="blue">must continue</font> to     attract a large number of <font color="blue">subscribers</font> who have <font color="blue">traditionally used video</font>     retailers, video <font color="blue">rental outlets</font>, cable channels, such as HBO and Showtime,     pay-per-view and VOD for in-home filmed <font color="blue">entertainment</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we face     <font color="blue">direct <font color="blue">competition</font></font> to our service, namely from services like <font color="blue"><font color="blue">Blockbuster</font> </font>    Online, that <font color="blue">will likely impact</font> our ability to <font color="blue">attract <font color="blue">subscribers</font></font></td>
+    </tr>
+    <tr>
+      <td>Our     ability  to  <font color="blue">attract <font color="blue">subscribers</font></font> will depend in part on our ability to     <font color="blue">consistently provide</font> our <font color="blue">subscribers</font> with a valuable and quality experience     for selecting, viewing, receiving and <font color="blue">returning titles</font>, including providing     accurate <font color="blue">recommendations through</font> our <font color="blue">recommendation service</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, if     our <font color="blue">competitors</font> are able to offer similar <font color="blue">service levels at lower prices</font>,     our ability to <font color="blue">attract <font color="blue">subscribers</font></font> will be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If consumers     do not perceive our <font color="blue">service offering</font> to be of value, or if we <font color="blue">introduce new</font>     services that are not favorably received by them, we may not be able to     <font color="blue">attract <font color="blue">subscribers</font></font></td>
+    </tr>
+    <tr>
+      <td>In addition, many of our new <font color="blue">subscribers</font> originate from     word-of-mouth advertising and referrals from existing <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>If our     efforts to satisfy our existing <font color="blue">subscribers</font> are not successful, we may not     be able to <font color="blue">attract new <font color="blue">subscribers</font></font>, and as a result, our <font color="blue">revenues will</font> be     <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If we experience <font color="blue">excessive rates</font> of churn, our revenues and business will be     harmed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must minimize</font> the rate of loss of existing <font color="blue">subscribers</font> while adding new     <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Subscribers </font>cancel their <font color="blue">subscription</font> to our service for many     reasons,  including  a  <font color="blue">perception</font>  that  they  do not use the service     <font color="blue">sufficiently</font>,  delivery  takes  too long, the service is a poor value,     <font color="blue">competitive services provide</font> a better value and/or experience, and customer     <font color="blue">service issues</font> are not <font color="blue">satisfactorily resolved</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must continually add new</font>     <font color="blue">subscribers</font> both to replace <font color="blue">subscribers</font> who cancel and to grow our business     beyond our <font color="blue">current <font color="blue">subscriber base</font></font></td>
+    </tr>
+    <tr>
+      <td>If too many of our <font color="blue">subscribers</font> cancel     our service, or if we are unable to <font color="blue">attract new <font color="blue">subscribers</font></font> in numbers     sufficient to grow our business, our operating results will be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>Further, if <font color="blue">excessive numbers</font> of <font color="blue">subscribers</font> cancel our service,     we may be required to incur <font color="blue"><font color="blue">significant</font>ly</font> higher marketing expenditures than     we currently anticipate to replace these <font color="blue">subscribers</font> with new <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">compete <font color="blue">effectively</font></font>, our business will be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>The market for in-home filmed <font color="blue">entertainment</font> is <font color="blue">intensely competitive</font> and     subject to rapid change</td>
+    </tr>
+    <tr>
+      <td>New <font color="blue">technologies</font> for delivery of in-home filmed     <font color="blue">entertainment</font>, such as VOD and downloading over the Internet, continue to     receive considerable <font color="blue">media attention</font></td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> have longer     operating histories, larger customer bases, greater brand <font color="blue">recognition</font> and     <font color="blue"><font color="blue">significant</font>ly</font> greater financial, marketing and other <font color="blue">resources than</font> we do</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">rapid growth</font> of our online <font color="blue">entertainment</font> <font color="blue">subscription</font> business since our     <font color="blue">inception <font color="blue">may continue</font></font> to attract <font color="blue">direct <font color="blue">competition</font></font> from larger companies     with  <font color="blue"><font color="blue">significant</font>ly</font>  greater  financial  resources  and national brand     <font color="blue">recognition</font></td>
+    </tr>
+    <tr>
+      <td>For example, we have seen the entry of <font color="blue">direct <font color="blue">competition</font></font> from     <font color="blue">Blockbuster</font>, <font color="blue">which launched</font> its online service in August 2004, and could     <font color="blue">face <font color="blue">competition</font> from potential new entrants into</font> the online DVD rental     market</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">successfully</font> or <font color="blue">profitably compete with current</font>     and new <font color="blue">competitors</font>, our business will be <font color="blue">adversely</font> affected, and we may not     be able to increase or maintain market share, revenues or <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  many consumers maintain <font color="blue">simultaneous <font color="blue">relationship</font>s with</font>     multiple  in-home  filmed <font color="blue">entertainment</font> providers and can easily shift     <font color="blue">spending from one provider</font> to another</td>
+    </tr>
+    <tr>
+      <td>For example, consumers may subscribe     to HBO, rent a DVD from <font color="blue">Blockbuster</font>, buy a DVD from Wal-Mart and subscribe     to Netflix, or some                                           8     ______________________________________________________________________    [31]Table <font color="blue">of <font color="blue">Contents       </font></font><font color="blue"><font color="blue">combination</font> thereof</font>, all in the <font color="blue">same month</font></td>
+    </tr>
+    <tr>
+      <td>New <font color="blue">competitors</font> may be able to     <font color="blue">launch new <font color="blue">businesses</font> at relatively low cost</font></td>
+    </tr>
+    <tr>
+      <td>DVDs <font color="blue">represent only one</font> of     many  existing  and  potential  new  <font color="blue">technologies</font>  for  viewing filmed     <font color="blue">entertainment</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the growth in adoption of DVD <font color="blue">technology</font> is not     <font color="blue">mutually exclusive from</font> the growth of other <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable     to <font color="blue">successfully</font> compete with current and new <font color="blue">competitors</font> and <font color="blue">technologies</font>,     we may not be able to achieve <font color="blue">adequate market</font> share, increase our revenues     or maintain <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our principal <font color="blue">competitors</font> include, or could     include:           • video <font color="blue">rental outlets</font>, such as <font color="blue"><font color="blue">Blockbuster</font> </font>and Movie Gallery;           • online DVD <font color="blue">subscription</font> rental sites, such as <font color="blue"><font color="blue">Blockbuster</font> </font>Online;           • pay-per-view and VOD services and <font color="blue">alternative content delivery methods</font>     such as Apple’s <font color="blue">video iPod</font> and MovieBeam;           • movie retail stores, such as Best Buy, Wal-Mart and Amazon</td>
+    </tr>
+    <tr>
+      <td>com;           • <font color="blue">subscription</font> <font color="blue">entertainment</font> services, such as HBO and Showtime;           • Internet movie providers, such as Movielink, CinemaNow</td>
+    </tr>
+    <tr>
+      <td>com and Vongo;           • Internet <font color="blue">companies such as</font> Yahoo!</td>
+    </tr>
+    <tr>
+      <td>and Google;           • cable providers, such as AOL Time Warner and Comcast; and           • direct broadcast satellite providers, such as <font color="blue">DIRECTV and Echostar</font></td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> have adopted, and <font color="blue">may continue</font> to adopt, <font color="blue">aggressive</font>     pricing policies and devote <font color="blue">substantially</font> more resources to marketing and     Web site and <font color="blue">systems <font color="blue">development</font> than</font> we do</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that     we will be able to <font color="blue">compete <font color="blue">effectively</font></font> against current or new <font color="blue">competitors</font> at     our <font color="blue">existing pricing levels</font> or <font color="blue">at even lower price points</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Furthermore, we may need to adjust the level of <font color="blue">service provided</font> to our     <font color="blue">subscribers</font> and/or incur <font color="blue"><font color="blue">significant</font>ly</font> higher marketing expenditures than we     currently anticipate</td>
+    </tr>
+    <tr>
+      <td>As a result of increased <font color="blue">competition</font>, we have seen and     <font color="blue">may continue</font> to see a reduction in operating margins and market share</td>
+    </tr>
+    <tr>
+      <td>If VOD or other <font color="blue">technologies</font> are <font color="blue">widely adopted</font> and <font color="blue">supported as</font> a method of     content  delivery  by the studios and consumers, our business could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">digital cable providers</font> and Internet <font color="blue">content providers</font> have implemented     <font color="blue">technology</font> referred to as VOD This <font color="blue">technology</font> transmits movies and other     <font color="blue">entertainment</font> <font color="blue">content on</font> demand with interactive capabilities such as start,     stop and rewind</td>
+    </tr>
+    <tr>
+      <td>High-speed Internet access has <font color="blue">greatly increased</font> the speed     and quality of viewing VOD content, including feature-length movies, on     <font color="blue">personal computers over</font> the Internet</td>
+    </tr>
+    <tr>
+      <td>In addition, other <font color="blue">technologies</font> have     been developed that <font color="blue">allow alternative</font> means for consumers to receive and     watch  movies  or other <font color="blue">entertainment</font>, such as on cell phones or other     <font color="blue">handheld devices such as</font> Apple’s iPod</td>
+    </tr>
+    <tr>
+      <td>If VOD or other <font color="blue">technologies</font> become     affordable  and  <font color="blue">viable alternative methods</font> of <font color="blue">content delivery widely</font>     supported  by  studios and <font color="blue">adopted by consumers</font>, our business could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>If  the  <font color="blue">popularity</font> <font color="blue">of the DVD </font><font color="blue">format <font color="blue">decreases</font></font>, our business could be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consumers </font>have <font color="blue">rapidly adopted</font> the DVD format for viewing in-home filmed     <font color="blue">entertainment</font></td>
+    </tr>
+    <tr>
+      <td>In addition, DVD <font color="blue">sales account</font> for more than 42prca     of <font color="blue">studio revenues</font></td>
+    </tr>
+    <tr>
+      <td>We believe that the DVD format, including any successor     <font color="blue">formats such as</font> HD-DVD and BluRay, will be valuable long-term consumer     <font color="blue">propositions</font>  and <font color="blue">studio profit centers</font></td>
+    </tr>
+    <tr>
+      <td>However, if DVD sales were to     decrease, whether because of a shift <font color="blue">away from movie</font> watching or because new     or existing <font color="blue">technologies</font> were to become more <font color="blue">popular at</font> the expense of DVD     enjoyment, studios and <font color="blue">retailers may reduce</font> their support <font color="blue">of the DVD </font>format</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">subscriber growth</font> will</font> be <font color="blue">substantially</font> <font color="blue">influenced by</font> future <font color="blue">popularity</font>     <font color="blue">of the DVD </font>format, and if such <font color="blue">popularity</font> wanes, our <font color="blue"><font color="blue">subscriber growth</font> may</font>     also slow</td>
+    </tr>
+    <tr>
+      <td>9     ______________________________________________________________________    [32]Table <font color="blue">of <font color="blue">Contents       </font></font>We <font color="blue"><font color="blue">depend on</font> studios</font> to <font color="blue">release titles on</font> DVD for an exclusive time period     <font color="blue">following <font color="blue">theatrical release</font></font></td>
+    </tr>
+    <tr>
+      <td>Our ability to attract and retain <font color="blue">subscribers</font> is related to our ability to     <font color="blue">offer new releases</font> of filmed <font color="blue">entertainment</font> on DVDs prior to their release to     other <font color="blue">distribution channels</font></td>
+    </tr>
+    <tr>
+      <td>Except for <font color="blue">theatrical release</font>, DVDs currently     enjoy a <font color="blue"><font color="blue">significant</font> competitive advantage over</font> other <font color="blue">distribution channels</font>,     such as pay-per-view and VOD, because of the <font color="blue">early distribution window</font> for     DVDs</td>
+    </tr>
+    <tr>
+      <td>The window for DVD rental and <font color="blue">retail sales</font> is <font color="blue"><font color="blue">generally</font> exclusive</font>     against  other  forms  of  non-theatrical  movie distribution, such as     pay-per-view, premium <font color="blue">television</font>, <font color="blue">basic cable</font> and network and syndicated     <font color="blue">television</font></td>
+    </tr>
+    <tr>
+      <td>The length of the <font color="blue">exclusive window</font> for <font color="blue">movie rental</font> and retail     <font color="blue">sales varies</font></td>
+    </tr>
+    <tr>
+      <td>Our business could suffer increased <font color="blue">competition</font> if:           • the window for rental were no longer the <font color="blue">first following</font> the theatrical     release; or           • the length of this window was shortened</td>
+    </tr>
+    <tr>
+      <td>The order, length and <font color="blue">exclusivity</font> of <font color="blue">each window</font> for <font color="blue">each distribution</font>     channel is determined solely by the <font color="blue">studio releasing</font> the title, and we     <font color="blue">cannot assure</font> you that the <font color="blue">studios will</font> not change their policies in the     future in a manner that would be adverse to our business and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Currently, <font color="blue">studios distribute</font> their filmed <font color="blue">entertainment</font> content     <font color="blue"><font color="blue">approximately</font> three</font> to six months after <font color="blue">theatrical release</font> to the home video     market, seven to <font color="blue">nine months</font> after <font color="blue">theatrical release</font> to pay-per-view and     VOD, one year after <font color="blue">theatrical release</font> to satellite and cable, and two to     <font color="blue">three years</font> after <font color="blue">theatrical release</font> to <font color="blue">basic cable</font> and <font color="blue">syndicated networks</font></td>
+    </tr>
+    <tr>
+      <td>However, in what continues to be an <font color="blue">emerging trend</font>, the <font color="blue">major studios</font> have     shortened the <font color="blue">release <font color="blue">window on certain titles</font></font>, in particular the theatrical     to <font color="blue">home video window</font></td>
+    </tr>
+    <tr>
+      <td>In addition, some studios have <font color="blue">discussed eliminating</font>     the  release  <font color="blue">window on certain titles</font>, in <font color="blue">particular releasing movies</font>     <font color="blue">simultaneously on</font> DVD and VOD         If  we are unable to <font color="blue">offset increased demand</font> for <font color="blue">titles with increased</font>     <font color="blue">subscriber retention</font> or operating margins, our operating results may be     <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>With our unlimited plans, there is <font color="blue">no established limit</font> to the number of     movies that <font color="blue">subscribers</font> may rent</td>
+    </tr>
+    <tr>
+      <td>Historically, on a plan-by-plan basis, we     have seen the average number of <font color="blue">movies rented per subscriber increase on</font> an     annual  basis</td>
+    </tr>
+    <tr>
+      <td>We believe that this increase in usage is <font color="blue">influenced by</font>     <font color="blue">improvements</font> to our <font color="blue">service as well as consumer usage habits</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     demand for <font color="blue">titles may increase</font> for a variety of <font color="blue">reasons beyond</font> our control,     including <font color="blue">promotion by studios</font> and <font color="blue">seasonal <font color="blue">variations</font></font> or shifts in consumer     movie watching</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">continually adjusting</font> our service in ways that <font color="blue">may impact subscriber</font>     movie  usage</td>
+    </tr>
+    <tr>
+      <td>Such  <font color="blue">adjustments</font>  include  new  Web  site features and     <font color="blue">merchandising</font>  practices, an expanded distribution network, as well as     software and process changes</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">subscribers</font> <font color="blue">may continue</font> to increase their usage of our service, which     <font color="blue">would increase</font> our operating costs</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">subscriber retention</font> does not     increase or our operating margins do not improve to an <font color="blue">extent <font color="blue">necessary</font></font> to     offset the effect of increased operating costs, our operating results will     be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">subscriber growth</font> and <font color="blue">retention may</font>     be <font color="blue">affected <font color="blue">adversely</font></font> if we attempt to alter our service or increase our     monthly <font color="blue">subscription</font> fees to offset any <font color="blue">increased costs</font> of acquiring or     delivering titles</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">subscribers</font> select titles or formats that are more expensive for us     to acquire and deliver more <font color="blue">frequently</font>, our <font color="blue">expenses <font color="blue">will increase</font></font></td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">titles cost us</font> more to acquire or result in <font color="blue">greater <font color="blue">revenue sharing</font></font>     expenses, depending on the <font color="blue">source from whom</font> they are acquired and the terms     on which they are acquired</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">subscribers</font> select these titles more often on     a <font color="blue"><font color="blue">proportional</font> basis compared</font> to all <font color="blue">titles selected</font>, our <font color="blue">revenue sharing</font>     and other DVD <font color="blue"><font color="blue">acquisition</font> expenses could increase</font>, and our gross margins     could be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>In addition, films released on the new high     <font color="blue">definition</font> DVD formats, HD-DVD and BluRay, may be more expensive to acquire</td>
+    </tr>
+    <tr>
+      <td>The  rate  of <font color="blue">customer <font color="blue">acceptance</font></font> and adoption of these <font color="blue">new formats</font> is     uncertain</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">subscribers</font> select these formats on a                                           10     ______________________________________________________________________    [33]Table <font color="blue">of <font color="blue">Contents       </font></font><font color="blue">proportional</font>  basis  more  often than the existing DVD format, our DVD     <font color="blue">acquisition</font>  expenses  could  increase, and our gross <font color="blue">margins could</font> be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>If  our  efforts to <font color="blue">build strong</font> brand identity and <font color="blue">improve subscriber</font>     <font color="blue">satisfaction</font> and loyalty are not successful, we may not be able to attract     or retain <font color="blue">subscribers</font>, and our operating results will be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Netflix </font>brand is still developing, and we <font color="blue">must continue</font> to <font color="blue">build strong</font>     brand identity</td>
+    </tr>
+    <tr>
+      <td>To succeed, we <font color="blue">must continue</font> to attract and retain a large     number of owners of DVD players who have traditionally relied on store-based     <font color="blue">rental outlets</font> and <font color="blue">persuade them</font> to subscribe to our <font color="blue">service through</font> our Web     site</td>
+    </tr>
+    <tr>
+      <td>In addition, we will have to compete for <font color="blue">subscribers</font> against other     <font color="blue">brands which</font> have greater <font color="blue">recognition</font> than ours, such as <font color="blue">Blockbuster</font></td>
+    </tr>
+    <tr>
+      <td>We     believe that the importance of brand <font color="blue">loyalty will only increase</font> in light of     <font color="blue">competition</font>  both  for online <font color="blue">subscription</font> services and other means of     distributing titles, such as VOD From time-to-time, our <font color="blue">subscribers</font> express     dis<font color="blue">satisfaction</font>  with  our  service, including among other things, our     inventory  <font color="blue">allocation</font>  and  delivery  processing</td>
+    </tr>
+    <tr>
+      <td>To  the extent such     dis<font color="blue">satisfaction</font> is widespread or not <font color="blue">adequately</font> addressed, our brand may be     <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>If our efforts to promote and maintain our brand are not     successful, our operating results and our ability to attract and retain     <font color="blue">subscribers</font> will be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to manage the mix of subscriber <font color="blue">acquisition</font> sources, our     <font color="blue">subscriber levels may</font> be <font color="blue">affected <font color="blue">adversely</font></font> and our <font color="blue"><font color="blue">marketing expenses</font> may</font>     increase</td>
+    </tr>
+    <tr>
+      <td>We utilize a <font color="blue">broad mix</font> of <font color="blue">marketing programs</font> to promote our service to     potential new <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>We obtain a large portion of our new <font color="blue">subscribers</font>     through our <font color="blue">online marketing efforts</font>, including <font color="blue"><font color="blue">third party</font> banner ads</font>,     pop-under placements, direct links and permission-based e-mails as well as     our  <font color="blue">active affiliate program</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we have engaged in various     offline <font color="blue">marketing programs</font>, including <font color="blue">television</font> and <font color="blue">radio advertising</font>,     <font color="blue">direct mail</font> and print campaigns, consumer package and <font color="blue">mailing insertions</font></td>
+    </tr>
+    <tr>
+      <td>We     also  acquire  a  number  of <font color="blue">subscribers</font> who rejoin our service having     <font color="blue">previously</font>  cancelled  their  <font color="blue">membership</font></td>
+    </tr>
+    <tr>
+      <td>We maintain an <font color="blue">active public</font>     <font color="blue">relations program</font> to <font color="blue">increase awareness</font> of our service and <font color="blue">drive subscriber</font>     <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">opportunistically adjust</font> our mix of <font color="blue">marketing programs</font> to     acquire new <font color="blue">subscribers</font> at a <font color="blue">reasonable cost with</font> the intention of achieving     <font color="blue">overall financial goals</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to maintain or replace our sources     of <font color="blue">subscribers</font> with similarly effective sources, or if the cost of our     <font color="blue">existing sources increases</font>, our <font color="blue">subscriber levels may</font> be <font color="blue">affected <font color="blue">adversely</font></font>     and our <font color="blue"><font color="blue">marketing expenses</font> may</font> increase</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">continue using</font> our <font color="blue">current marketing channels</font>, our     ability to <font color="blue">attract new <font color="blue">subscribers</font></font> may be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to continue to support the marketing of our <font color="blue">service by</font>     current means if <font color="blue">such <font color="blue">activities</font></font> are <font color="blue">no longer available</font> to us, become cost     <font color="blue">prohibitive</font> or are adverse to our business</td>
+    </tr>
+    <tr>
+      <td>If companies that currently     promote our <font color="blue">service decide</font> to enter our business or a similar business or     decide to <font color="blue">exclusively support</font> our <font color="blue">competitors</font>, we <font color="blue">may no longer</font> be given     access to <font color="blue">such channels</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if <font color="blue">ad rates increase</font>, we may curtail     marketing  expenses  or otherwise be required to increase our cost per     subscriber</td>
+    </tr>
+    <tr>
+      <td>Laws and <font color="blue">regulations</font> impose <font color="blue">restrictions</font> on the use of certain     channels, including commercial e-mail and <font color="blue">direct mail</font></td>
+    </tr>
+    <tr>
+      <td>We may limit or     <font color="blue">discontinue use</font> or support of e-mail and other <font color="blue">activities</font> if we become     concerned that <font color="blue">subscribers</font> or potential <font color="blue">subscribers</font> deem <font color="blue">such <font color="blue">activities</font></font>     intrusive,  <font color="blue">which could affect</font> our goodwill or brand</td>
+    </tr>
+    <tr>
+      <td>If the available     marketing channels are curtailed, our ability to <font color="blue">attract new <font color="blue">subscribers</font></font> may     be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are not able to manage our growth, our business could be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">expanded rapidly since</font> we launched our Web site in April 1998</td>
+    </tr>
+    <tr>
+      <td>We     anticipate <font color="blue">further expanding</font> our <font color="blue">operations</font> to help grow our <font color="blue">subscriber base</font>     and  to  take  advantage of favorable <font color="blue">market opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Any future     expansion  will  likely  place  <font color="blue"><font color="blue">significant</font> demands on</font> our managerial,     operational, administrative and <font color="blue">financial resources</font></td>
+    </tr>
+    <tr>
+      <td>If we are not able to     respond <font color="blue">effectively</font> to new or increased demands that arise because of                                           11     ______________________________________________________________________    [34]Table <font color="blue">of <font color="blue">Contents       </font></font>our growth, or, if in responding, our <font color="blue">management</font> is <font color="blue">materially distracted</font>     from our current <font color="blue">operations</font>, our business may be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>In     addition, if we do not have <font color="blue">sufficient breadth</font> and depth of the titles     <font color="blue">necessary</font> to <font color="blue">satisfy increased demand</font> arising <font color="blue">from growth</font> in our subscriber     base, our subscriber <font color="blue">satisfaction</font> may be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely heavily on</font> our <font color="blue">proprietary</font> <font color="blue">technology</font> to <font color="blue">process deliveries</font> and     returns of our DVDs and to manage other aspects of our <font color="blue">operations</font>, and the     failure of this <font color="blue">technology</font> to operate <font color="blue">effectively</font> could <font color="blue">adversely</font> affect our     business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">use complex <font color="blue">proprietary</font> software</font> to <font color="blue">process deliveries</font> and returns of our     DVDs  and  to  manage other aspects of our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">proprietary</font>     <font color="blue">technology</font> is intended to allow our <font color="blue">nationwide network</font> of <font color="blue"><font color="blue">shipping center</font>s</font>     to be operated on an <font color="blue">integrated basis</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">continually enhance</font> or modify the     <font color="blue">software used</font> for our distribution <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We cannot be sure that any     <font color="blue">enhancements</font> or other <font color="blue"><font color="blue">modification</font>s</font> we make to our distribution <font color="blue">operations</font>     will  achieve  the  intended  results  or otherwise be of value to our     <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue">enhancements</font> and <font color="blue"><font color="blue">modification</font>s</font> to our <font color="blue">proprietary</font>     <font color="blue">technology</font>  could  consume considerable resources</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     maintain and enhance our <font color="blue">technology</font> to manage the processing of DVDs among     our <font color="blue"><font color="blue">shipping center</font>s</font> in a timely and <font color="blue"><font color="blue">efficient</font> manner</font>, our ability to retain     existing <font color="blue">subscribers</font> and to add new <font color="blue">subscribers</font> may be impaired</td>
+    </tr>
+    <tr>
+      <td>If  we experience <font color="blue">delivery problems</font> or if our <font color="blue">subscribers</font> or potential     <font color="blue">subscribers</font>  lose  confidence  in  the US <font color="blue">mail system</font>, we <font color="blue">could lose</font>     <font color="blue">subscribers</font>, which could <font color="blue">adversely</font> affect our operating results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely exclusively on</font> the <font color="blue"><font color="blue">US Postal Service</font> </font>to deliver DVDs from our     <font color="blue"><font color="blue">shipping center</font>s</font> and to return DVDs to us from our <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>We are     subject to <font color="blue">risks associated with using</font> the public <font color="blue">mail system</font> to meet our     shipping needs, including delays or <font color="blue"><font color="blue">disruption</font>s</font> caused <font color="blue">by inclement weather</font>,     natural disasters, labor activism, health epidemics or <font color="blue">bioterrorism</font></td>
+    </tr>
+    <tr>
+      <td>Our     DVDs are also subject to risks of <font color="blue">breakage during delivery</font> and <font color="blue">handling by</font>     the  <font color="blue">US Postal Service</font></td>
+    </tr>
+    <tr>
+      <td>The risk of breakage is <font color="blue">also impacted by</font> the     materials  and  methods  used  to  replicate our DVDs</td>
+    </tr>
+    <tr>
+      <td>If the entities     <font color="blue">replicating</font> our DVDs <font color="blue">use materials</font> and methods more likely to <font color="blue">break during</font>     delivery and handling or we fail to timely deliver DVDs to our <font color="blue">subscribers</font>,     our <font color="blue">subscribers</font> could become <font color="blue">dissatisfied</font> and cancel our service, which     could  <font color="blue">adversely</font>  affect our operating results</td>
+    </tr>
+    <tr>
+      <td>In addition, increased     <font color="blue">breakage rates</font> for our DVDs <font color="blue">will increase</font> our cost of acquiring titles</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in the cost of delivering DVDs could <font color="blue">adversely</font> affect our gross     profit and <font color="blue">marketing expenses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in postage delivery rates will <font color="blue">adversely</font> affect our gross profit     if we elect not to raise our <font color="blue">subscription</font> fees to offset the increase</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue"><font color="blue">US Postal Service</font> </font><font color="blue">recently increased</font> the rate for first class <font color="blue">postage on</font>     January 8, 2006 by 2 cents, from 37 cents to 39 cents</td>
+    </tr>
+    <tr>
+      <td>In addition, the US     Congress has been considering <font color="blue">postal reform <font color="blue">legislation</font> which would provide</font>     the <font color="blue"><font color="blue">US Postal Service</font> </font>with more <font color="blue">flexibility</font> in <font color="blue">establishing postal rates</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">US Postal Service</font> </font>continues to focus on plans to reduce its costs and     make its service more <font color="blue">efficient</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue"><font color="blue">US Postal Service</font> </font>were to change     any <font color="blue">policies relative</font> to the <font color="blue">requirements</font> of first-class mail, including     changes  in  size,  weight  or <font color="blue">mach<font color="blue">inability</font> qualifications</font> of our DVD     envelopes, such changes could result in <font color="blue">increased shipping costs</font> or higher     breakage for our DVDs and our gross margin could be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Also, if the <font color="blue"><font color="blue">US Postal Service</font> </font>curtails its services, such as by closing     <font color="blue">facilities</font> or <font color="blue">discontinuing</font> or reducing Saturday delivery service, our     ability  to  timely  deliver  DVDs  <font color="blue">could diminish</font>, and our subscriber     <font color="blue">satisfaction</font> could be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Currently, most filmed <font color="blue">entertainment</font> is <font color="blue">packaged on</font> a <font color="blue">single <font color="blue">lightweight</font></font>     DVD Our delivery process is designed to <font color="blue">accommodate</font> the delivery of one DVD     to fulfill a selection</td>
+    </tr>
+    <tr>
+      <td>Because of the <font color="blue">lightweight</font> nature of a DVD, we     <font color="blue"><font color="blue">generally</font> mail one envelope containing</font> a <font color="blue">title using</font> standard US postage</td>
+    </tr>
+    <tr>
+      <td>Studios <font color="blue">occasionally provide <font color="blue">additional</font> <font color="blue">content on</font></font> a second DVD or may     package  a  title  on two DVDs</td>
+    </tr>
+    <tr>
+      <td>In addition, the studios have recently     announced  plans to <font color="blue">release certain films</font> in high <font color="blue">definition</font> format on     HD-DVDs  and BluRay DVDs</td>
+    </tr>
+    <tr>
+      <td>These new DVDs have <font color="blue">characteristics</font> that are     <font color="blue">different than</font> those currently in <font color="blue">circulation</font></td>
+    </tr>
+    <tr>
+      <td>These high-<font color="blue">definition</font> format     DVDs may be heavier and/or more <font color="blue">fragile than current</font> DVDs</td>
+    </tr>
+    <tr>
+      <td>If packaging of     filmed <font color="blue">entertainment</font> on                                           12     ______________________________________________________________________    [35]Table <font color="blue">of <font color="blue">Contents       </font></font>multiple DVDs were to become more prevalent, if the weight of DVDs were to     increase, or the <font color="blue">durability</font> of DVDs <font color="blue">deteriorate</font>, our costs of delivery and     <font color="blue">fulfillment</font> processing <font color="blue">would increase</font> and our costs of <font color="blue">replacing damaged</font>     DVDs <font color="blue">may rise materially which would depress</font> gross margins and <font color="blue">profitability</font>     and <font color="blue">adversely</font> affect free cash flow</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">effectively</font> utilize our <font color="blue">recommendation service</font>, our     business may suffer</td>
+    </tr>
+    <tr>
+      <td>Based on <font color="blue">proprietary</font> algorithms, our <font color="blue">recommendation service</font> enables us to     predict and <font color="blue">recommend titles</font> and <font color="blue">effectively</font> merchandize our library to our     <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>We believe that in order for our <font color="blue">recommendation service</font> to     function most <font color="blue">effectively</font>, it must access a large database of <font color="blue">user ratings</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that the <font color="blue">proprietary</font> algorithms in our recommendation     <font color="blue">service <font color="blue">will continue</font></font> to function <font color="blue">effectively</font> to predict and recommend     titles that our <font color="blue">subscribers</font> will enjoy, or that we <font color="blue">will continue</font> to be     successful in enticing <font color="blue">subscribers</font> to <font color="blue">rate enough titles</font> for our database to     <font color="blue">effectively</font> predict and <font color="blue">recommend new</font> or <font color="blue">existing titles</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">continually refining</font> our <font color="blue">recommendation service</font> in an effort to     improve its <font color="blue">predictive accuracy</font> and usefulness to our <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>We may     experience <font color="blue"><font color="blue">difficult</font>ies</font> in <font color="blue">implementing such refinements</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we     <font color="blue">cannot assure</font> you that we will be able to continue to make and implement     <font color="blue">meaningful refinements</font> to our <font color="blue">recommendation service</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">recommendation service</font> does not <font color="blue">enable us</font> to predict and recommend     titles that our <font color="blue">subscribers</font> will enjoy or if we are unable to implement     meaningful <font color="blue">improvements</font>, our personal movie <font color="blue">recommendation service</font> will be     <font color="blue">less useful</font>, in <font color="blue">which event</font>:           •   our subscriber <font color="blue">satisfaction</font> may decrease, <font color="blue">subscribers</font> may perceive our     service to be of <font color="blue">lower value</font> and our ability to attract and retain     <font color="blue">subscribers</font> may be <font color="blue">affected <font color="blue">adversely</font></font>;           •   our ability to <font color="blue">effectively</font> <font color="blue">merchandise</font> and utilize our <font color="blue">library will</font> be     <font color="blue">affected <font color="blue">adversely</font></font>; and           •   our <font color="blue">subscribers</font> may default to <font color="blue">choosing titles from among new releases</font>     or other titles that cost us more to provide, and our <font color="blue">margins may</font> be     <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If we do not correctly anticipate our short and long-term needs for titles,     our  subscriber <font color="blue">satisfaction</font> and results of <font color="blue">operations</font> may be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>If  we  do not acquire <font color="blue">sufficient copies</font> of titles, we may not satisfy     <font color="blue">subscriber demand</font>, and our subscriber <font color="blue">satisfaction</font> and results of <font color="blue">operations</font>     could be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Conversely, if we attempt to mitigate this risk     and acquire more <font color="blue">copies than</font> needed to satisfy our <font color="blue">subscriber demand</font>, our     <font color="blue">inventory <font color="blue">utilization</font> would become less effective</font> and our gross margins     would be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to renew or <font color="blue">renegotiate</font> our <font color="blue">revenue sharing</font> <font color="blue">agreements</font> when     they expire on terms favorable to us, or if the cost of <font color="blue">purchasing titles on</font>     a <font color="blue">wholesale basis increases</font>, our gross <font color="blue">margins may</font> be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Since 2000, we have entered into numerous <font color="blue">revenue sharing</font> <font color="blue">arrangement</font>s with     studios and <font color="blue"><font color="blue">distributor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">revenue sharing</font> <font color="blue">agreements</font> <font color="blue">generally</font> have     terms of up to <font color="blue">five years</font></td>
+    </tr>
+    <tr>
+      <td>Revenue share <font color="blue">agreements</font> typically <font color="blue">enable us</font> to     increase our copy depth of DVDs on an <font color="blue">economical basis</font> because of the low     <font color="blue">initial payment</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>payments are made only if our <font color="blue">subscribers</font> rent     the DVD Under a purchase <font color="blue">arrangement</font>, we must pay the full wholesale price,     <font color="blue">regardless</font>  of whether the DVD is rented</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">revenue sharing</font>     <font color="blue">agreements</font>  <font color="blue">generally</font>  provide  for  <font color="blue">studio promotional support</font> of the     associated DVD and our service as well as permit us to own the DVD following     expiration of the <font color="blue">revenue sharing</font> period, typically no more than 12 months     <font color="blue">following street date</font></td>
+    </tr>
+    <tr>
+      <td>During the course of our <font color="blue">revenue sharing</font> <font color="blue">relationship</font> with studios and     <font color="blue"><font color="blue">distributor</font>s</font>, various contract <font color="blue">administration</font> issues arise</td>
+    </tr>
+    <tr>
+      <td>To the extent     that we are unable to resolve any of these issues in an <font color="blue">amicable manner</font>, our     <font color="blue">relationship</font> with the studios and <font color="blue"><font color="blue">distributor</font>s</font> may be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>13     ______________________________________________________________________    [36]Table <font color="blue">of <font color="blue">Contents       </font></font>As our <font color="blue">revenue sharing</font> <font color="blue">agreements</font> expire, we may be required to negotiate     new terms that could be <font color="blue">disadvantageous</font> to us or if we <font color="blue">cannot renew</font> the     <font color="blue">agreements</font> we would be required to <font color="blue">purchase titles</font></td>
+    </tr>
+    <tr>
+      <td>In such event, the cost     of acquiring <font color="blue">content could increase</font> and our gross <font color="blue">margins may</font> be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if we were required to <font color="blue">purchase titles</font> the risk     associated with accurately predicting title demand could increase</td>
+    </tr>
+    <tr>
+      <td>Titles  that  we  do not acquire under a <font color="blue">revenue sharing</font> agreement are     <font color="blue">purchased on</font> a <font color="blue">wholesale basis from studios</font> or other <font color="blue"><font color="blue">distributor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If the     price of purchased titles increases, our gross margin will be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>If the sales price of DVDs to retail consumers <font color="blue">decreases</font>, our ability to     <font color="blue">attract new <font color="blue">subscribers</font></font> may be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>The cost of <font color="blue">manufacturing</font> DVDs is <font color="blue">substantially</font> less than the price for     which new DVDs are <font color="blue">generally</font> sold in the <font color="blue">retail market</font></td>
+    </tr>
+    <tr>
+      <td>Thus, we believe     that studios and other resellers of DVDs have <font color="blue">significant</font> <font color="blue">flexibility</font> in     pricing  DVDs  for  retail sale</td>
+    </tr>
+    <tr>
+      <td>If the retail price of DVDs <font color="blue">decreases</font>     <font color="blue"><font color="blue">significant</font>ly</font>, consumers may choose to purchase DVDs instead of subscribing     to our service</td>
+    </tr>
+    <tr>
+      <td>We  may need <font color="blue">additional</font> capital, and we cannot be sure that <font color="blue">additional</font>     <font color="blue">financing will</font> be available</td>
+    </tr>
+    <tr>
+      <td>Historically, we have funded our <font color="blue">operations</font> and <font color="blue">capital expenditures through</font>     <font color="blue">proceeds from private equity</font> and debt financings, equipment leases and cash     flow from <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Although we currently anticipate that the proceeds     from our May 2002 initial <font color="blue">public offering</font>, together with our <font color="blue">available funds</font>     and cash flow from <font color="blue">operations</font>, will be sufficient to meet our cash needs for     the <font color="blue">foreseeable future</font>, we may require <font color="blue">additional</font> financing</td>
+    </tr>
+    <tr>
+      <td>Our ability to     obtain  financing  will depend, among other things, on our <font color="blue">development</font>     efforts, business plans, operating performance and condition of the capital     <font color="blue">markets at</font> the time we <font color="blue">seek financing</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">additional</font>     <font color="blue">financing will</font> be available to us on favorable terms when required, or at     all</td>
+    </tr>
+    <tr>
+      <td>If  we  raise  <font color="blue">additional</font>  <font color="blue">funds through</font> the issuance of equity,     equity-linked  or  debt  securities, those <font color="blue">securities may</font> have rights,     <font color="blue">preferences</font> or <font color="blue">privileges senior</font> to the rights of our <font color="blue">common stock</font>, and our     <font color="blue"><font color="blue">stockholders</font> may</font> experience dilution</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue"><font color="blue">significant</font> <font color="blue">disruption</font></font> in <font color="blue">service on</font> our Web site or in our computer     <font color="blue">systems could</font> result in a loss of <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Subscribers </font>and potential <font color="blue">subscribers</font> access our <font color="blue">service through</font> our Web     site, where the <font color="blue">title selection process</font> is <font color="blue">integrated with</font> our delivery     <font color="blue">processing systems</font> and software</td>
+    </tr>
+    <tr>
+      <td>Our reputation and ability to attract,     retain and serve our <font color="blue">subscribers</font> is <font color="blue">dependent upon</font> the <font color="blue">reliable performance</font>     of  our  Web  site,  <font color="blue">network infrastructure</font> and <font color="blue"><font color="blue">fulfillment</font> processes</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Interruptions </font>in these <font color="blue">systems could</font> make our Web <font color="blue">site unavailable</font> and     hinder  our  ability  to  fulfill  <font color="blue">selections</font></td>
+    </tr>
+    <tr>
+      <td>Much of our software is     <font color="blue">proprietary</font>, and we rely on the expertise of our <font color="blue">engineering</font> and software     <font color="blue">development</font> teams for the <font color="blue">continued performance</font> of our software and computer     systems</td>
+    </tr>
+    <tr>
+      <td>Service <font color="blue">interruptions</font> or the <font color="blue">unavailability</font> of our Web site could     diminish the <font color="blue">overall attractiveness</font> of our <font color="blue">subscription</font> service to existing     and potential <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>Our servers are vulnerable to computer viruses, physical or <font color="blue">electronic</font>     break-ins and similar <font color="blue"><font color="blue">disruption</font>s</font>, which could lead to <font color="blue">interruptions</font> and     delays in our service and <font color="blue">operations</font> as well as loss, misuse or theft of     data</td>
+    </tr>
+    <tr>
+      <td>Our Web <font color="blue">site periodically</font> experiences <font color="blue">directed attacks intended</font> to     cause a <font color="blue">disruption</font> in service</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">attempts by hackers</font> to disrupt our Web     site  service  or  our <font color="blue">internal systems</font>, if successful, could harm our     business, be expensive to remedy and damage our reputation</td>
+    </tr>
+    <tr>
+      <td>Our insurance     does  not  <font color="blue">cover expenses</font> related to <font color="blue">direct attacks on</font> our Web site or     <font color="blue">internal systems</font></td>
+    </tr>
+    <tr>
+      <td>Efforts to prevent hackers from entering our computer     systems are expensive to implement and may limit the <font color="blue">functionality</font> of our     services</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue"><font color="blue">significant</font> <font color="blue">disruption</font></font> to our Web site or internal computer     <font color="blue">systems could</font> result in a loss of <font color="blue">subscribers</font> and <font color="blue">adversely</font> affect our     business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">communications hardware</font> and the <font color="blue">computer hardware used</font> to operate our     Web site are hosted at the <font color="blue">facilities</font> of a <font color="blue"><font color="blue">third party</font> provider</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Hardware     </font>for our delivery systems is maintained in our <font color="blue"><font color="blue">shipping center</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Fires,     floods, <font color="blue">earthquakes</font>, power losses, <font color="blue">telecommunications</font> failures, break-ins     and similar <font color="blue">events could damage</font> these                                           14     ______________________________________________________________________    [37]Table <font color="blue">of <font color="blue">Contents       </font></font>systems and hardware or cause them to <font color="blue">fail completely</font></td>
+    </tr>
+    <tr>
+      <td>As we do not maintain     <font color="blue">entirely redundant systems</font>, a <font color="blue">disrupting event could</font> result in prolonged     downtime of our <font color="blue">operations</font> and could <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Problems     </font><font color="blue">faced by</font> our <font color="blue">third party</font> Web hosting provider, with the <font color="blue">telecommunications</font>     <font color="blue">network providers with whom</font> it contracts or with the <font color="blue">systems by which</font> it     <font color="blue">allocates capacity among</font> its customers, including us, could impact <font color="blue">adversely</font>     the experience of our <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">executive offices</font> and our Sunnyvale-based <font color="blue">shipping center</font> are located in     the <font color="blue">San Francisco Bay Area</font></td>
+    </tr>
+    <tr>
+      <td>In the event of an earthquake or other natural     or man-made disaster, our <font color="blue">operations</font> would be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">executive offices</font> and our Sunnyvale-based <font color="blue">shipping center</font>, which also     houses our customer service <font color="blue">operations</font>, are located in the San Francisco Bay     Area</td>
+    </tr>
+    <tr>
+      <td>Our business and <font color="blue"><font color="blue">operations</font> could</font> be <font color="blue">adversely</font> affected in the event     of  electrical  <font color="blue">blackouts</font>,  fires,  floods, <font color="blue">earthquakes</font>, power losses,     <font color="blue">telecommunications</font> failures, break-ins or similar events</td>
+    </tr>
+    <tr>
+      <td>We may not be able     to  <font color="blue">effectively</font>  shift  our <font color="blue">fulfillment</font> and delivery <font color="blue">operations</font> due to     <font color="blue"><font color="blue">disruption</font>s</font> in service in the <font color="blue">San Francisco Bay Area</font> or any other <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>Because the <font color="blue">San Francisco Bay Area</font> is located in an earthquake-sensitive     area, we are <font color="blue">particularly susceptible</font> to the risk of damage to, or total     <font color="blue">destruction</font> of, our Sunnyvale-based <font color="blue">operations</font> center and the surrounding     <font color="blue">transportation infrastructure</font></td>
+    </tr>
+    <tr>
+      <td>We are not <font color="blue">insured against</font> any losses or     expenses that arise from a <font color="blue">disruption</font> to our business due to <font color="blue">earthquakes</font></td>
+    </tr>
+    <tr>
+      <td>The loss of our Chief Executive Officer, <font color="blue">Chief <font color="blue">Financial </font>Officer </font>or Chief     Marketing Officer, or our failure to attract, assimilate and retain other     highly qualified personnel in the future, could harm our business and new     service <font color="blue">development</font>s</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> the <font color="blue">continued services</font> and performance of our <font color="blue">key personnel</font>,     including Reed Hastings, our Chief Executive Officer, President and Chairman     of the Board, W Barry McCarthy Jr, our <font color="blue">Chief <font color="blue">Financial </font>Officer </font>and Leslie     J  Kilgore, our <font color="blue">Chief Marketing Officer</font></td>
+    </tr>
+    <tr>
+      <td>In addition, much of our key     <font color="blue">technology</font> and systems are custom-made for our business by our personnel</td>
+    </tr>
+    <tr>
+      <td>The loss of <font color="blue">key personnel</font> could disrupt our <font color="blue">operations</font> and have an adverse     effect on our ability to grow our business</td>
+    </tr>
+    <tr>
+      <td>Privacy <font color="blue">concerns <font color="blue">could limit</font></font> our ability to leverage our <font color="blue">subscriber data</font></td>
+    </tr>
+    <tr>
+      <td>In the ordinary course of business, and in particular in <font color="blue">connection with</font>     providing our personal movie <font color="blue">recommendation service</font>, we collect and utilize     data  supplied  by  our  <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">currently face certain legal</font>     <font color="blue">obligations</font> regarding the manner in which we treat such information</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Other     </font><font color="blue">businesses</font> have <font color="blue">been criticized by privacy groups</font> and <font color="blue">governmental bodies</font>     for attempts to <font color="blue">link personal identities</font> and other information to data     collected  on <font color="blue">the Internet </font>regarding users’ browsing and other habits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased   </font>regulation   of   data  <font color="blue">utilization</font>  practices,  including     self-regulation, as well as increased enforcement of existing laws, could     have an adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>Our reputation and <font color="blue">relationship</font>s with <font color="blue">subscribers</font> would be harmed if our     <font color="blue">billing data</font> were to be <font color="blue">accessed by unauthorized persons</font></td>
+    </tr>
+    <tr>
+      <td>To  <font color="blue">secure transmission</font> of <font color="blue">confidential</font> information obtained by us for     <font color="blue">billing purposes</font>, including <font color="blue">subscribers</font>’ credit card or <font color="blue">checking account</font>     data, we <font color="blue">rely on licensed encryption</font> and authentication <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>In     <font color="blue">conjunction with</font> the <font color="blue">payment processing companies</font>, we take measures to     <font color="blue">protect against <font color="blue">unauthorized intrusion into</font></font> our <font color="blue">subscribers</font>’ data</td>
+    </tr>
+    <tr>
+      <td>If,     despite these measures, we experience any <font color="blue">unauthorized intrusion into</font> our     <font color="blue">subscribers</font>’ data, current and potential <font color="blue">subscribers</font> may become unwilling to     provide the information to us <font color="blue">necessary</font> for them to become <font color="blue">subscribers</font>, and     our business could be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Similarly, if a well-publicized     breach of the <font color="blue">consumer data security</font> of any other <font color="blue">major consumer</font> Web site     were to occur, <font color="blue">there could</font> be a <font color="blue">general public loss</font> of confidence in the use     of <font color="blue">the Internet </font>for commerce <font color="blue"><font color="blue">transaction</font>s</font>, which could <font color="blue">adversely</font> affect our     business</td>
+    </tr>
+    <tr>
+      <td>In addition, because we obtain <font color="blue">subscribers</font>’ billing information on our Web     site, we do not obtain signatures from <font color="blue">subscribers</font> in <font color="blue">connection with</font> the     use of credit <font color="blue">cards by them</font></td>
+    </tr>
+    <tr>
+      <td>Under current credit <font color="blue">card practices</font>, to the                                           15     ______________________________________________________________________    [38]Table <font color="blue">of <font color="blue">Contents       </font></font>extent  we  do  not  obtain cardholders’ signatures, we are liable for     <font color="blue">fraudulent</font> credit card <font color="blue"><font color="blue">transaction</font>s</font>, even when the <font color="blue">associated financial</font>     <font color="blue">institution approves payment</font> of the orders</td>
+    </tr>
+    <tr>
+      <td>From time to time, <font color="blue">fraudulent</font>     credit cards are used on our Web site to obtain service and access our DVD     inventory</td>
+    </tr>
+    <tr>
+      <td>Typically, these credit cards have not <font color="blue">been registered as stolen</font>     and are therefore not <font color="blue">rejected by</font> our <font color="blue">automatic authorization <font color="blue">safeguards</font></font></td>
+    </tr>
+    <tr>
+      <td>While we do have a number of other <font color="blue">safeguards</font> in place, we <font color="blue">nonetheless</font>     experience some loss from these <font color="blue">fraudulent</font> <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We do not currently     carry <font color="blue">insurance against</font> the risk of <font color="blue">fraudulent</font> credit card <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>A     failure to <font color="blue">adequately</font> control <font color="blue">fraudulent</font> credit card <font color="blue"><font color="blue">transaction</font>s</font> would harm     our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in payment processing fees <font color="blue">would increase</font> our operating expenses     and <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">subscribers</font> pay for our <font color="blue">subscription</font> services predominately using credit     cards  and <font color="blue">debit cards</font> and, to a lesser extent, <font color="blue">electronic</font> checks</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">acceptance</font> of these payment methods requires our payment of <font color="blue">certain fees</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, these <font color="blue">fees may increase</font>, either as a result of rate     changes by the <font color="blue">payment processing companies</font> or as a result in a change in     our business <font color="blue">practices which increase</font> the fees on a cost-per-<font color="blue">transaction</font>     basis</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">fees may increase</font> in 2006</td>
+    </tr>
+    <tr>
+      <td>Such increase may <font color="blue">adversely</font> affect     our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">trademarks</font> and other <font color="blue">proprietary</font> rights are not <font color="blue">adequately</font> protected     to <font color="blue">prevent use</font> or <font color="blue"><font color="blue">appropriation</font> by</font> our <font color="blue">competitors</font>, the value of our brand     and other <font color="blue">intangible assets may</font> be diminished, and our business may be     <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>We rely and expect to continue to rely on a <font color="blue">combination</font> of <font color="blue">confidential</font>ity     and license <font color="blue">agreements</font> with our employees, consultants and <font color="blue">third parties</font>     with whom we have <font color="blue">relationship</font>s, as well as trademark, copyright, patent and     <font color="blue">trade secret protection laws</font>, to protect our <font color="blue">proprietary</font> rights</td>
+    </tr>
+    <tr>
+      <td>Netflix is     a <font color="blue">registered trademark</font> of Netflix, Inc</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">also filed <font color="blue">trademark application</font>s</font> in the <font color="blue">United States </font>for     <font color="blue">the Friends and Profiles </font>service marks and for the Netflix <font color="blue">design logo</font>, and     have filed US <font color="blue">patent applications</font> for <font color="blue">certain aspects</font> of our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We have also filed a <font color="blue">trademark application</font> in the <font color="blue">European Union </font>for the     Netflix name</td>
+    </tr>
+    <tr>
+      <td>From time to time we expect to file <font color="blue">additional</font> trademark and     <font color="blue">patent applications</font></td>
+    </tr>
+    <tr>
+      <td>Nevertheless, these <font color="blue">applications may</font> not be approved,     <font color="blue">third parties</font> may challenge any <font color="blue">patents issued</font> to or held by us, third     <font color="blue">parties may knowingly</font> or <font color="blue">unknowingly infringe</font> our patents, <font color="blue">trademarks</font> and     other <font color="blue">proprietary</font> rights, and we may not be able to <font color="blue">prevent infringement</font>     without substantial expense to us</td>
+    </tr>
+    <tr>
+      <td>If the protection of our <font color="blue">proprietary</font>     rights is inadequate to <font color="blue">prevent use</font> or <font color="blue"><font color="blue">appropriation</font> by</font> <font color="blue">third parties</font>, the     value  of  our  brand  and  other <font color="blue">intangible assets may</font> be diminished,     <font color="blue">competitors</font> may be able to more <font color="blue">effectively</font> mimic our service and methods of     <font color="blue">operations</font>, the <font color="blue">perception</font> of our business and service to <font color="blue">subscribers</font> and     potential <font color="blue">subscribers</font> may become confused in the marketplace and our ability     to <font color="blue">attract <font color="blue">subscribers</font></font> may be <font color="blue">adversely</font> affected         Intellectual property claims <font color="blue"><font color="blue">against us</font> could</font> be costly and result in the     loss of <font color="blue"><font color="blue">significant</font> rights</font> related to, among other things, our Web site, our     <font color="blue">recommendation service</font>, <font color="blue">title selection process</font>es and marketing <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Trademark, copyright, patent and other <font color="blue"><font color="blue"><font color="blue">intellectual</font> property</font> rights</font> are     important to us and other companies</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue"><font color="blue">intellectual</font> property</font> rights</font> extend     to our <font color="blue">technology</font>, business processes and the <font color="blue">content on</font> our Web site</td>
+    </tr>
+    <tr>
+      <td>We     use the <font color="blue"><font color="blue">intellectual</font> property</font> of <font color="blue">third parties</font> in <font color="blue">merchandising</font> our products     and marketing our <font color="blue">service through</font> contractual and other rights</td>
+    </tr>
+    <tr>
+      <td>From time to     time, <font color="blue">third parties</font> allege that we have violated their <font color="blue"><font color="blue">intellectual</font> property</font>     rights</td>
+    </tr>
+    <tr>
+      <td>If  we  are  unable  to  obtain  <font color="blue">sufficient rights</font> or develop     non-infringing  <font color="blue">intellectual</font>  property or otherwise alter our business     practices  on  a  timely  basis  in  response to claims <font color="blue">against us</font> for     infringement, mis<font color="blue">appropriation</font>, misuse or other violation of <font color="blue">third party</font>     <font color="blue"><font color="blue"><font color="blue">intellectual</font> property</font> rights</font>, our business and <font color="blue">competitive position may</font> be     <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>Many companies are <font color="blue">devoting <font color="blue">significant</font> resources</font> to     developing  patents  that <font color="blue">could potentially affect</font> many aspects of our     business</td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">numerous patents</font> that broadly claim means and methods of     conducting business on the Internet</td>
+    </tr>
+    <tr>
+      <td>We have not <font color="blue">exhaustively searched</font>     <font color="blue">patents relative</font> to our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Defending </font>ourselves against <font color="blue">intellectual</font>     property claims, whether they are with or <font color="blue">without merit</font> or are determined in     our favor, results in <font color="blue">costly <font color="blue">litigation</font></font> and diversion of technical and                                           16     ______________________________________________________________________    [39]Table <font color="blue">of <font color="blue">Contents       </font></font><font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>It also may result in our <font color="blue">inability</font> to use our current     Web site or our <font color="blue">recommendation service</font> or <font color="blue">inability</font> to market our service or     <font color="blue">merchandise</font> our products</td>
+    </tr>
+    <tr>
+      <td>As a result of a dispute, we may have to develop     non-infringing <font color="blue">technology</font>, enter into royalty or licensing <font color="blue">agreements</font>,     adjust our <font color="blue">merchandizing</font> or marketing <font color="blue">activities</font> or take other actions to     resolve the claims</td>
+    </tr>
+    <tr>
+      <td>If we are unable to protect our <font color="blue">domain names</font>, our reputation and brand could     be <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>We currently hold various <font color="blue">domain names</font> relating to our brand, including     Netflix</td>
+    </tr>
+    <tr>
+      <td>Failure to protect our <font color="blue">domain names</font> could affect <font color="blue">adversely</font> our     reputation and brand, and make it more <font color="blue">difficult</font> for users to find our Web     site  and our service</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">acquisition</font> and maintenance of <font color="blue">domain names</font>     <font color="blue">generally</font> are <font color="blue">regulated by governmental agencies</font> and their designees</td>
+    </tr>
+    <tr>
+      <td>The     regulation of <font color="blue">domain names</font> in the <font color="blue">United States </font>may change in the near     future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Governing </font>bodies may establish <font color="blue">additional</font> top-level domains, appoint     <font color="blue">additional</font> domain name registrars or modify the <font color="blue">requirements</font> for holding     <font color="blue">domain names</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, the <font color="blue">relationship</font> between <font color="blue">regulations</font> governing     <font color="blue">domain names</font> and laws protecting <font color="blue">trademarks</font> and similar <font color="blue">proprietary</font> rights     is unclear</td>
+    </tr>
+    <tr>
+      <td>We may be unable, without <font color="blue">significant</font> cost or at all, to prevent     <font color="blue">third parties</font> from acquiring <font color="blue">domain names</font> that are similar to, <font color="blue">infringe upon</font>     or otherwise decrease the value of our <font color="blue">trademarks</font> and other <font color="blue">proprietary</font>     rights</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Forecasting </font><font color="blue">film revenue</font> and associated gross <font color="blue">profits from</font> our <font color="blue">films prior</font>     to release is extremely <font color="blue">difficult</font> and may result in <font color="blue">significant</font> write-offs</td>
+    </tr>
+    <tr>
+      <td>We are required to <font color="blue">amortize capitalized <font color="blue">film production costs</font> over</font> the     expected <font color="blue">revenue streams as</font> we recognize <font color="blue">revenue from</font> the <font color="blue">associated films</font></td>
+    </tr>
+    <tr>
+      <td>The amount of <font color="blue">film production costs</font> that will be <font color="blue">amortized each period</font>     <font color="blue">depends on how</font> much <font color="blue">future revenue</font> we expect to receive <font color="blue">from each film</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unamortized  </font>film  production  costs are evaluated for <font color="blue">impairment each</font>     reporting period on a film-by-film basis</td>
+    </tr>
+    <tr>
+      <td>If estimated <font color="blue">remaining revenue</font> is     not  sufficient  to recover the unamortized <font color="blue">film production costs</font>, the     unamortized <font color="blue">film production costs</font> will be <font color="blue">written down</font> to <font color="blue">fair value</font></td>
+    </tr>
+    <tr>
+      <td>In any     given  period, if we lower our previous forecast with respect to total     anticipated  <font color="blue">revenue from</font> any individual film, we would be required to     <font color="blue">accelerate</font> <font color="blue">amortization</font> of related film costs</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">accelerate</font>d <font color="blue">amortization</font>     would  <font color="blue">adversely</font>  impact our business, operating results and financial     condition</td>
+    </tr>
+    <tr>
+      <td>In addition, we base our estimates of <font color="blue">revenue on performance</font> of     <font color="blue">comparable titles</font> and our knowledge of the industry</td>
+    </tr>
+    <tr>
+      <td>If the information is     incorrect, the amount of revenue and related expenses that we recognize from     our  films  could  be wrong, which could result in <font color="blue">fluctuations</font> in our     earnings</td>
+    </tr>
+    <tr>
+      <td>If we become subject to <font color="blue">liability</font> for content that we publish or that we     <font color="blue">distribute on</font> DVD through our service, our results of <font color="blue">operations</font> would be     <font color="blue">affected <font color="blue">adversely</font></font></td>
+    </tr>
+    <tr>
+      <td>As a publisher of content, a host of <font color="blue">third party</font> content and a <font color="blue">distributor</font>     of <font color="blue">content on</font> DVD, we face potential <font color="blue">liability</font> for negligence, copyright,     patent or <font color="blue">trademark infringement</font> or other claims <font color="blue">based on</font> the nature and     content  of  materials that we publish or distribute</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also may face</font>     potential <font color="blue">liability</font> for <font color="blue">content uploaded from</font> our users in <font color="blue">connection with</font>     our community-related content or <font color="blue">movie reviews</font></td>
+    </tr>
+    <tr>
+      <td>If we become liable, then our business may suffer</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>to defend     these claims could be costly and the expenses and damages arising from any     <font color="blue">liability</font> could harm our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we     are <font color="blue">adequately</font> insured to cover claims of these types or to <font color="blue">indemnify us</font> for     all <font color="blue">liability</font> that may be <font color="blue">imposed on us</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">government regulation</font> of <font color="blue">the Internet </font>or other areas of our business     changes or if <font color="blue">consumer attitudes toward use</font> of <font color="blue">the Internet </font>change, we may     need to change the manner in which we conduct our business, or <font color="blue">incur greater</font>     operating expenses</td>
+    </tr>
+    <tr>
+      <td>The adoption or <font color="blue">modification</font> of laws or <font color="blue">regulations</font> relating to <font color="blue">the Internet </font>    or other areas of our business <font color="blue">could limit</font> or otherwise <font color="blue">adversely</font> affect the     manner in which we <font color="blue">currently conduct</font> our business</td>
+    </tr>
+    <tr>
+      <td>In addition, the                                           17     ______________________________________________________________________    [40]Table <font color="blue">of <font color="blue">Contents       </font></font>growth and <font color="blue">development</font> of the market for <font color="blue">online commerce may lead</font> to more     stringent consumer protection laws, which may impose <font color="blue">additional</font> burdens on     us</td>
+    </tr>
+    <tr>
+      <td>If we are required to comply with new <font color="blue">regulations</font> or <font color="blue">legislation</font> or new     <font color="blue">interpretations</font> of existing <font color="blue">regulations</font> or <font color="blue">legislation</font>, this compliance     could cause us to incur <font color="blue">additional</font> expenses or alter our business model</td>
+    </tr>
+    <tr>
+      <td>The manner in which Internet and other <font color="blue">legislation</font> may be interpreted and     <font color="blue">enforced cannot</font> be precisely determined and may subject <font color="blue">either us</font> or our     customers to potential <font color="blue">liability</font>, which in turn could have an adverse effect     on our business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The adoption     of any laws or <font color="blue">regulations</font> that <font color="blue">adversely</font> affect the <font color="blue">popularity</font> or growth in     use of the Internet, including <font color="blue">laws limiting</font> Internet neutrality, could     decrease the demand for our <font color="blue">subscription</font> service and increase our cost of     doing  business</td>
+    </tr>
+    <tr>
+      <td>In addition, if <font color="blue">consumer attitudes toward use</font> of the     <font color="blue">Internet  </font>change,  consumers  may  become  unwilling  to  select their     <font color="blue">entertainment</font> online or <font color="blue">otherwise provide us with</font> information <font color="blue">necessary</font> for     them to become <font color="blue">subscribers</font></td>
+    </tr>
+    <tr>
+      <td>Further, we may not be able to <font color="blue">effectively</font>     market our <font color="blue">services online</font> to users of the Internet</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     interact with consumers because of changes in their <font color="blue">attitude toward use</font> of     the Internet, our subscriber <font color="blue">acquisition</font> and <font color="blue">retention may</font> be affected     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>We  may  be  engaged in <font color="blue">legal proceedings</font> that could cause us to incur     unforeseen  expenses  and  could  occupy  a  <font color="blue"><font color="blue">significant</font> amount</font> of our     <font color="blue">management</font>’s time and attention</td>
+    </tr>
+    <tr>
+      <td>From  time  to time, we are subject to <font color="blue">litigation</font> or claims that could     <font color="blue">negatively affect</font> our business <font color="blue">operations</font> and <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Such     </font>disputes  could  cause us to incur unforeseen expenses, could occupy a     <font color="blue">significant</font>  amount  of our <font color="blue">management</font>’s time and attention, and could     <font color="blue">negatively affect</font> our business <font color="blue">operations</font> and <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Recently </font>enacted changes in <font color="blue">securities laws</font> and <font color="blue">regulations</font> have increased     and <font color="blue">may continue</font> to increase our costs</td>
+    </tr>
+    <tr>
+      <td>Changes in the laws and <font color="blue">regulations</font> affecting public companies, including     the provisions of the Sarbanes-Oxley Act of 2002 and recently-enacted rules     promulgated by the Securities and Exchange Commission, have increased and     <font color="blue">may continue</font> to increase our <font color="blue">expenses as</font> we evaluate the <font color="blue">implications</font> of     these rules and <font color="blue">devote resources</font> to respond to their <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>The NASDAQ National Market, on which our <font color="blue">common stock</font> is listed, has also     adopted  <font color="blue">comprehensive</font>  rules  and  <font color="blue">regulations</font>  relating to corporate     governance</td>
+    </tr>
+    <tr>
+      <td>These laws, rules and <font color="blue">regulations</font> have increased and will     continue  to  increase the scope, complexity and cost of our corporate     governance,  reporting  and <font color="blue">disclosure practices</font></td>
+    </tr>
+    <tr>
+      <td>We also expect these     <font color="blue">development</font>s to make it more <font color="blue">difficult</font> and more expensive for us to obtain     director  and officer <font color="blue">liability</font> insurance in the future, and we may be     required to <font color="blue">accept reduced coverage</font> or incur <font color="blue">substantially</font> higher costs to     obtain coverage</td>
+    </tr>
+    <tr>
+      <td>Further, our <font color="blue">board members</font>, <font color="blue">Chief Executive Officer </font>and     <font color="blue">Chief <font color="blue">Financial </font>Officer </font>could face an <font color="blue">increased risk</font> of personal <font color="blue">liability</font>     in <font color="blue">connection with</font> the performance of their duties</td>
+    </tr>
+    <tr>
+      <td>As a result, we may have     <font color="blue">difficult</font>y attracting and retaining qualified <font color="blue">board members</font> and executive     officers, which would <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Stock Ownership          Our officers and <font color="blue">directors</font> and their affiliates will exercise <font color="blue">significant</font>     <font color="blue">control over</font> Netflix</td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue">December </font>31, 2005, our <font color="blue">executive officers</font> and <font color="blue">directors</font>, their     <font color="blue">immediate family members</font> and <font color="blue">affiliated venture capital funds <font color="blue">beneficially</font></font>     owned, in the aggregate, <font color="blue">approximately</font> 31 percent of our <font color="blue">outstanding common</font>     stock, warrants and <font color="blue">stock options</font> that are exercisable within 60 days</td>
+    </tr>
+    <tr>
+      <td>In     particular, Jay Hoag, one of our <font color="blue">directors</font>, <font color="blue">beneficially</font> owned <font color="blue">approximately</font>     21 percent and Reed Hastings, our Chief Executive Officer, President and     Chairman of the Board, <font color="blue">beneficially</font> owned <font color="blue">approximately</font> 10 percent</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue"><font color="blue">stockholders</font> may</font> have individual interests that are <font color="blue">different from yours</font> and     will be able to exercise <font color="blue">significant</font> <font color="blue">control over</font> all matters requiring     <font color="blue">stockholder approval</font>, including the election of <font color="blue">directors</font> and approval of     <font color="blue">significant</font> corporate <font color="blue"><font color="blue">transaction</font>s</font>, which could delay or prevent someone     from acquiring or <font color="blue">merging with us</font></td>
+    </tr>
+    <tr>
+      <td>18     ______________________________________________________________________    [41]Table <font color="blue">of <font color="blue">Contents       </font></font>Provisions in our charter <font color="blue">documents</font> and under <font color="blue">Delaware </font><font color="blue">law could discourage</font>     a takeover that <font color="blue"><font color="blue">stockholders</font> may</font> consider favorable</td>
+    </tr>
+    <tr>
+      <td>Our  charter  <font color="blue">documents</font>  may  discourage, delay or prevent a merger or     <font color="blue">acquisition</font> that a <font color="blue">stockholder may</font> consider favorable because they:           •   authorize our board of <font color="blue">directors</font>, without <font color="blue">stockholder approval</font>, to     issue up to 10cmam000cmam000 shares of <font color="blue">undesignated preferred stock</font>;           •   provide for a <font color="blue">classified board</font> of <font color="blue">directors</font>;           •   prohibit our <font color="blue">stockholders</font> from acting <font color="blue">by written consent</font>;           •   <font color="blue">establish advance</font> notice <font color="blue">requirements</font> for <font color="blue">proposing matters</font> to be     approved by <font color="blue">stockholders</font> at stockholder meetings; and           •   prohibit <font color="blue">stockholders</font> from calling a <font color="blue">special meeting</font> of <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a merger or <font color="blue">acquisition</font> may trigger retention payments to     <font color="blue">certain executive employees under</font> the terms of our <font color="blue">Executive Severance </font>and     Retention Incentive Plan, <font color="blue">thereby increasing</font> the cost of such a <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>As  a  <font color="blue">Delaware </font> <font color="blue">corporation</font>,  we are also subject to certain <font color="blue">Delaware </font>    anti-takeover provisions</td>
+    </tr>
+    <tr>
+      <td>Under <font color="blue">Delaware </font>law, a <font color="blue">corporation</font> may not engage     in a business <font color="blue">combination</font> with any holder of 15 percent or more of its     <font color="blue">capital stock unless</font> the holder has held the stock for <font color="blue">three years</font> or, among     other things, the board of <font color="blue">directors</font> has approved the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>Our board     of <font color="blue">directors</font> could rely on <font color="blue">Delaware </font>law to prevent or delay an <font color="blue">acquisition</font>     of us</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">price at which</font> our <font color="blue">common stock</font> has <font color="blue">traded since</font> our May 2002 initial     <font color="blue">public offering</font> has fluctuated <font color="blue"><font color="blue">significant</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>The price <font color="blue">may continue</font> to be     <font color="blue">volatile due</font> to a number of factors including the following, some of which     are beyond our control:           •   <font color="blue">variations</font> in our operating results;           •   <font color="blue">variations</font> between our actual operating results and the <font color="blue">expectations</font>     of securities analysts, investors and the <font color="blue">financial community</font>;           •   <font color="blue">announcements</font> of <font color="blue">development</font>s affecting our business, systems or     expansion plans by us or others;           •   <font color="blue">competition</font>, including the <font color="blue">introduction</font> of new <font color="blue">competitors</font>, their     <font color="blue">pricing strategies</font> and services;           •   <font color="blue">market <font color="blue">volatility</font></font> in general;           •   the level of short interest in our stock; and           •   the operating results of our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>As a result of these and other factors, investors in our <font color="blue">common stock</font> may     not be able to resell their shares at or above their <font color="blue">original purchase</font>     price</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following  </font>certain  periods  of  <font color="blue">volatility</font> in the <font color="blue">market price</font> of our     securities,  we  became  the  subject of securities <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>We may     experience more such <font color="blue">litigation</font> following <font color="blue">future periods</font> of <font color="blue">volatility</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font>type  of <font color="blue">litigation</font> may result in substantial costs and a diversion of     <font color="blue">management</font>’s attention and resources</td>
+    </tr>
+    <tr>
+      <td>We record substantial expenses related to our issuance of <font color="blue">stock options</font> that     may  have  a material <font color="blue">negative impact on</font> our operating results for the     <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>During the second quarter of 2003, we adopted the <font color="blue">fair value</font> <font color="blue">recognition</font>     provisions  of  <font color="blue">Statement  </font>of  <font color="blue">Financial </font> Accounting Standards Nodtta 123     “Accounting for Stock-Based Compensation” (“SFAS 123”) for stock- based     <font color="blue">employee <font color="blue">compensation</font></font></td>
+    </tr>
+    <tr>
+      <td>In addition, during the <font color="blue">third quarter</font> of 2003, we     began granting <font color="blue">stock options</font> to                                           19     ______________________________________________________________________    [42]Table <font color="blue">of <font color="blue">Contents       </font></font>our <font color="blue">employees on</font> a <font color="blue">monthly basis</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">vesting periods provide</font> for options to     <font color="blue">vest immediately</font>, in <font color="blue">comparison with</font> the three to four-year vesting periods     for <font color="blue">stock options</font> granted prior to the <font color="blue">third quarter</font> of 2003</td>
+    </tr>
+    <tr>
+      <td>As a result of     immediate vesting, stock-based <font color="blue">compensation</font> expenses determined under SFAS     Nodtta 123 are fully recognized in the <font color="blue">same periods as</font> the <font color="blue">monthly stock option</font>     grants</td>
+    </tr>
+    <tr>
+      <td>In addition, we continue to amortize the deferred <font color="blue">compensation</font> of     <font color="blue">stock options</font> with three to four-year vesting periods granted prior to the     <font color="blue">third quarter</font> of 2003 over the <font color="blue">remaining vesting periods</font></td>
+    </tr>
+    <tr>
+      <td>We expect our stock-based     <font color="blue">compensation</font> expenses <font color="blue">will continue</font> to be <font color="blue">significant</font> in <font color="blue">future periods</font>,     which  will  have  an  adverse  impact  on  our operating results</td>
+    </tr>
+    <tr>
+      <td>The     Black-Scholes option-pricing model, used by us, requires the input of highly     <font color="blue">subjective <font color="blue">assumptions</font></font>, including the option’s expected life and the price     <font color="blue">volatility</font>  of  the  <font color="blue">underlying stock</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the <font color="blue">subjective input</font>     <font color="blue">assumptions</font> can <font color="blue">materially affect</font> the <font color="blue">fair value</font> estimate</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font><font color="blue">forecasting by us</font> and <font color="blue">financial analysts</font> who may publish estimates     of our <font color="blue">performance may differ materially from actual</font> results</td>
+    </tr>
+    <tr>
+      <td>Given the dynamic nature of our business and the <font color="blue">inherent limitations</font> in     predicting the future, forecasts of our revenues, gross margin, operating     expenses, number of paying <font color="blue">subscribers</font>, number of DVDs <font color="blue">shipped per day</font> and     other  financial  and operating <font color="blue">data may differ materially from actual</font>     results</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">discrepancies could</font> cause a decline in the <font color="blue">trading price</font> of     our <font color="blue">common stock</font></td>
+    </tr>
+  </tbody>
+</table>

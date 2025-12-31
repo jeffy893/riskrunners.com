@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "5: risks described", fill: "#cf1020"},
+{source: "5: risks described", target: "5: significant", fill: "#cf1020"},
+{source: "5: significant", target: "5: financial condition", fill: "#cf1020"},
+{source: "5: financial condition", target: "5: operations", fill: "#cf1020"},
+{source: "5: operations", target: "5: corresponding decline", fill: "#cf1020"},
+{source: "5: corresponding decline", target: "5: market price", fill: "#cf1020"},
+{source: "5: market price", target: "5: common stock", fill: "#cf1020"},
+{source: "5: risks described", target: "9: loss reserves", fill: "#9b870c"},
+{source: "9: loss reserves", target: "9: based on", fill: "#9b870c"},
+{source: "9: based on", target: "9: actual losses", fill: "#9b870c"},
+{source: "9: loss reserves", target: "22: concentrated", fill: "#8a2be2"},
+{source: "22: concentrated", target: "22: California ", fill: "#8a2be2"},
+{source: "22: California ", target: "22: premiums written", fill: "#8a2be2"},
+{source: "22: premiums written", target: "22: December ", fill: "#8a2be2"},
+{source: "22: December ", target: "22: Alaska ", fill: "#8a2be2"},
+{source: "22: Alaska ", target: "22: direct premiums written", fill: "#8a2be2"},
+{source: "22: direct premiums written", target: "22: same period", fill: "#8a2be2"},
+{source: "22: concentrated", target: "26: geographic concentration", fill: "#00b7eb"},
+{source: "26: geographic concentration", target: "26: adversely affected", fill: "#00b7eb"},
+{source: "26: adversely affected", target: "26: regulatory risks", fill: "#00b7eb"},
+{source: "26: regulatory risks", target: "26: risks from natural perils", fill: "#00b7eb"},
+{source: "26: risks from natural perils", target: "26: risks faced by insurance companies", fill: "#00b7eb"},
+{source: "26: risks faced by insurance companies", target: "26: greater geographic area", fill: "#00b7eb"},
+{source: "26: geographic concentration", target: "55: broad regulatory powers", fill: "#0d98ba"},
+{source: "55: broad regulatory powers", target: "55: protect policyholders", fill: "#0d98ba"},
+{source: "55: protect policyholders", target: "55: stockholders", fill: "#0d98ba"},
+{source: "55: broad regulatory powers", target: "START_HERE", fill: "#0d98ba"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Defy norms</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Treasury_stock">Treasury stock</a></td>
+      <td>A treasury stock or reacquired stock is stock which is bought back by the issuing company, reducing the amount of outstanding stock on the open market ("open market" including insiders' holdings). \nStock repurchases are used as a tax efficient method to put cash into shareholders' hands, rather than paying dividends, in jurisdictions that treat capital gains more favorably.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Insurance">Insurance</a></td>
+      <td>Securitization is the financial practice of pooling various types of contractual debt such as residential mortgages, commercial mortgages, auto loans or credit card debt obligations (or other non-debt assets which generate receivables) and selling their related cash flows to third party investors as securities, which may be described as bonds, pass-through securities, or collateralized debt obligations (CDOs). Investors are repaid from the principal and interest cash flows collected from the underlying debt and redistributed through the capital structure of the new financing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_17">December 17</a></td>
+      <td>December 17 is the 351st day of the year (352nd in leap years) in the Gregorian calendar;  14 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n497 BC – The first Saturnalia festival was celebrated in ancient Rome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_10">December 10</a></td>
+      <td>December 10 is the 344th day of the year (345th in leap years) in the Gregorian calendar;  21 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n1317 – The "Nyköping Banquet": King Birger of Sweden treacherously seizes his two brothers Valdemar, Duke of Finland and Eric, Duke of Södermanland, who were subsequently starved to death in the dungeon of Nyköping Castle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1924_German_federal_election">December 1924 German federal election</a></td>
+      <td>Federal elections were held in Germany on 7 December 1924, the second that year after the Reichstag had been dissolved on 20 October. The Social Democratic Party remained the largest party in the Reichstag, receiving an increased share of the vote and winning 131 of the 493 seats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2016_in_aviation">2016 in aviation</a></td>
+      <td>This is a list of aviation-related events from 2016.\n\n\n== Events ==\n\n\n=== January ===\nThe Government of Italy permitted United States unmanned aerial vehicles (UAVs or drones) to fly strike missions from Naval Air Station Sigonella in Sicily where the US has operated unarmed surveillance UAVs since 2001 against Islamic State targets in Libya, but only if they are "defensive," protecting U.S. forces or rescuers retrieving downed pilots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Assets_under_management">Assets under management</a></td>
+      <td>In finance, assets under management (AUM), sometimes called funds under management, measures the total market value of all the financial assets which an individual or financial institution—such as a mutual fund, venture capital firm, or depository institution—or a decentralized network protocol controls, typically on behalf of a client.  These funds may be managed for clients/users or for themselves in the case of a financial institution which has mutual funds or holds its own venture capital.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Life_Insurance_Corporation">Life Insurance Corporation</a></td>
+      <td>Life Insurance Corporation of India (LIC) is an Indian statutory insurance and investment corporation headquartered in the city of Mumbai, India. It is under the ownership of Government of India.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ivor_Montagu">Ivor Montagu</a></td>
+      <td>Ivor Goldsmid Samuel Montagu (23 April 1904, in Kensington, London – 5 November 1984, in Watford) was an English filmmaker, screenwriter, producer, film critic, writer, table tennis player, and Communist activist in the 1930s. He helped to develop a lively intellectual film culture in Britain during the interwar years, and was also the founder of the International Table Tennis Federation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Defence_mechanism">Defence mechanism</a></td>
+      <td>In psychoanalytic theory, a defence mechanism (American English: defense mechanism), is an unconscious psychological operation that functions to protect a person from anxiety-producing thoughts and feelings related to internal conflicts and outer stressors.Defence mechanisms may result in healthy or unhealthy consequences depending on the circumstances and frequency with which the mechanism is used. Defence mechanisms (German: Abwehrmechanismen) are psychological strategies brought into play by the unconscious mind to manipulate, deny, or distort reality in order to defend against feelings of anxiety and unacceptable impulses and to maintain one's self-schema or other schemas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Day_the_Music_Died">The Day the Music Died</a></td>
+      <td>On February 3, 1959, American rock and roll musicians Buddy Holly, Ritchie Valens, and "The Big Bopper" J. P. Richardson were killed in a plane crash near Clear Lake, Iowa, together with pilot Roger Peterson. The event later became known as "The Day the Music Died" after singer-songwriter Don McLean referred to it as such in his 1971 song "American Pie".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Decree_nisi">Decree nisi</a></td>
+      <td>A decree nisi or rule nisi (from Latin  nisi 'unless') is a court order that will come into force at a future date unless a particular condition is met. Unless the condition is met, the ruling becomes a decree absolute (rule absolute), and is binding.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Botswana">Botswana</a></td>
+      <td>Botswana ( (listen), also UK: ), officially the Republic of Botswana (Setswana: Lefatshe la Botswana, [lɪˈfatsʰɪ la bʊˈtswana]), is a landlocked country in Southern Africa. Botswana is topographically flat, with up to 70 percent of its territory being the Kalahari Desert.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/North_American_Free_Trade_Agreement">North American Free Trade Agreement</a></td>
+      <td>The North American Free Trade Agreement (NAFTA ; Spanish: Tratado de Libre Comercio de América del Norte, TLCAN; French: Accord de libre-échange nord-américain, ALÉNA) was an agreement signed by Canada, Mexico, and the United States that created a trilateral trade bloc in North America. The agreement came into force on January 1, 1994, and superseded the 1988 Canada–United States Free Trade Agreement between the United States and Canada.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder">Shareholder</a></td>
+      <td>A shareholder (in the United States often referred to as stockholder) of a corporation is an individual or legal entity (such as another corporation, a body politic, a trust or partnership) that is registered by the corporation as the legal owner of shares of the share capital of a public or private corporation. Shareholders may be referred to as members of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Equity_(finance)">Equity (finance)</a></td>
+      <td>In finance, equity is ownership of assets that may have debts or other liabilities attached to them. Equity is measured for accounting purposes by subtracting liabilities from the value of the assets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_company">Public company</a></td>
+      <td>A public company, publicly traded company, publicly held company, publicly listed company, or public limited company is a company whose ownership is organized via shares of stock which are intended to be freely traded on a stock exchange or in over-the-counter markets. A public (publicly traded) company can be listed on a stock exchange (listed company), which facilitates the trade of shares, or not (unlisted public company).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Derivative_suit">Derivative suit</a></td>
+      <td>A shareholder derivative suit is a lawsuit brought by a shareholder on behalf of a corporation against a third party. Often, the third party is an insider of the corporation, such as an executive officer or director.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Friedman_doctrine">Friedman doctrine</a></td>
+      <td>The Friedman doctrine, also called shareholder theory or stockholder theory, is a normative theory of business ethics advanced by economist Milton Friedman which holds that the social responsibility of business is to increase its profits. This shareholder primacy approach views shareholders as the economic engine of the organization and the only group to which the firm is socially responsible.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jessica_Stockholder">Jessica Stockholder</a></td>
+      <td>Jessica Stockholder (born 1959) is a Canadian-American artist known for site-specific installation works and sculptures that are often described as "paintings in space." She came to prominence in the early 1990s with monumental works that challenged boundaries between artwork and display environment as well as between pictorial and physical experience. Her art often presents a "barrage" of bold colors, textures and everyday objects, incorporating floors, walls and ceilings and sometimes spilling out of exhibition sites.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>SEABRIGHT INSURANCE HOLDINGS INC      Item 1A      <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">should carefully</font> consider the <font color="blue">risks described</font> below, <font color="blue">together with</font>     all of the other information included in this annual report</td>
+    </tr>
+    <tr>
+      <td>The risks and     <font color="blue"><font color="blue">uncertainties</font> described</font> below are not the <font color="blue">only ones facing</font> our company</td>
+    </tr>
+    <tr>
+      <td>Any of the <font color="blue">risks described</font>     below  could result in a <font color="blue">significant</font> or material adverse effect on our     <font color="blue">financial condition</font> or results of <font color="blue">operations</font>, and a <font color="blue">corresponding decline</font> in     the <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">could lose</font> all or part of your     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The  risks  discussed  below also include forward-looking     statements  and our actual results <font color="blue">may differ <font color="blue">substantially</font> from</font> those     discussed  in  those  forward-looking  statements</td>
+    </tr>
+    <tr>
+      <td>Please refer to the     discussion under the heading “Note on Forward-Looking Statements” in Item 1</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Business       Our <font color="blue"><font color="blue">loss reserve</font>s</font> are <font color="blue">based on</font> estimates and may be inadequate to cover our     <font color="blue">actual losses</font></td>
+    </tr>
+    <tr>
+      <td>If  we  fail to <font color="blue">accurately assess</font> the <font color="blue">risks associated with</font> the     <font color="blue">businesses</font> that we insure, our <font color="blue"><font color="blue">loss reserve</font>s</font> may be inadequate to cover our     <font color="blue">actual losses</font> and we may fail to <font color="blue">establish <font color="blue">appropriate</font> premium rates</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">We                                         </font>35       _________________________________________________________________    [85]Table of <font color="blue">Contents       </font>establish  <font color="blue"><font color="blue">loss reserve</font>s</font> in our <font color="blue">financial statements</font> that represent an     estimate of amounts needed to pay and <font color="blue">administer</font> claims <font color="blue">with respect</font> to     <font color="blue">insured events</font> that have occurred, including events that have not yet been     reported to us</td>
+    </tr>
+    <tr>
+      <td>Loss reserves are estimates and are <font color="blue">inherently uncertain</font>;     they do not and <font color="blue">cannot represent</font> an exact measure of <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly,     our <font color="blue"><font color="blue">loss reserve</font>s</font> may prove to be inadequate to cover our <font color="blue">actual losses</font></td>
+    </tr>
+    <tr>
+      <td>Any     changes in these estimates are reflected in our results of <font color="blue">operations</font> during     the  period  in which the changes are made, <font color="blue">with increases</font> in our loss     reserves resulting in a charge to our earnings</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">loss reserve</font> estimates are <font color="blue">based on</font> estimates of the <font color="blue">ultimate cost</font>     of individual claims and <font color="blue">on <font color="blue">actuarial estimation</font> techniques</font></td>
+    </tr>
+    <tr>
+      <td>Several factors     contribute to the <font color="blue">uncertainty</font> in <font color="blue">establishing</font> these estimates</td>
+    </tr>
+    <tr>
+      <td>Judgment is     required in <font color="blue">actuarial estimation</font> to ascertain the relevance of historical     payment and claim <font color="blue">settlement patterns under current facts</font> and <font color="blue">circumstances</font></td>
+    </tr>
+    <tr>
+      <td>Key <font color="blue">assumptions</font> in the <font color="blue">estimation process</font> are the <font color="blue">average cost</font> of claims     over time, which we refer to <font color="blue">as <font color="blue">severity trends</font></font>, including the increasing     level of medical, legal and <font color="blue">rehabilitation costs</font>, and <font color="blue">costs associated with</font>     fraud or other abuses of the medical claim process</td>
+    </tr>
+    <tr>
+      <td>If there are unfavorable     changes in <font color="blue">severity trends</font>, we may need to increase our <font color="blue"><font color="blue">loss reserve</font>s</font>, as     described above</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">geographic <font color="blue">concentration</font></font> ties</font> our performance to the business, economic     and <font color="blue"><font color="blue">regulatory</font> <font color="blue">conditions</font></font> in California, Hawaii and Alaska</td>
+    </tr>
+    <tr>
+      <td>Any single     <font color="blue">catastrophe</font> or other <font color="blue">condition <font color="blue">affecting</font> losses</font> in these states could     <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">concentrated</font> in <font color="blue">California </font>(<font color="blue">approximately</font> 64dtta8prca of     direct  <font color="blue">premiums written</font> for the year ended <font color="blue">December </font>31, 2005), <font color="blue">Alaska     </font>(<font color="blue">approximately</font> 12dtta0prca of direct <font color="blue">premiums written</font> for the <font color="blue">same period</font>) and     Hawaii (<font color="blue">approximately</font> 7dtta4prca of direct <font color="blue">premiums written</font> for the <font color="blue">same period</font>)</td>
+    </tr>
+    <tr>
+      <td>Accordingly, unfavorable business, economic or <font color="blue"><font color="blue">regulatory</font> <font color="blue">conditions</font></font> in     those states <font color="blue">could negatively impact</font> our business</td>
+    </tr>
+    <tr>
+      <td>For example, California,     Hawaii and Alaska are states that are susceptible to <font color="blue">severe natural perils</font>,     such as tsunamis, earthquakes and hurricanes, along with the <font color="blue">possibility</font> of     terrorist  acts</td>
+    </tr>
+    <tr>
+      <td>Accordingly,  we  <font color="blue">could suffer losses as</font> a result of     <font color="blue"><font color="blue">catastrophic</font> events</font> in those states</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">geographic <font color="blue">concentration</font></font> has     not <font color="blue"><font color="blue">adversely</font> affect</font>ed our business in the past, we may in the future be     exposed to economic and <font color="blue"><font color="blue">regulatory</font> risks</font> or <font color="blue">risks from natural perils</font> that     are  greater  than the <font color="blue">risks faced by <font color="blue">insurance companies</font></font> that conduct     business over a <font color="blue">greater geographic area</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">concentration</font> of our business     could have a material adverse effect on our <font color="blue">financial condition</font> or results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain or <font color="blue">collect on</font> our <font color="blue">reinsurance protection</font>, our     business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font> could be <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">buy reinsurance coverage</font> to <font color="blue">protect us from</font> the impact of large     losses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reinsurance </font>is an <font color="blue">arrangement</font> in which an insurance company, called     the  ceding company, transfers insurance risk by sharing premiums with     another insurance company, called the reinsurer</td>
+    </tr>
+    <tr>
+      <td>Conversely, the reinsurer     receives  or assumes reinsurance from the ceding company</td>
+    </tr>
+    <tr>
+      <td>We currently     <font color="blue">participate</font> in a workers’ <font color="blue">compensation</font> and employers’ <font color="blue">liability</font> excess of     <font color="blue">loss <font color="blue">reinsurance treaty program</font> covering</font> all of the business that we write     pursuant to which our <font color="blue">reinsurers</font> are liable for <font color="blue">varying percentages</font> of the     <font color="blue">ultimate net losses</font> in excess of dlra500cmam000 for the business we write, up to a     dlra50dtta0 million limit, subject to <font color="blue">certain <font color="blue">exclusions</font></font> and <font color="blue">limitations</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">treaty program provides coverage</font> in <font color="blue">several layers</font></td>
+    </tr>
+    <tr>
+      <td>See the discussion under     the heading “Reinsurance” in Item 1</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font>, amount and cost of     <font color="blue">reinsurance depend on market <font color="blue">conditions</font></font> and may vary <font color="blue">significant</font>ly</td>
+    </tr>
+    <tr>
+      <td>As a     result of <font color="blue"><font color="blue">catastrophic</font> events</font>, such as the events <font color="blue">of <font color="blue">September </font></font>11, 2001, we     may incur <font color="blue">significant</font>ly <font color="blue">higher reinsurance costs</font>, more <font color="blue"><font color="blue">restrictive</font> terms</font> and     <font color="blue">conditions</font>, and <font color="blue">decreased <font color="blue">availability</font></font></td>
+    </tr>
+    <tr>
+      <td>For example, the second layer of our     <font color="blue">current excess</font> of <font color="blue">loss <font color="blue">reinsurance treaty program</font> provides</font> a sub-limit on     our <font color="blue">reinsurers</font>’ maximum <font color="blue">liability</font> in the amount of dlra4dtta0 million for losses     arising out of, or caused by, <font color="blue">occupational</font> disease or other disease or     cumulative  trauma,  and  the  second,  third and <font color="blue">fourth layers</font> of our     reinsurance program provide sub-limits for losses caused by any act of     terrorism, as defined in the <font color="blue">Terrorism Risk Act</font></td>
+    </tr>
+    <tr>
+      <td>Because of these sub-limits     and <font color="blue">exclusions</font>, which are common in the wake of the events <font color="blue">of <font color="blue">September </font></font>11,     2001, we have <font color="blue">significant</font>ly greater exposure to losses resulting from acts     of                                         36       _________________________________________________________________    [86]Table of <font color="blue">Contents       </font>terrorism</td>
+    </tr>
+    <tr>
+      <td>The incurrence of <font color="blue">higher reinsurance costs</font> and more <font color="blue">restrictive</font>     terms could <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affect</font> our business, <font color="blue">financial condition</font>     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreements</font> for our current workers’ <font color="blue">compensation</font> excess of loss     <font color="blue">reinsurance treaty program</font> expire on October 1, 2006</td>
+    </tr>
+    <tr>
+      <td>Although we currently     expect to renew the <font color="blue">program upon</font> its expiration, any decrease in the amount     of our <font color="blue">reinsurance at</font> the time of renewal, whether caused by the existence     of more <font color="blue"><font color="blue">restrictive</font> terms</font> and <font color="blue">conditions</font> or <font color="blue">decreased <font color="blue">availability</font></font>, will     <font color="blue">also increase</font> our risk of loss and, as a result, could <font color="blue">materially</font> <font color="blue">adversely</font>     affect our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have     not  experienced  <font color="blue"><font color="blue">difficult</font>y</font> in qualifying for or obtaining sufficient     reinsurance to <font color="blue"><font color="blue">appropriate</font>ly cover</font> our risks in the past</td>
+    </tr>
+    <tr>
+      <td>We currently have     13  <font color="blue">reinsurers</font>  <font color="blue">participating</font> in our excess of <font color="blue">loss reinsurance treaty</font>     program, and believe that this is a sufficient number of <font color="blue">reinsurers</font> to     <font color="blue">provide us with reinsurance</font> in the volume that we require</td>
+    </tr>
+    <tr>
+      <td>However, it is     possible  that  one  or  more  of  our current <font color="blue">reinsurers</font> could cancel     <font color="blue">participation</font>, or we could find it <font color="blue">necessary</font> to cancel the <font color="blue">participation</font> of     one of our <font color="blue">reinsurers</font>, in our excess of loss <font color="blue">reinsurance treaty program</font></td>
+    </tr>
+    <tr>
+      <td>In     either of those events, if our <font color="blue">reinsurance broker</font> is unable to spread the     cancelled or <font color="blue">terminated reinsurance among</font> the remaining <font color="blue">reinsurers</font> in the     program, we estimate that it could take <font color="blue"><font color="blue">approximately</font> one</font> to <font color="blue">three weeks</font> to     identify  and  negotiate  <font color="blue"><font color="blue">appropriate</font> documentation with</font> a <font color="blue">replacement</font>     reinsurer</td>
+    </tr>
+    <tr>
+      <td>During this time, we would be exposed to an <font color="blue">increased risk</font> of     loss,  the  extent  of  which  <font color="blue">would depend on</font> the volume of cancelled     reinsurance</td>
+    </tr>
+    <tr>
+      <td>In  addition, we are subject to credit risk <font color="blue">with respect</font> to our     <font color="blue">reinsurers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reinsurance </font>protection that we receive does not discharge our     <font color="blue">direct <font color="blue"><font color="blue">obligation</font>s</font> under</font> the policies we write</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">remain liable</font> to our     <font color="blue">policyholders</font>, even if we are unable to make <font color="blue">recoveries</font> to which we believe     we are <font color="blue">entitled under</font> our <font color="blue">reinsurance contracts</font></td>
+    </tr>
+    <tr>
+      <td>Losses may not be recovered     from our <font color="blue">reinsurers</font> until claims are paid, and, in the case of long-term     workers’ <font color="blue">compensation</font> cases, the <font color="blue">creditworthiness</font> of our <font color="blue">reinsurers</font> may     change before we can <font color="blue">recover amounts</font> to which we are entitled</td>
+    </tr>
+    <tr>
+      <td>Although we     have not experienced problems in the past resulting from the failure of a     reinsurer to pay our claims in a <font color="blue">timely manner</font>, if we experience these     problems in the future, our <font color="blue">costs would increase</font> and our <font color="blue">revenues would</font>     decline</td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue">December </font>31,  2005,  we had dlra14dtta4 million of amounts     <font color="blue">recoverable from</font> our <font color="blue">reinsurers</font> that we would be obligated to pay if our     <font color="blue">reinsurers</font> failed to pay us</td>
+    </tr>
+    <tr>
+      <td>The insurance business is subject to extensive regulation and <font color="blue">legislative</font>     changes, which impact the manner in which we operate our business</td>
+    </tr>
+    <tr>
+      <td>Our insurance business is subject to extensive <font color="blue">regulation by</font> the     applicable state agencies in the <font color="blue">jurisdictions</font> in which we operate, perhaps     most <font color="blue">significant</font>ly by the Illinois Division of Insurance and the <font color="blue">California </font>    Department of Insurance</td>
+    </tr>
+    <tr>
+      <td>These state agencies have <font color="blue">broad <font color="blue">regulatory</font> powers</font>     designed to <font color="blue">protect <font color="blue">policyholders</font></font>, not <font color="blue">stockholders</font> or other investors</td>
+    </tr>
+    <tr>
+      <td>These powers include, among other things, the ability to:         •  place <font color="blue">limitations</font> on our ability to transact business with our     <font color="blue">affiliates</font>;         •  regulate mergers, <font color="blue">acquisition</font>s and <font color="blue">divestitures involving</font> our insurance     <font color="blue">company subsidiary</font>;          •  require <font color="blue"><font color="blue"><font color="blue"><font color="blue">SeaBright </font>Insurance Company </font>and PointSure</font> </font>to <font color="blue">comply with</font>     various licensing <font color="blue">requirements</font> and approvals that affect our ability to do     business;         •  approve or reject our <font color="blue">policy coverage</font> and <font color="blue">endorsements</font>;         •  place <font color="blue">limitations</font> on our <font color="blue">investment</font>s and dividends;         •  set standards of solvency to be met and maintained;         •  regulate rates pertaining to our business;          •  require <font color="blue">assessments</font> for the provision of funds <font color="blue">necessary</font> for the     settlement of covered claims <font color="blue">under certain policies provided by impaired</font>,     insolvent or <font color="blue">failed <font color="blue">insurance companies</font></font>;         •  require us to <font color="blue"><font color="blue">comply with</font> medical privacy laws</font>; and         •  prescribe the form and content of, and examine, our <font color="blue">statutory financial</font>     statements</td>
+    </tr>
+    <tr>
+      <td>37       _________________________________________________________________    [87]Table of <font color="blue">Contents       </font>      Our ability to transact business with our <font color="blue">affiliates</font> and to <font color="blue">enter into</font>     mergers, <font color="blue">acquisition</font>s and <font color="blue">divestitures involving</font> our insurance company     subsidiary is limited by the <font color="blue">requirements</font> of the insurance holding company     laws of <font color="blue">Illinois and California</font></td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">comply with</font> these laws, we are required     to file notices with the Illinois Division of Insurance and the <font color="blue">California </font>    Department of Insurance to seek their respective approvals at least 30 days     before engaging in any intercompany <font color="blue">transactions</font>, such as sales, purchases,     exchanges of assets, loans, extensions of credit, cost sharing <font color="blue">arrangement</font>s     and <font color="blue">extra<font color="blue">ordinary dividends</font></font> or other <font color="blue">distributions</font> to <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under     </font>these holding <font color="blue">company laws</font>, any change of <font color="blue">control transaction also</font> requires     <font color="blue">prior <font color="blue">notification</font></font> and approval</td>
+    </tr>
+    <tr>
+      <td>Because these <font color="blue"><font color="blue">governmental agencies</font> may</font> not     take action or <font color="blue">give approval within</font> the 30 day period, these <font color="blue">notification</font>     and approval <font color="blue">requirements</font> may subject us to business delays and <font color="blue">additional</font>     business expense</td>
+    </tr>
+    <tr>
+      <td>If we fail to give these <font color="blue">notification</font>s, we may be subject     to <font color="blue">significant</font> fines and penalties and damaged working <font color="blue">relations with</font> these     <font color="blue">governmental agencies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, workers’ <font color="blue">compensation</font> insurance is <font color="blue">statutorily provided</font>     for in all of the states in which we do business</td>
+    </tr>
+    <tr>
+      <td>State laws and <font color="blue">regulations</font>     provide for the form and content of <font color="blue">policy coverage</font> and the rights and     benefits that are available to <font color="blue">injured workers</font>, their <font color="blue">representatives</font> and     medical  providers</td>
+    </tr>
+    <tr>
+      <td>For  example,  in California, on January 1, 2003,     workers’  <font color="blue">compensation</font>  <font color="blue"><font color="blue">legislation</font> became effective</font> that provided for     increases in the <font color="blue">benefits payable</font> to <font color="blue">injured workers</font></td>
+    </tr>
+    <tr>
+      <td>Also, in California,     workers’ <font color="blue">compensation</font> <font color="blue">legislation</font> intended to <font color="blue">reduce certain costs</font> was     enacted  in  <font color="blue"><font color="blue">September </font> </font>2003  and April 2004</td>
+    </tr>
+    <tr>
+      <td>Among other things, this     <font color="blue">legislation</font> established an <font color="blue">independent</font> medical review process for resolving     medical disputes, tightened standards for determining <font color="blue">impairment</font> ratings by     applying specific medical treatment <font color="blue">guidelines</font>, capped temporary total     <font color="blue">disability</font> payments to 104 weeks from first payment and enabled injured     workers to access immediate medical care up to dlra10cmam000 but required them to     get medical care through a network of doctors chosen by the employer</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">implementation</font> of these <font color="blue">reforms affects</font> the manner in which we coordinate     medical  care  <font color="blue">costs with employers</font> and the manner in which we oversee     treatment plans</td>
+    </tr>
+    <tr>
+      <td>However, the reforms are subject to continuing opposition     in the <font color="blue">California </font><font color="blue">legislature</font>, in the courts and <font color="blue">by ballot initiatives</font>, any     of <font color="blue">which could overturn</font> or <font color="blue"><font color="blue">substantially</font> amend</font> the reforms and <font color="blue">regulatory</font>     <font color="blue">rules applicable</font> to the <font color="blue">legislation</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> the <font color="blue">ultimate impact</font>     of the reforms</td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">also <font color="blue">affected by</font> federal laws</font>, including the USL&amp;H     Act, which is <font color="blue">administer</font>ed by the Department of Labor, and the Merchant     Marine Act of 1920, <font color="blue">or Jones Act</font></td>
+    </tr>
+    <tr>
+      <td>The USL&amp;H Act <font color="blue">contains various provisions</font>     <font color="blue">affecting</font> our business, including the nature of the <font color="blue">liability</font> of employers     of <font color="blue">longshoremen</font>, the rate of <font color="blue">compensation</font> to an <font color="blue">injured longshoreman</font>, the     selection of physicians, <font color="blue">compensation</font> for <font color="blue">disability</font> and death and the     filing of claims</td>
+    </tr>
+    <tr>
+      <td>Currently, builders of recreational boats over 65 feet in     length are subject to the USL&amp;H Act</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">proposed amendment</font> to the USL&amp;H Act     <font color="blue">would eliminate builders</font> of <font color="blue">recreational boats from</font> the reach of the USL&amp;H     Act</td>
+    </tr>
+    <tr>
+      <td>If this <font color="blue">proposed amendment</font> is adopted, we expect that we would lose a     total of <font color="blue">approximately</font> dlra3dtta0 million in <font color="blue">annual direct written premiums from</font>     <font color="blue">policies currently providing</font> USL&amp;H Act coverage</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">proposed amendment</font>     would not have a material <font color="blue">impact on</font> our <font color="blue">policies providing coverage under</font>     the Jones Act, <font color="blue">which gives certain employees at sea</font> the right to sue their     employers if <font color="blue">such employees</font> are injured</td>
+    </tr>
+    <tr>
+      <td>Moreover, changes in <font color="blue">federal tax</font>     <font color="blue">laws could also impact</font> our business</td>
+    </tr>
+    <tr>
+      <td>In addition, we are <font color="blue">impacted by</font> the <font color="blue">Terrorism Risk Act</font> and by the     Gramm-Leach-Bliley  Act  of  2002  related  to  <font color="blue">disclosure</font> of personal     information</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Terrorism Risk Act</font> requires that <font color="blue">commercial property</font> and     <font color="blue">casualty <font color="blue">insurance companies</font> offer coverage</font> for certain acts of terrorism     and has established a <font color="blue">federal assistance program through</font> the end of 2007 to     <font color="blue">help insurers cover</font> claims arising out of such acts</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Terrorism Risk Act</font>     <font color="blue">only covers certified</font> acts of terrorism, and the <font color="blue">US Secretary </font>of the     Treasury must declare the act to be a “certified act of terrorism” for it to     be <font color="blue">covered under</font> this <font color="blue">federal program</font></td>
+    </tr>
+    <tr>
+      <td>In addition, no federal <font color="blue">compensation</font>     will be <font color="blue">paid under</font> the <font color="blue">Terrorism Risk Act</font> <font color="blue">unless aggregate <font color="blue">insured losses</font></font>     from the act for the <font color="blue">entire <font color="blue">insurance industry</font> exceed certain threshold</font>     amounts (dlra5dtta0 million for <font color="blue">terrorism losses</font> occurring prior to April 1, 2006,     dlra50dtta0 million  for  terrorism  losses  occurring from April 1, 2006 to     <font color="blue">December </font>31, 2006, and dlra100dtta0 million for <font color="blue">terrorism losses</font> occurring in     2007)</td>
+    </tr>
+    <tr>
+      <td>Under this program, the federal government covers 90prca of the losses     <font color="blue">from covered certified</font> acts of terrorism (85prca for <font color="blue">terrorism losses</font> occurring     in 2007) on commercial risks in the <font color="blue"><font color="blue">United States</font> </font>only, in excess of the     <font color="blue">applicable <font color="blue">deductible amount</font></font></td>
+    </tr>
+    <tr>
+      <td>This deductible is calculated <font color="blue">based on</font> a     percentage of an <font color="blue">affiliated</font>                                         38       _________________________________________________________________    [88]Table of <font color="blue">Contents       </font>insurance group’s prior year direct earned premiums on commercial lines     policies  (except  for <font color="blue">certain excluded lines such as commercial auto</font>)     <font color="blue">covering risks</font> in the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">deductible amount</font> is 17dtta5prca of such     premiums for losses occurring in 2006 and 20dtta0prca of <font color="blue">such premiums</font> for losses     occurring  in  2007</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Terrorism Risk Act</font> is scheduled to expire on     <font color="blue">December </font>31,  2007 and may not be renewed, or if it is renewed, it may     <font color="blue">provide reduced protection against</font> the <font color="blue">financial impact</font> of acts of terrorism     by, among other things, increasing the <font color="blue">aggregate loss event trigger</font> and the     amount of <font color="blue">statutory deductible insurers would</font> be required to pay</td>
+    </tr>
+    <tr>
+      <td>This extensive regulation of our business may affect the cost or     demand for our products and may limit our ability to obtain <font color="blue">rate increases</font>     or to take other actions that we might desire to increase our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we may be unable to maintain all required approvals or comply     <font color="blue">fully with</font> the wide variety of <font color="blue">applicable laws</font> and <font color="blue">regulations</font>, which are     <font color="blue">continually undergoing revision</font>, or the relevant authority’s interpretation     of such laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>A downgrade in the AM Best rating of our <font color="blue">insurance subsidiary could reduce</font>     the amount of business we are able to write</td>
+    </tr>
+    <tr>
+      <td>Our insurance <font color="blue">company subsidiary</font> currently has a     rating of “A-” (Excellent) from AM Best, which is the <font color="blue">rating agency</font> that     we believe has the <font color="blue">most influence on</font> our business</td>
+    </tr>
+    <tr>
+      <td>The ratings of <font color="blue">AM Best     </font>are  subject to periodic review using, among other things, proprietary     <font color="blue">capital adequacy models</font>, and are subject to revision or <font color="blue">withdrawal at</font> any     time</td>
+    </tr>
+    <tr>
+      <td>Insurance ratings are <font color="blue">directed toward</font> the concerns of <font color="blue">policyholders</font>     and <font color="blue">insurance agents</font> and are not intended for the protection of investors or     as  a  <font color="blue">recommendation</font>  to buy, hold or sell any of our securities</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">competitive position relative</font> to other companies is determined in part by     our AM Best rating</td>
+    </tr>
+    <tr>
+      <td>We believe that our business is <font color="blue">particularly sensitive</font>     to our AM Best rating because we <font color="blue">focus on larger customers which tend</font> to     give substantial weight to the AM Best rating of their insurers</td>
+    </tr>
+    <tr>
+      <td>We expect     that  any  reduction  in our AM Best rating below “A-” would cause a     reduction in the number of policies we write and could have a material     adverse effect on our results of <font color="blue">operations</font> and our <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td>The effects of emerging claim and <font color="blue">coverage issues on</font> our business are     uncertain</td>
+    </tr>
+    <tr>
+      <td>As  industry  practices  and  legal, judicial, social and other     environmental <font color="blue">conditions</font> change, unexpected and <font color="blue">unintended issues</font> related to     claims  and <font color="blue">coverage may emerge</font></td>
+    </tr>
+    <tr>
+      <td>These issues may <font color="blue"><font color="blue">adversely</font> affect</font> our     business by either extending coverage beyond our <font color="blue"><font color="blue">underwriting</font> intent</font> or by     increasing the number or size of claims</td>
+    </tr>
+    <tr>
+      <td>In some instances, these changes     may not <font color="blue">become apparent until</font> some time after we have <font color="blue">issued insurance</font>     contracts that are <font color="blue">affected by</font> the changes</td>
+    </tr>
+    <tr>
+      <td>As a result, the full extent of     <font color="blue">liability</font> under our insurance contracts may not be known for many years     after a contract is issued</td>
+    </tr>
+    <tr>
+      <td>For example, the number or nature of existing     <font color="blue">occupational</font>  <font color="blue">diseases may expand beyond</font> our <font color="blue">expectation</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     medical claims <font color="blue">costs associated with</font> permanent and <font color="blue">partial disabilities may</font>     inflate more rapidly or <font color="blue">higher than</font> we currently expect</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Expansions </font>of this     nature may expose us to more claims than we anticipated when we wrote the     underlying policy</td>
+    </tr>
+    <tr>
+      <td>Intense <font color="blue">competition</font> could <font color="blue"><font color="blue">adversely</font> affect</font> our ability to <font color="blue">sell policies at</font>     rates we deem adequate</td>
+    </tr>
+    <tr>
+      <td>In  most of the states in which we operate, we face <font color="blue">significant</font>     <font color="blue">competition</font>  which,  at times, is intense</td>
+    </tr>
+    <tr>
+      <td>If we are unable to compete     <font color="blue">effectively</font>,  our business and <font color="blue">financial condition</font> could be <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>in our <font color="blue">businesses</font> is <font color="blue">based on</font> many factors,     including premiums charged, services provided, financial strength ratings     assigned  by  <font color="blue">independent</font>  rating  agencies, speed of claims payments,     reputation, perceived financial strength and general experience</td>
+    </tr>
+    <tr>
+      <td>We compete     <font color="blue">with regional</font> and <font color="blue">national <font color="blue">insurance companies</font></font> and state-sponsored insurance     funds, as well as potential insureds that have decided to self-insure</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">principal <font color="blue">competitors</font></font> include AIG, Alaska National Insurance Company, Signal     Mutual  Indemnity  Association Ltd, Zurich and the State Compensation     Insurance Fund of California</td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> have <font color="blue">substantially</font>     greater  financial and marketing resources than we do, and some of our     <font color="blue">competitors</font>, including the State Compensation Insurance Fund of California,     <font color="blue">benefit financially by</font> not                                         39       _________________________________________________________________    [89]Table of <font color="blue">Contents       </font>being subject to <font color="blue">federal income tax</font></td>
+    </tr>
+    <tr>
+      <td>Intense <font color="blue">competitive pressure on prices</font>     can result from the actions of even a single large competitor, such as the     State Compensation Insurance Fund of <font color="blue">California </font>or AIG             In addition, our <font color="blue">competitive advantage may</font> be limited due to the small     number of <font color="blue">insurance products</font> that we offer</td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font>, such as     AIG, have <font color="blue">additional</font> competitive leverage because of the <font color="blue">wide array</font> of     <font color="blue">insurance products</font> that they offer</td>
+    </tr>
+    <tr>
+      <td>For example, it may be more <font color="blue">convenient</font>     for a <font color="blue">potential customer</font> to <font color="blue">purchase numerous different types</font> of insurance     products  from  <font color="blue">one insurance carrier</font></td>
+    </tr>
+    <tr>
+      <td>We do not offer a <font color="blue">wide array</font> of     insurance  <font color="blue">products due</font> to our <font color="blue">targeted <font color="blue">market niches</font></font>, and we may lose     <font color="blue">potential customer</font>s to our larger, more diverse <font color="blue">competitors</font> as a result</td>
+    </tr>
+    <tr>
+      <td>On May 31, 2005, the <font color="blue">California </font>Insurance <font color="blue">Commissioner </font>issued a     decision  adopting  an <font color="blue"><font color="blue">advisory pure</font> premium rate reduction</font> of 18prca for     <font color="blue">California </font>workers’ <font color="blue">compensation</font> policies incepting on or after July 1,     2005</td>
+    </tr>
+    <tr>
+      <td>Pure premium is that portion of an insurance premium <font color="blue">necessary</font> to     cover the cost of paying claims, <font color="blue">such as medical</font> and <font color="blue">indemnity costs</font> and     allocated and <font color="blue">unallocated loss adjustment expenses</font></td>
+    </tr>
+    <tr>
+      <td>The decision was issued     in response to <font color="blue">reductions</font> in 2004 workers’ <font color="blue">compensation</font> claim costs in     California, as well as anticipated future claim cost <font color="blue">reductions</font>, as a result     of reform <font color="blue">legislation</font> enacted primarily in 2003 and 2004</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">California </font>    Insurance Commissioner’s decision is <font color="blue">advisory only</font> and <font color="blue">insurance companies</font>     <font color="blue">may choose whether</font> or not to adopt the new rates</td>
+    </tr>
+    <tr>
+      <td>On June 6, 2005, after     completing a study of our <font color="blue">California </font>loss data, we <font color="blue">filed with</font> the <font color="blue">California </font>    Department of Insurance our rates for new and <font color="blue">renewal workers</font>’ <font color="blue">compensation</font>     <font color="blue"><font color="blue">insurance policies</font> written</font> in <font color="blue">California </font>on or after July  1, 2005</td>
+    </tr>
+    <tr>
+      <td>The     filing was <font color="blue">approved on</font> June 28, 2005</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">new rates reflect</font> an average     reduction  of  14dtta2prca  <font color="blue">from prior rates</font> and are in response to emerging     favorable trends in <font color="blue">loss costs</font> resulting from reform <font color="blue">legislation</font></td>
+    </tr>
+    <tr>
+      <td>If any of     our <font color="blue">competitors</font> adopt premium rate <font color="blue">reductions</font> that are <font color="blue">greater than ours</font>, we     may be unable to compete <font color="blue">effectively</font> and our business, <font color="blue">financial condition</font>     and results of <font color="blue">operations</font> could be <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On <font color="blue">September </font></font>15, 2005, the Workers’ Compensation Insurance Rating     Bureau (“WCIRB”), an industry-backed private <font color="blue">organization</font> that provides     statistical  analysis, submitted an amended filing with the <font color="blue">California </font>    Insurance  <font color="blue">Commissioner </font><font color="blue">recommending</font> a 15dtta9prca decrease in <font color="blue">advisory pure</font>     <font color="blue">premium rates on new</font> and <font color="blue">renewal policies effective</font> January 1, 2006</td>
+    </tr>
+    <tr>
+      <td>As     described  above,  such  rates, if adopted by the <font color="blue">California </font>Insurance     Commissioner, are <font color="blue">advisory only</font> and <font color="blue">insurance companies</font> <font color="blue">may choose whether</font>     or not to adopt the new rates</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">rate decrease</font> was <font color="blue">proposed following</font> the     WCIRB’s review of <font color="blue">accident year</font> experience valued as of June 30, 2005 and     the cost impact of the January 1, 2005 permanent <font color="blue">disability</font> rating schedule</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On November </font>10, 2005, the <font color="blue">Commissioner </font>recommended a 15dtta3prca decrease in     rates, and on November 28, 2005 we filed <font color="blue">new rates reflect</font>ing an average     reduction  of  11dtta8prca  from  prior  rates  for new and <font color="blue">renewal workers</font>’     <font color="blue">compensation</font> <font color="blue"><font color="blue">insurance policies</font> written</font> in <font color="blue">California </font>on or after January 1,     2006</td>
+    </tr>
+    <tr>
+      <td>The filing was <font color="blue">approved on</font> <font color="blue">December </font>22, 2005</td>
+    </tr>
+    <tr>
+      <td>Rate <font color="blue">reductions</font> have     <font color="blue">also been proposed</font> in other states in which we operate</td>
+    </tr>
+    <tr>
+      <td>At this time, we are     unable to predict the impact that the proposed rate <font color="blue">reductions</font>, if approved     and adopted by us, might have on our future <font color="blue">financial position</font> and results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to realize our <font color="blue">investment</font> objectives, our financial     <font color="blue">condition may</font> be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investment </font>income is an important component of our revenues and net     income</td>
+    </tr>
+    <tr>
+      <td>The ability to achieve our <font color="blue">investment</font> objectives is <font color="blue">affected by</font>     factors  that  are  beyond  our  control</td>
+    </tr>
+    <tr>
+      <td>For  example, <font color="blue"><font color="blue">United States</font> </font>    <font color="blue">participation</font> in <font color="blue">hostilities with</font> other countries and large-scale acts of     terrorism may <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">economy <font color="blue">generally</font></font>, and our <font color="blue">investment</font>     <font color="blue">income could decrease</font></td>
+    </tr>
+    <tr>
+      <td>Interest rates are <font color="blue">highly sensitive</font> to many factors,     including <font color="blue">governmental monetary policies</font> and domestic and <font color="blue">international</font>     economic and political <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>These and other <font color="blue">factors also affect</font> the     <font color="blue">capital markets</font>, and, <font color="blue">consequently</font>, the value of the securities we own</td>
+    </tr>
+    <tr>
+      <td>The     outlook for our <font color="blue">investment</font> income is <font color="blue">dependent on</font> the <font color="blue">future direction</font> of     interest  rates  and the amount of cash flows from <font color="blue">operations</font> that are     available for <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">fair values</font> of fixed maturity <font color="blue">investment</font>s that     are “available-for-sale” fluctuate with changes in <font color="blue">interest rates</font> and cause     <font color="blue">fluctuations</font> in our <font color="blue">stockholders</font>’ equity</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> decline in our     <font color="blue">investment</font> income as a result of rising <font color="blue">interest rates</font> or <font color="blue">general market</font>     <font color="blue">conditions</font> would have an adverse effect on our net income and, as a result,     on our <font color="blue">stockholders</font>’ equity and our <font color="blue">policyholders</font>’ surplus</td>
+    </tr>
+    <tr>
+      <td>40       _________________________________________________________________    [90]Table of <font color="blue">Contents       </font>We could be <font color="blue"><font color="blue">adversely</font> affect</font>ed by the loss of one or more principal     employees or by an <font color="blue">inability</font> to attract and retain staff</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success will depend</font> in substantial part upon our ability to     attract and retain <font color="blue">qualified executive officers</font>, experienced <font color="blue">underwriting</font>     talent and other <font color="blue">skilled employees</font> who are <font color="blue">knowledgeable about</font> our business</td>
+    </tr>
+    <tr>
+      <td>We rely <font color="blue">substantially</font> upon the services of our <font color="blue">senior <font color="blue">management</font> team</font> and     key employees, consisting of John G Pasqualetto, Chairman, President and     Chief Executive Officer; Richard J Gergasko, Executive Vice President —     Operations;  Joseph S De Vita, Senior Vice President, Chief Financial     Officer  and  Assistant  Secretary;  Richard W Seelinger, Senior Vice     President —  Policyholder  Services; Marc B Miller, MD, Senior Vice     President and Chief Medical Officer; D Drue Wax — Senior Vice President,     General  Counsel  and  Corporate Secretary; Jeffrey C Wanamaker, Vice     President — Underwriting; James L Borland, III, Vice President and Chief     Information Officer; M Philip Romney, Vice President — Finance, Principal     Accounting  Officer  and  Assistant  Secretary  and Chris A Engstrom,     President — PointSure</td>
+    </tr>
+    <tr>
+      <td>Although we are not aware of any planned <font color="blue">departures</font>     or <font color="blue">retirements</font>, if we were to lose the services of members of our <font color="blue">management</font>     team,  our business could be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>Were we to lose any of these employees, it may be <font color="blue">challenging</font> for us     to attract a <font color="blue">replacement</font> employee with comparable skills and experience in     our <font color="blue">market niches</font></td>
+    </tr>
+    <tr>
+      <td>We have employment <font color="blue">agreements</font> with some of our executive     officers, which are <font color="blue">described under</font> the heading “<font color="blue">Employment Contracts </font>and     Termination of Employment and Change-in-Control Arrangements” contained in     our  proxy  statement  for the 2006 annual meeting of <font color="blue">stockholders</font> and     <font color="blue">incorporated by reference into</font> Part III, Item 11 of this annual report</td>
+    </tr>
+    <tr>
+      <td>We     do not currently maintain key man life <font color="blue">insurance policies</font> <font color="blue">with respect</font> to     any member of our <font color="blue">senior <font color="blue">management</font> team</font> or other employees</td>
+    </tr>
+    <tr>
+      <td>We may require <font color="blue">additional</font> capital in the future, which may not be available     or <font color="blue">only available on unfavorable terms</font></td>
+    </tr>
+    <tr>
+      <td>Our future capital <font color="blue">requirements</font> depend on many factors, including our     ability to write new business <font color="blue">successfully</font> and to <font color="blue">establish premium rates</font>     and <font color="blue"><font color="blue">loss reserve</font>s</font> at levels sufficient to <font color="blue">cover losses</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that     the funds generated by the <font color="blue">initial public offering</font> of 8cmam625cmam000 shares of     our  common  stock  in  <font color="blue">January  </font>2005  and  the  follow-on offering of     3cmam910cmam000 shares  of <font color="blue">common stock</font> in <font color="blue">February </font>2006 are insufficient to     <font color="blue">support future</font> operating <font color="blue">requirements</font> and/or cover claim losses, we may need     to raise <font color="blue">additional</font> funds through <font color="blue">financings</font> or curtail our growth</td>
+    </tr>
+    <tr>
+      <td>We     believe that the net proceeds to us from the above <font color="blue">offerings will satisfy</font>     our capital <font color="blue">requirements</font> for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>However, because the     timing and amount of our future needs for <font color="blue">capital will depend on</font> our growth     and <font color="blue">profitability</font>, we <font color="blue">cannot provide</font> any assurance in that regard</td>
+    </tr>
+    <tr>
+      <td>If we had     to raise <font color="blue">additional</font> capital, equity or <font color="blue">debt financing may</font> not be available     at all or may be <font color="blue">available only on terms</font> that are not favorable to us</td>
+    </tr>
+    <tr>
+      <td>In     the case of equity <font color="blue">financings</font>, dilution to our <font color="blue">stockholders</font> could result,     and in any <font color="blue">case such securities may</font> have rights, preferences and privileges     that are senior to those of the <font color="blue">shares currently outstanding</font></td>
+    </tr>
+    <tr>
+      <td>If we cannot     obtain <font color="blue">adequate capital on</font> favorable terms or at all, we may be unable to     support  <font color="blue">future growth</font> or operating <font color="blue">requirements</font> and, <font color="blue">accordingly</font>, our     business, <font color="blue">financial condition</font> or results of <font color="blue">operations</font> could be <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>Our status as an insurance holding company with no direct <font color="blue">operations</font> could     <font color="blue"><font color="blue">adversely</font> affect</font> our ability to <font color="blue">pay dividends</font> in the future</td>
+    </tr>
+    <tr>
+      <td>We are a holding company that transacts our business through our     operating <font color="blue">subsidiaries</font>, <font color="blue"><font color="blue"><font color="blue">SeaBright </font>Insurance Company </font>and PointSure</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">primary assets</font> are the stock of these operating <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to     pay expenses and dividends depends, in the long run, upon the surplus and     earnings of our <font color="blue">subsidiaries</font> and the ability of our <font color="blue">subsidiaries</font> to pay     dividends to us</td>
+    </tr>
+    <tr>
+      <td>Payment of dividends by <font color="blue"><font color="blue">SeaBright </font>Insurance Company </font>is     <font color="blue">restricted by</font> state insurance laws, including laws <font color="blue">establishing</font> minimum     solvency and <font color="blue">liquidity thresholds</font>, and could be subject to <font color="blue">contractual</font>     <font color="blue">restrictions</font> in the future, including those <font color="blue">imposed by indebtedness</font> we may     incur in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">SeaBright </font>Insurance Company </font>is required to report any     <font color="blue">ordinary dividends</font> to the Illinois Division of Insurance and the <font color="blue">California </font>    Department of Insurance                                         41       _________________________________________________________________    [91]Table of <font color="blue">Contents       </font>prior to the payment of the dividend</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">SeaBright </font>Insurance     Company is not authorized to pay any <font color="blue">extra<font color="blue">ordinary dividends</font></font> to us under     Illinois or <font color="blue">California </font>insurance laws without prior <font color="blue">regulatory</font> approval from     the  Illinois  Division  of  Insurance or the <font color="blue">California </font>Department of     Insurance</td>
+    </tr>
+    <tr>
+      <td>As a result, at times, we may not be able to receive     dividends from <font color="blue"><font color="blue">SeaBright </font>Insurance Company </font>and we may not receive dividends     in amounts <font color="blue">necessary</font> to <font color="blue">pay dividends</font> on our <font color="blue">capital stock</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the     payment  of  dividends  by us is within the <font color="blue">discretion</font> of our board of     <font color="blue">directors</font> and <font color="blue">will depend on numerous factors</font>, including our financial     condition, our capital <font color="blue">requirements</font> and other factors that our board of     <font color="blue">directors</font> considers relevant</td>
+    </tr>
+    <tr>
+      <td>Currently, we do not intend to <font color="blue">pay dividends</font>     on our <font color="blue">capital stock</font></td>
+    </tr>
+    <tr>
+      <td>We rely on <font color="blue">independent</font> insurance brokers to distribute our products</td>
+    </tr>
+    <tr>
+      <td>Our business depends in part on the efforts of <font color="blue">independent</font> insurance     brokers to market our <font color="blue">insurance programs</font> <font color="blue">successfully</font> and produce business     for us and on our ability to <font color="blue">offer <font color="blue">insurance programs</font></font> and services that meet     the <font color="blue">requirements</font> of the clients and customers of these brokers</td>
+    </tr>
+    <tr>
+      <td>The majority     of the business in our workers’ <font color="blue">compensation</font> <font color="blue">operations</font> is produced by a     group of <font color="blue">approximately</font> 111 licensed insurance brokers</td>
+    </tr>
+    <tr>
+      <td>Brokers are not     obligated  to promote our <font color="blue">insurance programs</font> and may sell <font color="blue">competitors</font>’     <font color="blue">insurance programs</font></td>
+    </tr>
+    <tr>
+      <td>Several of our <font color="blue">competitors</font>, including AIG and Zurich,     offer a <font color="blue">broader array</font> of <font color="blue">insurance programs</font> than we do</td>
+    </tr>
+    <tr>
+      <td>Accordingly, our     <font color="blue">brokers may find</font> it easier to promote the <font color="blue">broader range</font> of programs of our     <font color="blue">competitors</font> than to promote our <font color="blue">niche selection</font> of <font color="blue">insurance products</font></td>
+    </tr>
+    <tr>
+      <td>If     our <font color="blue">brokers fail</font> or choose not to market our <font color="blue">insurance programs</font> <font color="blue">successfully</font>     or to produce business for us, our <font color="blue">growth may</font> be limited and our financial     condition and results of <font color="blue">operations</font> may be <font color="blue">negatively affected</font></td>
+    </tr>
+    <tr>
+      <td>We have a limited operating <font color="blue">history as</font> a stand-alone entity and may     experience <font color="blue"><font color="blue">difficult</font>y</font> in <font color="blue">transitioning</font> to an <font color="blue">independent</font> public company</td>
+    </tr>
+    <tr>
+      <td>We commenced <font color="blue">operations</font> in October 2003 after acquiring KEIC, the     renewal rights from, and <font color="blue">substantially</font> all of the operating assets, systems     and employees of, the Eagle entities and PointSure</td>
+    </tr>
+    <tr>
+      <td>See the discussion under     the  heading  “Our History” in Item 1</td>
+    </tr>
+    <tr>
+      <td>Although our <font color="blue">management</font> team is     primarily the same <font color="blue">management</font> team that operated the Eagle entities and     <font color="blue">PointSure </font>for <font color="blue">approximately</font> five years prior to the <font color="blue">Acquisition</font>, we have a     limited operating <font color="blue">history as</font> a stand-alone entity and do not have the same     <font color="blue">resources available</font> to us that the Eagle entities and <font color="blue">PointSure </font>had prior to     the <font color="blue">Acquisition</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our future results of <font color="blue">operations</font> or financial     <font color="blue">condition as</font> a stand-alone entity <font color="blue">may vary from</font> the results realized by the     Eagle entities and <font color="blue">PointSure </font>prior to the <font color="blue">Acquisition</font></td>
+    </tr>
+    <tr>
+      <td>An investor in our     <font color="blue">common stock</font> should consider that our <font color="blue">history as</font> a stand-alone entity is     <font color="blue">relatively</font>  short and that there is a limited basis for evaluating our     performance</td>
+    </tr>
+    <tr>
+      <td>In addition, upon <font color="blue">completion</font> of our <font color="blue">initial public offering</font> in <font color="blue">January  </font>   2005,  we became a publicly-traded company and are now responsible for     complying  with  the  various  federal  and state legal and <font color="blue">regulatory</font>     <font color="blue">requirements</font> applicable to <font color="blue">public companies</font></td>
+    </tr>
+    <tr>
+      <td>We have incurred and will incur     <font color="blue"><font color="blue">increased costs</font> as</font> a result of being a public company, particularly in light     of <font color="blue">recently enacted</font> and proposed changes in laws, <font color="blue">regulations</font> and listing     <font color="blue">requirements</font>, including those related to the Sarbanes-Oxley Act of 2002</td>
+    </tr>
+    <tr>
+      <td>Our     business and <font color="blue">financial condition</font> may be <font color="blue"><font color="blue">adversely</font> affect</font>ed if we are unable     to <font color="blue">effectively</font> manage these <font color="blue">increased costs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Assessments </font>and other surcharges for <font color="blue">guaranty funds</font> and <font color="blue">second <font color="blue">injury funds</font></font>     and other mandatory pooling <font color="blue">arrangement</font>s may reduce our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Virtually </font>all states require insurers licensed to do business in their     state to bear a portion of the <font color="blue">unfunded <font color="blue"><font color="blue">obligation</font>s</font></font> of impaired or insolvent     <font color="blue">insurance companies</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">obligation</font>s</font> are funded by <font color="blue">assessments</font> that are     expected to continue in the future as a result of <font color="blue">insolvencies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Assessments </font>    are <font color="blue">levied by guaranty associations within</font> the state, up to prescribed     limits,  on  all  member  insurers  in  the  state on the basis of the     <font color="blue">proportionate</font> share of the <font color="blue">premium written by</font> member insurers in the lines     of business in which the impaired, insolvent or <font color="blue">failed insurer</font> is engaged</td>
+    </tr>
+    <tr>
+      <td>See the discussion under the heading “Regulation” in Item 1</td>
+    </tr>
+    <tr>
+      <td>Accordingly,     the <font color="blue">assessments</font> levied on us may increase as we increase our                                         42       _________________________________________________________________    [92]Table of <font color="blue">Contents       </font><font color="blue">premiums written</font></td>
+    </tr>
+    <tr>
+      <td>Further, Washington state <font color="blue">legislation</font> enacted on April 20,     2005 created a <font color="blue">separate account within</font> the Guaranty Fund for USL&amp;H Act     claims and <font color="blue">authorized prefunding</font> of potential <font color="blue">insolvencies</font> in order to     establish a <font color="blue">cash balance</font></td>
+    </tr>
+    <tr>
+      <td>Many states also have laws that <font color="blue">established second</font>     <font color="blue">injury funds</font> to provide <font color="blue">compensation</font> to <font color="blue"><font color="blue">injured employee</font>s</font> for <font color="blue">aggravation</font> of     a <font color="blue">prior condition</font> or injury, which are funded by either <font color="blue">assessments</font> <font color="blue">based on</font>     <font color="blue">paid losses</font> or <font color="blue">premium surcharge mechanisms</font></td>
+    </tr>
+    <tr>
+      <td>For example, Alaska requires     insurers to contribute to its <font color="blue">second injury fund annually</font> an amount equal to     the <font color="blue">compensation</font> the <font color="blue">injured employee</font> is <font color="blue">owed multiplied by</font> a <font color="blue">contribution</font>     rate <font color="blue">based on</font> the fund’s reserve rate</td>
+    </tr>
+    <tr>
+      <td>In addition, as a condition of the     ability to conduct business in some states, including California, insurance     companies are required to <font color="blue">participate</font> in mandatory workers’ <font color="blue">compensation</font>     <font color="blue">shared market mechanisms</font> or pooling <font color="blue">arrangement</font>s, which provide workers’     <font color="blue">compensation</font> insurance coverage from private insurers</td>
+    </tr>
+    <tr>
+      <td>Although we price our     products to account for the <font color="blue"><font color="blue">obligation</font>s</font> that we may have under these pooling     <font color="blue">arrangement</font>s, we may not be successful in estimating our <font color="blue">liability</font> for these     <font color="blue"><font color="blue">obligation</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly,  our  prices  may not <font color="blue">fully account</font> for our     liabilities under pooling <font color="blue">arrangement</font>s, which may cause a decrease in our     profits</td>
+    </tr>
+    <tr>
+      <td>As we <font color="blue">write policies</font> in new states that have pooling <font color="blue">arrangement</font>s,     we will be required to <font color="blue">participate</font> in <font color="blue">additional</font> pooling <font color="blue">arrangement</font>s</td>
+    </tr>
+    <tr>
+      <td>Further, the insolvency of other insurers in these pooling <font color="blue">arrangement</font>s     <font color="blue">would likely increase</font> the <font color="blue">liability</font> for other <font color="blue">members remaining</font> in the pool</td>
+    </tr>
+    <tr>
+      <td>The effect of these <font color="blue">assessments</font> and mandatory <font color="blue">shared market mechanisms</font> or     changes in <font color="blue">them could reduce</font> our <font color="blue">profitability</font> in any <font color="blue">given period</font> or limit     our ability to grow our business</td>
+    </tr>
+    <tr>
+      <td>In the event LMC is <font color="blue">placed into <font color="blue">receivership</font></font>, we <font color="blue">could lose</font> our rights to     fee income and protective <font color="blue">arrangement</font>s that were established in <font color="blue">connection</font>     with the <font color="blue">Acquisition</font>, our reputation and <font color="blue">credibility could</font> be <font color="blue">adversely</font>     affected and we could be subject to claims <font color="blue">under applicable voidable</font>     preference and <font color="blue">fraudulent transfer laws</font></td>
+    </tr>
+    <tr>
+      <td>The assets that <font color="blue">SeaBright </font>acquired in the <font color="blue">Acquisition</font> were acquired     from  LMC and certain of its <font color="blue">affiliates</font></td>
+    </tr>
+    <tr>
+      <td>LMC and its insurance company     <font color="blue">affiliates</font>  are  currently operating under a three-year “run off” plan     approved  by  the  Illinois  Division  of  Insurance</td>
+    </tr>
+    <tr>
+      <td>“Run off” is the     professional <font color="blue">management</font> of an insurance company’s discontinued, distressed     or non-renewed lines of insurance and <font color="blue">associated liabilities outside</font> of a     <font color="blue">judicial proceeding</font></td>
+    </tr>
+    <tr>
+      <td>Under the run off plan, LMC is attempting to buy back     some  of its <font color="blue">commercial line policies</font> and <font color="blue">institute aggressive expense</font>     <font color="blue">control measures</font> in order to reduce its <font color="blue">future loss exposure</font> and allow it to     meet its <font color="blue"><font color="blue">obligation</font>s</font> to current <font color="blue">policyholders</font></td>
+    </tr>
+    <tr>
+      <td>According to LMC’s statutory     <font color="blue">financial statements</font> as of and for the year ended <font color="blue">December </font>31, 2005, LMC had     a  statutory  surplus  of  dlra168dtta3 million  (unaudited), an increase of     <font color="blue">approximately</font> dlra106dtta3 million from its surplus of dlra62dtta0 million (audited) as     of <font color="blue">December </font>31, 2004</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection</font> with the <font color="blue">Acquisition</font>, we established     various <font color="blue">arrangement</font>s with LMC and certain of its <font color="blue">affiliates</font>, including     (1) servicing <font color="blue">arrangement</font>s entitling us to fee income for providing claims     <font color="blue">administration</font> services <font color="blue">for Eagle </font>and (2) other protective <font color="blue">arrangement</font>s     designed to minimize our exposure to any past business <font color="blue">underwritten by</font> KEIC,     the shell entity that we acquired from LMC for its insurance licenses, and     any adverse <font color="blue"><font color="blue">development</font>s</font> in KEIC’s <font color="blue"><font color="blue">loss reserve</font>s</font> as they existed at the date     of the <font color="blue">Acquisition</font></td>
+    </tr>
+    <tr>
+      <td>See the discussion under the heading “Our History” in     Item 1</td>
+    </tr>
+    <tr>
+      <td>In the event LMC is <font color="blue">placed into <font color="blue">receivership</font></font>, our business could be     <font color="blue"><font color="blue">adversely</font> affect</font>ed in the <font color="blue">following ways</font>:         •  A <font color="blue">receiver could seek</font> to reject or <font color="blue">terminate one</font> or more of the     services <font color="blue">agreements</font> that were established in <font color="blue">connection</font> with the <font color="blue">Acquisition</font>     <font color="blue">between us</font> and LMC or its <font color="blue">affiliates</font>, including Eagle</td>
+    </tr>
+    <tr>
+      <td>In that event, we     <font color="blue">could lose</font> the revenue we currently receive under these services <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>•  As <font color="blue">discussed under</font> “Our History” in Item 1, to minimize our exposure to     any past business <font color="blue">underwritten by</font> KEIC, we <font color="blue">entered into</font> an <font color="blue">arrangement</font> with     LMC at the time of the <font color="blue">Acquisition</font> requiring LMC to indemnify us in the     event of <font color="blue">adverse <font color="blue">development</font></font> of the <font color="blue"><font color="blue">loss reserve</font>s</font> in KEIC’s <font color="blue">balance sheet as</font>     they existed on the date of closing of the <font color="blue">Acquisition</font></td>
+    </tr>
+    <tr>
+      <td>We refer to this     <font color="blue">arrangement</font> as the <font color="blue">adverse <font color="blue">development</font></font> cover</td>
+    </tr>
+    <tr>
+      <td>To support LMC’s <font color="blue"><font color="blue">obligation</font>s</font>     under the <font color="blue">adverse <font color="blue">development</font></font> cover, LMC funded a <font color="blue">trust account at</font> the time     of the <font color="blue">Acquisition</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">minimum amount</font> that must be maintained in the trust     account is equal to the greater of (a) dlra1dtta6 million or                                         43       _________________________________________________________________    [93]Table of <font color="blue">Contents       </font>  (b) 102prca of the <font color="blue">then existing quarterly</font> estimate of LMC’s total     <font color="blue"><font color="blue">obligation</font>s</font> under the <font color="blue">adverse <font color="blue">development</font></font> cover</td>
+    </tr>
+    <tr>
+      <td>We refer to this trust     <font color="blue">account as</font> the <font color="blue">collateralized reinsurance trust</font> because the <font color="blue">funds on deposit</font>     in the <font color="blue">trust account serve as collateral</font> for LMC’s <font color="blue">potential future</font>     <font color="blue"><font color="blue">obligation</font>s</font> to us under the <font color="blue">adverse <font color="blue">development</font></font> cover</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005,     the <font color="blue">liability</font> of LMC under the <font color="blue">adverse <font color="blue">development</font></font> cover was <font color="blue">approximately</font>     dlra3dtta4 million</td>
+    </tr>
+    <tr>
+      <td>LMC <font color="blue">initially funded</font> the trust account with dlra1dtta6 million to     support its <font color="blue"><font color="blue">obligation</font>s</font> under the <font color="blue">adverse <font color="blue">development</font></font> cover</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue"><font color="blue">September </font> </font>   2004, we and LMC retained an <font color="blue">independent</font> actuary to determine the     <font color="blue"><font color="blue">appropriate</font> amount</font> of <font color="blue"><font color="blue">loss reserve</font>s</font> that are subject to the adverse     <font color="blue"><font color="blue">development</font> cover as</font> <font color="blue">of <font color="blue">September </font></font>30, 2004</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">accordance with</font> the terms of     the protective <font color="blue">arrangement</font>s that we have <font color="blue">established with</font> LMC, on     <font color="blue">December </font>23, 2004, LMC <font color="blue">deposited into</font> the <font color="blue">collateralized reinsurance trust</font>     an <font color="blue">additional</font> dlra3dtta2 million, resulting in a total balance in the trust     account of dlra4dtta8 million</td>
+    </tr>
+    <tr>
+      <td>The balance in the <font color="blue">trust account totaled</font>     dlra4dtta9 million at <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>If LMC is placed in <font color="blue">receivership</font> and the     amount held in the <font color="blue">collateralized reinsurance trust</font> is inadequate to satisfy     the <font color="blue"><font color="blue">obligation</font>s</font> of LMC to us under the <font color="blue">adverse <font color="blue">development</font></font> cover, it is     unlikely that we would recover any future amounts owed by LMC to us under     the <font color="blue">adverse <font color="blue">development</font></font> cover in excess of the <font color="blue">amounts currently</font> held in     trust because the director <font color="blue">of the Illinois Division of Insurance </font>would have     control of the assets of LMC         •  Some of our customers are insured under Eagle <font color="blue">insurance policies</font> that     we  service  pursuant to the claims <font color="blue">administration</font> servicing agreement     described above</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">SeaBright </font>is a <font color="blue">separate legal</font> entity from LMC and     its <font color="blue">affiliates</font>, including Eagle, Eagle’s <font color="blue">policyholders</font> may not readily     distinguish <font color="blue">SeaBright </font>from <font color="blue">Eagle and LMC </font>if those policies are not honored     in the event LMC is found to be insolvent and placed into court-ordered     <font color="blue">liquidation</font></td>
+    </tr>
+    <tr>
+      <td>If that were to occur, our market reputation, credibility and     ability to renew the <font color="blue">underlying policies could</font> be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>•  In <font color="blue">connection</font> with the <font color="blue">Acquisition</font>, LMC and its <font color="blue">affiliates</font> made various     transfers and payments to SeaBright, including <font color="blue">approximately</font> dlra13dtta0 million     under the <font color="blue">commutation agreement</font> and an <font color="blue">initial amount</font> of <font color="blue">approximately</font>     dlra1dtta6 million to fund the <font color="blue">collateralized reinsurance trust</font></td>
+    </tr>
+    <tr>
+      <td>In the event that     LMC is <font color="blue">placed into <font color="blue">receivership</font></font>, it is possible that a receiver or creditor     could assert a claim seeking to unwind or recover these <font color="blue">payments under</font>     <font color="blue">applicable voidable preference</font> and <font color="blue">fraudulent transfer laws</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Industry       We may face substantial exposure to <font color="blue">losses from terrorism</font> for which we are     required by law to <font color="blue">provide coverage</font></td>
+    </tr>
+    <tr>
+      <td>Under our workers’ <font color="blue">compensation</font> policies, we are required to provide     workers’ <font color="blue">compensation</font> benefits for losses arising from acts of terrorism</td>
+    </tr>
+    <tr>
+      <td>The impact of any terrorist act is unpredictable, and the <font color="blue">ultimate impact</font> on     <font color="blue">us would depend upon</font> the nature, extent, location and timing of such an act</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Notwithstanding </font>the <font color="blue">protection provided by</font> the reinsurance we have purchased     and any <font color="blue">protection provided by</font> the <font color="blue">Terrorism Risk Act</font>, the risk of severe     losses to us from acts of terrorism has not been eliminated because, as     discussed above, our excess of loss <font color="blue">reinsurance treaty program</font> contains     various sub-limits and <font color="blue">exclusions</font> limiting our <font color="blue">reinsurers</font>’ <font color="blue">obligation</font> to     <font color="blue">cover losses</font> caused by acts of terrorism</td>
+    </tr>
+    <tr>
+      <td>Furthermore, the Terrorism Risk     Act is scheduled to expire on <font color="blue">December </font>31, 2007 and may not be renewed, or     if it is renewed, it may <font color="blue">provide reduced protection against</font> the financial     impact of acts of terrorism</td>
+    </tr>
+    <tr>
+      <td>Accordingly, <font color="blue">events may</font> not be <font color="blue">covered by</font>, or     may exceed the <font color="blue">capacity</font> of, our <font color="blue">reinsurance protection</font> and any protection     <font color="blue">offered by</font> the <font color="blue">Terrorism Risk Act</font> or any successor <font color="blue">legislation</font></td>
+    </tr>
+    <tr>
+      <td>Thus, any     acts  of  terrorism could <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affect</font> our business and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The threat of terrorism and military and other <font color="blue">actions may</font> result in     <font color="blue">decreases</font> in our net income, revenue and assets under <font color="blue">management</font> and may     <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">investment</font> portfolio</td>
+    </tr>
+    <tr>
+      <td>The threat of terrorism, both within the <font color="blue"><font color="blue">United States</font> </font>and abroad, and     military and other actions and <font color="blue">heightened security measures</font> in response to     these types of threats, may cause <font color="blue">significant</font> volatility and                                         44       _________________________________________________________________    [94]Table of <font color="blue">Contents       </font>declines in the <font color="blue">equity markets</font> in the <font color="blue"><font color="blue">United States</font> </font>and abroad, as well as     loss  of life, property damage, <font color="blue">additional</font> <font color="blue">disruptions</font> to commerce and     reduced <font color="blue">economic activity</font></td>
+    </tr>
+    <tr>
+      <td>Actual <font color="blue"><font color="blue">terrorist attacks</font> could</font> cause a decrease     in our <font color="blue">stockholders</font>’ equity, net income and/or revenue</td>
+    </tr>
+    <tr>
+      <td>In addition, some of     the assets in our <font color="blue">investment</font> portfolio may be <font color="blue"><font color="blue">adversely</font> affect</font>ed by declines     in  the  bond  markets and declines in <font color="blue">economic activity</font> caused by the     continued  threat of terrorism, ongoing military and other actions and     <font color="blue">heightened security measures</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">cannot predict</font> at this time whether and the extent to which     <font color="blue">industry sectors</font> in which we maintain <font color="blue">investment</font>s may suffer losses as a     result of <font color="blue">potential decreased commercial</font> and <font color="blue">economic activity</font>, or how any     <font color="blue">such decrease might impact</font> the ability of <font color="blue">companies within</font> the affected     <font color="blue">industry sectors</font> to <font color="blue">pay interest</font> or <font color="blue">principal on</font> their securities, or how     the value of any <font color="blue">underlying collateral might</font> be affected</td>
+    </tr>
+    <tr>
+      <td>We can offer no assurances that <font color="blue">terrorist attacks</font> or the threat of     <font color="blue">future terrorist events</font> in the <font color="blue"><font color="blue">United States</font> </font>and abroad or military actions     by  the  United  States will not have a material adverse effect on our     business, <font color="blue">financial condition</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our results of <font color="blue">operations</font> and <font color="blue">revenues <font color="blue">may fluctuate</font> as</font> a result of many     factors, including cyclical changes in the <font color="blue">insurance industry</font>, which may     cause the price of our <font color="blue">common stock</font> to be volatile</td>
+    </tr>
+    <tr>
+      <td>The results of <font color="blue">operations</font> of companies in the <font color="blue">insurance industry</font>     <font color="blue">historically</font>   have  been  subject  to  <font color="blue">significant</font>  <font color="blue">fluctuations</font>  and     <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">profitability</font> can be affected <font color="blue">significant</font>ly by:         •  <font color="blue">competition</font>;         •  <font color="blue">rising levels</font> of <font color="blue">loss costs</font> that we cannot anticipate at the time we     price our products;          •   volatile  and  unpredictable  <font color="blue"><font color="blue">development</font>s</font>, including man-made,     weather-related and other natural <font color="blue">catastrophe</font>s or <font color="blue">terrorist attacks</font>;         •  changes in the level of reinsurance <font color="blue">capacity</font> and capital <font color="blue">capacity</font>;         •  changes in the amount of <font color="blue"><font color="blue">loss reserve</font>s</font> resulting <font color="blue">from new types</font> of     claims and new or changing <font color="blue">judicial interpretations</font> relating to the scope of     insurers’ liabilities; and          •  <font color="blue">fluctuations</font> in <font color="blue">interest rates</font>, inflationary pressures and other     changes in the <font color="blue">investment</font> environment, which affect returns on invested     assets and may impact the <font color="blue">ultimate payout</font> of losses</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of insurance is related to <font color="blue">prevailing prices</font>, the     level of <font color="blue">insured losses</font> and the level of <font color="blue">industry surplus which</font>, in turn,     <font color="blue">may fluctuate</font> in response to changes in rates of return on <font color="blue">investment</font>s being     earned  in the <font color="blue">insurance industry</font></td>
+    </tr>
+    <tr>
+      <td>As a result, the insurance business     <font color="blue">historically</font>  has been a cyclical industry <font color="blue">characterized</font> by periods of     intense price <font color="blue">competition</font> due to excessive <font color="blue">underwriting</font> <font color="blue">capacity</font> as well as     periods when shortages of <font color="blue">capacity</font> permitted favorable premium levels</td>
+    </tr>
+    <tr>
+      <td>During 1998, 1999 and 2000, the workers’ <font color="blue">compensation</font> <font color="blue">insurance industry</font>     experienced substantial pricing <font color="blue">competition</font>, and this pricing <font color="blue">competition</font>     greatly  affected the ability of our <font color="blue">predecessor</font> to <font color="blue">increase premiums</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Beginning </font>in 2001, we witnessed a decrease in pricing <font color="blue">competition</font> in the     industry, which enabled us to raise our rates</td>
+    </tr>
+    <tr>
+      <td>Although rates for many     products increased from 2000 to 2003, <font color="blue">legislative</font> reforms caused premium     rates in certain states, including California, to decrease in 2004 and 2005,     and  rates  <font color="blue">may continue</font> to decrease</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">availability</font> of     insurance has and <font color="blue">may continue</font> to increase, either by capital provided by     new  entrants  or  by the <font color="blue">commitment</font> of <font color="blue">additional</font> capital by existing     insurers, which may perpetuate <font color="blue">rate decrease</font>s</td>
+    </tr>
+    <tr>
+      <td>Any of these factors could     lead to a <font color="blue">significant</font> reduction in premium rates, less favorable policy     terms and <font color="blue">fewer submissions</font> for our <font color="blue">underwriting</font> services</td>
+    </tr>
+    <tr>
+      <td>In addition to     these  <font color="blue">considerations</font>, changes in the frequency and severity of losses     <font color="blue">suffered by insureds</font> and <font color="blue">insurers may affect</font> the cycles of the insurance     business <font color="blue">significant</font>ly, and we expect to experience the effects of such     <font color="blue">cyclicality</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">cyclicality</font> may cause the price of our securities to be     volatile</td>
+    </tr>
+    <tr>
+      <td>45       _________________________________________________________________    [95]Table of <font color="blue">Contents       </font>Risks Related to Our Common Stock       The price of our <font color="blue">common stock</font> may decrease</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of shares of our <font color="blue">common stock</font> may decline for many     reasons, some of which are beyond our control, including, <font color="blue">among others</font>:         •  <font color="blue">quarterly variations</font> in our results of <font color="blue">operations</font>;         •  changes in <font color="blue">expectation</font>s as to our future results of <font color="blue">operations</font>,     including financial estimates <font color="blue">by securities</font> analysts and investors;         •  <font color="blue">announcements</font> of claims <font color="blue">against us by third parties</font>;         •  changes in law and regulation;         •  results of <font color="blue">operations</font> that vary from those expected <font color="blue">by securities</font>     analysts and investors; and         •  <font color="blue">future sales</font> of shares of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  the <font color="blue">stock market</font> in <font color="blue">recent years</font> has experienced     substantial price and volume <font color="blue">fluctuations</font> that sometimes have <font color="blue">been unrelated</font>     or dis<font color="blue">proportionate</font> to the operating performance of <font color="blue">companies whose shares</font>     are traded</td>
+    </tr>
+    <tr>
+      <td>Future sales of shares of our <font color="blue">common stock</font> may affect their <font color="blue">market price</font> and     the <font color="blue">future exercise</font> of <font color="blue">options may depress</font> our stock price and result in     dilution of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> what effect, if any, <font color="blue">future sales</font> of shares of our     <font color="blue">common stock</font>, or the <font color="blue">availability</font> of shares for future sale, will have on     the <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Future sales of substantial amounts of     our <font color="blue">common stock</font> in the <font color="blue">public market</font>, or the <font color="blue">perception</font> that such sales     could occur, could <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">market price</font> of our <font color="blue">common stock</font> and     may make it more <font color="blue">difficult</font> for you to sell your shares at a time and price     which you deem <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of March </font>27, 2006, there were 20cmam539cmam974 shares of our <font color="blue">common stock</font>     outstanding</td>
+    </tr>
+    <tr>
+      <td>Moreover, 804cmam524 <font color="blue">additional</font> shares of our <font color="blue">common stock</font> will be     <font color="blue">issuable upon</font> the full exercise or <font color="blue">conversion</font> of <font color="blue">options outstanding at</font>     <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>In the event that any outstanding options are exercised,     you will suffer dilution of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Applicable </font><font color="blue">insurance laws may</font> make it <font color="blue">difficult</font> to effect a change of     control of our company</td>
+    </tr>
+    <tr>
+      <td>Our insurance <font color="blue">company subsidiary</font> is domiciled in the state of <font color="blue">Illinois     </font>and <font color="blue">commercially</font> domiciled in the state of California</td>
+    </tr>
+    <tr>
+      <td>The insurance holding     <font color="blue">company laws</font> of Illinois and <font color="blue">California </font>require <font color="blue">advance approval by</font> the     Illinois Division of Insurance and the <font color="blue">California </font>Department of Insurance of     any change in control of <font color="blue">SeaBright </font>Insurance Company</td>
+    </tr>
+    <tr>
+      <td>“Control” is <font color="blue">generally</font>     presumed to exist through the direct or <font color="blue">indirect ownership</font> of 10prca or more of     the <font color="blue">voting securities</font> of a <font color="blue">domestic insurance company</font> or of any entity that     controls a <font color="blue">domestic insurance company</font></td>
+    </tr>
+    <tr>
+      <td>In addition, insurance laws in many     states <font color="blue">contain provisions</font> that require pre<font color="blue">notification</font> to the insurance     <font color="blue">commissioners</font> of a change in control of a non-<font color="blue">domestic insurance company</font>     licensed in those states</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">future <font color="blue">transactions</font></font> that <font color="blue">would constitute</font> a     change in control of <font color="blue">SeaBright </font>Insurance Company, including a change of     control of us, would <font color="blue">generally</font> require the party acquiring control to obtain     the <font color="blue">prior approval</font> <font color="blue">of the Illinois Division of Insurance </font>and the <font color="blue">California </font>    Department of Insurance and may require pre-<font color="blue">acquisition</font> <font color="blue">notification</font> in     applicable states that have adopted pre-<font color="blue">acquisition</font> <font color="blue">notification</font> provisions</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Obtaining </font>these <font color="blue">approvals may</font> result in a material delay of, or deter, any     <font color="blue">such transaction</font></td>
+    </tr>
+    <tr>
+      <td>See the discussion under the heading “Regulation” in     Item 1</td>
+    </tr>
+    <tr>
+      <td>These laws may discourage potential <font color="blue">acquisition</font> proposals and may     delay,  deter  or prevent a change of control of us, including through     <font color="blue">transactions</font>, and in particular unsolicited <font color="blue">transactions</font>, that some or all     of our <font color="blue">stockholders</font> might consider to be desirable</td>
+    </tr>
+    <tr>
+      <td>46       _________________________________________________________________    [96]Table of <font color="blue">Contents       </font>Entities <font color="blue">affiliated</font> with <font color="blue"><font color="blue">Summit Partners</font> </font>have the ability to <font color="blue">significant</font>ly     influence our business, which may be <font color="blue">disadvantageous</font> to other <font color="blue">stockholders</font>     and <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">trading price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following </font>the <font color="blue">completion</font> of a <font color="blue">secondary offering</font> of our <font color="blue">common stock</font>     in <font color="blue">February </font>2006, entities <font color="blue">affiliated</font> with <font color="blue">Summit Partners</font>, <font color="blue">collectively</font>,     <font color="blue"><font color="blue">beneficial</font>ly</font> own <font color="blue">approximately</font> 20dtta2prca of our outstanding <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>As a     result, these <font color="blue">stockholders</font>, acting together, will have the ability to exert     substantial  influence  over  all  matters  requiring  approval by our     <font color="blue">stockholders</font>,  including the election and removal of <font color="blue">directors</font> and any     proposed merger, consolidation or sale of all or <font color="blue">substantially</font> all of our     assets and other corporate <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">stockholders</font> may     have interests that are <font color="blue">different from ours</font></td>
+    </tr>
+    <tr>
+      <td>Under our amended and restated     <font color="blue">certificate</font> of <font color="blue">incorporation</font>, none of the Summit entities or any director,     officer, stockholder, member, manager or employee of the Summit entities has     any duty to <font color="blue">refrain from</font> engaging directly or <font color="blue">indirectly</font> in the same or     similar business <font color="blue">activities</font> or lines of business that we do</td>
+    </tr>
+    <tr>
+      <td>In the event     that any Summit entity acquires knowledge of a <font color="blue">potential transaction</font> or     matter which may be a <font color="blue">corporate opportunity</font> for itself and us, the <font color="blue">Summit     </font>entity will not have any duty to communicate or <font color="blue">offer such opportunity</font> to us     and will not be liable to us or our <font color="blue">stockholders</font> for breach of any <font color="blue">fiduciary</font>     duty relating to such <font color="blue">corporate opportunity</font></td>
+    </tr>
+    <tr>
+      <td>Two of our <font color="blue">directors</font>, Peter Y     Chung  and  J  Scott Carter, are <font color="blue">affiliated</font> with <font color="blue">Summit Partners</font></td>
+    </tr>
+    <tr>
+      <td>Our     officers, <font color="blue">directors</font> and principal <font color="blue">stockholders</font> could delay or prevent an     <font color="blue">acquisition</font>  or  merger  even  if  the <font color="blue">transaction would benefit</font> other     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, this <font color="blue">concentration</font> of <font color="blue">stock ownership may</font> make it     <font color="blue">difficult</font>  for  <font color="blue">stockholders</font>  to replace <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>In addition, this     <font color="blue">significant</font>  <font color="blue">concentration</font> of <font color="blue">stock ownership may</font> <font color="blue"><font color="blue">adversely</font> affect</font> the     trading  price  of  our  <font color="blue">common stock</font> because <font color="blue">investors often</font> perceive     <font color="blue">disadvantages</font> in owning stock in companies with <font color="blue">significant</font> or <font color="blue">controlling</font>     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>This  <font color="blue">concentration</font>  could  be <font color="blue">disadvantageous</font> to other     <font color="blue">stockholders</font> with interests different from those of our officers, <font color="blue">directors</font>     and principal <font color="blue">stockholders</font> and the <font color="blue">trading price</font> of shares of our common     <font color="blue">stock could</font> be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>Anti-takeover provisions in our amended and restated <font color="blue">certificate</font> of     <font color="blue">incorporation</font> and by-laws and under the laws of the <font color="blue">State of Delaware </font>could     impede an attempt to replace or remove our <font color="blue">directors</font> or otherwise effect a     change of control of our company, which could diminish the value of our     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our amended and restated <font color="blue">certificate</font> of <font color="blue">incorporation</font> and by-laws     <font color="blue">contain provisions</font> that may make it more <font color="blue">difficult</font> for <font color="blue">stockholders</font> to     replace <font color="blue">directors</font> even if the <font color="blue">stockholders</font> consider it <font color="blue">beneficial</font> to do so</td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">provisions could delay</font> or prevent a change of control     that a <font color="blue">stockholder might</font> consider favorable</td>
+    </tr>
+    <tr>
+      <td>For example, these provisions     <font color="blue">may prevent</font> a <font color="blue">stockholder from</font> receiving the <font color="blue">benefit from</font> any <font color="blue">premium over</font>     the <font color="blue">market price</font> of our <font color="blue">common stock</font> <font color="blue">offered by</font> a bidder in a potential     takeover</td>
+    </tr>
+    <tr>
+      <td>Even in the absence of an attempt to effect a change in <font color="blue">management</font>     or a <font color="blue">takeover attempt</font>, these <font color="blue">provisions may</font> <font color="blue"><font color="blue">adversely</font> affect</font> the prevailing     <font color="blue">market price</font> of our <font color="blue">common stock</font> if they are viewed <font color="blue">as <font color="blue">discouraging</font> takeover</font>     attempts in the future</td>
+    </tr>
+    <tr>
+      <td>In addition, Section 203 of the Delaware General     Corporation Law may limit the ability of an “<font color="blue">interested stockholder</font>” to     engage  in business <font color="blue">combinations with us</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">interested stockholder</font> is     defined  to  include  persons  owning  15prca or more of any class of our     <font color="blue">outstanding voting stock</font></td>
+    </tr>
+    <tr>
+      <td>Our amended and restated <font color="blue">certificate</font> of <font color="blue">incorporation</font> and by-laws     contain the <font color="blue">following provisions</font> that could have an anti-takeover effect:         •  <font color="blue">stockholders</font> have limited ability to <font color="blue">call stockholder meetings</font> and to     bring business before a meeting of <font color="blue">stockholders</font>;         •  <font color="blue">stockholders</font> may not act <font color="blue">by written consent</font>; and         •  our board of <font color="blue">directors</font> may authorize the issuance of <font color="blue">preferred stock</font>     with such rights, powers and <font color="blue">privileges as</font> the board deems <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>47       _________________________________________________________________    [97]Table of <font color="blue">Contents       </font>      These <font color="blue">provisions may</font> make it <font color="blue">difficult</font> for <font color="blue">stockholders</font> to replace     <font color="blue">management</font> and could have the effect of <font color="blue">discouraging</font> a <font color="blue">future takeover</font>     <font color="blue">attempt which</font> is not <font color="blue">approved by</font> our board of <font color="blue">directors</font> but which individual     <font color="blue">stockholders</font> might consider favorable</td>
+    </tr>
+  </tbody>
+</table>

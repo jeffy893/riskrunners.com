@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: following risks actually", fill: "#446ccf"},
+{source: "2: following risks actually", target: "2: materially", fill: "#446ccf"},
+{source: "2: materially", target: "2: adversely affected", fill: "#446ccf"},
+{source: "2: following risks actually", target: "4: Additional ", fill: "#1e90ff"},
+{source: "4: Additional ", target: "4: uncertainties", fill: "#1e90ff"},
+{source: "4: uncertainties", target: "4: materially", fill: "#1e90ff"},
+{source: "4: materially", target: "4: adversely", fill: "#1e90ff"},
+{source: "4: adversely", target: "4: financial condition andor", fill: "#1e90ff"},
+{source: "4: Additional ", target: "21: different", fill: "#ffef00"},
+{source: "21: different", target: "21: supplements", fill: "#ffef00"},
+{source: "21: supplements", target: "21: products with", fill: "#ffef00"},
+{source: "21: products with", target: "21: products as", fill: "#ffef00"},
+{source: "21: products as", target: "21: quote functional quote", fill: "#ffef00"},
+{source: "21: quote functional quote", target: "21: functional benefits", fill: "#ffef00"},
+{source: "21: different", target: "24: Competitive ", fill: "#ff7f50"},
+{source: "24: Competitive ", target: "24: energy drink", fill: "#ff7f50"},
+{source: "24: energy drink", target: "24: lower market", fill: "#ff7f50"},
+{source: "24: lower market", target: "24: which could", fill: "#ff7f50"},
+{source: "24: which could", target: "24: adverse affect", fill: "#ff7f50"},
+{source: "24: Competitive ", target: "32: Additionally ", fill: "#f49ac2"},
+{source: "32: Additionally ", target: "32: recessionary", fill: "#f49ac2"},
+{source: "32: recessionary", target: "32: margins which", fill: "#f49ac2"},
+{source: "32: margins which", target: "32: would adversely", fill: "#f49ac2"},
+{source: "32: would adversely", target: "32: operations", fill: "#f49ac2"},
+{source: "32: Additionally ", target: "39: rely on bottlers", fill: "#4997d0"},
+{source: "39: rely on bottlers", target: "39: manufacture", fill: "#4997d0"},
+{source: "39: rely on bottlers", target: "43: facilities", fill: "#f96"},
+{source: "43: facilities", target: "43: United States ", fill: "#f96"},
+{source: "43: United States ", target: "43: with adequate", fill: "#f96"},
+{source: "43: with adequate", target: "43: capacity andor suitable", fill: "#f96"},
+{source: "43: capacity andor suitable", target: "43: Gold Standard ", fill: "#f96"},
+{source: "43: Gold Standard ", target: "43: line aseptic juice products juices", fill: "#f96"},
+{source: "43: facilities", target: "47: rely on bottlers", fill: "#b5a642"},
+{source: "47: rely on bottlers", target: "47: distributors", fill: "#b5a642"},
+{source: "47: rely on bottlers", target: "67: high fructose corn syrup", fill: "#88d8c0"},
+{source: "67: high fructose corn syrup", target: "67: certain juice", fill: "#88d8c0"},
+{source: "67: certain juice", target: "67: concentrate", fill: "#88d8c0"},
+{source: "67: concentrate", target: "67: particularly", fill: "#88d8c0"},
+{source: "67: high fructose corn syrup", target: "70: raw materials", fill: "#673147"},
+{source: "70: raw materials", target: "70: ingredients", fill: "#673147"},
+{source: "70: ingredients", target: "70: such increases on", fill: "#673147"},
+{source: "70: raw materials", target: "78: industrywide shortages", fill: "#dda0dd"},
+{source: "78: industrywide shortages", target: "78: concentrates", fill: "#dda0dd"},
+{source: "78: concentrates", target: "78: supplements", fill: "#dda0dd"},
+{source: "78: supplements", target: "78: could from", fill: "#dda0dd"},
+{source: "78: industrywide shortages", target: "92: intellectual", fill: "#967117"},
+{source: "92: intellectual", target: "92: property rights", fill: "#967117"},
+{source: "92: property rights", target: "92: rights could materially adversely affect", fill: "#967117"},
+{source: "92: intellectual", target: "START_HERE", fill: "#967117"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Metal and Glass Containers</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Day_the_Music_Died">The Day the Music Died</a></td>
+      <td>On February 3, 1959, American rock and roll musicians Buddy Holly, Ritchie Valens, and "The Big Bopper" J. P. Richardson were killed in a plane crash near Clear Lake, Iowa, together with pilot Roger Peterson. The event later became known as "The Day the Music Died" after singer-songwriter Don McLean referred to it as such in his 1971 song "American Pie".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/North_American_Free_Trade_Agreement">North American Free Trade Agreement</a></td>
+      <td>The North American Free Trade Agreement (NAFTA ; Spanish: Tratado de Libre Comercio de América del Norte, TLCAN; French: Accord de libre-échange nord-américain, ALÉNA) was an agreement signed by Canada, Mexico, and the United States that created a trilateral trade bloc in North America. The agreement came into force on January 1, 1994, and superseded the 1988 Canada–United States Free Trade Agreement between the United States and Canada.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Anthony_Adverse">Anthony Adverse</a></td>
+      <td>Anthony Adverse is a 1936 American epic historical drama film directed by Mervyn LeRoy and starring Fredric March and Olivia de Havilland. The screenplay by Sheridan Gibney draws elements of its plot from eight of the nine books in Hervey Allen's historical novel, Anthony Adverse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Supplement_(publishing)">Supplement (publishing)</a></td>
+      <td>Advertising supplements periodically accompany corresponding newspapers and are prepared by the paper's advertising staff instead of its editorial staff. It is common for them to cover topics such as real estate and automobiles on behalf of the paper's frequent advertisers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bodybuilding_supplement">Bodybuilding supplement</a></td>
+      <td>Bodybuilding supplements are dietary supplements commonly used by those involved in bodybuilding, weightlifting, mixed martial arts, and athletics for the purpose of facilitating an increase in lean body mass. Bodybuilding supplements may contain ingredients that are advertised to increase a person's muscle, body weight, athletic performance, and decrease a person's percent body fat for desired muscle definition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Iron_supplement">Iron supplement</a></td>
+      <td>Iron supplements, also known as iron salts and iron pills, are a number of iron formulations used to treat and prevent iron deficiency including iron deficiency anemia. For prevention they are only recommended in those with poor absorption, heavy menstrual periods, pregnancy, hemodialysis, or a diet low in iron.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Neanderthal">Neanderthal</a></td>
+      <td>Neanderthals (, also Neandertals, Homo neanderthalensis or Homo sapiens neanderthalensis) are an extinct species or subspecies of archaic humans who lived in Eurasia until about 40,000 years ago. While the cause of their extinction remains “highly contested”, demographic factors like small population size, inbreeding, and random fluctuations are considered likely factors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Great_Filter">Great Filter</a></td>
+      <td>The Great Filter, in the context of the Fermi paradox, is one possible resolution of the paradox.  It posits that in the development of life from the earliest stages of abiogenesis to reaching the highest levels of development on the Kardashev scale, there exists some particular barrier to development that makes detectable extraterrestrial life exceedingly rare.The concept originates in Robin Hanson's argument that the failure to find any extraterrestrial civilizations in the observable universe implies that something is wrong with one or more of the arguments (from various scientific disciplines) that the appearance of advanced intelligent life is probable; this observation is conceptualized in terms of a "Great Filter" which acts to reduce the great number of sites where intelligent life might arise to the tiny number of intelligent species with advanced civilizations actually observed (currently just one: human).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Doomsday_device">Doomsday device</a></td>
+      <td>A doomsday device is a hypothetical construction — usually a weapon or weapons system — which could destroy all life on a planet, particularly Earth, or destroy the planet itself, bringing "doomsday", a term used for the end of planet Earth. Most hypothetical constructions rely on hydrogen bombs being made arbitrarily large, assuming there are no concerns about delivering them to a target (see Teller–Ulam design) or that they can be "salted" with materials designed to create long-lasting and hazardous fallout (e.g., a cobalt bomb).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gobelins_Manufactory">Gobelins Manufactory</a></td>
+      <td>The Gobelins Manufactory (French: Manufacture des Gobelins) is a historic tapestry factory in Paris, France. It is located at 42 avenue des Gobelins, near Les Gobelins métro station in the 13th arrondissement of Paris.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Design_for_manufacturability">Design for manufacturability</a></td>
+      <td>Design for manufacturability (also sometimes known as design for manufacturing or DFM) is the general engineering practice of designing products in such a way that they are easy to manufacture. The concept exists in almost all engineering disciplines, but the implementation differs widely depending on the manufacturing technology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Computer-aided_manufacturing">Computer-aided manufacturing</a></td>
+      <td>Computer-aided manufacturing (CAM) also known as computer-aided modeling or computer-aided machining is the use of software to control machine tools in the manufacturing of work pieces. This is not the only definition for CAM, but it is the most common; CAM may also refer to the use of a computer to assist in all operations of a manufacturing plant, including planning, management, transportation and storage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Congress">United States Congress</a></td>
+      <td>The United States Congress is the legislature of the federal government of the United States. It is bicameral, being composed of a lower body, the House of Representatives, and an upper body, the Senate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Democratic_Party_(United_States)">Democratic Party (United States)</a></td>
+      <td>The Democratic Party is one of the two major contemporary political parties in the United States. It was founded in 1828 by supporters of Andrew Jackson, making it the world's oldest active political party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_dollar">United States dollar</a></td>
+      <td>The United States dollar (symbol: $; code: USD; also abbreviated US$ or U.S. Dollar, to distinguish it from other dollar-denominated currencies; referred to as the dollar, U.S. dollar, American dollar, or colloquially buck) is the official currency of the United States and several other countries. The Coinage Act of 1792 introduced the U.S. dollar at par with the Spanish silver dollar, divided it into 100 cents, and authorized the minting of coins denominated in dollars and cents.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hartford_Distributors_shooting">Hartford Distributors shooting</a></td>
+      <td>The Hartford Distributors shooting was a mass shooting that occurred on August 3, 2010, in Manchester, Connecticut, United States. The location of the crime was a warehouse owned by Hartford Distributors, a beer distribution company.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Brewers'_Distributor">Brewers' Distributor</a></td>
+      <td>Brewers' Distributor Ltd. (BDL) is a Canadian company that distributes beer throughout the four western provinces and three northern territories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Quality_Distributors">Quality Distributors</a></td>
+      <td>Quality Distributors FC are a professional association football (soccer) club in Guam. They play in the Guam Soccer League.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/General_Film_Distributors">General Film Distributors</a></td>
+      <td>General Film Distributors (GFD), later known as J. Arthur Rank Film Distributors and Rank Film Distributors Ltd., was a British film distribution company based in London. It was active between 1935 and 1996, and from 1937 it was part of the Rank Organisation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sony_Pictures_Motion_Picture_Group">Sony Pictures Motion Picture Group</a></td>
+      <td>Sony Pictures Entertainment Motion Picture Group (commonly known as Sony Pictures Motion Picture Group, formerly known as the Columbia TriStar Motion Picture Group until 2013, and abbreviated as SPMPG) is a division of Sony Pictures Entertainment to manage its motion picture operations. It was launched in 1998 by integrating the businesses of Columbia Pictures Industries, Inc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Aerial_Distributors">Aerial Distributors</a></td>
+      <td>Aerial Distributors was a US aircraft manufacturer established in Wichita, Kansas in 1967. It set up to develop the Distributor Wing DWA-1, an unorthodox agricultural aircraft.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cannabis_concentrate">Cannabis concentrate</a></td>
+      <td>Cannabis concentrate (also called marijuana concentrate, marijuana extract, or cannabis extract) is a tetrahydrocannabinol (THC) and/or cannabidiol (CBD) concentrated mass. Cannabis concentrates contain high THC levels that range from 40% to over 90%, stronger in THC content than high-grade marijuana, which normally measures around 20% THC levels.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Concentrator">Concentrator</a></td>
+      <td>In chemistry, concentration is the abundance of a constituent divided by the total volume of a mixture. Several types of mathematical description can be distinguished: mass concentration, molar concentration, number concentration, and volume concentration.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ore_concentrate">Ore concentrate</a></td>
+      <td>Ore concentrate, dressed ore or simply concentrate is the product generally produced by metal ore mines. The raw ore is usually ground finely in various comminution operations and gangue (waste) is removed, thus concentrating the metal component.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ingredient">Ingredient</a></td>
+      <td>An ingredient is a substance that forms part of a mixture (in a general sense). For example, in cooking, recipes specify which ingredients are used to prepare a specific dish.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cooking">Cooking</a></td>
+      <td>Cooking, cookery, or culinary arts is the art, science and craft of using heat to prepare food for consumption. Cooking techniques and ingredients vary widely, from grilling food over an open fire to using electric stoves, to baking in various types of ovens, reflecting local conditions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Concentrated_solar_power">Concentrated solar power</a></td>
+      <td>Concentrated solar power (CSP, also known as concentrating solar power, concentrated solar thermal) systems generate solar power by using mirrors or lenses to concentrate a large area of sunlight onto a receiver. Electricity is generated when the concentrated light is converted to heat (solar thermal energy), which drives a heat engine (usually a steam turbine) connected to an electrical power generator or powers a thermochemical reaction.CSP had a global total installed capacity of 5,500 MW in 2018, up from 354 MW in 2005.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Triuranium_octoxide">Triuranium octoxide</a></td>
+      <td>Triuranium octoxide (U3O8) is a compound of uranium. It is present as an olive green to black, odorless solid.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Intellectual_property_infringement">Intellectual property infringement</a></td>
+      <td>An intellectual property (IP) infringement is the infringement or violation of an intellectual property right. There are several types of intellectual property rights, such as copyrights, patents, trademarks, industrial designs, and trade secrets.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>HANSEN NATURAL CORP    ITEM 1A        RISK FACTORS         In addition to the other  information in this report,  you <font color="blue">should carefully</font>  consider the following  risks</td>
+    </tr>
+    <tr>
+      <td>If any of the <font color="blue">following risks actually</font> occur, our  business,  financial  condition  and/or  operating  results  could be <font color="blue">materially</font>  <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">risk factors summarized</font> below are not the only risks we  face</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and  <font color="blue">uncertainties</font>  not currently known to us or that we  currently  deem to be  immaterial  also  may  <font color="blue">materially</font>  <font color="blue">adversely</font>  affect  our  business, <font color="blue">financial condition</font> and/or operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue"><font color="blue">competition</font> could hurt</font> our business</td>
+    </tr>
+    <tr>
+      <td>The  beverage  industry  is  highly  <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>The  principal  areas of  <font color="blue">competition</font> are pricing, packaging,  <font color="blue">development</font> of <font color="blue">new products</font> and flavors and  marketing  <font color="blue">campaigns</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">products compete with</font> a wide range of drinks produced  by a <font color="blue">relatively</font> large number of <font color="blue"><font color="blue">manufacture</font>rs</font>,  most of which have <font color="blue">substantially</font>  greater financial, marketing and <font color="blue"><font color="blue">distribution</font> resources than</font> we do</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Important  </font>factors  <font color="blue">affecting</font> our ability to compete  <font color="blue">successfully</font>  include  taste and flavor of products, trade and consumer promotions, rapid and <font color="blue">effective</font>  <font color="blue">development</font>  of new,  unique  <font color="blue">cutting edge</font>  products,  attractive  and <font color="blue">different</font>  packaging,  <font color="blue">branded product</font>  <font color="blue">advertising</font> and pricing</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">products compete with</font>  all liquid  <font color="blue">refreshments</font>  and with  products  of much  larger and  <font color="blue">substantially</font>  <font color="blue">better financed</font>  <font color="blue">competitors</font>,  including the products of <font color="blue">numerous nationally</font> and  <font color="blue">internationally</font>  known  <font color="blue">producers such as</font> The Coca-Cola  Company,  Pepsico Inc,  Cadbury Schweppes plc, Red Bull Gmbh, Kraft Foods Inc, Nestle Beverage Company,  Tree Top and Ocean Spray</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also compete</font>  with  companies  that are smaller or  primarily  local in  operation</td>
+    </tr>
+    <tr>
+      <td>Our products  also  <font color="blue">compete with private</font>  label  <font color="blue">brands such as</font> those carried <font color="blue">by grocery store chains</font>,  <font color="blue">convenience store chains</font>,  and  club  stores</td>
+    </tr>
+    <tr>
+      <td>There  can  be no  assurance  that  we  will  not  encounter  <font color="blue">difficulties</font> in maintaining our <font color="blue">current revenues</font> or market share or <font color="blue">position due</font>  to <font color="blue">competition</font> in the <font color="blue">beverage industry</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">revenues decline</font>, our business,  <font color="blue">financial condition</font> and results of <font color="blue"><font color="blue">operations</font> could</font> be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We  derive a  substantial  portion  of  revenues  from  our  energy  drinks  and  <font color="blue">competitive</font>  pressure in the  &amp;quote <font color="blue">energy drink</font> &amp;quote  category could <font color="blue">adversely</font>  affect our  operating results</td>
+    </tr>
+    <tr>
+      <td>Our DSD  segment <font color="blue">which comprises primarily <font color="blue">energy drink</font>s</font>,  represented 77dtta4prca of net sales  for the year ended  <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Any decrease in the sales of our Monster  Energy(R) brand <font color="blue"><font color="blue">energy drink</font>s could</font>  <font color="blue"><font color="blue">significant</font>ly</font>  <font color="blue">adversely</font>  affect our future  revenues  and  net  income</td>
+    </tr>
+    <tr>
+      <td>Historically,   we  have  experienced  substantial  <font color="blue">competition</font>  <font color="blue">from new entrants</font> in the <font color="blue">energy drink</font>  category</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">energy drink</font>s  <font color="blue">compete directly with</font> Red Bull,  Adrenaline Rush, Amp,  Rockstar,  No Fear, Full  Throttle,  180, KMX, Venom,  Extreme Energy Shot, US energy,  Red Devil, Rip It,  Nos, Boo Koo, Lipovitan,  MET-Rx,  Hype, XTC, and many other brands</td>
+    </tr>
+    <tr>
+      <td>A number of  companies who market and distribute  iced teas and juice  cocktails in <font color="blue">different</font>  packages,  such  as 16 and  20-ounce  glass  bottles,  including  Sobe,  Snapple  Elements,  Arizona,  Fuse,  and Vitamin Water,  have added  <font color="blue">supplements</font> to their  <font color="blue">products with</font> a view to marketing  their  <font color="blue">products as</font>   &amp;quote functional &amp;quote   or  &amp;quote energy &amp;quote   beverages or as having <font color="blue">functional benefits</font></td>
+    </tr>
+    <tr>
+      <td>In addition, certain large companies  such as The Coca-Cola Company and Pepsico Inc</td>
+    </tr>
+    <tr>
+      <td>market and/or distribute products  in that market segment such as Mountain Dew, Mountain Dew MDX, Vault, Adrenaline  Rush, Amp, No Fear, Full Throttle,  and Rockstar</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitive  </font>pressures in the  <font color="blue">energy drink</font>  category  could impact our revenues or we could  experience  price  erosion or <font color="blue">lower market</font> share, any of <font color="blue">which could</font> have a material <font color="blue">adverse affect</font>  on our business and results</td>
+    </tr>
+    <tr>
+      <td>Change in consumer <font color="blue">preferences</font> <font color="blue">may reduce demand</font> for some of our products</td>
+    </tr>
+    <tr>
+      <td>There is increasing  awareness and concern for the health  <font color="blue">consequences</font>  of  obesity</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">may reduce demand</font> for our non-diet beverages,  <font color="blue">which could</font> affect  our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our future  success  will  depend,  in part,  upon our  continued  ability  to  develop  and  introduce <font color="blue">different</font> and <font color="blue">innovative beverages</font></td>
+    </tr>
+    <tr>
+      <td>In order to retain and expand our  market share, we <font color="blue">must continue</font> to develop and introduce <font color="blue">different</font> and innovative  beverages and be <font color="blue">competitive</font> in the areas of quality and health,  <font color="blue">although there</font>  can be no  assurance  of  our  ability  to do so</td>
+    </tr>
+    <tr>
+      <td>Additionally,  many of our  products are  considered  premium  products and to maintain  market  share during  <font color="blue">recessionary</font>  periods we may have to reduce  profit  <font color="blue">margins which</font>  would <font color="blue">adversely</font>  affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Product  </font><font color="blue">lifecycles</font> for some  beverage  brands and/or  products  and/or packages may be limited to a few years  before consumers &amp;apos   <font color="blue">preferences</font>  change</td>
+    </tr>
+    <tr>
+      <td>The beverages we <font color="blue">currently market</font> are in  varying  stages of their  <font color="blue">lifecycles</font>  and there  can be no  assurance  that such  beverages  will become or remain  profitable  for us</td>
+    </tr>
+    <tr>
+      <td>The  beverage  industry is  subject to changing consumer  <font color="blue">preferences</font> and shifts in consumer <font color="blue">preferences</font> may  <font color="blue">adversely</font> affect us if we misjudge such <font color="blue">preferences</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to achieve  <font color="blue">volume growth through product</font> and packaging  <font color="blue">initiatives</font></td>
+    </tr>
+    <tr>
+      <td>We also may be unable  to penetrate  <font color="blue">new markets</font></td>
+    </tr>
+    <tr>
+      <td>If our revenues  decline,  our  business,  financial  condition and results of <font color="blue">operations</font> will be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on bottlers</font> and other contract  packers to <font color="blue">manufacture</font> our products</td>
+    </tr>
+    <tr>
+      <td>If  we are unable to maintain  good  <font color="blue">relationships</font>  with our  bottlers  and contract  packers and/or their ability to <font color="blue">manufacture</font> our <font color="blue">products becomes</font>  constrained or  unavailable to us, our business <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>We do not directly  <font color="blue">manufacture</font>  our products,  but instead  <font color="blue">outsource such</font>  <font color="blue">manufacturing</font>  to bottlers and other contract  packers</td>
+    </tr>
+    <tr>
+      <td>Although our production  <font color="blue">arrangements</font> are <font color="blue">generally</font> of short duration or are <font color="blue">terminable upon request</font>,  in  the event of a  <font color="blue">disruption</font>  or delay,  we may be unable to  procure  <font color="blue">alternative</font>  packing  <font color="blue"><font color="blue">facilities</font> at commercially</font>  <font color="blue">reasonable rates</font> and/or within a <font color="blue">reasonably</font>  short time period</td>
+    </tr>
+    <tr>
+      <td>In addition,  there are limited  packing  <font color="blue">facilities</font>  in the  <font color="blue">United States </font><font color="blue">with adequate</font>  <font color="blue">capacity</font> and/or suitable  equipment for many of our  products,  including  Hansenapstas(R)  brand <font color="blue">energy drink</font>s in 8dtta3-ounce and 16-ounce  cans, <font color="blue">Gold Standard </font>line, aseptic juice products, juices in 64-ounce PET plastic  bottles,  Energade(R),  Monster  Energy(R),  Lost(R),  Rumba(TM)  and  Joker Mad  Energy(TM)  energy  drinks  in 8dtta3,  15dtta5,  16,  and  24-ounce  cans,  sparkling  lemonades  and  orangeades  and other  products</td>
+    </tr>
+    <tr>
+      <td>There are also limited  shrink  sleeve  labeling  <font color="blue">facilities</font>  available to us in the <font color="blue">United States </font><font color="blue">with adequate</font>  <font color="blue">capacity</font> for our E2O Energy Water(R)</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">disruption</font> or delay in production of any  of <font color="blue">such <font color="blue">products could</font></font>  <font color="blue"><font color="blue">significant</font>ly</font>  affect our revenues from such <font color="blue">products as</font>  <font color="blue">alternative</font>  co-packing  <font color="blue">facilities</font> in the <font color="blue">United States </font><font color="blue">with adequate</font>  <font color="blue">capacity</font>  may not be available for <font color="blue"><font color="blue">such products</font> either at commercially</font>  <font color="blue">reasonable rates</font>,  and/or  within a  <font color="blue">reasonably</font>  short  time  period,  if at all</td>
+    </tr>
+    <tr>
+      <td>Consequently,  a  <font color="blue">disruption</font> in production of <font color="blue">such <font color="blue">products could</font></font> <font color="blue">adversely</font> affect our revenues</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on bottlers</font> and  <font color="blue">distributors</font> to distribute our DSD products</td>
+    </tr>
+    <tr>
+      <td>If we are  unable to <font color="blue">secure such bottlers</font> and <font color="blue">distributors</font> and/or we are unable to maintain  good  <font color="blue">relationships</font>  with our <font color="blue">existing bottlers</font> and  <font color="blue">distributors</font>,  our business  <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">continually seek</font> to <font color="blue">expand <font color="blue">distribution</font></font> of our <font color="blue">products by entering into</font>  <font color="blue">agreements</font>  <font color="blue">with regional</font>  bottlers or other <font color="blue">direct store delivery</font>  <font color="blue">distributors</font>  having established sales, marketing and <font color="blue"><font color="blue">distribution</font> organizations</font></td>
+    </tr>
+    <tr>
+      <td>Many of our  bottlers and <font color="blue">distributors</font> are <font color="blue">affiliated</font> with and <font color="blue">manufacture</font>  and/or distribute  other soda and  non-carbonated  brands  and other  beverage  products  including  <font color="blue">energy drink</font>s</td>
+    </tr>
+    <tr>
+      <td>In many cases, <font color="blue">such products</font> <font color="blue">compete directly with</font> our products</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">marketing efforts</font> of our <font color="blue">distributors</font> are important for our success</td>
+    </tr>
+    <tr>
+      <td>If  our DSD  brands  prove  to be  less  attractive  to our  existing  bottlers  and  <font color="blue">distributors</font>  and/or if we fail to <font color="blue">attract additional bottlers</font> and <font color="blue">distributors</font>,  and/or our bottlers  and/or  <font color="blue">distributors</font> do not market and promote our products  above the products of our  <font color="blue">competitors</font>,  our business,  financial  condition and  results of <font color="blue"><font color="blue">operations</font> could</font> be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to maintain  good  <font color="blue">relationships</font> with our <font color="blue">existing customers</font>, our business <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unilateral </font><font color="blue">decisions could</font> be taken by our <font color="blue">distributors</font>, and/or convenience  chains, grocery chains,  specialty chain stores, club stores and other customers  to <font color="blue">discontinue</font> carrying all or any of the our products that they are carrying at  any time, <font color="blue">which could</font> cause our business to suffer</td>
+    </tr>
+    <tr>
+      <td>One customer  accounted for approximately 18prca and 13prca of the <font color="blue">Companys </font>sales  for the years  ended  <font color="blue">December </font> 31, 2005 and 2004,  <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">decision by</font>  that, or any other large  customer,  to decrease the amount  purchased  from the  Company or to cease carrying the <font color="blue">Companys </font><font color="blue">products could</font> have a material adverse  effect  on  the  <font color="blue">Companys </font> financial  condition  and  <font color="blue">consolidated</font>   results  of  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  have  exclusive  contracts  with  the  State  of  <font color="blue">California </font> ( &amp;quote State &amp;quote )  Department of Health Services,  Women, Infant and Children ( &amp;quote WIC &amp;quote )  Supplemental  Nutrition  Branch ( &amp;quote DHS &amp;quote ) to supply 100prca apple juice and 100prca blended juice,  in  64-ounce PET <font color="blue">plastic bottles</font></td>
+    </tr>
+    <tr>
+      <td>The contracts are each for a period of <font color="blue">three years</font>  with a further  one-year  <font color="blue">extension option</font> to be <font color="blue">mutually agreed between</font> Hansens  and the State of California</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">current contracts</font> expire on July 11, 2007, and  we have no knowledge of whether the <font color="blue">contracts will</font> be extended for a <font color="blue">further one</font>  year,  or whether we will be successful in securing any new future WIC contracts  with the State</td>
+    </tr>
+    <tr>
+      <td>If we are <font color="blue">unsuccessful</font> in <font color="blue">securing new future</font> WIC <font color="blue">contracts with</font>  the State,  our  revenues  from those  products  could be  <font color="blue">materially</font>  <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases  </font>in cost or  shortages  of raw  materials  or  increases  in  costs of  co-packing could harm our business</td>
+    </tr>
+    <tr>
+      <td>The  principal  raw  materials  <font color="blue">used by us comprise</font>  aluminum  cans,  glass  bottles and PET plastic  <font color="blue">bottles as well as juices</font>,  high  fructose  <font color="blue">corn syrup</font>,  sucrose and sucralose,  the costs of which are subject to  <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td>Due to  the <font color="blue">consolidations</font> that have taken place in the glass industry over the past few  years,  the prices of glass  bottles  continue  to  increase</td>
+    </tr>
+    <tr>
+      <td>The prices of high fructose <font color="blue">corn syrup</font>,  sucrose and <font color="blue">certain juice</font>  <font color="blue">concentrate</font>s  have also  increased  during the year,  <font color="blue">particularly</font>  apple  <font color="blue">concentrate</font></td>
+    </tr>
+    <tr>
+      <td>These  increased  costs,  together with increased costs primarily of energy and gas and  freight resulted in increases in <font color="blue">certain product costs which</font> are ongoing and are  expected  to  continue  to exert  pressure  on our  gross  margins  in 2006</td>
+    </tr>
+    <tr>
+      <td>In  addition,  certain of our co-pack <font color="blue">arrangements</font> allow such co-packers to increase  their  charges  <font color="blue"><font color="blue">based on</font> certain</font> of their own cost  increases</td>
+    </tr>
+    <tr>
+      <td>We are uncertain  whether the prices of any of the above or any other <font color="blue">raw materials</font> or <font color="blue">ingredients</font>  will  continue  to rise in the future and whether we will be able to pass any of  <font color="blue">such increases on</font> to our customers</td>
+    </tr>
+    <tr>
+      <td>In addition,  some of these <font color="blue">raw materials</font>,  such as a sucralose and certain  sizes of cans,  are available  from a limited  number of  suppliers</td>
+    </tr>
+    <tr>
+      <td>Sucralose,  which is used in the Companyapstas  low-calorie  products, is <font color="blue">purchased by us from</font> a  single  <font color="blue">manufacture</font>r</td>
+    </tr>
+    <tr>
+      <td>The  supplier  of  sucralose  has  notified  us that  our  purchases of sucralose during 2006 will be subject to volume  <font color="blue">limitations due</font> to  demand for <font color="blue">sucralose exceeding</font>  production  <font color="blue">capacity</font></td>
+    </tr>
+    <tr>
+      <td>While we believe that our  2006 sucralose  volume  <font color="blue">allocation will</font> be sufficient to meet the demand for our  products that contain  sucralose,  we may need to  <font color="blue">reformulate</font>  certain of those  products that contain  sucralose with <font color="blue">alternative</font>  <font color="blue">sweetener systems</font> to avoid an  <font color="blue">interruption</font> in supply of those products, should the need arise</td>
+    </tr>
+    <tr>
+      <td>Our  ability to  estimate demand for our products is imprecise,  <font color="blue">particularly</font>  with <font color="blue">new products</font>,  and may be <font color="blue">less precise</font>  during  periods of rapid  growth,  <font color="blue">particularly</font>  in new  markets</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">materially</font> underestimate demand for our products or are unable to  <font color="blue">secure sufficient</font>  <font color="blue">ingredients</font> or <font color="blue">raw materials</font>  including,  but not limited to,  glass, PET plastic  bottles,  cans,  labels,  sucralose,  flavors,  <font color="blue">supplements</font>,  certain  sweeteners,  or packing  <font color="blue">arrangements</font>,  we might not be able to satisfy  <font color="blue">demand on</font> a short-term basis</td>
+    </tr>
+    <tr>
+      <td>Moreover, industry-wide shortages of <font color="blue">certain juice</font>  <font color="blue">concentrate</font>s,  <font color="blue">supplements</font> and sweeteners have been and could, from time to time  in  the  future,  be  experienced,  which  could  interfere  with  and/or  delay  production of certain of our products and could have a material  adverse  effect  on our business  and  financial  results</td>
+    </tr>
+    <tr>
+      <td>We do not use hedging  <font color="blue">agreements</font>  or  <font color="blue">alternative</font> <font color="blue">instruments</font> to manage this risk</td>
+    </tr>
+    <tr>
+      <td>20  <PAGE>    The costs of <font color="blue">packaging supplies</font> are subject to <font color="blue">price increases from</font> time to time  and we may be  unable  to pass  all or some of such  increased  costs  on to our  customers</td>
+    </tr>
+    <tr>
+      <td>The majority of our  packaging  supplies  contracts  allow our suppliers to  alter the costs they <font color="blue">charge us</font> for  packaging  supplies  <font color="blue">based on</font> changes in the  costs of the  underlying  <font color="blue">commodities</font>  that are used to produce those  packaging  supplies,  <font color="blue">such as resin</font> for PET bottles and aluminum for cans</td>
+    </tr>
+    <tr>
+      <td>These changes in  the prices we pay for our  packaging  supplies  occur at  certain  <font color="blue">predetermined</font>  times  that  vary by  product  and  supplier</td>
+    </tr>
+    <tr>
+      <td>Accordingly,  we bear the risk of  increases in the costs of these  packaging  supplies,  including the  underlying  costs of the <font color="blue">commodities</font> that comprise these packaging  supplies</td>
+    </tr>
+    <tr>
+      <td>We do not use  <font color="blue">derivative</font>  <font color="blue">instruments</font>  to manage  this  risk</td>
+    </tr>
+    <tr>
+      <td>If the cost of these  packaging  supplies  increase,  we may be unable to pass these costs along to our customers  through  <font color="blue">corresponding</font>  <font color="blue">adjustments</font> to the prices we charge,  <font color="blue">which could</font> have a  material adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We rely upon our ongoing <font color="blue">relationships</font> with our <font color="blue">key <font color="blue">flavor suppliers</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are  unable to source our  <font color="blue">flavors on</font>  acceptable  <font color="blue">terms from</font> our key  suppliers,  we  <font color="blue">could suffer</font> <font color="blue">disruption</font>s in our business</td>
+    </tr>
+    <tr>
+      <td>Generally,  <font color="blue">flavor suppliers</font> hold the <font color="blue">proprietary</font>  rights to their flavors</td>
+    </tr>
+    <tr>
+      <td>Consequently, we do not have the list of <font color="blue">ingredients</font> or formulae for our flavors  and certain of our <font color="blue">concentrate</font>s  <font color="blue">readily available</font> to us and we may be unable to  obtain these flavors or <font color="blue">concentrate</font>s from <font color="blue">alternative</font> suppliers on short notice</td>
+    </tr>
+    <tr>
+      <td>Industry-wide   shortages  of  certain  juice   <font color="blue">concentrate</font>s,   <font color="blue">supplements</font>  and  sweeteners have been and could, from time to time in the future, be experienced,  <font color="blue">which could</font>  interfere with and/or delay  production of certain of our products</td>
+    </tr>
+    <tr>
+      <td>If we  have  to  replace  a  flavor  supplier,  we  could  experience  temporary  <font color="blue">disruption</font>s in our ability to deliver products to our customers <font color="blue">which could</font> have  a material adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">intellectual</font>  <font color="blue">property rights</font> are critical to our success,  the loss of such  rights could <font color="blue">materially</font> <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>We own <font color="blue">numerous <font color="blue">trademarks</font></font> that are very important to our business</td>
+    </tr>
+    <tr>
+      <td>We  regard  our  <font color="blue">trademarks</font>,  <font color="blue">copyrights</font>,  and  similar  <font color="blue">intellectual</font>  property as critical to our success and attempt to protect  such  property  with  registered and common law <font color="blue">trademarks</font> and <font color="blue">copyrights</font>,  <font color="blue">restrictions on disclosure</font>  and other actions to <font color="blue">prevent infringement</font></td>
+    </tr>
+    <tr>
+      <td>Product packages, mechanical designs  and artwork are  important to our success and we take action to protect  against  imitation of our  packaging  and <font color="blue">trade dress</font> and to protect our  <font color="blue">trademarks</font>  and  <font color="blue">copyrights</font> as  <font color="blue">necessary</font></td>
+    </tr>
+    <tr>
+      <td>However,  there can be no assurance  that other third  parties  will  not  infringe  or  <font color="blue">misappropriate</font>   our  <font color="blue">trademarks</font>  and  similar  <font color="blue">proprietary</font> rights</td>
+    </tr>
+    <tr>
+      <td>If we lose some or all of our <font color="blue">intellectual</font>  <font color="blue">property rights</font>,  our business may be <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>changes in <font color="blue">government regulation may hinder sales</font></td>
+    </tr>
+    <tr>
+      <td>The production,  <font color="blue">distribution</font>  and sale in the <font color="blue">United States </font>of many of our  products is subject to the Federal  Food,  Drug and  Cosmetic  Act;  the Dietary  Supplement Health and Education Act of 1994; the Occupational  Safety and Health  Act; various <font color="blue">environmental</font>  statutes; and various other federal, state and local  statutes and  <font color="blue">regulations</font>  applicable to the production,  <font color="blue">transportation</font>,  sale,  safety, <font color="blue">advertising</font>, labeling and <font color="blue">ingredients</font> of <font color="blue">such products</font></td>
+    </tr>
+    <tr>
+      <td>New statutes and  <font color="blue">regulations</font>  may also be  instituted  in the future</td>
+    </tr>
+    <tr>
+      <td>If a regulatory  authority  finds that a current or future  product or  production  run is not in compliance  with any of these <font color="blue">regulations</font>,  we may be fined, or <font color="blue">such products</font> may have to be  recalled and/or <font color="blue">reformulate</font>d and/or packaging changed,  thus <font color="blue">adversely</font> <font color="blue">affecting</font>  our <font color="blue">financial condition</font> and <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">California </font>law requires that a specific  warning  appear on any product that contains a component  listed by the State as  having <font color="blue">been found</font> to cause cancer or birth  defects</td>
+    </tr>
+    <tr>
+      <td>While none of our beverage  products  are  required to display  warnings  under this law, we cannot  predict  whether an  important  component  of any of our  products  might be added to the  <font color="blue">California </font>list in the future</td>
+    </tr>
+    <tr>
+      <td>We also are unable to <font color="blue">predict whether</font> or to what  extent a warning  under  this law would  have an <font color="blue"><font color="blue">impact on</font> costs</font> or sales of our  products</td>
+    </tr>
+    <tr>
+      <td>21  <PAGE>    If we are unable to maintain brand image or <font color="blue">product quality</font>,  or if we encounter  <font color="blue">product recalls</font>, our business may suffer</td>
+    </tr>
+    <tr>
+      <td>Our success  <font color="blue">depends on</font> our  ability to maintain  and build brand image for  our <font color="blue">existing products</font>,  <font color="blue">new products</font> and brand <font color="blue">extensions</font></td>
+    </tr>
+    <tr>
+      <td>We have no assurance  that our <font color="blue">advertising</font>,  marketing and promotional  <font color="blue">programs will</font> have the desired  <font color="blue">impact on</font> our products &amp;apos  brand image and on consumer <font color="blue">preferences</font></td>
+    </tr>
+    <tr>
+      <td>Product quality  issues, real or imagined, or <font color="blue">allegations</font> of <font color="blue">product contamination</font>,  even if fake  or  unfounded,  could  tarnish  the image of the  affected  brands and may cause  consumers  to choose  other  products</td>
+    </tr>
+    <tr>
+      <td>Product recalls could <font color="blue">adversely</font> affect our <font color="blue">profitability</font> and our brand image</td>
+    </tr>
+    <tr>
+      <td>We  do not maintain <font color="blue">recall insurance</font></td>
+    </tr>
+    <tr>
+      <td>While  we have to date  not  experienced  any  credible  product  <font color="blue">liability</font>  <font color="blue">litigation</font>, there is no assurance that we will not experience <font color="blue">such <font color="blue">litigation</font></font> in  the future</td>
+    </tr>
+    <tr>
+      <td>In the event we were to experience  product  <font color="blue">liability</font>  claims or a  product  recall,  our  financial  condition  and  business  <font color="blue">operations</font>  could be  <font color="blue">materially</font> <font color="blue">adversely</font> effected</td>
+    </tr>
+    <tr>
+      <td>If we are not able to retain the full-time  services of <font color="blue">senior management</font> it may  have an adverse effect on our <font color="blue">operations</font> and/or our operating  <font color="blue">performance until</font>  we <font color="blue">find suitable <font color="blue">replacements</font></font></td>
+    </tr>
+    <tr>
+      <td>Our  business is  <font color="blue">dependent</font>,  to a large  extent,  upon the services of our  <font color="blue">senior management</font></td>
+    </tr>
+    <tr>
+      <td>We do not maintain key person <font color="blue">life insurance</font> for any members  of our <font color="blue">senior management</font></td>
+    </tr>
+    <tr>
+      <td>We currently have employment <font color="blue">agreements</font> with Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Schlosberg </font> </font>which end on  <font color="blue">December </font> 31,  2008</td>
+    </tr>
+    <tr>
+      <td>The loss of services of  either of these persons or any other key members of our senior  <font color="blue">management could</font>  <font color="blue">adversely</font> affect our business until a suitable  <font color="blue">replacements</font> can be found</td>
+    </tr>
+    <tr>
+      <td>There  may be a limited number of <font color="blue">personnel with</font> the <font color="blue">requisite skills</font> to serve in these  positions and we may be unable to locate or <font color="blue">employ such</font>  qualified  <font color="blue">personnel on</font>  acceptable terms</td>
+    </tr>
+    <tr>
+      <td>Weather could <font color="blue">adversely</font> affect our supply chain and demand for our products</td>
+    </tr>
+    <tr>
+      <td>With regard to fruit juice,  fruit juice  <font color="blue">concentrate</font>s and <font color="blue">natural flavors</font>,  the <font color="blue">beverage industry</font> is subject to <font color="blue">variability</font> of weather <font color="blue">conditions</font>, which may  result in higher prices and/or the  <font color="blue">non<font color="blue">availability</font></font>  of any of such items</td>
+    </tr>
+    <tr>
+      <td>Sales  of our products may also be influenced  to some extent by weather  <font color="blue">conditions</font> in  the markets in which we operate,  <font color="blue">particularly</font>  in areas outside of  California</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Weather  </font><font color="blue">conditions</font> may influence  <font color="blue">consumer demand</font> for certain of our beverages,  <font color="blue">which could</font> have an adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Potential  </font>changes in <font color="blue">accounting</font>  practices and/or taxation may <font color="blue">adversely</font> affect  our financial results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> the impact that future changes in <font color="blue">accounting</font> standards or  <font color="blue">practices may</font> have on our financial results</td>
+    </tr>
+    <tr>
+      <td>New <font color="blue">accounting</font>  <font color="blue">standards could</font> be  issued  that  could  change  the way we record  revenues,  expenses,  assets and  <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>These changes in <font color="blue">accounting</font>  <font color="blue">standards could</font> <font color="blue">adversely</font>  affect our  reported  earnings</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases  </font>in direct and  indirect  income tax rates  could  affect  after tax  income</td>
+    </tr>
+    <tr>
+      <td>Equally,  increases  in  indirect  taxes  (including  <font color="blue">environmental</font>  taxes  pertaining to the disposal of beverage  <font color="blue">containers</font>)  could  affect our products &amp;apos  <font color="blue">affordability</font> and reduce our sales</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Volatility of Stock Price </font><font color="blue">may restrict sale opportunities</font></td>
+    </tr>
+    <tr>
+      <td>22  <PAGE>         Our stock price is <font color="blue">affected by</font> a number of factors,  including  stockholder  <font color="blue">expectations</font>,  financial results, the <font color="blue">introduction</font> of <font color="blue">new products</font> by us and our  <font color="blue">competitors</font>,  <font color="blue">general economic</font> and market <font color="blue">conditions</font>,  estimates and <font color="blue">projections</font>  by the <font color="blue">investment</font>  <font color="blue">community</font> and <font color="blue">public comments by</font> other persons and many other  factors,  many of which are  beyond  our  control</td>
+    </tr>
+    <tr>
+      <td>We may be unable to  achieve  <font color="blue">analysts earnings</font>  forecasts,  which may be <font color="blue">based on</font> projected volumes and sales  of many product types and/or <font color="blue">new products</font>,  certain of which are more profitable  <font color="blue">than others</font></td>
+    </tr>
+    <tr>
+      <td>As a result,  our stock  price is subject to  <font color="blue">significant</font>  <font color="blue">volatility</font>  and  <font color="blue">stockholders</font>  may not be able to sell our stock at  attractive prices</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions </font>in our  <font color="blue">organizational</font>  <font color="blue">documents</font> and control by insiders may prevent  changes  in  control  even  if  such  changes   would  be  <font color="blue">beneficial</font>  to  other  <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">organizational</font> <font color="blue">documents</font> may limit changes in control</td>
+    </tr>
+    <tr>
+      <td>Furthermore, at  <font color="blue">February  </font>10,  2006,  Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Sacks and Mr</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Schlosberg </font> </font>together  may be deemed to  control a maximum of 21dtta2prca of our outstanding  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Schlosberg </font>could exercise <font color="blue">significant</font> control on matters submitted  to  a  vote  of  our  <font color="blue">stockholders</font>,   including  electing  <font color="blue">directors</font>,   amending  <font color="blue">organizational</font>  <font color="blue">documents</font> and  approving  <font color="blue">extraordinary</font>  <font color="blue">transactions</font>  such as a  <font color="blue">takeover attempt</font>,  <font color="blue">even though such actions may</font> be favorable to the other common  <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">cash flow</font> may</font> not be sufficient to fund our <font color="blue">long term goals</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to  generate  sufficient  <font color="blue">cash flow</font> to support our capital  <font color="blue">expenditure</font>  plans and general  operating  <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  the terms  and/or  <font color="blue">availability</font>  of  our  credit  <font color="blue">facility</font>  and/or  the  <font color="blue">activities</font>  of our  <font color="blue">creditors could affect</font> the financing of our <font color="blue">future growth</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>or legal <font color="blue">proceedings</font>  could expose us to <font color="blue">significant</font>  <font color="blue">liabilities</font> and  thus <font color="blue">negatively</font> affect our financial results</td>
+    </tr>
+    <tr>
+      <td>We are a party,  from time to time, to various  <font color="blue">litigation</font> claims and legal  <font color="blue">proceedings</font>, <font color="blue">which could</font> <font color="blue">adversely</font> affect our financial results</td>
+    </tr>
+  </tbody>
+</table>

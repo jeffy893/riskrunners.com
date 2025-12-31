@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: competition could reduce", fill: "#ffa500"},
+{source: "1: competition could reduce", target: "1: services which could", fill: "#ffa500"},
+{source: "1: services which could", target: "1: financial condition", fill: "#ffa500"},
+{source: "1: financial condition", target: "1: operations", fill: "#ffa500"},
+{source: "1: competition could reduce", target: "2: Competition ", fill: "#087830"},
+{source: "2: Competition ", target: "2: marketing services", fill: "#087830"},
+{source: "2: marketing services", target: "2: competitors", fill: "#087830"},
+{source: "2: Competition ", target: "3: pharmaceutical", fill: "#cd853f"},
+{source: "3: pharmaceutical", target: "3: manufacturer", fill: "#cd853f"},
+{source: "3: manufacturer", target: "3: advertising", fill: "#cd853f"},
+{source: "3: advertising", target: "3: television", fill: "#cd853f"},
+{source: "3: television", target: "3: alternative", fill: "#cd853f"},
+{source: "3: pharmaceutical", target: "4: parameters on which", fill: "#ffd800"},
+{source: "4: parameters on which", target: "4: manufacturer pharmaceutical manufacturer", fill: "#ffd800"},
+{source: "4: manufacturer pharmaceutical manufacturer", target: "4: pharmaceutical", fill: "#ffd800"},
+{source: "4: pharmaceutical", target: "4: retailer may base", fill: "#ffd800"},
+{source: "4: retailer may base", target: "4: allocate advertising", fill: "#ffd800"},
+{source: "4: allocate advertising", target: "4: expenditures", fill: "#ffd800"},
+{source: "4: expenditures", target: "4: services will continue", fill: "#ffd800"},
+{source: "4: services will continue", target: "4: compete effectively against", fill: "#ffd800"},
+{source: "4: compete effectively against", target: "4: manufacturers", fill: "#ffd800"},
+{source: "4: parameters on which", target: "9: Significant ", fill: "#009000"},
+{source: "9: Significant ", target: "9: mass marketers", fill: "#009000"},
+{source: "9: mass marketers", target: "9: value chains", fill: "#009000"},
+{source: "9: value chains", target: "9: marketing services", fill: "#009000"},
+{source: "9: marketing services", target: "9: distribution", fill: "#009000"},
+{source: "9: distribution", target: "9: communications", fill: "#009000"},
+{source: "9: Significant ", target: "16: shopping behavior could", fill: "#c0c0c0"},
+{source: "16: shopping behavior could", target: "16: operations", fill: "#c0c0c0"},
+{source: "16: operations", target: "16: financial condition", fill: "#c0c0c0"},
+{source: "16: shopping behavior could", target: "38: development", fill: "#6f0"},
+{source: "38: development", target: "38: deployment", fill: "#6f0"},
+{source: "38: deployment", target: "38: new services may", fill: "#6f0"},
+{source: "38: new services may", target: "38: significant expenditures", fill: "#6f0"},
+{source: "38: development", target: "START_HERE", fill: "#6f0"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Telecommunication Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marketing">Marketing</a></td>
+      <td>Marketing is the process of exploring, creating, and delivering value to meet the needs of a target market in terms of goods and services; potentially including selection of a target audience; selection of certain attributes or themes to emphasize in advertising; operation of advertising campaigns; attendance at trade shows and public events; design of products and packaging attractive to buyers; defining the terms of sale, such as price, discounts, warranty, and return policy; product placement in media or with people believed to influence the buying habits of others; agreements with retailers, wholesale distributors, or resellers; and attempts to create awareness of, loyalty to, and positive feelings about a brand. Marketing is typically done by the seller, typically a retailer or manufacturer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Digital_marketing">Digital marketing</a></td>
+      <td>Digital marketing is the component of marketing that uses the Internet and online based digital technologies such as desktop computers, mobile phones and other digital media and platforms to promote products and services. Its development during the 1990s and 2000s changed the way brands and businesses use technology for marketing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_analysis">Competitor analysis</a></td>
+      <td>Competitive analysis in marketing and strategic management is an assessment of the strengths and weaknesses of current and potential competitors. This analysis provides both an offensive and defensive strategic context to identify opportunities and threats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Dancing_with_the_Stars_(American_TV_series)_competitors">List of Dancing with the Stars (American TV series) competitors</a></td>
+      <td>Dancing with the Stars is an American reality television show in which celebrity contestants and professional dance partners compete to be the best dancers, as determined by the show's judges and public voting. The series first broadcast in 2005, and thirty complete seasons have aired on ABC. During each season, competitors are progressively eliminated on the basis of public voting and scores received from the judges until only a few contestants remain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_Group">Competitor Group</a></td>
+      <td>Competitor Group, Inc. (CGI) is a privately held, for-profit, sports marketing and management company based in Mira Mesa, San Diego, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Round-robin_tournament">Round-robin tournament</a></td>
+      <td>A round-robin tournament (or all-play-all tournament) is a competition in which each contestant meets every other participant, usually in turn. A round-robin contrasts with an elimination tournament, in which participants are eliminated after a certain number of losses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_price">List price</a></td>
+      <td>The list price, also known as the manufacturer's suggested retail price (MSRP), or the recommended retail price (RRP), or the suggested retail price (SRP) of a product is the price at which its manufacturer notionally recommends that a retailer sell the product.\nSuggested pricing methods may conflict with competition theory, as they allow prices to be set higher than would be established by supply and demand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Value_chain">Value chain</a></td>
+      <td>A value chain is a set of activities that a firm operating in a specific industry performs in order to deliver a valuable product (i.e., good and/or service) to the end customer. The concept comes through business management and was first described  by Michael Porter in his 1985 best-seller, Competitive Advantage: Creating and Sustaining Superior Performance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agricultural_value_chain">Agricultural value chain</a></td>
+      <td>Agricultural value chain is to the integrated range of goods and services (value chain) necessary for an agricultural product to move from the producer to the final consumer. The concept has been used since the beginning of the millennium, primarily by those working in agricultural development in developing countries, although there is no universally accepted definition of the term.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_value_chain">Knowledge value chain</a></td>
+      <td>A knowledge value chain is a sequence of intellectual tasks by which knowledge workers build their employer's unique competitive advantage  and/or social and environmental benefit. As an example, the components of a research and development project form a knowledge value chain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Supply_chain">Supply chain</a></td>
+      <td>In commerce, a supply chain is a system within organizations, people, activities, information, and resources involved in\nsupplying a product or service to a consumer. Supply chain activities involve the transformation of natural resources, raw materials, and components into a finished product and delivering the same to the end customer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_trade_theory">International trade theory</a></td>
+      <td>International trade theory is a sub-field of economics which analyzes the patterns of international trade, its origins, and its welfare implications. International trade policy has been highly controversial since the 18th century.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agribusiness">Agribusiness</a></td>
+      <td>Agribusiness refers to the enterprises, the industry, and the field of study of  value chains in agriculture and in the bio-economy,\nin which case it is also called bio-business or bio-enterprise. \nThe primary goal of agribusiness is to maximize profit while sustainably satisfying the needs of consumers for products related to natural resources such as biotechnology, farms, food, forestry, fisheries, fuel, and fiber — usually with the exclusion of non-renewable resources such as mining.Studies of business growth and performance in farming have found successful agricultural businesses are cost-efficient internally and operate in favorable economic, political, and physical-organic environments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Creating_shared_value">Creating shared value</a></td>
+      <td>Creating shared value (CSV) is a business concept first introduced in Harvard Business Review article Strategy &amp; Society: The Link between Competitive Advantage and Corporate Social Responsibility. The concept was further expanded in the January 2011 follow-up piece entitled "Creating Shared Value: Redefining Capitalism and the Role of the Corporation in Society".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/E-commerce">E-commerce</a></td>
+      <td>Commerce is the exchange of goods and services, especially on a large scale.\n\n\n== Etymology ==\nThe English-language word commerce has been derived from the Latin word commercium, from com ("together") and merx ("merchandise").</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deployment">Deployment</a></td>
+      <td>Employment is a relationship between two parties regulating the provision of paid labour services.  Usually based on a contract, one party, the employer, which might be a corporation, a not-for-profit organization, a co-operative, or any other entity, pays the other, the employee, in return for carrying out assigned work.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_deployment">Software deployment</a></td>
+      <td>Software deployment is all of the activities that make a software system available for use.The general deployment process consists of several interrelated activities with possible transitions between them. These activities can occur at the producer side or at the consumer side or both.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deployment_diagram">Deployment diagram</a></td>
+      <td>A deployment diagram in the Unified Modeling Language models the physical deployment of artifacts on nodes.  To describe a web site, for example, a deployment diagram would show what hardware components ("nodes") exist (e.g., a web server, an application server, and a database server), what software components ("artifacts") run on each node (e.g., web application, database), and how the different pieces are connected (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/System_deployment">System deployment</a></td>
+      <td>The deployment of a mechanical device, electrical system, computer program, etc., is its assembly or transformation from a packaged form to an operational working state.\nDeployment implies moving a product from a temporary or development state to a permanent or desired state.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/IT_infrastructure_deployment">IT infrastructure deployment</a></td>
+      <td>IT infrastructure deployment typically involves defining the sequence of operations or steps, often referred to as a deployment plan, that must be carried to deliver changes into a target system environment. The individual operations within a deployment plan can be executed manually or automatically.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/IPv6_deployment">IPv6 deployment</a></td>
+      <td>Deployment of Internet Protocol Version 6 (IPv6), the latest generation of the Internet Protocol, has been in progress since the mid-2000s.\nIPv6 was designed as a replacement for IPv4.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deployment_environment">Deployment environment</a></td>
+      <td>In software deployment, an environment, or tier is a computer system or set of systems in which a computer program or software component is deployed and executed. In simple cases, such as developing and immediately executing a program on the same machine, there may be a single environment, but in industrial use, the development environment (where changes are originally made) and production environment (what end users use) are separated, often with several stages in between.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Continuous_deployment">Continuous deployment</a></td>
+      <td>Continuous deployment (CD) is a software engineering approach in which software functionalities are delivered frequently through automated deployments. CD contrasts with continuous delivery, a similar approach in which software functionalities are also frequently delivered and deemed to be potentially capable of being deployed but are actually not deployed.In an environment in which data-centric microservices provide the functionality, and where the microservices can have multiple instances, CD consists of instantiating the new version of a microservice and retiring the old version once it has drained all the requests in flight.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CATALINA MARKETING CORP/DE      Item 1A Risk Factors        Risk Factors Relating to Our Business        Increased <font color="blue"><font color="blue">competition</font> could reduce</font> the demand for our services, <font color="blue">which could</font>     have a material adverse effect on our business, <font color="blue">financial condition</font>, results     of <font color="blue">operations</font> and business prospects</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>in the promotions and <font color="blue">marketing services</font> business is intense and     includes  many  <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>We  compete  for  CPG and <font color="blue">pharmaceutical</font>     <font color="blue"><font color="blue">manufacture</font>r</font> <font color="blue">advertising</font> and consumer promotion budgets with a wide range of     media including <font color="blue">television</font>, radio, print and direct mail <font color="blue">advertising</font>, as     well as several <font color="blue">alternative</font> in-store and point-of-sale programs</td>
+    </tr>
+    <tr>
+      <td>While we     believe we provide unique, cost-effective targeted <font color="blue">marketing services</font>, there     are many <font color="blue">parameters on which</font> a CPG <font color="blue"><font color="blue">manufacture</font>r</font>, <font color="blue">pharmaceutical</font> <font color="blue"><font color="blue">manufacture</font>r</font>     or <font color="blue">retailer may base</font> its decision to allocate <font color="blue">advertising</font> or promotional     <font color="blue">expenditures</font>, and there can be no assurance that our <font color="blue">services will continue</font>     to <font color="blue">compete <font color="blue">effectively</font> against</font> other formats or that CPG and <font color="blue">pharmaceutical</font>     <font color="blue"><font color="blue">manufacture</font>r</font>s and retailers will continue to use our <font color="blue">marketing services</font></td>
+    </tr>
+    <tr>
+      <td>We     also expect our <font color="blue">competitors</font> to continue to improve the performance of their     <font color="blue">current products</font> or services, to <font color="blue">reduce sales prices</font> of their existing     products and services and to <font color="blue">introduce new products</font> or services that may     <font color="blue">offer greater performance</font> and <font color="blue">improved pricing</font></td>
+    </tr>
+    <tr>
+      <td>In addition, changes in     <font color="blue"><font color="blue">technology</font> may enable merchants</font> and <font color="blue">retail companies</font> to implement or install     their own <font color="blue">proprietary</font> point-of-sale systems or provide other solutions for     the <font color="blue">distribution</font> of <font color="blue">communications</font> and messages</td>
+    </tr>
+    <tr>
+      <td>”       A shift in <font color="blue">consumer purchasing trends</font> for <font color="blue">certain <font color="blue">categories</font></font> of products     <font color="blue">from traditional retail supermarkets may</font> cause a decrease in the <font color="blue">utilization</font>     of our services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>retailers including <font color="blue">mass marketers</font> and <font color="blue">value chains</font> do not use     us  for  their  <font color="blue">marketing services</font> for the <font color="blue">distribution</font> of coupons and     <font color="blue">communications</font></td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue">retailers utilize</font> our <font color="blue">competitors</font> for <font color="blue">such services</font> and     some conduct <font color="blue">such services</font> in-house or otherwise allocate their marketing     dollars  to  other <font color="blue">media outlets</font></td>
+    </tr>
+    <tr>
+      <td>Mass marketers and <font color="blue">value chains</font> have     <font color="blue"><font color="blue">significant</font>ly increased</font> their presence in the grocery business and retail     <font color="blue">industry over</font> the <font color="blue">last several years</font></td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue">mass marketers</font> and <font color="blue">value chains</font>,     including Wal-Mart, are not our clients</td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">mass marketers</font> and <font color="blue">value chains</font>     such  as Wal-Mart increase their presence in the grocery business, the     percentage  of <font color="blue">retail grocery purchases</font> that occur in stores where our     networks are <font color="blue">installed may decrease</font></td>
+    </tr>
+    <tr>
+      <td>The impact of the increased presence of     mass  marketers and <font color="blue">value chains</font> is <font color="blue">particularly</font> pronounced in certain     product  <font color="blue">categories</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  if <font color="blue">consumers continue</font> to shift to     <font color="blue">alternative</font> shopping channels, like club stores, <font color="blue">mass merchandisers</font> and     value  chains, the ability and <font color="blue">effectiveness</font> of the Catalina Marketing     Network^^®^  to  reach retail shoppers may decline</td>
+    </tr>
+    <tr>
+      <td>Any such change in     <font color="blue">shopping behavior could</font> have a material adverse effect on our results of     <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">dependent on</font> the <font color="blue">promotional spending</font> of our <font color="blue"><font color="blue">manufacture</font>r</font>     and retail partners, which may be effected by seasonal, economic and other     <font color="blue">factors over which</font> we have no control</td>
+    </tr>
+    <tr>
+      <td>In general, we expect our revenues to be <font color="blue">greater during periods</font> of increased     promotional activity by <font color="blue"><font color="blue">manufacture</font>r</font>s</td>
+    </tr>
+    <tr>
+      <td>As a result, the pattern of promotion     <font color="blue">distribution</font> can be irregular and may change from period to period depending     on various factors, including the economy, <font color="blue">competition</font>, the timing of new     product <font color="blue">introductions</font> and the timing of <font color="blue"><font color="blue">manufacture</font>r</font>s’ promotion planning     and <font color="blue">implementation</font></td>
+    </tr>
+    <tr>
+      <td>In addition, this <font color="blue">pattern may</font> be <font color="blue">affected by seasonal</font>     factors such as holiday-related promotions and <font color="blue">annual budgeting processes</font>     <font color="blue">affecting</font> when our <font color="blue">clients use promotional</font> and consumer-related expenditure     budgets</td>
+    </tr>
+    <tr>
+      <td>These factors, as well as the overall changes in the number of     contracts we have <font color="blue">with retailer</font> and <font color="blue"><font color="blue">manufacture</font>r</font> clients, the timing of     changes  of  the  <font color="blue">installed store base</font> and access to revenue producing     <font color="blue">transactions</font>, may impact our revenues and profits in any <font color="blue">particular period</font></td>
+    </tr>
+    <tr>
+      <td>8     ______________________________________________________________________    [33]Table of <font color="blue">Contents       </font>Our <font color="blue">success depends on</font> our <font color="blue">relationships</font> <font color="blue">with retailer</font>s and pharmacies that     <font color="blue">provide access</font> to consumers in their <font color="blue">retail locations</font> and we <font color="blue">rely on data</font>     <font color="blue">provided <font color="blue">from retailers</font></font> and pharmacies to trigger and report on the delivery     of our services</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on retail stores</font> and pharmacies to <font color="blue">provide access</font> to <font color="blue">transactions</font>     <font color="blue">with consumers</font> and allow us to install the Catalina Marketing Network^® and     <font color="blue">Health Resource Network </font>on their premises</td>
+    </tr>
+    <tr>
+      <td>We believe that our <font color="blue">relationships</font>     with our <font color="blue">current retail</font> and <font color="blue">pharmacy clients</font> are strong; however, in the     past, some retailers and pharmacies have required us to remove our network     from their stores or <font color="blue">negotiate <font color="blue">significant</font>ly different</font> or <font color="blue">less advantageous</font>     terms in order for us to maintain networks in their stores</td>
+    </tr>
+    <tr>
+      <td>Should any of     our <font color="blue"><font color="blue">significant</font> retailers</font> or <font color="blue">pharmacy chains reduce</font> in size, cease to exist,     not renew our <font color="blue">agreements</font>, require us to remove our <font color="blue">network equipment</font> or     negotiate  terms  <font color="blue">with us which</font> are <font color="blue">less advantageous</font> than our current     <font color="blue">agreements</font>,  the  ability  and <font color="blue">effectiveness</font> of the Catalina Marketing     Network^® or <font color="blue">Health Resource Network </font>to reach retail shoppers and access     <font color="blue">transactions</font> could be reduced and/or the <font color="blue">profitability</font> of our <font color="blue">operations</font>     could be reduced</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consolidations </font>between our <font color="blue">current retail</font> and <font color="blue">pharmacy network partners</font> and     companies that do not utilize our <font color="blue">networks may</font> decrease the <font color="blue">installation</font>     base  of  our  networks  and  reduce  the <font color="blue">utilization</font> of our services</td>
+    </tr>
+    <tr>
+      <td>Internationally, certain <font color="blue">value chains</font> and <font color="blue">mass marketers</font> continue to make     <font color="blue">acquisitions</font> in the <font color="blue">retail industry</font></td>
+    </tr>
+    <tr>
+      <td>Further <font color="blue">significant</font> <font color="blue">acquisitions</font> and     <font color="blue">consolidations could</font> have a material <font color="blue">impact on</font> our ability to maintain and     expand our international <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">rely on data</font> provided by our retailers and pharmacies to     trigger  and  report  on the delivery of our <font color="blue">services on behalf</font> of our     <font color="blue"><font color="blue">manufacture</font>r</font> clients as well as provide a database to target <font color="blue">transactions</font>     <font color="blue">based on purchase history</font></td>
+    </tr>
+    <tr>
+      <td>Any change, <font color="blue">interruption</font> or <font color="blue">inaccuracy</font> of the     data provided by our retailers and <font color="blue">pharmacies could impact</font> the services we     offer  to  our  clients  as  well  as the data we utilize to report on     <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>We may not succeed in our effort to develop <font color="blue">new services</font> or <font color="blue">enter new retail</font>     channels and achieve <font color="blue">future growth</font></td>
+    </tr>
+    <tr>
+      <td>A key element of our <font color="blue">growth strategy</font> is the <font color="blue">development</font> and sale of new     services  and  entry  <font color="blue">into new <font color="blue">retail channels</font></font></td>
+    </tr>
+    <tr>
+      <td>While <font color="blue">new services</font> are     currently under <font color="blue">development</font>, there can be no assurance that we will be able     to <font color="blue">successfully</font> develop and market <font color="blue">new services</font></td>
+    </tr>
+    <tr>
+      <td>In addition, while we have     <font color="blue">dedicated <font color="blue">significant</font> resources</font> to expanding our CMS business into new     <font color="blue">retail channels</font> beyond our foundation in the <font color="blue">grocery channel</font>, including     <font color="blue">installation</font>s in <font color="blue">drug stores</font> and <font color="blue">mass merchandisers</font> and <font color="blue">pilot tests</font> in     convenience  stores,  there  is  no  guaranty  that we will be able to     <font color="blue">successfully</font> operate in these <font color="blue">retail channels</font>, or that we will achieve     <font color="blue">revenue growth from</font> these channels</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> or failure to enter new     retail  channels,  devise  new  marketing  services or to complete the     <font color="blue">development</font> or <font color="blue">implementation</font> of particular services for use on a large     scale, or the failure of <font color="blue">such services</font> to achieve market <font color="blue">acceptance</font>, could     <font color="blue"><font color="blue">adversely</font> affect</font> our ability to achieve a <font color="blue">significant</font> part of our growth     strategy</td>
+    </tr>
+    <tr>
+      <td>The absence of <font color="blue">such growth could</font> have a material adverse effect on     our business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>To retain and     attract <font color="blue"><font color="blue">manufacture</font>r</font>s, retailers and pharmacies, we believe that we must     continue to <font color="blue">introduce <font color="blue">additional</font> successful services</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">development</font> and     <font color="blue">deployment</font> of <font color="blue">new services</font> may require <font color="blue">significant</font> <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>Our  proposed  enhanced  and <font color="blue">expanded <font color="blue">service offerings</font></font>, including the     <font color="blue">deployment</font> of <font color="blue">color printers</font>, will require <font color="blue">significant</font> capital <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>We have announced that we are currently working on the <font color="blue">deployment</font> of color     <font color="blue">ink jet printers</font> in our <font color="blue">existing retail network</font> in place of certain of our     existing thermal black-and-white printers, and that we have and continue to     pursue <font color="blue">agreements</font> to install our networks in new <font color="blue">retail channels</font>, including     retail <font color="blue">drug stores</font> and <font color="blue">mass merchandisers</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">efforts will</font> require a     substantial increase in our capital <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>In addition, these efforts     differ to some <font color="blue">degree from</font> our historical business and, as a result, carry     <font color="blue"><font color="blue">additional</font> risks</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">deployment</font> of color <font color="blue">ink jet printers</font> in our <font color="blue">existing retail network</font> will     require substantial <font color="blue">expenditures</font> to acquire and <font color="blue">install <font color="blue">such printers</font></font> and,     in some instances, will replace existing thermal black-and-white printers     that may not have reached the end of their useful lives, which we plan to     <font color="blue">redeploy elsewhere</font></td>
+    </tr>
+    <tr>
+      <td>Color <font color="blue">printers will</font> require new and <font color="blue"><font color="blue">additional</font> efforts</font>     and <font color="blue">potential costs</font> to be <font color="blue">expended by</font> our retailers, including the use and     <font color="blue">management</font> of <font color="blue">additional</font> <font color="blue">consumables</font>, such as ink and non-thermal paper,     changes in software, hardware and wiring and other logistics steps not     required by our <font color="blue">current network</font> of thermal black-and-white printers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">While     </font>we are working with Epson and other vendors to try to simplify the use,     servicing and supply of <font color="blue">such printers</font> and the required <font color="blue">consumables</font>, we     cannot  <font color="blue">provide assurance</font> that <font color="blue"><font color="blue">difficult</font>ies will</font> not be <font color="blue">encountered</font> in     installing,  using and servicing <font color="blue">such printers</font> and the <font color="blue">consumables</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, while we believe the design of the printers and <font color="blue">consumables</font> will     operate <font color="blue">effectively</font> and <font color="blue">efficiently</font> when deployed and operated in the field,     due to the fact that the printers are <font color="blue">highly customized</font> and have not been     tested in mass production, there can be no assurance that the timing of     <font color="blue">manufacture</font> and delivery of the printers and <font color="blue">consumables</font> will move forward     <font color="blue">as currently</font> planned, that the printers and <font color="blue">consumables</font> will operate in     <font color="blue"><font color="blue">accordance</font> with specifications</font>, that we will experience operating                                           9     ______________________________________________________________________    [34]Table of <font color="blue">Contents       </font><font color="blue">re<font color="blue">liability</font> consistent with</font> our current thermal black-and-white printers or     that we will not experience a <font color="blue">significant</font> number of failures resulting from     design, <font color="blue">manufacture</font>, operation or other causes</td>
+    </tr>
+    <tr>
+      <td>Furthermore, while we expect     color  printing to enhance the <font color="blue">effectiveness</font> of our clients’ marketing     efforts  or increase the <font color="blue">redemption rates</font> of <font color="blue">incentives printed on</font> our     network, a <font color="blue"><font color="blue">track record verifying</font> such goal</font> has not <font color="blue">yet been established</font></td>
+    </tr>
+    <tr>
+      <td>Hence,  the  <font color="blue">deployment</font>  of  color  <font color="blue">printers will</font> involve the use of a     substantial  amount  of  <font color="blue">capital with</font> a risk that <font color="blue"><font color="blue">difficult</font>ies will</font> be     <font color="blue">encountered</font> in installing and using them and that they may not gain the     <font color="blue">acceptance</font> we desire <font color="blue">from retailers</font> and our <font color="blue"><font color="blue">manufacture</font>r</font> clients</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Such     </font><font color="blue">outcome could</font> have a material adverse effect on our results of <font color="blue">operations</font>     and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">deployment</font> and expansion of our <font color="blue">existing networks</font> in new <font color="blue">retail channels</font>     and markets that we have not <font color="blue">historically served</font>, including the <font color="blue">retail drug</font>     store market, will require a <font color="blue">significant</font> amount of capital <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Manufacturer </font><font color="blue">clients using</font> our services for new <font color="blue">retail channels</font> may differ,     to  some extent, from our <font color="blue">historical <font color="blue">client base</font> due</font> to the nature and     quantity of items carried in these <font color="blue">retail channels</font></td>
+    </tr>
+    <tr>
+      <td>While we expect the     <font color="blue">deployment</font>  of  our  network  in  new  retail  channels to enhance the     <font color="blue">effectiveness</font> of our clients’ marketing efforts, a <font color="blue">track record verifying</font>     such goal has not <font color="blue">yet been established</font></td>
+    </tr>
+    <tr>
+      <td>As a result, the <font color="blue">deployment</font> of our     network in new <font color="blue">retail channels</font> will involve the use of a substantial amount     of <font color="blue">capital with</font> a risk that it may not gain the <font color="blue">acceptance</font> we desire from     our clients</td>
+    </tr>
+    <tr>
+      <td>Such result could have a material adverse effect on our results     of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>anticipated <font color="blue">new <font color="blue">initiatives</font></font>, including the <font color="blue">deployment</font> of color     printers, will impact our resources and <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We have announced that we are currently working on several <font color="blue">significant</font>     <font color="blue">initiatives</font> including the <font color="blue">deployment</font> of <font color="blue">color printers</font> in our CMS grocery     network  and  pursuit  of  new  retail  channels</td>
+    </tr>
+    <tr>
+      <td>As a result of these     <font color="blue">initiatives</font>, subject to the timing and success of these <font color="blue">initiatives</font>, we will     experience an <font color="blue">increased demand on</font> our resources and <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>Loss of data center <font color="blue">capacity</font> or <font color="blue">interruption</font> of <font color="blue">telecommunication</font> links     could <font color="blue"><font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>Our ability to protect our <font color="blue">data centers</font> against damage from fire, power     loss, tele<font color="blue">communications</font> failure, hurricanes or other <font color="blue">disasters</font> is critical     to our future</td>
+    </tr>
+    <tr>
+      <td>We believe we have <font color="blue">taken reasonable precautions</font> to protect     our  data  centers  and <font color="blue">telecommunication</font> links from events that could     interrupt our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Any damage to our <font color="blue">data centers</font> or any failure of     our tele<font color="blue">communications</font> links that causes <font color="blue">interruption</font>s in our <font color="blue">operations</font>     could  materially  <font color="blue">adversely</font>  affect  our ability to meet our clients’     <font color="blue">requirements</font>, <font color="blue">which could</font> result in a material adverse effect on our results     of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>A breach of our <font color="blue">network security could</font> result in <font color="blue">liability</font> to us and deter     <font color="blue">customers from using</font> our services</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">networks may</font> be vulnerable to unauthorized access, <font color="blue">computer viruses</font> and     other <font color="blue">disruptive problems</font></td>
+    </tr>
+    <tr>
+      <td>Any of the <font color="blue">foregoing problems could</font> result in     <font color="blue">liability</font> to us, decrease the confidence of our <font color="blue"><font color="blue">manufacture</font>r</font> and retail     <font color="blue">client base</font> and deter <font color="blue">customers from using</font> our services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unauthorized </font>access     <font color="blue">could jeopardize</font> the security of <font color="blue">confidential</font> information related to our     Company stored in our <font color="blue">computer systems</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Eliminating </font><font color="blue">computer viruses</font> and     <font color="blue">alleviating</font> other <font color="blue">security problems may</font> require <font color="blue">interruption</font>s, delays or     cessation of service, cause us to incur <font color="blue">significant</font> costs to remedy the     problem and divert <font color="blue">management</font>’s attention</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">provide no assurance</font> that     the <font color="blue">security measures</font> we have <font color="blue">implemented will</font> not be <font color="blue">circumvented</font> or that     any failure of these <font color="blue">measures will</font> not have a material adverse effect on our     ability to obtain and retain customers</td>
+    </tr>
+    <tr>
+      <td>Failure to defend our <font color="blue">intellectual</font> property rights may harm our <font color="blue">competitive</font>     position, and <font color="blue">litigation</font> to protect our <font color="blue">intellectual</font> property rights could     be costly</td>
+    </tr>
+    <tr>
+      <td>We hold <font color="blue">United States </font>and foreign patents on various aspects of the process     of promotion and communication <font color="blue">distribution</font>, and have applied for <font color="blue">additional</font>     patents</td>
+    </tr>
+    <tr>
+      <td>In addition, we regard <font color="blue">certain computer software</font> and <font color="blue">each service</font>     <font color="blue"><font color="blue">application</font> as <font color="blue">proprietary</font></font> and attempt to <font color="blue">protect them through copyright</font> and     trade  secret  laws and internal non-<font color="blue">disclosure</font> <font color="blue">agreements</font> and similar     <font color="blue">safeguards</font></td>
+    </tr>
+    <tr>
+      <td>Certain aspects of our <font color="blue">services may</font> not be <font color="blue">adequately protected</font>     <font color="blue">from <font color="blue">infringement</font></font> or copying</td>
+    </tr>
+    <tr>
+      <td>Further, there can be no assurance that our     patents or <font color="blue">trademarks would</font> be upheld if challenged or that <font color="blue">competitors</font>     might not develop similar or superior processes or <font color="blue">services outside</font> the     protection of any <font color="blue">patents issued</font> to us</td>
+    </tr>
+    <tr>
+      <td>Third  parties  may  infringe  or  <font color="blue">misappropriate</font> our patents or other     <font color="blue">intellectual</font> property rights, <font color="blue">which could</font> have a material adverse effect on     our business, <font color="blue">financial condition</font> or operating results</td>
+    </tr>
+    <tr>
+      <td>The actions we take     to protect our patents and other <font color="blue"><font color="blue"><font color="blue">proprietary</font> rights</font> may</font> not be adequate</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>may be <font color="blue">necessary</font> to enforce our <font color="blue">intellectual</font> property rights,     protect  our  <font color="blue">trade secrets</font> or determine the validity and scope of the     <font color="blue"><font color="blue">proprietary</font> rights</font> of others</td>
+    </tr>
+    <tr>
+      <td>We cannot <font color="blue">provide assurance</font> that we will be     able  to  prevent  <font color="blue">infringement</font> of our <font color="blue">intellectual</font> property rights or     <font color="blue">misappropriation</font> of our <font color="blue">proprietary</font> information</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">litigation</font> is     time-consuming and expensive to defend and could result in the diversion of     our time and resources</td>
+    </tr>
+    <tr>
+      <td>Any claims <font color="blue">from <font color="blue">third parties may</font> also</font> result in     <font color="blue"><font color="blue">limitations</font> on</font> our ability to use the <font color="blue">intellectual</font> property subject to these     claims</td>
+    </tr>
+    <tr>
+      <td>”                                           10     ______________________________________________________________________    [35]Table of <font color="blue">Contents       </font>Intellectual property <font color="blue">litigation</font> <font color="blue">against us</font> could be costly and could result     in the loss of <font color="blue">significant</font> rights</td>
+    </tr>
+    <tr>
+      <td>We expect that, as we continue to expand our <font color="blue">service offerings</font> and the     number of <font color="blue">competitors</font> in <font color="blue">targeted marketing grows</font>, we may be <font color="blue">increasingly</font>     subject  to <font color="blue">intellectual</font> property <font color="blue">infringement</font>, unfair <font color="blue">competition</font> and     related claims <font color="blue">against us</font></td>
+    </tr>
+    <tr>
+      <td>Third <font color="blue">parties may also seek</font> to <font color="blue">invalidate certain</font>     of our patents</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">competitors</font> and <font color="blue">third parties may</font>, in the     future, name our clients as <font color="blue">defendants</font> in lawsuits, which may cause these     clients to terminate their <font color="blue">relationships</font> with us</td>
+    </tr>
+    <tr>
+      <td>Our efforts to defend     these <font color="blue">actions may</font> not be successful</td>
+    </tr>
+    <tr>
+      <td>Our failure to prevail in this type of     <font color="blue">litigation</font> could result in our paying monetary damages (<font color="blue">which could</font> be     tripled if the <font color="blue">infringement</font> is found to have <font color="blue">been willful</font>); an injunction     requiring us to <font color="blue">stop offering</font> our services in their current form; our having     to redesign our <font color="blue">technology</font> and business methods, <font color="blue">which could</font> be costly and     time-consuming, even where a redesign is feasible; or our having to pay fees     to license <font color="blue">intellectual</font> property rights, which may result in <font color="blue">unanticipated</font>     or higher operating costs</td>
+    </tr>
+    <tr>
+      <td>Any third-party claims, with or <font color="blue">without merit</font>,     could be time consuming, result in costly <font color="blue">litigation</font> and damages, cause us     to reduce or alter our services, delay or <font color="blue">prevent service enhancements</font> or     require us to <font color="blue">enter into royalty</font> or licensing <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Legislation </font> </font>relating  to  consumer  privacy and changes in <font color="blue">government</font>     <font color="blue"><font color="blue">regulations</font> could affect</font> our ability to deliver targeted <font color="blue">communications</font> and     <font color="blue">collect data</font> that we use in providing our <font color="blue">marketing services</font>, <font color="blue">which could</font>     <font color="blue"><font color="blue">negatively</font> affect</font> our ability to satisfy our clients’ needs</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">enactment</font> of <font color="blue">legislation</font> related to <font color="blue">consumer privacy issues could</font> have a     material adverse <font color="blue">impact on</font> our <font color="blue">marketing services</font></td>
+    </tr>
+    <tr>
+      <td>Any such <font color="blue">legislation</font>     could place <font color="blue">restrictions upon</font> the <font color="blue">collection</font> and use of information that is     currently legally available, <font color="blue">which could</font> materially increase our cost of     managing or collecting some data</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Legislation </font>or industry regulation could     also prohibit us from collecting or <font color="blue">disseminating</font> certain types of data,     coupons, promotions, messages or <font color="blue">newsletters</font>, <font color="blue">which could</font> <font color="blue"><font color="blue">adversely</font> affect</font>     our ability to meet our clients’ <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>With  respect to CHR’s Health Resource Network, our ability to provide     consumers with condition-specific health information and direct-to-patient     <font color="blue">communications</font> may be <font color="blue"><font color="blue">adversely</font> affect</font>ed by concerns over heath regulatory     <font color="blue">guidelines</font> and publicity regarding a patient’s rights to privacy</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory     </font>changes in some <font color="blue">jurisdictions</font> have increased <font color="blue"><font color="blue">manufacture</font>r</font> and retailer     <font color="blue">sensitivity</font>  and  <font color="blue">selectiveness as</font> to what types of messages they will     distribute in these <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td>In addition, changes in the laws and     <font color="blue">regulations</font> or manner of <font color="blue">enforcement</font> of such laws and <font color="blue">regulations</font> could     <font color="blue">negatively</font>  impact our business and cause us to change our services or     systems</td>
+    </tr>
+    <tr>
+      <td>While we are currently working with our <font color="blue"><font color="blue">manufacture</font>r</font> and retailer     clients  to  find  an <font color="blue">adequate solution</font> to these concerns, there is no     guarantee that we will be able to continue to <font color="blue">distribute prints</font> for these     clients  or  that <font color="blue">there will</font> not be <font color="blue">additional</font> changes in the laws and     <font color="blue">regulations</font> in these and other <font color="blue">jurisdictions</font> that <font color="blue">will further impact</font> our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>See Item 1 — “<font color="blue">Government Regulation</font></td>
+    </tr>
+    <tr>
+      <td>”       <font color="blue">Compliance </font>with changes in the <font color="blue">securities laws</font> and <font color="blue">regulations</font>, including     the Sarbanes-Oxley Act of 2002, is likely to increase our costs</td>
+    </tr>
+    <tr>
+      <td>The Sarbanes-Oxley Act of 2002 that became law in July 2002 (the “Act”) has     required changes in some of our corporate governance, securities <font color="blue">disclosure</font>     and <font color="blue">compliance practices</font></td>
+    </tr>
+    <tr>
+      <td>In response to the <font color="blue">requirements</font> of that Act, the     <font color="blue">SEC and the NYSE </font>have <font color="blue">promulgated new rules</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these new rules     has increased our legal and financial and <font color="blue"><font color="blue">accounting</font> costs</font>, and we expect     these  increased  costs to <font color="blue">continue indefinitely</font></td>
+    </tr>
+    <tr>
+      <td>We also expect these     <font color="blue">development</font>s to make it more <font color="blue">difficult</font> and more expensive for us to obtain     director and officer <font color="blue">liability</font> insurance, and we may be forced to accept     <font color="blue">reduced coverage</font> or <font color="blue">incur substantially higher costs</font> to maintain or obtain     coverage</td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">development</font>s may make it more <font color="blue">difficult</font> for us     to  attract  and retain <font color="blue">qualified members</font> of our board of <font color="blue">directors</font> or     <font color="blue">qualified executive officers</font></td>
+    </tr>
+    <tr>
+      <td>Due to inherent <font color="blue">limitations</font>, there can be no assurance that our system of     <font color="blue">disclosure</font>  and <font color="blue">internal controls</font> and procedures will be successful in     preventing all errors or fraud, or in informing <font color="blue">management</font> of all material     information in <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">management</font>,  including  our CEO and CFO, does not expect that our     <font color="blue">disclosure</font> controls and <font color="blue">internal controls</font> and <font color="blue">procedures will prevent</font> all     error and all fraud</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">control system</font>, no matter how well conceived and     operated, can <font color="blue">provide only reasonable</font>, not absolute, assurance that the     <font color="blue">objectives</font> of the <font color="blue">control system</font> are met</td>
+    </tr>
+    <tr>
+      <td>Further, the design of a control     <font color="blue">system must reflect</font> the fact that there are <font color="blue">resource constraints</font>, and the     benefits of <font color="blue">controls must</font> be considered relative to their costs</td>
+    </tr>
+    <tr>
+      <td>Because of     the inherent <font color="blue">limitations</font> in all <font color="blue">control system</font>s, <font color="blue">no evaluation</font> of controls     can provide <font color="blue">absolute assurance</font> that all control issues and instances of     fraud,  if  any, within <font color="blue">the Company </font>have been detected</td>
+    </tr>
+    <tr>
+      <td>These inherent     <font color="blue">limitations</font> include the realities that judgments in decision-making can be     faulty and that <font color="blue">breakdowns</font> can occur because of <font color="blue">simple error</font> or mistake</td>
+    </tr>
+    <tr>
+      <td>Additionally, controls can be <font color="blue">circumvented</font> by the individual acts of some     persons, by collusion of two or more people, or by <font color="blue">management</font> override of     the control</td>
+    </tr>
+    <tr>
+      <td>The design of any system of <font color="blue">controls also</font> is based in part upon certain     <font color="blue"><font color="blue">assumptions</font> about</font> the likelihood of <font color="blue">future events</font>, and there can be no     assurance that any <font color="blue">design will</font> succeed in achieving its stated <font color="blue">goals under</font>     all <font color="blue">potential future <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>Over time, a <font color="blue">control may become</font> inadequate     because of changes in <font color="blue">conditions</font>, or the degree of <font color="blue">compliance with</font> the     policies  or  procedures  may  <font color="blue">deteriorate</font></td>
+    </tr>
+    <tr>
+      <td>Because of these inherent     <font color="blue">limitations</font>, <font color="blue">misstatements</font> due to error or fraud may occur and may not be     detected</td>
+    </tr>
+    <tr>
+      <td>11     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>There  are inherent uncertainties involved in estimates, judgments and     <font color="blue"><font color="blue">assumptions</font> used</font> in the <font color="blue">preparation</font> of <font color="blue">financial statements</font> in <font color="blue">accordance</font>     with <font color="blue">U S GAAP Any </font>changes in estimates, judgments and <font color="blue"><font color="blue">assumptions</font> could</font>     have a material adverse effect on our business, <font color="blue">financial position</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">consolidated</font> and condensed <font color="blue">consolidated</font> <font color="blue">financial statements</font> included in     the periodic reports we file with the SEC are prepared in <font color="blue">accordance</font> with     <font color="blue"><font color="blue">accounting</font> principles generally accepted</font> in the <font color="blue">United States </font>of America     (“US GAAP”)</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">preparation</font> of <font color="blue">financial statements</font> in <font color="blue">accordance</font> with     US GAAP involves making estimates, judgments and <font color="blue">assumptions</font> that affect     reported amounts of assets, liabilities, revenues, expenses and income</td>
+    </tr>
+    <tr>
+      <td>Estimates, judgments and <font color="blue">assumptions</font> are inherently subject to change in the     future, and any such changes could result in <font color="blue">corresponding</font> changes to the     amounts of assets, liabilities, revenues, expenses and income</td>
+    </tr>
+    <tr>
+      <td>Any such     changes could have a material adverse effect on our <font color="blue">financial position</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Changes to financial <font color="blue">accounting</font> standards may affect our reported results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A change in <font color="blue">accounting</font> standards could have a <font color="blue">significant</font> effect on our     reported results and may affect our <font color="blue">previously</font> reported <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>New     <font color="blue">pronouncements</font> and <font color="blue">varying interpretations</font> of existing <font color="blue">pronouncements</font> have     occurred and may occur in the future</td>
+    </tr>
+    <tr>
+      <td>Changes to existing <font color="blue">accounting</font> rules     or the <font color="blue">application</font> of existing U S GAAP may <font color="blue"><font color="blue">adversely</font> affect</font> our reported     financial results, <font color="blue">which could</font> result in a decrease in the value of our     stock price</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Shareholder Lawsuits        We, and certain of our current and former <font color="blue">directors</font> and <font color="blue">former officers</font>, are     <font color="blue">defendants</font> in several stockholder class action lawsuits</td>
+    </tr>
+    <tr>
+      <td>We, and certain current and former <font color="blue">directors</font> and <font color="blue">former officers</font> of the     Company and CHR, were named as <font color="blue">defendants</font> in <font color="blue">numerous complaints purporting</font>     to be class <font color="blue">actions which</font> were <font color="blue">consolidated</font> in the <font color="blue">United States </font>District     Court for the Middle District of Florida</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">complaints seek unspecified</font>     <font color="blue">compensatory damages</font> and other relief</td>
+    </tr>
+    <tr>
+      <td>In addition, certain current and     former <font color="blue">directors</font> and <font color="blue">former officers</font> of <font color="blue">the Company </font>and CHR, and Catalina     Marketing,  as a <font color="blue">nominal defendant</font>, have been named in <font color="blue">two shareholder</font>     <font color="blue">derivative actions</font></td>
+    </tr>
+    <tr>
+      <td>The plaintiffs seek unspecified <font color="blue">compensatory damages</font>,     <font color="blue">restitution</font> of improper salaries, insider trading profits and <font color="blue">payments from</font>     us, and <font color="blue">disgorgement under</font> the Sarbanes-Oxley Act of 2002</td>
+    </tr>
+    <tr>
+      <td>We intend to <font color="blue">vigorously defend against</font> these lawsuits</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot currently</font>     predict the impact or resolution of this <font color="blue">litigation</font> or <font color="blue">reasonably</font> estimate a     range of possible loss, <font color="blue">which could</font> be material, and the resolution of these     <font color="blue"><font color="blue">lawsuits may</font> harm</font> our business and have a material adverse <font color="blue">impact on</font> our     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Securities </font><font color="blue">lawsuits may</font> result in substantial costs,     divert <font color="blue">management</font>’s attention and other resources, and have a material and     adverse effect on our <font color="blue">financial condition</font> and the results of our <font color="blue">operations</font>     in the future</td>
+    </tr>
+  </tbody>
+</table>

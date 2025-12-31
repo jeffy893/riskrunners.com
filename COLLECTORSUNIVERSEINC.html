@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: uncertainties", fill: "#ff7518"},
+{source: "2: uncertainties", target: "2: popularity", fill: "#ff7518"},
+{source: "2: popularity", target: "2: submissions", fill: "#ff7518"},
+{source: "2: submissions", target: "2: services could adversely impact", fill: "#ff7518"},
+{source: "2: uncertainties", target: "3: collectibles", fill: "#c154c1"},
+{source: "3: collectibles", target: "3: authentication", fill: "#c154c1"},
+{source: "3: authentication", target: "3: affected by", fill: "#c154c1"},
+{source: "3: affected by", target: "3: market value", fill: "#c154c1"},
+{source: "3: collectibles", target: "5: popularity", fill: "#cd9575"},
+{source: "5: popularity", target: "5: collectibles", fill: "#cd9575"},
+{source: "5: collectibles", target: "5: authenticate", fill: "#cd9575"},
+{source: "5: authenticate", target: "5: grade would", fill: "#cd9575"},
+{source: "5: grade would", target: "5: decreases", fill: "#cd9575"},
+{source: "5: decreases", target: "5: authentication", fill: "#cd9575"},
+{source: "5: authentication", target: "5: submissions", fill: "#cd9575"},
+{source: "5: submissions", target: "5: faster turnaround times", fill: "#cd9575"},
+{source: "5: faster turnaround times", target: "5: profitability", fill: "#cd9575"},
+{source: "5: popularity", target: "14: trends may", fill: "#36454f"},
+{source: "14: trends may", target: "14: net revenues", fill: "#36454f"},
+{source: "14: net revenues", target: "14: profitability", fill: "#36454f"},
+{source: "14: profitability", target: "14: authenticating", fill: "#36454f"},
+{source: "14: authenticating", target: "14: submissions but also", fill: "#36454f"},
+{source: "14: submissions but also", target: "14: such trends could lead", fill: "#36454f"},
+{source: "14: such trends could lead", target: "14: increased price", fill: "#36454f"},
+{source: "14: increased price", target: "14: competition which could", fill: "#36454f"},
+{source: "14: competition which could", target: "14: authentication", fill: "#36454f"},
+{source: "14: trends may", target: "START_HERE", fill: "#36454f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Consumer Discretionary</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Computer Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Computer Hardware</td>
+    </tr>
+    <tr>
+      <td>Computer and Electronics Retail</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Rally support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Popularity">Popularity</a></td>
+      <td>In sociology, popularity is how much a person, idea, place, item or other concept is either liked or accorded status by other people. Liking can be due to reciprocal liking, interpersonal attraction, and similar factors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Car_colour_popularity">Car colour popularity</a></td>
+      <td>The most popular car colours as of 2012 were greyscale colours, with over 70% of cars produced globally being white, black, grey or silver. Red, blue and brown/beige cars ranged between 6% and 10% each, while all other colours amounted to less than 5%.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Popularity_(album)">Popularity (album)</a></td>
+      <td>Popularity is Jonezetta's debut album, released by Tooth &amp; Nail Records on October 3, 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/National_sport">National sport</a></td>
+      <td>A national sport is considered to be an intrinsic part of the culture of a nation. Some sports are de facto (not established by law) national sports, as sumo is in Japan and Gaelic games are in Ireland and field hockey in Pakistan, while others are  de jure (established by law) national sports, as taekwondo is in South Korea.?</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Given_name">Given name</a></td>
+      <td>A given name (also known as a forename or first name) is the part of a personal name that identifies a person, potentially with a middle name as well, and differentiates that person from the other members of a group (typically a family or clan) who have a common surname. The term given name refers to a name usually bestowed at or close to the time of birth, usually by the parents of the newborn.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Popularity_Papers">The Popularity Papers</a></td>
+      <td>The Popularity Papers is a middle grade book series written and illustrated by Amy Ignatow.  The first book of the series was published in 2010.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Apple">Apple</a></td>
+      <td>In mathematics and computer science, apply is a function that applies a function to arguments. It is central to programming languages derived from lambda calculus, such as LISP and Scheme, and also in functional languages.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Popularity_contest">Popularity contest</a></td>
+      <td>A popularity contest is a real or attributed contest in which the sole criterion for winning is how many votes one gets, such that the winner is the most liked contestant. Although the phrase is often used disparagingly to suggest that some process is improperly based on popular appeal, the term historically referred to real contests sponsored by newspapers in late 19th century and early 20th century America.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collectable">Collectable</a></td>
+      <td>A collectable (collectible or collector's item) is any object regarded as being of value or interest to a collector. Collectable items are not necessarily monetarily valuable or uncommon.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collecting">Collecting</a></td>
+      <td>The hobby of collecting includes seeking, locating, acquiring, organizing, cataloging, displaying, storing, and maintaining items that are of interest to an individual collector. Collections differ in a wide variety of respects, most obviously in the nature and scope of the objects contained, but also in purpose, presentation, and so forth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Brighton_Collectibles">Brighton Collectibles</a></td>
+      <td>Brighton Collectibles (Brighton) is an accessories manufacturer and retailer, with 180 retail stores.  Brighton products are also sold in more than 4,000 specialty boutiques or online.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_collectables">List of collectables</a></td>
+      <td>This is a list of popular collectables.\n\n\n== Advertising collectables ==\nMatch-related items\nPremiums\nRadio premiums\nPrizes\nBazooka Joe comics from Bazooka bubble gum\nCereal box prizes\nCrater Critters\nCracker Jack prizes\nPin-back buttons\n\n\n== Brand name products ==\nBeanie Babies\nCoca-Cola\nDisneyana\nDisney pin trading\nSteiff teddy bears\nSwarovski figurines\n\n\n== Books and periodicals ==\nBooks\nFirst editions\nComic books\n\n\n== Cards ==\nArtist trading cards\nCollectible card games\nPhone cards\nTrading cards\nInsert cards\nNon-sports trading cards\nFor sports cards, see #Sports\n\n\n== Ephemera ==\nEphemera is transitory written and printed matter not intended to be retained or preserved.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collectables_by_Ashanti">Collectables by Ashanti</a></td>
+      <td>Collectables by Ashanti is a remix compilation album by American R&amp;B-pop singer Ashanti, released in 2005. It is the last Murder Inc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Metropolis_Collectibles">Metropolis Collectibles</a></td>
+      <td>Metropolis Collectibles is a famous rare comic book dealer of vintage American comics, primarily known for its large collection of comic books originally published in the 1930s, 1940s, 1950s, 1960s and 1970s. Metropolis was founded in 1984 by Stephen Fishler, and merged companies in 1999 with Vincent Zurzolo, Jr., of Vincent's Collectibles; Zurzolo said that as he found he could not compete with Fishler's business, merging the two made sense.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sideshow_Collectibles">Sideshow Collectibles</a></td>
+      <td>Sideshow Collectibles is an American specialty manufacturer of movie, film, television and collectible action figures, statues, and high end pieces. Sideshow's licenses include Star Wars, DC Comics, Marvel Comics, The Lord of the Rings, Disney, Harry Potter, Masters of the Universe, Pokémon, Dragon Ball Z, Street Fighter, Game of Thrones, and Star Trek.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Authentication">Authentication</a></td>
+      <td>Authentication (from Greek: αὐθεντικός authentikos, "real, genuine", from αὐθέντης authentes, "author") is the act of proving an assertion, such as the identity  of a computer system user. In contrast with identification, the act of indicating  a person or thing's identity, authentication is the process of verifying that identity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Authenticator">Authenticator</a></td>
+      <td>An authenticator is a means used to confirm a user's identity, that is, to perform digital authentication. A person authenticates to a computer system or application by demonstrating that he or she has possession and control of an authenticator.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Basic_access_authentication">Basic access authentication</a></td>
+      <td>In the context of an HTTP transaction, basic access authentication is a method for an HTTP user agent (e.g. a web browser) to provide a user name and password when making a request.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mutual_authentication">Mutual authentication</a></td>
+      <td>Mutual authentication or two-way authentication (not to be confused with two-factor authentication) refers to two parties authenticating each other at the same time in an authentication protocol. It is a default mode of authentication in some protocols (IKE, SSH) and optional in others (TLS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Single_sign-on">Single sign-on</a></td>
+      <td>Single sign-on (SSO) is an authentication scheme that allows a user to log in with a single ID to any of several related, yet independent, software systems. \nTrue single sign-on allows the user to log in once and access services without re-entering authentication factors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Extensible_Authentication_Protocol">Extensible Authentication Protocol</a></td>
+      <td>Extensible Authentication Protocol (EAP) is an authentication framework frequently used in network and internet connections. It is defined in RFC 3748, which made RFC 2284 obsolete, and is updated by RFC 5247.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/RADIUS">RADIUS</a></td>
+      <td>Radio is the technology of signaling and communicating using radio waves. Radio waves are electromagnetic waves of frequency between 30 hertz (Hz) and 300 gigahertz (GHz).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_analysis">Profitability analysis</a></td>
+      <td>In cost accounting, profitability analysis is an analysis of the profitability of an organisation's output. Output of an organisation can be grouped into products, customers, locations, channels and/or transactions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_index">Profitability index</a></td>
+      <td>Profitability index (PI), also known as profit investment ratio (PIR) and value investment ratio (VIR), is the ratio of payoff to investment of a proposed project. It is a useful tool for ranking projects because it allows you to quantify the amount of value created per unit of investment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_Profitability_Analysis">Customer Profitability Analysis</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Small_Is_Profitable">Small Is Profitable</a></td>
+      <td>Small Is Profitable: The Hidden Economic Benefits of Making Electrical Resources the Right Size is a 2002 book by energy analyst Amory Lovins and others.  The book describes 207 ways in which the size of "electrical resources"—devices that make, save, or store electricity—affects their economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SAP_ERP">SAP ERP</a></td>
+      <td>SAP ERP is an enterprise resource planning software developed by the German company SAP SE. SAP ERP incorporates the key business functions of an organization. The latest version of SAP ERP (V.6.0) was made available in 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_income">Net income</a></td>
+      <td>In business and accounting, net income (also total comprehensive income, net earnings, net profit, bottom line, sales profit, or credit sales) is an entity's income minus cost of goods sold, expenses, depreciation and amortization, interest, and taxes for an accounting period.It is computed as the residual of all revenues and gains less all expenses and losses for the period, and has also been defined as the net increase in shareholders' equity that results from a company's operations. It is different from gross income, which only deducts the cost of goods sold from revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borderlands_(series)">Borderlands (series)</a></td>
+      <td>Borderlands is an action role-playing first-person looter shooter video game franchise set in a space Western science fantasy setting, created and produced by Gearbox Software and published by 2K Games for multiple platforms.\nThe series consists of four games, each with multiple downloadable content packs: Borderlands (2009), Borderlands 2 (2012), Borderlands: The Pre-Sequel (2014) by 2K Australia and Borderlands 3 (2019).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tyco_International">Tyco International</a></td>
+      <td>Tyco International plc was a security systems company incorporated in the Republic of Ireland, with operational headquarters in Princeton, New Jersey, United States (Tyco International (US) Inc.). Tyco International was composed of two major business segments: security solutions and fire protection.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Verifone">Verifone</a></td>
+      <td>Verizon Communications Inc., commonly known as Verizon, is an American multinational telecommunications conglomerate and a corporate component of the Dow Jones Industrial Average. The company is headquartered at 1095 Avenue of the Americas in Midtown Manhattan, New York City, but is incorporated in Delaware.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Puig_(company)">Puig (company)</a></td>
+      <td>Puig (Catalan pronunciation: [ˈputʃ], PUTSH) is a Spanish fashion and fragrance company founded in 1914 by Antoni Puig i Castelló in Barcelona, Catalonia, Spain, and still managed by the Puig family.\nPuig markets its products in 150 countries and is directly present in 26 of them, employing 4,472 people worldwide.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_margin">Profit margin</a></td>
+      <td>Profit margin is a measure of profitability. It is calculated by finding the profit as a percentage of the revenue.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>COLLECTORS UNIVERSE INC      ITEM 1A RISK FACTORS           Our business is subject to a number of risks and <font color="blue">uncertainties</font> that could     <font color="blue">prevent us from</font> achieving our business <font color="blue">objectives</font> and that <font color="blue">could hurt</font> our     <font color="blue">future <font color="blue">financial performance</font></font> and the <font color="blue">price performance</font> of our <font color="blue">common stock</font>,     and cause our <font color="blue">future <font color="blue">financial condition</font></font> and <font color="blue">future <font color="blue">financial performance</font></font> to     differ  <font color="blue"><font color="blue">significant</font>ly</font>  from  our <font color="blue">current <font color="blue">expectations</font> described</font> in the     forward-looking statements contained in this <font color="blue">Annual Report</font></td>
+    </tr>
+    <tr>
+      <td>Those risks and     <font color="blue">uncertainties</font>,  many  of which are outside of our control, include the     following:           A decline in the <font color="blue">popularity</font> of high-value <font color="blue"><font color="blue">collectible</font>s</font> and a resulting     decrease  in  <font color="blue">submissions</font>  for our <font color="blue">services could <font color="blue">adversely</font> impact</font> our     business</td>
+    </tr>
+    <tr>
+      <td>The volume of <font color="blue"><font color="blue">collectible</font>s</font> submitted to us for <font color="blue">authentication</font> and grading is     <font color="blue">affected by</font> the demand for and <font color="blue">market value</font> of those <font color="blue"><font color="blue">collectible</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As the     demand for and value of <font color="blue"><font color="blue">collectible</font>s</font> increase, <font color="blue">authentication</font> and grading     <font color="blue">submissions</font>, as well as requests by submitters for higher price, faster     turn-around times, also increase</td>
+    </tr>
+    <tr>
+      <td>However, that also means that a decline in     <font color="blue">popularity</font>  and,  therefore  in the value, of the <font color="blue"><font color="blue">collectible</font>s</font> that we     <font color="blue">authenticate</font> and <font color="blue">grade would</font> cause <font color="blue">decreases</font> in <font color="blue">authentication</font> and grading     <font color="blue">submissions</font> and in requests for faster turn-around times and, therefore,     also in our revenues and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We have found, over the years, that     the <font color="blue">popularity</font> of <font color="blue"><font color="blue">collectible</font>s</font> can vary due to a number of factors, most of     which  are  outside  of  our  control, including perceived scarcity of     <font color="blue"><font color="blue">collectible</font>s</font>, general consumer confidence and trends and their <font color="blue">impact on</font>     <font color="blue">disposable income</font>, precious metals prices, <font color="blue">interest rates</font> and other general     economic  <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>For example, declines in <font color="blue">gold prices</font> or further     increases in <font color="blue"><font color="blue">interest rates</font> could lead</font> to <font color="blue">reductions</font> in <font color="blue">authentication</font> and     grading <font color="blue">submissions</font> and, therefore, could <font color="blue">adversely</font> affect our <font color="blue">profitability</font>     and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>27       _________________________________________________________________           <font color="blue">Declines </font>in general economic <font color="blue">conditions</font> could result in decreased demand for     our services, <font color="blue">which could</font> <font color="blue">adversely</font> affect our operating results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of <font color="blue">discretionary</font> or <font color="blue">disposable income</font> is an important     factor  in  the willingness and ability of <font color="blue">collectors</font> and consumers to     purchase,  and the prices that they are willing to pay for, high-value     <font color="blue"><font color="blue">collectible</font>s</font>, diamonds and <font color="blue">colored gemstones</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Declines </font>in purchases and     sales, and in the value, of <font color="blue"><font color="blue">collectible</font>s</font>, diamonds or <font color="blue">colored gemstones</font>     usually  result  in  declines in the use of <font color="blue">authentication</font> and grading     services, as such services are <font color="blue">most often used by sellers</font> and purchasers of     <font color="blue"><font color="blue">collectible</font>s</font>  in  <font color="blue">conjunction with</font> and to <font color="blue">facilitate sale</font> and purchase     <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>As a result, economic <font color="blue">uncertainties</font>, downturns and <font color="blue">recessions</font>     can  and do <font color="blue">adversely</font> affect our operating results by (i) reducing the     frequency with which <font color="blue"><font color="blue">collectible</font>s</font> dealers and <font color="blue">collectors</font> submit their coins,     sportscards and other <font color="blue"><font color="blue">collectible</font>s</font> for <font color="blue">authentication</font> and grading; (ii)     consumers purchasing fewer diamonds; thereby leading to a lower number of     diamonds for grading by retailers; (iii) causing <font color="blue"><font color="blue">collectible</font>s</font> dealers and     <font color="blue">collectors</font> to request longer <font color="blue">authentication</font> and grading turn-around times     <font color="blue">with respect</font> to the <font color="blue"><font color="blue">collectible</font>s</font> they submit to us for grading, which would     reduce our revenues and <font color="blue">profitability</font>, and (iv) reducing the ability of     customers to <font color="blue">pay outstanding accounts receivable</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Temporary  </font><font color="blue">popularity</font>  of  some  <font color="blue"><font color="blue">collectible</font>s</font> may result in short-term     increases, followed by <font color="blue">decreases</font>, in the volume of <font color="blue">submissions</font> for our     services, <font color="blue">which could</font> cause our revenues to fluctuate</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Temporary  </font>consumer  <font color="blue">popularity</font> or “fads” among <font color="blue">collectors</font> may lead to     short-term or temporary increases, followed by <font color="blue">decreases</font>, in the volume of     <font color="blue"><font color="blue">collectible</font>s</font> that we <font color="blue">authenticate</font> and grade</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">trends may</font> result in     <font color="blue">significant</font> period-to-period fluctuations in our operating results and could     result in declines in our <font color="blue">net revenues</font> and <font color="blue">profitability</font>, not only because     of  a  resulting  decline  in the volume of <font color="blue">authenticating</font> and grading     <font color="blue">submissions</font>, but also because <font color="blue">such trends could lead</font> to <font color="blue">increased price</font>     <font color="blue">competition</font>, <font color="blue">which could</font> require us to reduce our <font color="blue">authentication</font> and grading     fees in order to maintain market share</td>
+    </tr>
+    <tr>
+      <td>In the last few years, for example,     the <font color="blue">popularity</font> of sportscards has declined and, at the same time, we have     experienced a decline in sportscard <font color="blue">authentication</font> and grading <font color="blue">submissions</font></td>
+    </tr>
+    <tr>
+      <td>Our revenues and income depend <font color="blue"><font color="blue">significant</font>ly</font> on revenues generated by our     coin  <font color="blue">authentication</font>  and <font color="blue">grading services</font></td>
+    </tr>
+    <tr>
+      <td>A decrease in the level of     <font color="blue">submissions</font> for these services, which historically has <font color="blue">been impacted by</font>     changes in economic <font color="blue">conditions</font>, could <font color="blue">adversely</font> affect our revenues and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Coin <font color="blue">authentication</font> and <font color="blue">grading accounted</font> for approximately 65prca, 69prca and 66prca     of  our  net  revenues  in  fiscal  2006, 2005 and 2004, respectively</td>
+    </tr>
+    <tr>
+      <td>Furthermore,  in  fiscal  2005,  coin  grading  was the segment of our     <font color="blue">authentication</font> and grading business that experienced the most <font color="blue">significant</font>     increase  in <font color="blue">net revenues</font></td>
+    </tr>
+    <tr>
+      <td>We believe that this growth in <font color="blue">coin grading</font>     <font color="blue">submissions</font>  has  been due, at least in part, to the <font color="blue">volatility</font> of and     <font color="blue">uncertainties</font> regarding the performance of the stock markets, coupled with     the decline in <font color="blue">interest rates</font> and in the value of the US Dollar, which     have <font color="blue">led investors</font> to shift some of their <font color="blue"><font color="blue"><font color="blue">investment</font>s</font> from stocks</font> and bonds     to precious metals</td>
+    </tr>
+    <tr>
+      <td>The lack of <font color="blue">diversity</font> in our sources of revenues and our     dependence on <font color="blue">coin grading</font> <font color="blue">submissions</font> for a majority of our <font color="blue">net revenues</font>     make us more vulnerable to adverse changes in economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>adverse  changes  include  declines in the value of precious metals or     <font color="blue">recessionary</font>  <font color="blue">conditions</font> that could result in declines in <font color="blue"><font color="blue">collectible</font>s</font>     <font color="blue">authentication</font> and grading <font color="blue">submissions</font> generally or, more <font color="blue">particularly</font>, in     <font color="blue">collectible</font> coin <font color="blue">submissions</font> that would, in turn, result in <font color="blue">reductions</font> in     our total <font color="blue">net revenues</font> and income</td>
+    </tr>
+    <tr>
+      <td>Our  top  5  customers, account for approximately 22prca of our total net     revenues</td>
+    </tr>
+    <tr>
+      <td>During the year ended June 30, 2006, five of our coin <font color="blue">authentication</font> and     grading <font color="blue">customers account</font>ed for approximately 22prca of our total <font color="blue">net revenues</font></td>
+    </tr>
+    <tr>
+      <td>As  a  result, the loss of any of those customers, or a <font color="blue">lower level</font> of     <font color="blue">activity by</font> any of those customers, may cause our <font color="blue">net revenues</font> to decline     and, therefore, <font color="blue">could harm</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>During the fourth quarter of     fiscal 2005, the owner of the largest of these customers encountered an     unexpected and serious medical problem, which led to a 55prca decrease in     <font color="blue">revenues earned from</font> that customer in fiscal 2006, compared to fiscal 2005</td>
+    </tr>
+    <tr>
+      <td>28       _________________________________________________________________       Our stamp, currency and diamond <font color="blue">authentication</font> and <font color="blue">grading <font color="blue">businesses</font></font> are in     their start-up phases</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that these <font color="blue"><font color="blue">businesses</font> will</font>     prove to be successful</td>
+    </tr>
+    <tr>
+      <td>We purchased our <font color="blue">diamond grading</font> business in November 2005, started our     currency <font color="blue">authentication</font> and grading business in March 2005, and our stamp     <font color="blue">authentication</font> and grading business in fiscal 2000</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">businesses</font> have     yet to make a material <font color="blue">contribution</font> to our <font color="blue">net revenues</font></td>
+    </tr>
+    <tr>
+      <td>To date, our stamp,     currency and diamond <font color="blue">grading <font color="blue">businesses</font></font> have incurred operating losses and     there is no assurance that these <font color="blue">services will gain market <font color="blue">acceptance</font></font> or     will  ever make a material <font color="blue">contribution</font> to our <font color="blue">net revenues</font> or achieve     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>If they do not, we may have to <font color="blue">discontinue</font>, and write off our     <font color="blue"><font color="blue">investment</font>s</font> in, those <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue">acquisition</font>s and the <font color="blue">commencement</font> of new <font color="blue">businesses</font> present risks,     and we may be unable to achieve the financial and <font color="blue">strategic goals</font> of any     <font color="blue">acquisition</font> or <font color="blue">commencement</font> of any new business</td>
+    </tr>
+    <tr>
+      <td>One component of our <font color="blue">growth strategy</font> is to acquire existing or to start new     <font color="blue">businesses</font> that serve other markets for other <font color="blue"><font color="blue">collectible</font>s</font> or high-value     assets</td>
+    </tr>
+    <tr>
+      <td>In fiscal 2006, we acquired four <font color="blue">businesses</font> and, to-date in fiscal     2007, we have acquired two other <font color="blue">businesses</font>, a <font color="blue">colored gemstone grading</font>     business and a <font color="blue">trade show <font color="blue">management</font> company</font></td>
+    </tr>
+    <tr>
+      <td>These new <font color="blue"><font color="blue">businesses</font> will</font> face     a number of risks and <font color="blue">uncertainties</font>, including:         •       <font color="blue"><font color="blue">difficult</font>ies</font> in <font color="blue">integrating newly</font> acquired or <font color="blue">newly started</font> <font color="blue">businesses</font> into     existing <font color="blue">operations</font>, as a result of which we may <font color="blue">incur increased</font> operating     costs that would <font color="blue">adversely</font> affect our operating results;             •       the risk that our current and planned facilities, <font color="blue">computer systems</font> and     personnel and <font color="blue">controls will</font> not be adequate to support our expanded     <font color="blue">operations</font>;             •       diversion of <font color="blue">management</font> time and <font color="blue">capital resources from</font> our existing     <font color="blue">businesses</font>, <font color="blue">which could</font> <font color="blue">adversely</font> affect their performance and our operating     results;             •       dependence on key <font color="blue">management</font> personnel of acquired or <font color="blue">newly started</font>     <font color="blue">businesses</font> and the risk that we will be unable to integrate or retain such     personnel;             •       the risk that <font color="blue">new services</font> we <font color="blue">may introduce</font> or begin offering, whether as a     result of <font color="blue">internal expansion</font> or business <font color="blue">acquisition</font>s, will not gain     <font color="blue">acceptance</font>;             •       <font color="blue"><font color="blue">competition</font> from established</font> or <font color="blue">larger <font color="blue">competitor</font>s</font> in new markets, such as     (in our <font color="blue">diamond grading</font> business), <font color="blue">which could</font> <font color="blue">adversely</font> affect the     <font color="blue">financial performance</font> of any of the <font color="blue">businesses</font> we may have acquired or     started; and             •       the risk that the anticipated benefits of any <font color="blue">acquisition</font> or of the     <font color="blue">commencement</font> of any new business may not be realized, in <font color="blue">which event</font> we will     not be able to achieve an acceptable return on our <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">risks associated with new service offerings</font>, including our dealer     financing program, with which we have little experience</td>
+    </tr>
+    <tr>
+      <td>We are continually exploring <font color="blue">new services</font> that we <font color="blue">might introduce</font> and offer     to  our  existing  <font color="blue">authentication</font>  and <font color="blue">grading customers as</font> a means of     increasing our <font color="blue">net revenues</font> and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Those <font color="blue">new services</font>, however,     may prove to be unprofitable and <font color="blue">negatively impact</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>One of those <font color="blue">new services</font> that we introduced in fiscal year 2005 is a Dealer     Financing Program that involves our making short-term loans to <font color="blue"><font color="blue">collectible</font>s</font>     dealers that are <font color="blue">collateralized by</font> the <font color="blue"><font color="blue">collectible</font>s</font> that they submit or have     <font color="blue">been submitted</font> to us for <font color="blue">authentication</font> and grading</td>
+    </tr>
+    <tr>
+      <td>There is no assurance     that we will be successful in achieving sustained <font color="blue">profitability</font> in our     <font color="blue">Dealer Financing Program</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additionally </font>the lending business is subject to a     number of risks and <font color="blue">uncertainties</font>, and we have limited <font color="blue">loan underwriting</font> and     <font color="blue">collection</font> experience</td>
+    </tr>
+    <tr>
+      <td>In addition, the failure or inability of borrowers to     repay their loans is an <font color="blue">inherent risk</font> in a lending business</td>
+    </tr>
+    <tr>
+      <td>Our ability to     <font color="blue">minimize loan losses will <font color="blue">depend on</font> several factors</font>, including:                        •        The <font color="blue">loan underwriting</font> policies and controls we continue to adopt and     implement, <font color="blue"><font color="blue">which could</font> prove</font> to be inadequate to <font color="blue">prevent loan losses from</font>     occurring;           29       _________________________________________________________________                                                                                        •     Our ability to <font color="blue">sell collateral</font>, when a <font color="blue">borrower defaults</font> in the payment of a     loan, for <font color="blue">amounts sufficient</font> to offset loan losses, which can be <font color="blue">affected by</font>     a number of <font color="blue">factors outside</font> of our control, including (i) changes in     economic <font color="blue">conditions</font>, (ii) increases in <font color="blue">market rates</font> of interest and     (iii) changes in the condition or value of the collateral that will secure     the loans we make; and                  •        The reserves we will need to establish for potential loan losses, which may     prove to be inadequate, in which case we would have to <font color="blue">incur additional</font>     charges, which would   have the effect of reducing our net income and could     <font color="blue">negatively impact</font> our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, the business of lending is subject to numerous state and     certain federal laws and <font color="blue">regulations</font>, which may impose <font color="blue">significant</font> costs or     <font color="blue">limitations</font> on the way we conduct or expand such a business</td>
+    </tr>
+    <tr>
+      <td>We currently have a dlra7 million bank line of credit, expiring in June 2007,     that we can use to fund some of the <font color="blue">eligible loans</font> we make</td>
+    </tr>
+    <tr>
+      <td>To-date, we have     not utilized this line of credit, as we have <font color="blue">adequate <font color="blue">cash resources</font></font> to fund     the <font color="blue">Dealer Financing Program</font></td>
+    </tr>
+    <tr>
+      <td>However, in the event we make <font color="blue">borrowings under</font>     this line of credit in the future, we <font color="blue">cannot assure</font> that our <font color="blue">cash flow from</font>     the <font color="blue">operations</font> of our <font color="blue">dealer finance program will</font> be sufficient to <font color="blue">enable us</font>     to repay any <font color="blue">borrowings under</font> the line of credit</td>
+    </tr>
+    <tr>
+      <td>Also, the loan <font color="blue">agreements</font>     <font color="blue">establishing</font> the line of credit impose certain restrictive covenants on the     Company <font color="blue">which could</font> operate to restrict our plans to grow our business</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> our key <font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>Our  performance is greatly <font color="blue">dependent on</font> the performance of our senior     <font color="blue">management</font> and certain other <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>As a result, the loss of the     services of any of our <font color="blue">executive officers</font> or other <font color="blue">key employees</font> <font color="blue">could harm</font>     our business</td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">executive officers</font> and <font color="blue">key employees</font> are experts     in  the  <font color="blue"><font color="blue">collectible</font>s</font>  markets  and have industry-wide <font color="blue">reputations</font> for     <font color="blue">authentication</font> and grading of <font color="blue"><font color="blue">collectible</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In particular, the loss of     Michael  R Haynes, our Chief Executive Officer, or David G Hall, our     President, could have a negative effect on our reputation for expertise in     the <font color="blue"><font color="blue">collectible</font>s</font> markets in which we operate and could lead to a reduction     in <font color="blue">authentication</font> and grading <font color="blue">submissions</font> to us</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> our <font color="blue"><font color="blue">collectible</font>s</font> experts</td>
+    </tr>
+    <tr>
+      <td>In certain of our markets, there are a limited number of <font color="blue">individuals</font> who     have the expertise to <font color="blue">authenticate</font> and grade <font color="blue"><font color="blue">collectible</font>s</font>, and <font color="blue">competition</font>     for available <font color="blue"><font color="blue">collectible</font>s</font> experts is intense</td>
+    </tr>
+    <tr>
+      <td>Accordingly, our business and     our growth initiatives are heavily <font color="blue">dependent on</font> our ability (i) to retain     our existing <font color="blue"><font color="blue">collectible</font>s</font> experts, who have developed <font color="blue"><font color="blue">relatively</font> unique</font>     skills and enjoy a reputation for being <font color="blue">experts within</font> the <font color="blue"><font color="blue">collectible</font>s</font>     markets, and (ii) to implement personnel recruiting, succession and training     programs that will <font color="blue">enable us</font> to add <font color="blue"><font color="blue">collectible</font>s</font> experts, as necessary, to     grow our business and <font color="blue">offset employee turnover</font> that can occur from time to     time</td>
+    </tr>
+    <tr>
+      <td>If we are not successful in retaining our existing     <font color="blue"><font color="blue">collectible</font>s</font> experts or in hiring and training new <font color="blue"><font color="blue">collectible</font>s</font> experts,     this <font color="blue">could limit</font> our ability to grow our business and <font color="blue">adversely</font> affect our     operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, some of our experts     <font color="blue">could leave</font> our company to join a <font color="blue">competitor</font> or start a competing business</td>
+    </tr>
+    <tr>
+      <td>We could suffer losses on <font color="blue">authentication</font> and <font color="blue">grading warranties</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Certain  </font>of  our  grading  service  <font color="blue">businesses</font> offer customers service     warranties</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">warranties offered by</font> our <font color="blue"><font color="blue">collectible</font>s</font> <font color="blue">grading <font color="blue">businesses</font></font>     provide that:             •       if any <font color="blue">collectible</font> we have <font color="blue">authenticate</font>d and sealed in our tamper-evident     <font color="blue">plastic cases</font> is later determined not to have been genuine, we would have to     purchase the <font color="blue">collectible</font> at the price paid for it by its then owner; and             •       if any <font color="blue">collectible</font> that was <font color="blue">graded by us</font> and sealed in our tamper-evident     <font color="blue">plastic cases</font> later receives a lower grade upon resubmission to us for     grading, we would be <font color="blue">obligated either</font> to purchase the <font color="blue">collectible</font> at the     <font color="blue">price paid by</font> its then owner or to pay the difference in its value at its     <font color="blue"><font color="blue">original grade as</font> compared</font> to its value at the lower grade</td>
+    </tr>
+    <tr>
+      <td>30       _________________________________________________________________       GCAL offers a <font color="blue">grading warranty</font> that provides that if a diamond <font color="blue">graded by us</font>     is submitted for <font color="blue">regrading within</font> the succeeding year and, on regrading is     assigned a color or <font color="blue">clarity grade</font> that is more <font color="blue">than one grade lower than</font> the     <font color="blue">original color</font> or <font color="blue">clarity grade</font> it received, GCAL <font color="blue">will become obligated</font> to     purchase the <font color="blue">diamond at</font> the <font color="blue">price paid by</font> its then owner or, if GCAL so     chooses,  to  pay the difference in its value at its <font color="blue">original grade as</font>     compared to its value at the lower grade</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">no insurance coverage</font> for claims made under these warranties and,     therefore, we maintain reserves to <font color="blue">satisfy such warranty</font> claims <font color="blue">based on</font>     historical experience, which in the past have proven to be adequate</td>
+    </tr>
+    <tr>
+      <td>If     warranty claims were to exceed these reserves, we would <font color="blue">incur additional</font>     charges that would <font color="blue">adversely</font> affect our operating results and financial     condition</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font> could <font color="blue">adversely</font> affect our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>Although there are few major <font color="blue">competitor</font>s in the <font color="blue"><font color="blue">collectible</font>s</font> <font color="blue">authentication</font>     and <font color="blue">grading markets</font> in which we currently operate, <font color="blue">competition</font> in these     markets is, nevertheless, intense</td>
+    </tr>
+    <tr>
+      <td>In addition, in the <font color="blue">diamond market there</font>     are a number of <font color="blue">grading services</font> that are <font color="blue">substantially larger</font>, have been in     business <font color="blue">substantially longer</font> and are <font color="blue">better known than</font> GCAL <font color="blue">Increased </font>    <font color="blue">competition</font> in our <font color="blue"><font color="blue">collectible</font>s</font> markets could <font color="blue">adversely</font> affect our pricing     and <font color="blue">profit margins</font> and our ability to achieve <font color="blue">further growth</font>, and we cannot     assure that we <font color="blue">will continue</font> to be successful in <font color="blue">competing against existing</font>     or future <font color="blue">competitor</font>s in our <font color="blue"><font color="blue">collectible</font>s</font> markets</td>
+    </tr>
+    <tr>
+      <td>In our diamond business,     which is <font color="blue">just beginning</font> to implement its <font color="blue">growth strategy</font>, we are likely to     encounter intense <font color="blue">competition</font> from larger and more established <font color="blue">competitor</font>s     that have <font color="blue">significant</font> market shares</td>
+    </tr>
+    <tr>
+      <td>Also, our entry into new <font color="blue"><font color="blue">collectible</font>s</font>     or high-value asset markets could lead other potential <font color="blue">competitor</font>s to enter     those <font color="blue">markets as well</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">competition</font> could <font color="blue">adversely</font> affect our ability     to <font color="blue">generate profits</font> and could cause us to continue to <font color="blue">incur losses</font> in those     markets and damage our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> our ability to protect and enforce our <font color="blue"><font color="blue">intellectual</font> property</font>     rights</td>
+    </tr>
+    <tr>
+      <td>We believe that our patents, <font color="blue">trademarks</font> and other <font color="blue">proprietary rights</font> are     important to our success and <font color="blue">competitive position</font></td>
+    </tr>
+    <tr>
+      <td>We rely on a <font color="blue">combination</font>     of patents, <font color="blue">trademarks</font>, copyright and <font color="blue">trade secret laws</font> to establish and     protect our <font color="blue">proprietary rights</font></td>
+    </tr>
+    <tr>
+      <td>However, the actions we take to establish     and protect our <font color="blue">intellectual</font> and other <font color="blue">proprietary rights</font> may prove to be     inadequate to prevent imitation of our services or products or to prevent     <font color="blue">others from</font> claiming violations of their <font color="blue">intellectual</font> and <font color="blue">proprietary rights</font>     by  us</td>
+    </tr>
+    <tr>
+      <td>In addition, others may develop similar <font color="blue">trade secrets</font> or other     <font color="blue"><font color="blue">intellectual</font> property</font> independently or assert rights in our <font color="blue">intellectual</font> and     other <font color="blue">proprietary rights</font> that <font color="blue">could lead them</font> to seek to <font color="blue">block sales</font> of our     services  based  <font color="blue">on allegations</font> that use of some of our marks or other     <font color="blue"><font color="blue">intellectual</font> property</font> constitutes a violation of their <font color="blue"><font color="blue">intellectual</font> property</font>     rights</td>
+    </tr>
+    <tr>
+      <td>We have not conducted an <font color="blue">exhaustive search</font> of <font color="blue">possible prior users</font> of our     <font color="blue">unregistered <font color="blue">trademarks</font></font>, including Coin Universe, Collectors</td>
+    </tr>
+    <tr>
+      <td>com and PSE     Therefore, it is possible that our use of some of these <font color="blue"><font color="blue">trademarks</font> may</font>     <font color="blue">conflict with others</font></td>
+    </tr>
+    <tr>
+      <td>As a result, we could face <font color="blue">litigation</font> or lose the use     of some of these <font color="blue">trademarks</font>, <font color="blue">which could</font> have an adverse effect on our name     <font color="blue">recognition</font>  and  result  in a decrease in revenues and an increase in     expenses</td>
+    </tr>
+    <tr>
+      <td>The imposition of government <font color="blue">regulations</font> could increase our costs of doing     business</td>
+    </tr>
+    <tr>
+      <td>With the exception of state laws applicable to autograph <font color="blue">authentication</font>, the     <font color="blue">collectible</font> coin and other high-value <font color="blue"><font color="blue">collectible</font>s</font> markets are not currently     subject to <font color="blue">direct federal</font>, state or <font color="blue">local regulation</font></td>
+    </tr>
+    <tr>
+      <td>However, from time to     time government authorities discuss additional <font color="blue">regulations</font> <font color="blue">which could</font>     impose  <font color="blue">restrictions</font>  on the <font color="blue"><font color="blue">collectible</font>s</font> industry, such as regulating     <font color="blue"><font color="blue">collectible</font>s</font>  as  securities or requiring <font color="blue"><font color="blue">collectible</font>s</font> dealers to meet     <font color="blue">registration</font> or reporting <font color="blue">requirements</font>, or regulating the conduct of auction     <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Adoption </font>of laws or <font color="blue">regulations</font> of this nature could lead to a     decline in sales and purchases of <font color="blue"><font color="blue">collectible</font>s</font> and, therefore, also to a     decline in the volume of coins, sportscards and other <font color="blue"><font color="blue">collectible</font>s</font> that are     submitted to us for <font color="blue">authentication</font> and grading</td>
+    </tr>
+    <tr>
+      <td>31       _________________________________________________________________       Our   reliance   on  a  single  source  for  <font color="blue">principally</font>  all  of  our     “tamper-evident,” clear plastic coin and sportscard holders exposes us to     <font color="blue">potential supply</font> and <font color="blue">quality problems</font></td>
+    </tr>
+    <tr>
+      <td>We place all of the coins, sportscards and currency notes, and sometimes     also the stamps that we <font color="blue">authenticate</font> and grade, in tamper-evident, clear     <font color="blue">plastic holders</font></td>
+    </tr>
+    <tr>
+      <td>In order to take advantage of <font color="blue">volume pricing discounts</font>, we     have chosen to purchase substantially all of those holders, on a purchase     order basis, from one principal supplier</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">reliance on</font> a <font color="blue">single supplier</font>     for  a  substantial portion of those <font color="blue">plastic holders</font> exposes us to the     potential for delay in our ability to deliver timely <font color="blue">authentication</font> and     <font color="blue">grading services</font> in the event that supplier were to terminate its services     to us or to <font color="blue">encounter financial</font> or <font color="blue">production problems</font></td>
+    </tr>
+    <tr>
+      <td>If, in such an     event, we were unable to obtain <font color="blue">replacement</font> holders in a <font color="blue">relatively</font> short     period  of  time,  we  <font color="blue">could lose customer orders</font>, or <font color="blue">incur additional</font>     production  costs</td>
+    </tr>
+    <tr>
+      <td>In addition, if the <font color="blue">replacement</font> holders were not of     <font color="blue">comparable quality</font> to our <font color="blue">existing supplier</font>, we <font color="blue">could expose ourselves</font> to     the potential for <font color="blue">additional warranty</font> claims in the event that tampering     with our holders was not evident</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">occurrences could</font> cause a decline in     our  <font color="blue">net revenues</font> and have a material adverse effect on our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our computer and <font color="blue">network systems may</font> be vulnerable to <font color="blue">unforeseen problems</font>     and <font color="blue">security risks</font>, and we are vulnerable to <font color="blue">system failure due</font> to a lack of     <font color="blue">redundant systems at</font> another location</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are <font color="blue">dependent on</font> our ability to protect our <font color="blue">computer systems</font>     that we use in our <font color="blue">authentication</font> and grading <font color="blue">operations</font> and to maintain our     websites against damage from fire, power loss, telecommunications failure,     <font color="blue">earthquakes</font>  and similar <font color="blue">catastrophic events</font></td>
+    </tr>
+    <tr>
+      <td>In this regard, Southern     California, where we are <font color="blue">primarily located</font>, is <font color="blue">particularly</font> vulnerable to     <font color="blue">earthquakes</font> and fires that could result in damage to our <font color="blue">computer systems</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our diamond <font color="blue">operations</font> are located in a <font color="blue">New York City </font>high-rise     building that could be vulnerable to <font color="blue">terrorist attacks</font> or to fire or other     <font color="blue">disasters</font></td>
+    </tr>
+    <tr>
+      <td>We do not have redundant <font color="blue">computer systems</font> at a location that is     <font color="blue">remote from</font> <font color="blue">Southern California</font></td>
+    </tr>
+    <tr>
+      <td>Any damage to or failure of our computer     <font color="blue">systems could</font> cause an <font color="blue">interruption</font> in our services that <font color="blue">could harm</font> our     business, operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">operations</font> are <font color="blue">dependent on</font> our ability to protect our     <font color="blue">computer systems</font> and <font color="blue">network infrastructure from damage</font> that could occur     from physical break-ins, security breaches and other <font color="blue">disruptive problems</font>     caused  by  the  <font color="blue">technology</font> that we employ in our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Computer     </font>break-ins  and security breaches also could jeopardize the security of     information stored in and <font color="blue">transmitted through</font> our <font color="blue">computer systems</font> and     network infrastructure, <font color="blue">which could</font> cause us to incur <font color="blue">significant</font> liability     and <font color="blue">possibly also damage</font> our reputation</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">disruptions due</font> to problems     on the Internet or actions <font color="blue">of Internet </font>users could make it <font color="blue">difficult</font> for our     customers to access our websites</td>
+    </tr>
+    <tr>
+      <td>In either case, problems of this nature     could <font color="blue">adversely</font> affect our business and operating results, and security     breaches that would <font color="blue">adversely</font> affect the privacy of customer information     <font color="blue">could lead existing customers</font> to terminate their business <font color="blue">relationships with</font>     us</td>
+    </tr>
+    <tr>
+      <td>Although we intend to continue to implement and <font color="blue">upgrade sophisticated</font>     <font color="blue">technology</font> to <font color="blue">prevent such disruptions</font> and damage, there is no assurance     that our <font color="blue">security measures will prove</font> to be successful</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on <font color="blue">third parties</font></font> for various Internet and processing services</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> <font color="blue">depend on</font> a number of <font color="blue">third parties</font> for Internet access and     <font color="blue">delivery services</font></td>
+    </tr>
+    <tr>
+      <td>We have limited <font color="blue">control over</font> these <font color="blue">third parties</font> and no     long-term <font color="blue">relationships with</font> any of them</td>
+    </tr>
+    <tr>
+      <td>For example, we do not own a     <font color="blue">gateway onto</font> the Internet, but, instead, rely on Internet <font color="blue">service providers</font>     to connect our website to the Internet</td>
+    </tr>
+    <tr>
+      <td>Should the <font color="blue">third parties</font> that we     rely on for Internet access or <font color="blue">delivery services</font> be unable to serve our     needs for a sustained time period as a result of a strike, natural disaster     or other reason, our revenues and business could be harmed</td>
+    </tr>
+    <tr>
+      <td>We are exposed to <font color="blue">potential risks</font> and we <font color="blue">will continue</font>d to <font color="blue">incur increased</font>     costs as a result of the <font color="blue">internal control testing</font> and <font color="blue">evaluation process</font>     <font color="blue">mandated by</font> Section 404 of the Sarbanes-Oxley Act of 2002</td>
+    </tr>
+    <tr>
+      <td>Although we continue to document and test the <font color="blue">effectiveness</font> of our internal     controls  over  financial reporting, as required by Section 404 of the     Sarbanes-Oxley Act of 2002, we expect we <font color="blue">will continue</font> to incur costs,     including increased <font color="blue">accounting</font> fees, in order to maintain compliance with     that Section of the Sarbanes-Oxley Act</td>
+    </tr>
+    <tr>
+      <td>Also, if our efforts to <font color="blue">comply with</font>     new or changed laws, <font color="blue">regulations</font> and <font color="blue">standards differ from</font> the <font color="blue">activities</font>     <font color="blue">intended by regulatory</font> or <font color="blue">governing bodies due</font> to <font color="blue">ambiguities</font> related to our     practices, our <font color="blue">reputation may</font> be harmed or we may be subject to <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>32       _________________________________________________________________       If our quarterly results are below the <font color="blue">expectations</font> of <font color="blue">securities market</font>     analysts and investors or we decide to suspend or <font color="blue">discontinue</font> the payment of     dividends, the price of our <font color="blue">common stock</font> may decline</td>
+    </tr>
+    <tr>
+      <td>Many factors, including those described in this “Risk Factors” section, can     affect our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font>, which     makes  the prediction of our <font color="blue">future financial</font> results <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>factors include:             •       increases or <font color="blue">decreases</font> in number of <font color="blue"><font color="blue">collectible</font>s</font> or <font color="blue">diamonds graded from</font>     period to period;             •       changes in market <font color="blue">conditions</font> that can affect the demand for our     <font color="blue">authentication</font> and <font color="blue">grading services</font>, such as a decline in the <font color="blue">popularity</font> of     certain <font color="blue"><font color="blue">collectible</font>s</font>;             •       general economic <font color="blue">conditions</font> that affect the <font color="blue">availability</font> of disposable     income among <font color="blue">collectors</font> and consumers; and             •       the actions of our <font color="blue">competitor</font>s</td>
+    </tr>
+    <tr>
+      <td>If our quarterly operating results fall below <font color="blue">expectations</font> or we decide to     suspend or <font color="blue">discontinue</font> the payment of dividends, <font color="blue">securities market</font> analysts     <font color="blue">may downgrade</font> our <font color="blue">common stock</font> and some of our <font color="blue"><font color="blue">stockholders</font> may sell</font> their     shares, <font color="blue">which could</font> <font color="blue">adversely</font> affect the <font color="blue"><font color="blue">trading price</font>s</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, in the past, companies that have experienced declines in the     <font color="blue">trading price</font> of their <font color="blue">shares due</font> to events of this nature have been the     subject of securities class action <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">become involved</font> in a     securities  class  action <font color="blue">litigation</font> in the future, it could result in     substantial costs and diversion of our <font color="blue">management</font>’s attention and resources,     <font color="blue">thus harming</font> our business</td>
+    </tr>
+    <tr>
+      <td>No assurance that we <font color="blue">will continue</font> to <font color="blue">pay <font color="blue">cash dividends</font></font></td>
+    </tr>
+    <tr>
+      <td>On May 31, 2006, the Company adopted a <font color="blue">dividend policy</font> that calls for the     payment of an expected <font color="blue">total annual cash dividend</font> of dlra0dtta32 per common share,     payable in the amount of dlra0dtta08 per share, per quarter and since then we have     paid two consecutive <font color="blue">cash dividends</font>, each in the amount of dlra0dtta08 per share,     in <font color="blue">accordance with</font> this <font color="blue">dividend policy</font></td>
+    </tr>
+    <tr>
+      <td>The payment of <font color="blue">cash dividends</font> in     the future, pursuant to the Company’s <font color="blue">dividend policy</font>, is subject to final     <font color="blue">determination each quarter by</font> the <font color="blue">Board of Directors </font><font color="blue">based on</font> a number of     factors, including the Company’s <font color="blue">financial performance</font> and its available     <font color="blue">cash resources</font>, its cash <font color="blue">requirements</font> and <font color="blue">alternative uses</font> of cash that the     Board may conclude <font color="blue">would represent</font> an <font color="blue">opportunity</font> to generate a greater     return on <font color="blue">investment</font> for the Company</td>
+    </tr>
+    <tr>
+      <td>For these reasons, as well as others,     there can be no assurance that the amount of the Company’s <font color="blue">current quarterly</font>     <font color="blue">cash dividend will</font> not be reduced or that the <font color="blue">Board of Directors </font>will not     decide  to suspend or <font color="blue">discontinue</font> the payment of <font color="blue">cash dividends</font> in the     future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions  </font>in  our  charter  <font color="blue">documents</font> or in <font color="blue">Delaware </font>law may make an     <font color="blue">acquisition</font> of us more <font color="blue">difficult</font> or delay a change in control, which may     <font color="blue">adversely</font> affect the <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our Amended and Restated Certificate of Incorporation and Bylaws contain     anti-takeover provisions, including those listed below, that could make it     more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire control of us, even if that     change of <font color="blue">control would</font> be <font color="blue">beneficial</font> to our <font color="blue">stockholders</font>:             •       our board of <font color="blue">directors</font> has the authority to issue <font color="blue">common stock</font> and preferred     stock and to determine the price, rights and <font color="blue">preferences</font> of any new series     of <font color="blue">preferred stock without stockholder approval</font>;             •       there are <font color="blue">limitations</font> on who can <font color="blue">call special meetings</font> of our <font color="blue">stockholders</font>;     and             •       <font color="blue">stockholders</font> may not take <font color="blue">action by written consent</font></td>
+    </tr>
+    <tr>
+      <td>In addition, provisions of <font color="blue">Delaware </font>law and our <font color="blue">stock option</font> plans may also     discourage,  delay  or  prevent  a change in control of our company or     unsolicited <font color="blue">acquisition</font> proposals</td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: operations", fill: "#c33"},
+{source: "1: operations", target: "1: financial condition", fill: "#c33"},
+{source: "1: financial condition", target: "1: significant", fill: "#c33"},
+{source: "1: operations", target: "2: additional", fill: "#fdee00"},
+{source: "2: additional", target: "5: dependent on", fill: "#ca2c92"},
+{source: "5: dependent on", target: "5: development", fill: "#ca2c92"},
+{source: "5: development", target: "5: Sky Ranch the Lowry Range Property ", fill: "#ca2c92"},
+{source: "5: Sky Ranch the Lowry Range Property ", target: "5: Rangeview Water Supply ", fill: "#ca2c92"},
+{source: "5: Rangeview Water Supply ", target: "5: potential markets", fill: "#ca2c92"},
+{source: "5: potential markets", target: "5: Export Water", fill: "#ca2c92"},
+{source: "5: dependent on", target: "6: principal source", fill: "#ffdf00"},
+{source: "6: principal source", target: "6: future revenue will", fill: "#ffdf00"},
+{source: "6: future revenue will", target: "6: from long term", fill: "#ffdf00"},
+{source: "6: from long term", target: "6: Land Board ", fill: "#ffdf00"},
+{source: "6: Land Board ", target: "6: entitle us", fill: "#ffdf00"},
+{source: "6: entitle us", target: "6: provide water service", fill: "#ffdf00"},
+{source: "6: provide water service", target: "6: Lowry Range Property", fill: "#ffdf00"},
+{source: "6: principal source", target: "35: charge customers", fill: "#29ab87"},
+{source: "35: charge customers", target: "35: Districts ", fill: "#29ab87"},
+{source: "35: Districts ", target: "35: Land Board ", fill: "#29ab87"},
+{source: "35: Land Board ", target: "35: the District ", fill: "#29ab87"},
+{source: "35: the District ", target: "35: construction", fill: "#29ab87"},
+{source: "35: charge customers", target: "53: State ", fill: "#0ff"},
+{source: "53: State ", target: "53: regulations", fill: "#0ff"},
+{source: "53: regulations", target: "53: qualification standards", fill: "#0ff"},
+{source: "53: qualification standards", target: "53: specific water", fill: "#0ff"},
+{source: "53: specific water", target: "53: facilities", fill: "#0ff"},
+{source: "53: State ", target: "START_HERE", fill: "#0ff"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+    <tr>
+      <td>Fertilizers and Agricultural Chemicals</td>
+    </tr>
+    <tr>
+      <td>Agricultural Products</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Rally support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_Mathematics">Additional Mathematics</a></td>
+      <td>Additional Mathematics is a qualification in mathematics, commonly taken by students in high-school (or GCSE exam takers in the United Kingdom). It is applied to a range of problems set out in a different format and wider content to the standard Mathematics at the same level.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_member_system">Additional member system</a></td>
+      <td>The additional member system (AMS) is a mixed electoral system under which most representatives are elected in single-member districts (SMDs), and the other "additional members" are elected to make the seat distribution in the chamber more proportional to the way votes are cast for party lists. It is distinct from parallel voting (also known as the supplementary member system) in that the "additional member" seats are awarded to parties taking into account seats won in SMDs (referred to as compensation or "top-up"), which is not done under parallel voting (a non-compensatory method).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Superintendent_of_police_(India)">Superintendent of police (India)</a></td>
+      <td>Superintendent of police or SP is a senior rank in Indian Police Service or IPS. Superintendent of Police in Hindi means पुलिस अधीक्षक. They have one Star and one Ashoka emblem on their shoulders and below IPS is written.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_director_general_of_police">Additional director general of police</a></td>
+      <td>Additional Director General of Police (ADGP) is an Indian Police Service rank. Though having the maximum possible 3-star police rank just like Director General of Police,  ADGP's are considered same to DGP's.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Order_of_Australia">Order of Australia</a></td>
+      <td>The Order of Australia is an honour that recognises Australian citizens and other persons for outstanding achievement and service. It was established on 14 February 1975 by Elizabeth II, Queen of Australia, on the advice of the Australian Government.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Latin_Extended_Additional">Latin Extended Additional</a></td>
+      <td>Latin Extended Additional is a Unicode block.\nThe characters in this block are mostly precomposed combinations of Latin letters with one or more general diacritical marks.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additionality">Additionality</a></td>
+      <td>Additionality is the property of an activity being additional by adding something new to the context. It is a determination of whether an intervention has an effect when  compared to a baseline.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_development">Software development</a></td>
+      <td>Software development is the process of conceiving, specifying, designing, programming, documenting, testing, and bug fixing involved in creating and maintaining applications, frameworks, or other software components. Software development involves writing and maintaining the source code, but in a broader sense, it includes all processes from the conception of the desired software through to the final manifestation of the software, typically in a planned and structured process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Texas_Veterans_Land_Board">Texas Veterans Land Board</a></td>
+      <td>The Texas Veterans Land Board, also known as VLB, is part of the Texas General Land Office. Created by the Texas Legislature in 1946, the board was established to make land available to veterans returning from World War II.\nToday, the organization finances land, home loans and home improvement loans for Texas veterans and active military members who are eligible under VLB requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Veterans'_Land_Board_scandal">Veterans' Land Board scandal</a></td>
+      <td>The Veterans Land Board Scandal was a political scandal in Texas in that became public in 1954.\nThe Texas Legislature enacted the Veterans Land Act in November 1946.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Estonian_Land_Board">Estonian Land Board</a></td>
+      <td>The Estonian Land Board (Estonian: Maa-amet) is an official body, dealing with cartography and cadastre issues in Estonia. It is subordinated the Ministry of the Environment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Land_Appeal_Board">Land Appeal Board</a></td>
+      <td>Land Appeal Board (Bengali: ভূমি আপীল বোর্ড) is a quasi-judicial government body that is responsible for hearing appeals filed over land management in Bangladesh. It advises the government on issues concerning land management and land administration.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Karnataka_Wakf_Board_Land_Scam">Karnataka Wakf Board Land Scam</a></td>
+      <td>The Karnataka Wakf Board Land Scam concerns the alleged misappropriation of ₹2,000 billion (US$26 billion) in Indian property funds, made public by a report submitted by the Karnataka State Minorities Commission in 2012.\nIn March 2012, Anwar Manippady, the Chairman of the Karnataka State Minorities Commission submitted a report to the chief minister of Karnataka state, D.V. Sadananda Gowda, which alleged that 27,000 acres of land controlled by the Karnataka Wakf Board had either been misappropriated or allocated illegally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/California_Water_Service">California Water Service</a></td>
+      <td>California Water Service, commonly known as Cal Water, is an American public utility company providing drinking water and wastewater services to a number of regions within the state of California. It was founded in 1926 and is based in San Jose, California, and provides service across multiple local districts, reaching more than 484,900 customers.In 1997, California Water Service formed a new parent holding company, California Water Service Group, in order to expand its service coverage into other regions and states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction">Construction</a></td>
+      <td>Construction is a general term meaning the art and science to form objects, systems, or organizations, and comes from Latin constructio (from com- "together" and struere "to pile up") and Old French construction. To construct is the verb: the act of building, and the noun is construction: how something is built, the nature of its structure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_foreman">Construction foreman</a></td>
+      <td>A construction foreman or construction forewoman is the worker or skilled tradesperson who is in charge of a construction crew. This role is generally assumed by a senior worker.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Construction_engineering">Construction engineering</a></td>
+      <td>Construction engineering is a professional discipline that deals with the designing, planning, construction and management of infrastructures such as roads, tunnels, bridges, airports, railroads, facilities, buildings, dams, utilities and other projects.\nCivil engineering is a related field that deals more with the practical aspects of projects.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Grammatical_construction">Grammatical construction</a></td>
+      <td>In linguistics, a grammatical construction is any syntactic string of words ranging from sentences over phrasal structures to certain complex lexemes, such as phrasal verbs.\nGrammatical constructions form the primary unit of study in construction grammar theories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Parallel_construction">Parallel construction</a></td>
+      <td>Parallel construction is a law enforcement process of building a parallel, or separate, evidentiary basis for a criminal investigation in order to conceal how an investigation actually began.In the US, a particular form is evidence laundering, where one police officer obtains evidence via means that are in violation of the Fourth Amendment's protection against unreasonable searches and seizures, and then passes it on to another officer, who builds on it and gets it accepted by the court under the good-faith exception as applied to the second officer. This practice gained support after the Supreme Court's 2009 Herring v.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NASA_facilities">NASA facilities</a></td>
+      <td>There are NASA facilities across the United States and around the world. NASA Headquarters in Washington, DC provides overall guidance and political leadership to the agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Flight_Facilities">Flight Facilities</a></td>
+      <td>Flight Facilities is an Australian electronic producer duo that also performs as Hugo &amp; Jimmy. In 2009, they began mixing songs by other artists before crafting their own original material.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Attacks_on_U.S._diplomatic_facilities">Attacks on U.S. diplomatic facilities</a></td>
+      <td>The United States maintains numerous embassies and consulates around the world, many of which are in war-torn countries or other dangerous areas.\n\n\n== Diplomatic Security ==\nThe Regional Security Office is staffed by Special Agents of the Diplomatic Security Service (DSS), and is responsible for all security, protection, and law enforcement operations in the embassy or consulate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zubieta_Facilities">Zubieta Facilities</a></td>
+      <td>The Zubieta Facilities (Basque: Zubietako Kirol-instalakuntzak, Spanish: Instalaciones de Zubieta), is the training ground of the Primera Division club Real Sociedad. Located in Zubieta, an enclave of San Sebastian (adjacent to the San Sebastián Hippodrome), it was opened in 2004 in its modernised form, although was originally inaugurated in 1981.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Metallic_path_facilities">Metallic path facilities</a></td>
+      <td>Metallic path facility (MPF) are the unshielded twisted pair of copper wires that run from a main distribution frame (MDF) at a local telephone exchange to the customer. In this variant, both broadband and voice (baseband) services, together potentially with a video on demand service, are provided to the end user by a single communications provider.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PURE CYCLE CORP      Item 1A                 Risk Factors       Our business, <font color="blue">operations</font>, and <font color="blue">financial condition</font> are subject to <font color="blue">significant</font>     risks</td>
+    </tr>
+    <tr>
+      <td>These risks include those listed below and may include <font color="blue">additional</font>     risks of which we are not currently aware or which we currently do not     believe are material</td>
+    </tr>
+    <tr>
+      <td>If any of the events or <font color="blue"><font color="blue">circumstances</font> described</font> in the     <font color="blue">following risk factors actually</font> occurs, our business could be <font color="blue">materially</font>     <font color="blue"><font color="blue">adversely affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">risks should</font> be read in <font color="blue">conjunction with</font> the other     information set forth in this report</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> the <font color="blue">development</font> of Sky Ranch, the <font color="blue">Lowry Range Property</font>     and other areas near our <font color="blue">Rangeview Water Supply </font>that are <font color="blue">potential markets</font>     for our <font color="blue">Export Water</font></td>
+    </tr>
+    <tr>
+      <td>We expect that our <font color="blue">principal source</font> of <font color="blue">future revenue will</font> be <font color="blue">from long term</font>     contracts  with the Land Board, which expire in 2081 and <font color="blue">entitle us</font> to     <font color="blue">provide water service</font> to the <font color="blue">Lowry Range Property</font></td>
+    </tr>
+    <tr>
+      <td>In addition to the Lowry     Range,  we have <font color="blue">service <font color="blue">agreements</font> with</font> Sky Ranch, which <font color="blue">entitle us</font> to     <font color="blue">provide water service</font> <font color="blue">to the Sky Ranch </font><font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>The timing and amount     of these revenues will depend <font color="blue">significant</font>ly on the <font color="blue">development</font> of these     areas</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Lowry Range Property</font> is owned by the Land Board, which is in the     early  stages  of considering various <font color="blue">development</font> alternatives, but no     timetable  exists  for  <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>As  a component of the Sky Ranch     Agreements, we are <font color="blue">dependent on</font> the <font color="blue">development</font> of the <font color="blue">property prior</font> to us     receiving revenues for water service, which <font color="blue">development</font> is under the control     of the developer</td>
+    </tr>
+    <tr>
+      <td>We are not able to determine the timing of <font color="blue">water sales</font> or     the timing of <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that <font color="blue">development</font> will     occur or that <font color="blue">water sales</font> will occur on acceptable terms or in the amounts     or time required for us to support our costs of operation</td>
+    </tr>
+    <tr>
+      <td>Because of the     prior use of the <font color="blue">Lowry Range Property</font> as a military facility, <font color="blue">environment</font>al     clean-up may be required prior to <font color="blue">development</font>, including the removal of     unexploded  ordnance</td>
+    </tr>
+    <tr>
+      <td>There is often <font color="blue">significant</font> delay in adoption of     <font color="blue">development</font> plans, as the <font color="blue">political process involves</font> many <font color="blue">constituencies</font>     <font color="blue">with differing interests</font></td>
+    </tr>
+    <tr>
+      <td>In the event <font color="blue">water sales</font> are not <font color="blue">forthcoming</font> or     <font color="blue">development</font> of the <font color="blue">Lowry Range Property</font> is delayed, we may incur <font color="blue">additional</font>     short or long-term debt <font color="blue">obligations</font> or seek to sell <font color="blue">additional</font> equity to     generate operating capital</td>
+    </tr>
+    <tr>
+      <td>In the event <font color="blue">development</font> of the Lowry Range     Property and the <font color="blue">surrounding areas</font> is delayed, or the <font color="blue">Land Board </font>determines     to limit the use of <font color="blue">significant</font> portions of the <font color="blue">Lowry Range Property</font> for     open space, we may be required to incur <font color="blue">additional</font> short-term or long-term     debt <font color="blue">obligations</font> or seek to sell <font color="blue">additional</font> equity to generate operating     capital until demand arises for our <font color="blue">water assets</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are <font color="blue">significant</font>ly affected by the <font color="blue">general economic conditions</font>     for  real  estate <font color="blue">development</font> and the pace and location of <font color="blue">real estate</font>     <font color="blue">development</font>  <font color="blue">activities</font>  in the greater Denver metropolitan area, most     <font color="blue">particularly areas such as</font> Sky Ranch which are close to our Rangeview Water     Supply and thus are <font color="blue">potential markets</font> for our <font color="blue">Export Water</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in the     number of our water and <font color="blue">wastewater connections</font>, our <font color="blue">connection fees</font> and our     billings and <font color="blue">collection</font>s will depend on <font color="blue">real estate</font> <font color="blue">development</font> in this     area</td>
+    </tr>
+    <tr>
+      <td>We have no ability to control the pace and location of <font color="blue">real estate</font>     <font color="blue">development</font> <font color="blue">activities</font> which affect our business</td>
+    </tr>
+    <tr>
+      <td>In order to utilize the <font color="blue">Arkansas River </font>water acquired in fiscal 2006, we     have to apply for a change of use with the Colorado <font color="blue">water court</font> and this may     take <font color="blue">several years</font> to complete</td>
+    </tr>
+    <tr>
+      <td>The change of use of our <font color="blue">Arkansas River </font>water requires a ruling by the     Colorado <font color="blue">water court</font>s, which could take <font color="blue">several years</font> and be a costly and     <font color="blue">contentious effort since</font> it is anticipated that many <font color="blue">parties will oppose</font> the     transfer of the water</td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">several conditions which must</font> be satisfied     prior to our receiving a change of use decree for transfer of our Arkansas     River  water</td>
+    </tr>
+    <tr>
+      <td>One  condition  that  we  must  satisfy is a showing of     anti-speculation in which we, as the <font color="blue">applicant must demonstrate</font> that we have     contractual <font color="blue">obligations</font> to <font color="blue">provide water service</font> to <font color="blue">customers prior</font> to the     <font color="blue">water court</font> ruling on the transfer of a water right</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">water court</font> is also     expected to limit the transfer to the “<font color="blue">consumptive use</font>” portion of the water     right  and  to  address  changing  the  <font color="blue">historic use</font> of the <font color="blue">water from</font>     <font color="blue"><font color="blue">agricultural</font> uses</font> to other <font color="blue">uses such as municipal</font> and <font color="blue">industrial use</font></td>
+    </tr>
+    <tr>
+      <td>We     expect  to  <font color="blue">face opposition</font> to any <font color="blue">consumptive use</font> calculations of the     historic  <font color="blue">agricultural</font>  uses of this water</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">water court</font> may impose     <font color="blue">conditions on</font> our transfer of the <font color="blue"><font color="blue">water rights</font> such as</font> requiring us to     mitigate  the  loss  of  the  farming tax base, imposing re-vegetation     <font color="blue">requirements</font> to <font color="blue">convert soils from irrigated</font> to non-irrigated, and imposing     <font color="blue"><font color="blue">water quality</font> measures</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such conditions will likely increase</font> the cost of     <font color="blue">transferring</font> the <font color="blue">water rights</font></td>
+    </tr>
+    <tr>
+      <td>16     ______________________________________________________________________         Our <font color="blue">net losses may continue</font> and we may not have <font color="blue">sufficient liquidity</font> to     pursue our business <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced <font color="blue">significant</font> net losses and <font color="blue">could continue</font> to incur net     losses</td>
+    </tr>
+    <tr>
+      <td>For the years ended August 31, 2006, 2005 and 2004, we had net     losses of <font color="blue">approximately</font> dlra793cmam000, dlra1cmam051cmam000 and dlra1cmam976cmam000, respectively,     on  revenues  of <font color="blue">approximately</font> dlra271cmam700, dlra234cmam700 and dlra205cmam000, in the     <font color="blue">respective periods</font></td>
+    </tr>
+    <tr>
+      <td>Our cash flows from <font color="blue">operations</font> have been insufficient to     fund our <font color="blue">operations</font> in the past, and we have been required to <font color="blue">raise debt</font> and     equity  capital  to  remain  in  operation</td>
+    </tr>
+    <tr>
+      <td>Since 1998, we have raised     <font color="blue">approximately</font>  dlra10dtta1 million through the issuance of <font color="blue">approximately</font> 2dtta5     <font color="blue">million shares</font> of <font color="blue">common stock</font> to support our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to     fund our operational needs and meet our business <font color="blue">objectives</font> will depend on     our ability to generate cash from future <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">future cash flow</font>     from <font color="blue">operations</font> and other <font color="blue">capital resources</font> are insufficient to fund our     <font color="blue">operations</font> and the <font color="blue">significant</font> capital expenditure <font color="blue">requirements</font> to build our     <font color="blue">water <font color="blue">delivery systems</font></font>, we may be forced to reduce or delay our business     <font color="blue">activities</font>, or seek to obtain <font color="blue">additional</font> debt or equity capital, which may     not be <font color="blue">available on</font> acceptable terms, or at all</td>
+    </tr>
+    <tr>
+      <td>The rates we are allowed to <font color="blue">charge customers</font> are limited by <font color="blue">the District</font>’s     contract with the <font color="blue">Land Board </font>and our contract with <font color="blue"><font color="blue">the District</font> </font>and may be     insufficient to cover our costs of <font color="blue">construction</font> and operation</td>
+    </tr>
+    <tr>
+      <td>The prices we can charge for our water and <font color="blue">wastewater services</font> are subject     to <font color="blue">pricing <font color="blue">regulations</font> set</font> in <font color="blue">the District</font>’s contract with the <font color="blue">Land Board </font>    and our contract with <font color="blue">the District</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Annually </font>we survey the tap fees and rates of our rate-based     districts and set our tap fees and rates and <font color="blue">charges <font color="blue">based on</font></font> the average of     those <font color="blue">charged by</font> this group</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">costs associated with</font> the <font color="blue">construction</font> of     <font color="blue">water <font color="blue">delivery systems</font></font> and the production, treatment and delivery of our     water are subject to <font color="blue">market conditions</font> and other factors, which may increase     at a <font color="blue">significant</font>ly greater rate than the prices <font color="blue">charged by</font> our rate-based     districts</td>
+    </tr>
+    <tr>
+      <td>Factors beyond our control and <font color="blue">which cannot</font> be predicted, such as     drought, water contamination and <font color="blue">severe weather conditions</font>, like tornadoes     and floods, may result in <font color="blue">additional</font> labor and material costs that may not     <font color="blue">necessarily</font> be <font color="blue">recoverable under</font> our <font color="blue">operations</font> and <font color="blue">maintenance contracts</font>,     creating <font color="blue">additional</font> differences from the costs of our rate-based districts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased  </font>customer  demand  can <font color="blue">also increase</font> the <font color="blue">overall cost</font> of our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If  the costs for <font color="blue">construction</font> and operation of our water     services, including the cost of extracting our <font color="blue">groundwater</font>, exceed our     revenues, we may petition the <font color="blue">Land Board </font>for <font color="blue">rate increases</font></td>
+    </tr>
+    <tr>
+      <td>There can be no     assurance that the <font color="blue">Land Board </font><font color="blue">would approve</font> a <font color="blue">rate increase beyond</font> the     average of the rate-based districts</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">profitability could</font> be <font color="blue">negatively</font>     impacted if we experience an imbalance of costs and revenues and are not     successful in receiving approval for <font color="blue">rate increases</font></td>
+    </tr>
+    <tr>
+      <td>We only have <font color="blue">three employees</font> and may not be able to manage the increasing     demands of our expanding <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  expect  our  <font color="blue">activities</font>  relating  to  the Sky Ranch Agreements to     <font color="blue">significant</font>ly expand our business, and we are actively pursuing <font color="blue">additional</font>     <font color="blue">development</font> <font color="blue">opportunities</font> in areas near Sky Ranch, as well as <font color="blue">opportunities</font>     near our recently acquired <font color="blue">Arkansas River </font>water</td>
+    </tr>
+    <tr>
+      <td>We currently have only     <font color="blue">three employees</font> to <font color="blue">administer</font> our existing assets, interface with applicable     governmental bodies, market our services and plan for the <font color="blue">construction</font> and     <font color="blue">development</font> of our <font color="blue">future assets</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to maximize the value     of our <font color="blue">water assets</font> because of our limited manpower</td>
+    </tr>
+    <tr>
+      <td>We depend <font color="blue">significant</font>ly     on the services of Mark W Harding, our President</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Harding     </font>would cause a <font color="blue">significant</font> interruption of our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The success of our     future  business  <font color="blue">development</font>  and  ability  to  <font color="blue">capitalize</font>  on growth     <font color="blue">opportunities</font>  <font color="blue">depends on</font> our ability to attract and retain <font color="blue">additional</font>     experienced and <font color="blue">qualified persons</font> to operate and manage our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">State     </font><font color="blue">regulations</font>  set  the training, experience and <font color="blue">qualification standards</font>     required  for  our  employees to operate <font color="blue">specific water</font> and wastewater     <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Failure to find state-certified and qualified employees to     support the operation of our <font color="blue">facilities</font> could put us at risk, among other     things, for operational errors at the <font color="blue">facilities</font>, for improper billing and     <font color="blue">collection</font> processes, and for loss of contracts and revenues</td>
+    </tr>
+    <tr>
+      <td>We cannot     assure you that we can <font color="blue">successfully manage</font> our assets and our growth</td>
+    </tr>
+    <tr>
+      <td>Our  business  is  subject  to  <font color="blue">governmental regulation</font> and permitting     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue"><font color="blue">adversely affect</font>ed</font> by any <font color="blue">future decision by</font> the     <font color="blue">Colorado Public Utilities Commission </font>to <font color="blue">regulate us as</font> a <font color="blue">public utility</font> and     to impose regulation</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Colorado Public Utilities Commission </font>(“CPUC”) regulates investor-owned     <font color="blue">water companies</font> that hold themselves out to the public as serving, or ready     to serve, all of the public in a <font color="blue">service area</font></td>
+    </tr>
+    <tr>
+      <td>The CPUC regulates       17     ______________________________________________________________________       many aspects of public utilities’ <font color="blue">operations</font>, including the location and     <font color="blue">construction</font> of <font color="blue">facilities</font>, <font color="blue">establishing</font> water rates and fees, initiating     inspections, enforcement and compliance <font color="blue">activities</font> and <font color="blue">assisting consumers</font>     <font color="blue">with complaints</font></td>
+    </tr>
+    <tr>
+      <td>Although we act as a service provider under contracts with quasi-municipal     <font color="blue">metropolitan districts</font> that are <font color="blue">exempt by statute from regulation by</font> the     CPUC, the CPUC could decide to <font color="blue">regulate us as</font> a <font color="blue">public utility</font></td>
+    </tr>
+    <tr>
+      <td>If this were     to  occur,  we  might incur <font color="blue">significant</font> expense challenging the CPUC’s     assertion of authority, and we may be <font color="blue">unsuccessful</font></td>
+    </tr>
+    <tr>
+      <td>In the future, existing     <font color="blue">regulations</font> may be revised or <font color="blue">reinterpreted</font>, and new laws and <font color="blue">regulations</font>     may be adopted or become applicable to us or our <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>If we become     <font color="blue">regulated as</font> a <font color="blue">public utility</font>, our ability to <font color="blue">generate profits could</font> be     limited and we might incur <font color="blue">significant</font> <font color="blue">costs associated with</font> <font color="blue">regulatory</font>     compliance</td>
+    </tr>
+    <tr>
+      <td>There are many obstacles to our ability to sell our <font color="blue"><font color="blue">Paradise Water </font>Supply</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">currently earn no <font color="blue">revenues from</font></font> our <font color="blue"><font color="blue">Paradise Water </font>Supply</font>, which as of     August 31, 2006 has a <font color="blue">recorded cost</font> of <font color="blue">approximately</font> dlra5dtta5 million</td>
+    </tr>
+    <tr>
+      <td>Our     ability to convert our <font color="blue"><font color="blue">Paradise Water </font>Supply</font> into an <font color="blue">income generating asset</font>     is limited</td>
+    </tr>
+    <tr>
+      <td>Due to the nature of the <font color="blue">Paradise Water </font>rights and <font color="blue">agreements</font>     with other <font color="blue">western slope</font> water interests, our use of the <font color="blue">Paradise Water </font>    Supply is limited to <font color="blue">opportunities</font> along the <font color="blue">western slope</font></td>
+    </tr>
+    <tr>
+      <td>As part of our     water  <font color="blue">court decree</font> for the <font color="blue"><font color="blue">Paradise Water </font>Supply</font>, we are permitted to     construct a <font color="blue">storage facility on</font> the <font color="blue">Colorado River</font></td>
+    </tr>
+    <tr>
+      <td>However, due to the     strict <font color="blue">regulatory</font> <font color="blue">requirements</font> for <font color="blue">constructing</font> an on-channel reservoir,     completing the <font color="blue">conditional storage</font> right at its <font color="blue">decreed location could</font> be     <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">Paradise Water </font>Supply</font> is <font color="blue">also conditioned on</font> a Finding of Reasonable     Diligence from the <font color="blue">water court</font> every six years</td>
+    </tr>
+    <tr>
+      <td>To arrive at that finding, a     water  court  must determine that we continue to <font color="blue">diligently pursue</font> the     <font color="blue">development</font> of the <font color="blue">water rights</font>, either by us or by some <font color="blue">third party</font> who has     a <font color="blue">contractual commitment</font> for its use</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">water court</font> is unable to make     such a finding, our right to the <font color="blue"><font color="blue">Paradise Water </font>Supply</font> would be lost and we     would be required to impair the <font color="blue"><font color="blue">Paradise Water </font>Supply</font> asset and incur a dlra5dtta5     <font color="blue">million charge against earnings</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The State Engineers </font>office began its latest     review of our conditional <font color="blue">water rights</font> in fiscal 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conflicts </font>of interest may arise relating to the operation of <font color="blue">the District</font></td>
+    </tr>
+    <tr>
+      <td>Our officers, employees and a majority shareholder, constitute a majority of     the <font color="blue">directors</font> of the Rangeview Metropolitan District and Pure Cycle, along     with our officers and employees and one unrelated individual, own as tenants     in common, the 40 acres that form <font color="blue">the District</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Pursuant to State </font>law,     <font color="blue">directors</font> receive dlra75 for <font color="blue">each board meeting</font> or a <font color="blue">maximum compensation</font> of     dlra1cmam200 per year</td>
+    </tr>
+    <tr>
+      <td>We have made loans to <font color="blue"><font color="blue">the District</font> </font>to fund its <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">At August </font>31, 2006, total principal and <font color="blue">interest owed</font> to us by <font color="blue"><font color="blue">the District</font> </font>    was <font color="blue">approximately</font> dlra452cmam200</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The District </font>is a party to our <font color="blue">agreements</font> with     the <font color="blue">Land Board </font>and receives fees of 5prca of the <font color="blue">revenues from</font> the sale of     water  on  the  Lowry  Range Property and will hold title to the water     <font color="blue">distribution system at</font> the Sky Ranch <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>Proceeds from the fee     <font color="blue">collection</font>s will initially be used to repay <font color="blue">the District</font>’s <font color="blue">obligations</font> to     us, but after these loans are repaid, <font color="blue"><font color="blue">the District</font> </font>is not required to use     the  funds  to  benefit Pure Cycle</td>
+    </tr>
+    <tr>
+      <td>We have received <font color="blue">benefits from</font> our     <font color="blue">activities</font> undertaken in <font color="blue">conjunction with</font> <font color="blue">the District</font>, <font color="blue">but conflicts may</font>     arise between our interests and those of <font color="blue">the District</font>, and with our officers     who are acting in dual <font color="blue">capacities</font> in <font color="blue">negotiating</font> contracts to which both we     and <font color="blue"><font color="blue">the District</font> </font>are parties</td>
+    </tr>
+    <tr>
+      <td>We expect that <font color="blue"><font color="blue">the District</font> </font>will expand when     more properties are developed and become part of <font color="blue">the District</font>, and our     officers acting as <font color="blue">directors</font> of <font color="blue"><font color="blue">the District</font> </font>will have fiduciary <font color="blue">obligations</font>     to those other <font color="blue">constituents</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that all conflicts     will be resolved in the <font color="blue">best interests</font> of <font color="blue">Pure Cycle </font>and its <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>In addition, other <font color="blue">landowners coming into</font> <font color="blue"><font color="blue">the District</font> </font>will be eligible to     vote and to serve as <font color="blue">directors</font> of <font color="blue">the District</font></td>
+    </tr>
+    <tr>
+      <td>There can be <font color="blue">no assurances</font>     that our officers and employees will remain as <font color="blue">directors</font> of <font color="blue"><font color="blue">the District</font> </font>or     that the actions of a <font color="blue">subsequently elected board would</font> not have an adverse     <font color="blue">impact on</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  are required to maintain <font color="blue">stringent <font color="blue">water quality</font> standards</font> and are     subject to <font color="blue">regulatory</font> and <font color="blue"><font color="blue">environment</font>al risks</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must provide water</font> that meets all federal and state <font color="blue">regulatory</font> water     quality  standards  and operate our water and wastewater <font color="blue">facilities</font> in     <font color="blue">accordance with</font> these standards</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face contamination</font> and <font color="blue">pollution issues</font>     regarding our <font color="blue">water supplies</font></td>
+    </tr>
+    <tr>
+      <td>Improved detection technology, increasingly     stringent <font color="blue">regulatory</font> <font color="blue">requirements</font>, and <font color="blue">heightened consumer awareness</font> of     <font color="blue">water quality</font> issues contribute to an <font color="blue">environment</font> of <font color="blue">increased focus on</font>     <font color="blue">water quality</font></td>
+    </tr>
+    <tr>
+      <td>In       18     ______________________________________________________________________       contrast  with other providers in Colorado, we are combining the water     delivery and wastewater treatment processes, which may introduce technical     <font color="blue">treatment issues</font> that make compliance with <font color="blue">water quality</font> standards more     <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be able in the future to reduce     the amounts of <font color="blue">contaminants</font> in our water to acceptable levels</td>
+    </tr>
+    <tr>
+      <td>In addition,     the standards that we must meet are <font color="blue">constantly</font> changing and becoming more     stringent</td>
+    </tr>
+    <tr>
+      <td>For example, in <font color="blue">February </font>2002, the US Environmental Protection     Agency lowered the arsenic standard in drinking <font color="blue">water from</font> 50 parts per     billion to 10 parts per billion</td>
+    </tr>
+    <tr>
+      <td>Future changes in <font color="blue">regulations</font> governing the     supply of <font color="blue">drinking water</font> and treatment of <font color="blue">wastewater may</font> have a material     adverse <font color="blue">impact on</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">handle certain hazardous materials at</font> our water treatment <font color="blue">facilities</font>,     primarily  sodium  <font color="blue">hypochlorite</font></td>
+    </tr>
+    <tr>
+      <td>Any  failure of our operation of the     <font color="blue">facilities</font> in the future, including sewage spills, noncompliance with water     quality standards, hazardous materials leaks and spills, and similar events     <font color="blue">could expose us</font> to <font color="blue">environment</font>al liabilities, claims and <font color="blue">litigation costs</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will <font color="blue">successfully manage</font> these issues, and     failure to do so could have a material adverse effect on our future results     of <font color="blue">operations</font> by increasing our costs for damages and cleanup</td>
+    </tr>
+    <tr>
+      <td>Our contracts for the <font color="blue">construction</font> of water and wastewater projects may     expose us to <font color="blue">certain completion</font> and <font color="blue">performance risks</font></td>
+    </tr>
+    <tr>
+      <td>We intend to <font color="blue">rely on independent <font color="blue">contractors</font></font> to construct our water and     wastewater <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">construction</font> <font color="blue">activities</font> may involve risks,     including shortages of materials and labor, work stoppages, labor relations     disputes, weather interference, <font color="blue">engineering</font>, <font color="blue">environment</font>al, permitting or     <font color="blue">geological problems</font> and <font color="blue">unanticipated cost increases</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">issues could</font>     give rise to delays, <font color="blue">cost overruns</font> or <font color="blue">performance deficiencies</font>, or otherwise     <font color="blue">adversely affect</font> the <font color="blue">construction</font> or operation of our water and wastewater     <font color="blue">delivery systems</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we may experience <font color="blue">quality problems</font> in the <font color="blue">construction</font> of our     systems and <font color="blue">facilities</font>, including <font color="blue">equipment failures</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you     that we will not face claims <font color="blue">from customers</font> or others regarding product     quality and <font color="blue">installation</font> of <font color="blue">equipment placed</font> in <font color="blue">service by <font color="blue">contractors</font></font></td>
+    </tr>
+    <tr>
+      <td>Certain of our contracts may be fixed-price contracts, in which we may bear     all or a <font color="blue">significant</font> portion of the risk for <font color="blue">cost overruns</font></td>
+    </tr>
+    <tr>
+      <td>Under these     fixed-price contracts, contract prices are established in part <font color="blue">based on</font>     fixed, <font color="blue">firm subcontractor quotes on contracts</font> and on cost and scheduling     estimates</td>
+    </tr>
+    <tr>
+      <td>These  estimates  may be <font color="blue">based on</font> a number of <font color="blue">assumptions</font>,     including <font color="blue">assumptions</font> about prices and <font color="blue">availability</font> of labor, equipment and     materials, and other issues</td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">subcontractor quotations</font> or cost     estimates <font color="blue">prove inaccurate</font>, or if <font color="blue">circumstances</font> change, <font color="blue">cost overruns</font> may     occur, and our financial results would be <font color="blue">negatively</font> impacted</td>
+    </tr>
+    <tr>
+      <td>In many     cases, the incurrence of these <font color="blue">additional</font> costs would not be within our     control</td>
+    </tr>
+    <tr>
+      <td>We  may  have  contracts in which we guarantee project <font color="blue">completion by</font> a     <font color="blue">scheduled date</font></td>
+    </tr>
+    <tr>
+      <td>At times, we <font color="blue">may guarantee</font> that the project, when completed,     will achieve <font color="blue">certain <font color="blue">performance standards</font></font></td>
+    </tr>
+    <tr>
+      <td>If we fail to complete the     project  as  scheduled,  or  if we fail to <font color="blue">meet guaranteed performance</font>     standards, we may be held responsible for cost impacts and/or penalties to     the customer resulting from any delay or for the costs to alter the project     to achieve the <font color="blue">performance standards</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that these events occur     and  are  not  due  to  <font color="blue">circumstances</font>  for  which the customer accepts     <font color="blue">responsibility</font> or cannot be mitigated by <font color="blue">performance bonds</font> or the provisions     of our <font color="blue">agreements</font> with <font color="blue">contractors</font>, the <font color="blue">total costs</font> of the project could     exceed our original estimates and our financial results would be <font color="blue">negatively</font>     impacted</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customers may</font> require us to <font color="blue">secure performance</font> and <font color="blue">completion bonds</font> for     <font color="blue">certain contracts</font> and projects</td>
+    </tr>
+    <tr>
+      <td>The market <font color="blue">environment</font> for <font color="blue">surety companies</font>     has become more <font color="blue">risk averse</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">secure performance</font> and <font color="blue">completion bonds</font> for     our <font color="blue">contracts from</font> these <font color="blue">surety companies</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that     we can <font color="blue">secure performance</font> and <font color="blue">completion bonds</font> where required</td>
+    </tr>
+    <tr>
+      <td>We  may  operate <font color="blue">engineering</font> and <font color="blue">construction</font> <font color="blue">activities</font> for water and     wastewater <font color="blue">facilities</font> where design, <font color="blue">construction</font> or <font color="blue">system failures could</font>     result in injury to <font color="blue">third parties</font> or damage to property</td>
+    </tr>
+    <tr>
+      <td>Any losses that     exceed  claims  against our <font color="blue">contractors</font>, the <font color="blue">performance bonds</font> and our     insurance limits at <font color="blue">facilities</font> so <font color="blue">managed could</font> result in claims <font color="blue">against us</font></td>
+    </tr>
+    <tr>
+      <td>In addition, if there is a <font color="blue">customer dispute</font> regarding performance of our     services, the <font color="blue">customer may decide</font> to delay or <font color="blue">withhold payment</font> to us</td>
+    </tr>
+    <tr>
+      <td>19     ______________________________________________________________________         Weaknesses in the Company’s <font color="blue"><font color="blue">internal control</font>s</font> and <font color="blue">procedures could</font> have a     material adverse effect on the Company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management </font>is responsible for <font color="blue">establishing</font> and maintaining <font color="blue">adequate internal</font>     control  <font color="blue">over financial</font> reporting</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">internal control</font> <font color="blue">over financial</font>     reporting is a <font color="blue">process designed</font> to <font color="blue">provide reasonable assurance</font> regarding     the <font color="blue">reliability</font> of financial reporting and the <font color="blue">preparation</font> of financial     statements in <font color="blue">accordance with</font> US <font color="blue">generally accepted accounting principles</font>     (“GAAP”)</td>
+    </tr>
+    <tr>
+      <td>In making its assessment of <font color="blue">internal control</font> <font color="blue">over financial</font>     reporting as <font color="blue">of August </font>31, 2006, <font color="blue">management</font> used the <font color="blue">criteria described</font> in     “Internal  Control — Integrated  Framework” issued by the <font color="blue">Committee </font>of     <font color="blue">Sponsoring Organizations of the Treadway Commission</font></td>
+    </tr>
+    <tr>
+      <td>A material weakness is     a <font color="blue">control deficiency</font>, or <font color="blue">combination</font> of <font color="blue">control deficiencies</font>, that results     in a more <font color="blue">than remote likelihood</font> a material <font color="blue">misstatement</font> of the annual or     <font color="blue">interim <font color="blue">financial statements</font> will</font> not be prevented or detected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management </font>determined that a material <font color="blue">weaknesses</font> in our <font color="blue">internal control</font>     over   financial   reporting   existed  as  of  August 31,  2006</td>
+    </tr>
+    <tr>
+      <td>See     Item 9A — <font color="blue">Controls  </font>and  <font color="blue">Procedures </font>for a description of this material     weakness</td>
+    </tr>
+    <tr>
+      <td>The material weakness identified resulted in an <font color="blue">adverse opinion by</font> our     <font color="blue">independent registered public accounting firm on</font> the <font color="blue">effectiveness</font> of our     <font color="blue">internal control</font> <font color="blue">over financial</font> reporting</td>
+    </tr>
+    <tr>
+      <td>We are developing a <font color="blue">remediation</font> plan and intend to implement <font color="blue">remediation</font>     measures during fiscal 2007, designed to remediate the material weakness in     our  internal  <font color="blue">controls by</font> August 31, 2007 (See Item 9A — Controls and     Procedures)</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you as to when the <font color="blue">remediation</font> plan will be     <font color="blue">fully implemented</font>, nor can we assure you that <font color="blue">additional</font> material <font color="blue">weaknesses</font>     will not be identified by our <font color="blue">management</font> or <font color="blue">independent accountants</font> in the     future</td>
+    </tr>
+    <tr>
+      <td>In addition, even after the <font color="blue">remedial measures</font> are <font color="blue">fully implemented</font>,     our <font color="blue"><font color="blue">internal control</font>s</font> may not prevent all <font color="blue">potential error</font> and fraud, because     any control system, no matter <font color="blue">how well designed</font>, can <font color="blue">only provide reasonable</font>     and not <font color="blue">absolute assurance</font> that the <font color="blue">objectives</font> of the <font color="blue">control system will</font> be     achieved</td>
+    </tr>
+    <tr>
+      <td>Accounting for the <font color="blue">Arkansas River </font>Agreement is not finalized       <font color="blue">The Company </font>completed the <font color="blue">acquisition</font> of the <font color="blue">Arkansas River </font>Water Rights and     related assets as <font color="blue">of August </font>31, 2006 and has <font color="blue">provided purchase accounting</font>     based  on  initial  <font color="blue">valuations which may</font> be subject to change</td>
+    </tr>
+    <tr>
+      <td>We are     continuing to <font color="blue">evaluate future impacts on</font> our <font color="blue">balance sheet</font> and statement of     <font color="blue">operations</font> for fiscal years 2007 and continuing, which could result in a     material impact to our <font color="blue">financial statements</font></td>
+    </tr>
+  </tbody>
+</table>

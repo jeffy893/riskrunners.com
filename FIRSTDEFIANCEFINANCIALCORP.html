@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: dependent", fill: "#e32636"},
+{source: "1: dependent", target: "1: degree upon", fill: "#e32636"},
+{source: "1: degree upon", target: "1: net interest income", fill: "#e32636"},
+{source: "1: net interest income", target: "1: difference between interest earned from loans", fill: "#e32636"},
+{source: "1: difference between interest earned from loans", target: "1: investments", fill: "#e32636"},
+{source: "1: investments", target: "1: interest paid on deposits", fill: "#e32636"},
+{source: "1: interest paid on deposits", target: "1: borrowings", fill: "#e32636"},
+{source: "1: dependent", target: "3: highly sensitive", fill: "#002366"},
+{source: "3: highly sensitive", target: "3: conditions", fill: "#002366"},
+{source: "3: conditions", target: "3: monetary policies", fill: "#002366"},
+{source: "3: monetary policies", target: "3: Stability ", fill: "#002366"},
+{source: "3: highly sensitive", target: "6: origination", fill: "#ff0"},
+{source: "6: origination", target: "6: dependent", fill: "#ff0"},
+{source: "6: origination", target: "16: Weaknesses ", fill: "#a52a2a"},
+{source: "16: Weaknesses ", target: "16: unemployment", fill: "#a52a2a"},
+{source: "16: unemployment", target: "16: real estate values", fill: "#a52a2a"},
+{source: "16: real estate values", target: "16: significant", fill: "#a52a2a"},
+{source: "16: significant", target: "16: interest rates", fill: "#a52a2a"},
+{source: "16: Weaknesses ", target: "17: impact on", fill: "#522d80"},
+{source: "17: impact on", target: "17: Borrowers ", fill: "#522d80"},
+{source: "17: Borrowers ", target: "17: payments on", fill: "#522d80"},
+{source: "17: payments on", target: "17: collateral securing loans may decline", fill: "#522d80"},
+{source: "17: collateral securing loans may decline", target: "17: overall quality", fill: "#522d80"},
+{source: "17: overall quality", target: "17: loan portfolio may decline", fill: "#522d80"},
+{source: "17: impact on", target: "20: Competition ", fill: "#905d5d"},
+{source: "20: Competition ", target: "START_HERE", fill: "#905d5d"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pratītyasamutpāda">Pratītyasamutpāda</a></td>
+      <td>Pratītyasamutpāda (Sanskrit: प्रतीत्यसमुत्पाद, Pāli: paṭiccasamuppāda), commonly translated as dependent origination, or dependent arising, is a key doctrine in Buddhism shared by all schools of Buddhism. It states that all dharmas (phenomena) arise in dependence upon other dharmas: "if this exists, that exists; if this ceases to exist, that also ceases to exist".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Compound_interest">Compound interest</a></td>
+      <td>Compound interest is the addition of interest to the principal sum of a loan or deposit, or in other words, interest on principal plus interest. It is the result of reinvesting interest, or adding it to the loaned capital rather than paying it out, or requiring payment from borrower, so that interest in the next period is then earned on the principal sum plus previously accumulated interest.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interest">Interest</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interest_rate">Interest rate</a></td>
+      <td>An interest rate is the amount of interest due per period, as a proportion of the amount lent, deposited, or borrowed (called the principal sum). The total interest on an amount lent or borrowed depends on the principal sum, the interest rate, the compounding frequency, and the length of time over which it is lent, deposited, or borrowed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage_loan">Mortgage loan</a></td>
+      <td>A mortgage loan or simply mortgage (), in civil law jurisdicions known also as a hypothec loan, is a loan used either by purchasers of real property to raise funds to buy real estate, or by existing property owners to raise funds for any purpose while putting a lien on the property being mortgaged. The loan is "secured" on the borrower's property through a process known as mortgage origination.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment">Investment</a></td>
+      <td>Investment is the dedication of an asset to attain an increase in value over a period of time. Investment requires a sacrifice of some present asset, such as time, money, or effort.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Foreign_direct_investment">Foreign direct investment</a></td>
+      <td>A foreign direct investment (FDI) is an investment in the form of a controlling ownership in a business in one country by an entity based in another country. It is thus distinguished from a foreign portfolio investment by a notion of direct control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ariel_Investments">Ariel Investments</a></td>
+      <td>Ariel Investments is an investment company located in Chicago, Illinois. It specializes in small and mid-capitalized stocks based in the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fisher_Investments">Fisher Investments</a></td>
+      <td>Fisher Investments is an independent money management firm headquartered in Camas, Washington.\n\n\n== History ==\nKen Fisher founded the firm in 1979, incorporated in 1986, then served as CEO until July 2016, when he was succeeded by long-time Fisher Investments employee Damian Ornani.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alternative_investment">Alternative investment</a></td>
+      <td>An alternative investment (also called an alternative asset) is an investment in any asset class excluding stocks, bonds, and cash. The term is a relatively loose one and includes tangible assets such as precious metals, collectibles (art, wine, antiques, cars, coins, musical instruments, or stamps) and some financial assets such as real estate, commodities, private equity, distressed securities, hedge funds, exchange funds, carbon credits, venture capital, film production, financial derivatives, cryptocurrencies, non-fungible tokens, and tax receivable agreements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loanword">Loanword</a></td>
+      <td>A loanword (also loan word or loan-word) is a word permanently adopted from one language (the donor language) and incorporated into another language without translation. This is in contrast to cognates, which are words in two or more languages that are similar because they share an etymological origin, and calques, which involve translation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/External_commercial_borrowing">External commercial borrowing</a></td>
+      <td>External commercial borrowing (ECBs) are loans in India made by non-resident lenders in foreign currency to Indian borrowers. They are used widely in India to  facilitate access to foreign money by Indian corporations and PSUs (public sector undertakings).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/English_words_of_Greek_origin">English words of Greek origin</a></td>
+      <td>The Greek language has contributed to the English lexicon in five main ways:\n\nvernacular borrowings, transmitted orally through Vulgar Latin directly into Old English, e.g., 'butter' (butere, from Latin butyrum < βούτυρον), or through French, e.g., 'ochre';\nlearned borrowings from classical Greek texts, often via Latin, e.g., 'physics' (< Latin physica < τὰ φυσικά);\na few borrowings transmitted through other languages, notably Arabic scientific and philosophical writing, e.g., 'alchemy' (< χημεία);\ndirect borrowings from Modern Greek, e.g., 'ouzo' (ούζο);\nneologisms (coinages) in post-classical Latin or modern languages using classical Greek roots, e.g., 'telephone' (< τῆλε + φωνή) or a mixture of Greek and other roots, e.g., 'television' (< Greek τῆλε + English vision < Latin visio); these are often shared among the modern European languages, including Modern Greek;Of these, the neologisms are by far the most numerous.\n\n\n== Indirect and direct borrowings ==\nSince the living Greek and English languages were not in direct contact until modern times, borrowings were necessarily indirect, coming either through Latin (through texts or through French and other vernaculars), or from Ancient Greek texts, not the living spoken language.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prudential_borrowing">Prudential borrowing</a></td>
+      <td>Prudential borrowing is the set of rules governing local authority borrowing in the UK. Under prudential borrowing, the amount of debt and other liabilities most local authorities can incur is no longer capped by an upper limit. Instead borrowing must conform to the Prudential Code which (among other things) requires that borrowing be affordable and prudential.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_debt">Government debt</a></td>
+      <td>A country's gross government debt (also called public debt, or sovereign debt) is the financial liabilities of the government sector.: 81   Changes in government debt over time reflect primarily borrowing due to past government deficits.  A deficit occurs when a government's expenditures exceed revenues.: 79–82   Government debt may be owed to domestic residents, as well as to foreign residents.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borrowing_base">Borrowing base</a></td>
+      <td>Borrowing base is an accounting metric used by financial institutions to estimate the available collateral on a borrower's assets in order to evaluate the size of the credit that may be extended. Typically, the calculation of borrowing base is used for revolving loans, and the borrowing base determines the maximum credit line available to the borrower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borrowing_center">Borrowing center</a></td>
+      <td>A borrowing center, borrowing shop, borrowing bar, item library or library of things is a library of household items and tools, usually organized as a volunteer cooperative, nonprofit organization, or operated by the local public library.Borrowing centers are part of the sharing economy, which was termed in 1984 by Harvard economist Martin Weitzman. In contrast to a rental store, which offers many of the same items, borrowing centres are operated on a non-profit or collective basis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cultural_appropriation">Cultural appropriation</a></td>
+      <td>Cultural appropriation is the inappropriate or unacknowledged adoption of an element or elements of one culture or identity by members of another culture or identity. This can be controversial when members of a dominant culture appropriate from minority cultures.According to critics of the practice, cultural appropriation differs from acculturation, assimilation, or equal cultural exchange in that this appropriation is a form of colonialism.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Borrowing_Trouble">Borrowing Trouble</a></td>
+      <td>Borrowing Trouble is a 1937 American comedy film directed by Frank R. Strayer and starring Jed Prouty, Shirley Deane and Spring Byington. It is part of the Jones Family series of films and is also known by the alternative title of The Jones Family in Borrowing Trouble.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Monetary_policy">Monetary policy</a></td>
+      <td>Monetary policy is the policy adopted by the monetary authority of a nation to control either the interest rate payable for very short-term borrowing (borrowing by banks from each other to meet their short-term needs) or the money supply, often as an attempt to reduce inflation or the interest rate, to ensure price stability and general trust of the value and stability of the nation's currency.\nMonetary policy is a modification of the supply of money, i.e.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Origination_Clause">Origination Clause</a></td>
+      <td>The Origination Clause, sometimes called the Revenue Clause, is Article I, Section 7, Clause 1 of the U.S. Constitution. The clause says that all bills for raising revenue must start in the U.S. House of Representatives, but the U.S. Senate may propose or concur with amendments, as in the case of other bills.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Origination_(telephony)">Origination (telephony)</a></td>
+      <td>Origination in VOIP telephony refers to calls that originate in the PSTN public switched telephone network and are carried to their destination over the Internet.\nA VoIP call is initiated between two points, the initiation point is known as originator and the destination point is known as terminator.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage_origination">Mortgage origination</a></td>
+      <td>In consumer lending, mortgage origination, a specialized subset of loan origination, is the process by which a lender works with a borrower to complete a mortgage transaction, resulting in a mortgage loan.  A mortgage loan is a loan in which property or real estate is used as collateral.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loan_origination">Loan origination</a></td>
+      <td>Loan origination is the process by which a borrower applies for a new loan, and a lender processes that application. Origination generally includes all the steps from taking a loan application up to disbursal of funds (or declining the application).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Call_origination">Call origination</a></td>
+      <td>Call origination, also known as voice origination, refers to the collecting of the calls initiated by a calling party on a telephone exchange of the PSTN, and handing off the calls to a VoIP endpoint or to another exchange or telephone company for completion to a called party.\nIn the VoIP world, the opposite of call origination is call termination, where a call initiated as a VoIP call is terminated to the PSTN.\nThe term is often used in referring to a VoIP trunking service that provides the ability for calls to originate on the PSTN and be delivered to a customer's VoIP endpoint.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Origination_of_Organismal_Form">Origination of Organismal Form</a></td>
+      <td>Origination of Organismal Form: Beyond the Gene in Developmental and Evolutionary Biology (ISBN 0-262-13419-5) is a book published in 2003 edited by Gerd B. Müller and Stuart A. Newman. It explores the multiple factors that may have been responsible for the origination of biological form in multicellular life.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Impacts_of_tourism">Impacts of tourism</a></td>
+      <td>Tourism brings both positive and negative impacts on tourist destinations. The traditionally-described domains of tourism impacts are economic, socio-cultural, and environmental dimensions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FIRST DEFIANCE FINANCIAL CORP    Item 1A Risk Factors    Interest Rate Risk          Our earnings and financial  condition are <font color="blue">dependent</font> to a large <font color="blue">degree upon</font>  <font color="blue">net interest income</font>,  which is the <font color="blue">difference between interest earned from loans</font>  and <font color="blue">investments</font>  and <font color="blue"><font color="blue">interest paid on</font> deposits</font> and <font color="blue">borrowings</font></td>
+    </tr>
+    <tr>
+      <td>The narrowing of  the <font color="blue">spread between interest earned on loans</font> and <font color="blue">investments</font> and <font color="blue">interest paid on</font>  deposits and  <font color="blue">borrowings</font>  could  <font color="blue">adversely</font>  affect our  earnings  and  financial  condition</td>
+    </tr>
+    <tr>
+      <td>Interest rates are <font color="blue">highly sensitive</font> to many factors including:    o     The rate of inflation;    o     Economic <font color="blue">conditions</font>;    o     Federal <font color="blue">monetary policies</font>;    o     <font color="blue">Stability </font>of domestic and foreign markets</td>
+    </tr>
+    <tr>
+      <td>Changes in market <font color="blue">interest rates</font> will also affect the level of <font color="blue">prepayments</font>  on  loans  as well as the  payments  received  on  mortgage  backed  securities,  requiring  the  <font color="blue">reinvestment</font>  at lower rates than the loans or  securities  were  paying</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First Federal</font> Bank </font>originates a <font color="blue"><font color="blue">significant</font> amount</font> of <font color="blue">residential mortgage</font>  loans for sale and for our portfolio</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">origination</font> of residential  mortgage  loans is highly  <font color="blue">dependent</font>  on the local  real  estate  market  and the level of  interest  rates</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increasing  </font>interest  rates tend to reduce the  <font color="blue">origination</font> of  loans for sale and <font color="blue">consequently fee income</font>,  which we report <font color="blue">as mortgage banking</font>  income</td>
+    </tr>
+    <tr>
+      <td>Conversely, <font color="blue">decreasing <font color="blue">interest rates</font></font> have the effect of causing clients  to <font color="blue">refinance mortgage loans <font color="blue">faster than</font></font> anticipated</td>
+    </tr>
+    <tr>
+      <td>This causes the                                            -20-  <PAGE>    value of <font color="blue">mortgage servicing rights on</font> the <font color="blue">loans sold</font> to be <font color="blue">lower than originally</font>  anticipated</td>
+    </tr>
+    <tr>
+      <td>If this happens, we may be required to write down the value of our  mortgage  servicing  rights  <font color="blue">faster than</font>  anticipated,  <font color="blue">which will</font>  increase our  expense and lower our earnings</td>
+    </tr>
+    <tr>
+      <td>Credit Risk          Our earnings and financial  <font color="blue">condition may</font> be <font color="blue">adversely</font> affected if we fail  to <font color="blue">adequately</font>  manage our credit risk</td>
+    </tr>
+    <tr>
+      <td>Our primary  business is the  <font color="blue">origination</font>  and <font color="blue">underwriting</font> of loans</td>
+    </tr>
+    <tr>
+      <td>This business requires us to take  &amp;quote credit risk &amp;quote  which  is the risk of losing  principal and interest  income because  <font color="blue">borrowers fail</font> to  repay their  loans</td>
+    </tr>
+    <tr>
+      <td>The ability of borrowers to repay their loans and the value  of  collateral  securing  such  loans may be  affected  by a number  of  factors  including:          o     A slowdown in the local  economy of our <font color="blue">market area</font> or the  national              economy;          o     A  downturn  in the  business  sector  in which  our  loan  customer              operates;          o     A <font color="blue">rapid increase</font> in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>Economy          We operate our banking and insurance  business <font color="blue">units within</font> the geographic  area  comprised  of the  northwest  corner  of the  state of Ohio  and  <font color="blue">adjacent</font>  counties <font color="blue">in Indiana </font>and  Michigan</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Weaknesses  </font>in this  geographic  <font color="blue">market area</font>  could be caused by such  factors as an  increase  in the  <font color="blue">unemployment</font>  rate,  a  decrease in <font color="blue">real estate values</font>, or <font color="blue">significant</font>  increases in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>Any  such  weakness  could  have a  negative  <font color="blue">impact on</font> our  earnings  and  financial  condition because:          o     Demand for our products and services may go down;          o     <font color="blue">Borrowers </font>may be unable to make <font color="blue">payments on</font> their loans;          o     The value of <font color="blue">collateral securing loans may decline</font>;          o     The <font color="blue">overall quality</font> of the <font color="blue">loan portfolio may decline</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face <font color="blue">competition</font> both</font> in <font color="blue">originating</font>  loans  and  attracting  deposits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition  </font>is  intense in the  financial  services  industry</td>
+    </tr>
+    <tr>
+      <td>We  compete in our  market  area by  offering  superior  service  and  <font color="blue"><font color="blue">competitive</font> rates</font> and products</td>
+    </tr>
+    <tr>
+      <td>The type of <font color="blue">institutions</font> we <font color="blue">compete with</font> include  large regional commercial banks, smaller community banks, savings  <font color="blue">institutions</font>,  mortgage  <font color="blue">banking firms</font>,  credit unions,  finance  companies,  brokerage  firms,  insurance  agencies and mutual  funds</td>
+    </tr>
+    <tr>
+      <td>As a result of their size and ability to  achieve economies of scale, certain of our <font color="blue">competitors</font> can offer a broader range  of products and services than we offer</td>
+    </tr>
+    <tr>
+      <td>To stay  <font color="blue">competitive</font> in our <font color="blue">market area</font>,  we may need to adjust the  interest  rates on our products to <font color="blue">match rates</font> of our  <font color="blue">competition</font>,  <font color="blue">which will</font> have a negative <font color="blue">impact on</font> our <font color="blue">net interest margin</font></td>
+    </tr>
+    <tr>
+      <td>Our  continued  <font color="blue">profitability</font>  <font color="blue">depends on</font> our  ability  to  continue  to  <font color="blue">effectively</font>  compete in our <font color="blue">market area</font>s</td>
+    </tr>
+    <tr>
+      <td>-21-  <PAGE>    Government Regulation          Our  business  may be  <font color="blue">adversely</font>  affected  by changes  in the  <font color="blue">regulatory</font>  <font color="blue">environment</font>  or by changes in  <font color="blue">government</font>  <font color="blue">policies as</font> a whole</td>
+    </tr>
+    <tr>
+      <td>The earnings of  financial  <font color="blue">institutions</font> such as <font color="blue">First Defiance </font>and <font color="blue">First Federal</font> are <font color="blue">affected by</font>  the policies of the <font color="blue">regulatory</font> authorities, including the Federal Reserve Board,  which regulates the <font color="blue">money supply</font>,  and the Office of Thrift  Supervision,  which  regulates  <font color="blue">unitary thrift</font>  holding  <font color="blue">companies such as</font> <font color="blue">First Defiance </font>and savings  banks such as <font color="blue">First Federal</font></td>
+    </tr>
+    <tr>
+      <td>Among the methods  employed by the Federal  Reserve  Board are <font color="blue">open market</font>  <font color="blue">operations</font> in <font color="blue">US Government </font>securities, changes in the <font color="blue">discount rate on</font> member  bank  <font color="blue">borrowings</font>,  and changes in the reserve  <font color="blue">requirement</font>  against  member bank  deposits</td>
+    </tr>
+    <tr>
+      <td>These  tools  are  utilized  by  the  Federal   Reserve  in  varying  <font color="blue">combinations</font>  to  influence  overall  growth  and  <font color="blue">distribution</font>  of bank  loans,  <font color="blue">investments</font>  and deposits and they have a <font color="blue">significant</font>  <font color="blue">impact on</font> interest  rates  charged on loans and paid on deposits</td>
+    </tr>
+    <tr>
+      <td>The influence of the <font color="blue">monetary policies</font> of  the Federal  Reserve Board are expected to have a continuing and profound effect  on the operating results of commercial and <font color="blue">savings banks</font></td>
+    </tr>
+    <tr>
+      <td>Policies,  <font color="blue">administration</font>  <font color="blue">guidelines</font>,  and  <font color="blue">regulatory</font>  practices  of the  Office of Thrift  Supervision  and other banking  <font color="blue">regulators</font>  have a <font color="blue">significant</font>  <font color="blue">impact on</font> the  <font color="blue">operations</font>  of <font color="blue">First Federal</font> and First  Defiance</td>
+    </tr>
+    <tr>
+      <td>It is possible  that certain of those <font color="blue">regulations will negatively impact</font> the Companyapstas operating  results or <font color="blue">financial condition</font></td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: revenue growth", fill: "#4b3621"},
+{source: "2: revenue growth", target: "2: cash flows", fill: "#4b3621"},
+{source: "2: cash flows", target: "2: profitability", fill: "#4b3621"},
+{source: "2: revenue growth", target: "3: restaurants which limits", fill: "#b31b1b"},
+{source: "3: restaurants which limits", target: "3: restaurant locations without", fill: "#b31b1b"},
+{source: "3: restaurant locations without", target: "3: significant continuing liabilities", fill: "#b31b1b"},
+{source: "3: significant continuing liabilities", target: "3: cash flow", fill: "#b31b1b"},
+{source: "3: restaurants which limits", target: "4: facility", fill: "#ecebbd"},
+{source: "4: facility", target: "4: build new", fill: "#ecebbd"},
+{source: "4: build new", target: "4: restaurants which", fill: "#ecebbd"},
+{source: "4: restaurants which", target: "4: contributed", fill: "#ecebbd"},
+{source: "4: contributed", target: "4: through improving", fill: "#ecebbd"},
+{source: "4: through improving", target: "4: comparable restaurant sales", fill: "#ecebbd"},
+{source: "4: facility", target: "6: facility contains restrictive covenants", fill: "#6a5acd"},
+{source: "6: facility contains restrictive covenants", target: "6: requirements", fill: "#6a5acd"},
+{source: "6: requirements", target: "6: comply with certain financial ratios", fill: "#6a5acd"},
+{source: "6: facility contains restrictive covenants", target: "14: restaurants", fill: "#ffffe0"},
+{source: "14: restaurants", target: "15: comparable restaurant sales", fill: "#a0785a"},
+{source: "15: comparable restaurant sales", target: "15: restaurants", fill: "#a0785a"},
+{source: "15: restaurants", target: "15: Vinny Ts of Boston ", fill: "#a0785a"},
+{source: "15: comparable restaurant sales", target: "19: been filed against us", fill: "#cf0"},
+{source: "19: been filed against us", target: "19: Securities Exchange Act ", fill: "#cf0"},
+{source: "19: Securities Exchange Act ", target: "19: compensatory", fill: "#cf0"},
+{source: "19: compensatory", target: "19: attorneys fees", fill: "#cf0"},
+{source: "19: attorneys fees", target: "19: litigation", fill: "#cf0"},
+{source: "19: been filed against us", target: "24: Material Adverse Effect ", fill: "#fd0e35"},
+{source: "24: Material Adverse Effect ", target: "24: previously", fill: "#fd0e35"},
+{source: "24: previously", target: "24: investigation", fill: "#fd0e35"},
+{source: "24: Material Adverse Effect ", target: "START_HERE", fill: "#fd0e35"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Restaurants</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operating_cash_flow">Operating cash flow</a></td>
+      <td>In financial accounting, operating cash flow (OCF), cash flow provided by operations, cash flow from operating activities (CFO) or free cash flow from operations (FCFO), refers to the amount of cash a company generates from the revenues it brings in, excluding costs associated with long-term investment on capital items or investment in securities. Operating activities include any spending or sources of cash that’s involved in a company’s day-to-day business activities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_present_value">Net present value</a></td>
+      <td>The net present value (NPV) or net present worth (NPW) applies to a series of cash flows occurring at different times. The present value of a cash flow depends on the interval of time between now and the cash flow.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Free_cash_flow_to_equity">Free cash flow to equity</a></td>
+      <td>In corporate finance, free cash flow to equity (FCFE) is a metric of how much cash can be distributed to the equity shareholders of the company as dividends or stock buybacks—after all expenses, reinvestments, and debt repayments are taken care of. It is also referred to as the levered free cash flow or the flow to equity (FTE).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_flow_forecasting">Cash flow forecasting</a></td>
+      <td>Cash flow forecasting  is the process of obtaining an estimate or forecast of a company's future financial position; the cash flow forecast is typically based on anticipated payments and receivables.\nSee Financial forecast for general discussion re methodology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_flow_loan">Cash flow loan</a></td>
+      <td>A cash flow loan is a type of debt financing, in which a bank lends funds, generally for working capital, using the expected cash flows that a borrowing company generates as collateral for the loan. Cashflow loans are usually senior term loans or subordinated debt, being used for funding growth or financing an acquisition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Restaurant">Restaurant</a></td>
+      <td>A restaurant is a business that prepares and serves food and drinks to customers. Meals are generally served and eaten on the premises, but many restaurants also offer take-out and food delivery services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_ID">Facility ID</a></td>
+      <td>The facility ID number, also called a FIN or facility identifier, is a unique integer number of one to six digits, assigned by the U.S. Federal Communications Commission (FCC) Media Bureau to each broadcast station in the FCC Consolidated Database System (CDBS) and Licensing and Management System (LMS) databases, among others.\nBecause CDBS includes information about foreign stations which are notified to the U.S. under the terms of international frequency coordination agreements, FINs are also assigned to affected foreign stations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Health_facility">Health facility</a></td>
+      <td>A health facility is, in general, any location where healthcare is provided. Health facilities range from small clinics and doctor's offices to urgent care centers and large hospitals with elaborate emergency rooms and trauma centers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_location">Facility location</a></td>
+      <td>The study of facility location problems (FLP), also known as location analysis, is a branch of operations research and computational geometry concerned with the optimal placement of facilities to minimize transportation costs while considering factors like avoiding placing hazardous materials near housing, and competitors' facilities. The techniques also apply to cluster analysis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Harvey's">Harvey's</a></td>
+      <td>Harvey's is a fast food restaurant chain operating in Canada, with locations in every province except British Columbia. It serves hamburgers, poutine, hot dogs, french fries, onion rings, and other traditional Canadian fast-food fare.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Brown_sauce">Brown sauce</a></td>
+      <td>Brown sauce is a condiment served with food in the United Kingdom and Ireland, normally dark brown in colour. The ingredients include a varying combination of tomatoes, molasses, dates, apples, tamarind, spices, vinegar, and sometimes raisins.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_highest-grossing_films_in_the_Soviet_Union">List of highest-grossing films in the Soviet Union</a></td>
+      <td>This is the list of highest-grossing films in the Soviet Union, in terms of box office admissions (ticket sales). It includes the highest-grossing films in the Soviet Union (USSR), the highest-grossing domestic Soviet films, the domestic films with the greatest number of ticket sales by year, and the highest-grossing foreign films in the Soviet Union.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hala_Moddelmog">Hala Moddelmog</a></td>
+      <td>Hala Moddelmog (born January 3, 1956) became the first female president and CEO of the Metro Atlanta Chamber (MAC) in January 2014 following a career in the corporate and non-profit sectors. Moddelmog has 19 years of career experience in president and CEO roles.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/BK_Stacker">BK Stacker</a></td>
+      <td>The BK Stacker sandwiches are a family of cheeseburgers sold by the international fast-food restaurant chain Burger King.\n\n\n== History ==\nIn 2002, Burger King changed ownership when its parent company, Diageo, sold its interest in the company to a group of investment firms led by TPG Capital.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirement">Requirement</a></td>
+      <td>In product development and process optimization, a requirement is a singular documented physical or functional need that a particular design, product or process aims to satisfy. It is commonly used in a formal sense in engineering design, including for example in systems engineering, software engineering, or enterprise engineering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-functional_requirement">Non-functional requirement</a></td>
+      <td>In systems engineering and requirements engineering, a non-functional requirement (NFR) is a requirement that specifies criteria that can be used to judge the operation of a system, rather than specific behaviours. They are contrasted with functional requirements that define specific behavior or functions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Visa_requirements_for_United_States_citizens">Visa requirements for United States citizens</a></td>
+      <td>As of 25 February 2022, Holders of a United States passport could travel to 186 countries and territories without a travel visa, or with a visa on arrival. The United States passport currently ranks 6th in terms of travel freedom (tied with the passports of Czech Republic, Greece, Malta, Norway, and the UK) according to the Henley Passport Index.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_engineering">Requirements engineering</a></td>
+      <td>Requirements engineering (RE) is the process of defining, documenting, and maintaining requirements in the engineering design process. It is a common role in systems engineering and software engineering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_analysis">Requirements analysis</a></td>
+      <td>In systems engineering and software engineering, requirements analysis focuses on the tasks that determine the needs or conditions to meet the new or altered product or project, taking account of the possibly conflicting requirements of the various stakeholders, analyzing, documenting, validating and managing software or system requirements.Requirements analysis is critical to the success or failure of a systems or software project. The requirements should be documented, actionable, measurable, testable, traceable, related to identified business needs or opportunities, and defined to a level of detail sufficient for system design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_elicitation">Requirements elicitation</a></td>
+      <td>In requirements engineering, requirements elicitation is the practice of researching and discovering the requirements of a system from users, customers, and other stakeholders. The practice is also sometimes referred to as "requirement gathering".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Market_requirements_document">Market requirements document</a></td>
+      <td>A market requirements document (MRD) in project management and systems engineering, is a document that expresses the customer's wants and needs for the product or service.\nIt is typically written as a part of product marketing or product management.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_requirements">Business requirements</a></td>
+      <td>Business requirements, also known as stakeholder requirements specifications (StRS), describe the characteristics of a proposed system from the viewpoint of the system's end user like a CONOPS. Products, systems, software, and processes are ways of how to deliver, satisfy, or meet business requirements.  Consequently, business requirements are often discussed in the context of developing or procuring software or other systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Functional_requirement">Functional requirement</a></td>
+      <td>In software engineering and systems engineering, a functional requirement defines a function of a system or its component, where a function is described as a specification of behavior between inputs and outputs.Functional requirements may involve calculations, technical details, data manipulation and processing, and other specific functionality that define what a system is supposed to accomplish. Behavioral requirements describe all the cases where the system uses the functional requirements, these are captured in use cases.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/CKE_Restaurants">CKE Restaurants</a></td>
+      <td>CKE Restaurants Holdings (an acronym from Carl Karcher Enterprises) is an American fast food corporation and is the parent organization for the Carl's Jr., Hardee's, Green Burrito, and Red Burrito brands. CKE Restaurants is a subsidiary of the private equity firm, Roark Capital Group, and is headquartered in Franklin, Tennessee.In October 2020, CKE Restaurants operated or franchised to locations in 44 US states and 43 foreign countries and US territories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Types_of_restaurants">Types of restaurants</a></td>
+      <td>Restaurants fall into several industry classifications, based upon menu style, preparation methods and pricing, as well as the means by which the food is served to the customer.\n\n\n== Origin of categories ==\nHistorically, restaurant referred only to places that provided tables where one ate while seated, typically served by a waiter.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/BJ's_Restaurants">BJ's Restaurants</a></td>
+      <td>BJ's Restaurants, Inc. is an American restaurant chain, headquartered in Huntington Beach, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_recurring_Saturday_Night_Live_characters_and_sketches_by_cast_member">List of recurring Saturday Night Live characters and sketches by cast member</a></td>
+      <td>The following is a list of recurring Saturday Night Live characters and sketches introduced between September 28, 1996, and May 17, 1997, the twenty-second season of SNL.\n\n\n== The Ambiguously Gay Duo ==\n\nA cartoon by Robert Smigel, part of the Saturday TV Funhouse series. Originally appeared on the Dana Carvey Show.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lawsuit">Lawsuit</a></td>
+      <td>A lawsuit is a proceeding by a party or parties against another in the civil court of law. The archaic term "suit in law" is found in only a small number of laws still in effect today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vexatious_litigation">Vexatious litigation</a></td>
+      <td>Vexatious litigation is legal action which is brought  solely to harass or subdue an adversary. It may take the form of a primary frivolous lawsuit or may be the repetitive, burdensome, and unwarranted filing of meritless motions in a matter which is otherwise a meritorious cause of action.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_interest_law">Public interest law</a></td>
+      <td>Public interest law refers to legal practices undertaken to help poor, marginalized, or under-represented people, or to effect change in social policies in the public interest, on 'not for profit' terms (pro bono publico), often in the fields of civil rights, civil liberties, religious liberty, human rights, women's rights, consumer rights, environmental protection, and so on.In a celebrated 1905 speech, Louis Brandeis decried the legal profession, complaining that "able lawyers have to a large extent allowed themselves to become adjuncts of great corporations and have neglected their obligation to use their powers for the protection of the people."In the tradition thus exemplified, a common ethic for public-interest lawyers in a growing number of countries remains "fighting for the little guy".\n\n\n== By jurisdiction ==\n\n\n=== Central and Eastern Europe ===\nAt the end of the communist period in the early 1990s, the national legal systems of Central and Eastern Europe were still in a formative stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Parallel_litigation">Parallel litigation</a></td>
+      <td>Parallel litigation is a scenario in which different courts are hearing the same claim(s).  In the United States, parallel litigation (and the "race to judgement" that results)is a consequence of its system of "dual sovereignty, in which both state and federal courts have personal jurisdiction over the parties.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Counsel_investigation_(2017–2019)">Special Counsel investigation (2017–2019)</a></td>
+      <td>The Special Counsel investigation was an investigation into Russian interference in the 2016 United States elections, links between associates of Donald Trump and Russian officials, and possible obstruction of justice by Trump and his associates. The investigation was conducted by special prosecutor Robert Mueller from May 2017 to March 2019.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_Bureau_of_Investigation">Federal Bureau of Investigation</a></td>
+      <td>The Federal Bureau of Investigation (FBI) is the domestic intelligence and security service of the United States and its principal federal law enforcement agency. Operating under the jurisdiction of the United States Department of Justice, the FBI is also a member of the U.S. Intelligence Community and reports to both the Attorney General and the Director of National Intelligence.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medical_Investigation">Medical Investigation</a></td>
+      <td>Medical Investigation was an American medical drama television series that began September 9, 2004, on NBC. It ran for 20 one-hour episodes before its cancellation on March 25, 2005.  The series was co-produced by Paramount Network Television and NBC Universal Television Studio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Crime_&amp;_Investigation">Crime &amp; Investigation</a></td>
+      <td>Crime &amp; Investigation (stylized as Crime + Investigation) is an American pay television channel owned by A&amp;E Networks, a joint venture between the Hearst Communications and the Disney Media Networks division of The Walt Disney Company. The channel also broadcasts internationally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Criminal_investigation">Criminal investigation</a></td>
+      <td>Criminal investigation is an applied science that involves the study of facts that are then used to inform criminal trials. A complete criminal investigation can include searching, interviews, interrogations, evidence collection and preservation, and various methods of investigation.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BUCA INC /MN      Item 1A    Risk Factors          We May Be Unable to Return to Profitability or Raise Additional Capital          We <font color="blue">recorded net losses</font> of dlra24dtta7 million in fiscal 2003, dlra38dtta1 million in     fiscal 2004 and dlra32dtta1 million in fiscal 2005 and an <font color="blue">accumulated deficit</font> of     dlra99dtta9 million as of <font color="blue">December </font>25, 2005</td>
+    </tr>
+    <tr>
+      <td>We may not achieve <font color="blue">revenue growth</font>,     generate positive <font color="blue"><font color="blue">cash flow</font>s</font> or return to <font color="blue">profitability</font> in the future</td>
+    </tr>
+    <tr>
+      <td>We     have entered into long-term leases for many of our <font color="blue">restaurants</font>, which limits     our  ability  to either close individual restaurant locations (without     <font color="blue"><font color="blue">significant</font> continuing liabilities</font>) or improve their operating <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>Our  current  credit  <font color="blue">facility</font>  also  limits  our ability to <font color="blue">build new</font>     <font color="blue">restaurants</font>, which has <font color="blue">contributed</font> to our decision to slow down our future     development plans and develop a revised plan to improve our core business     <font color="blue">through improving</font> our <font color="blue">comparable restaurant sales</font> and margins</td>
+    </tr>
+    <tr>
+      <td>Failure to     achieve these <font color="blue">objectives</font> may limit our future growth, cause our stock price     to decline and make it <font color="blue">difficult</font> to raise <font color="blue">additional</font> capital</td>
+    </tr>
+    <tr>
+      <td>8     ______________________________________________________________________    [9]Index to Financial Statements       Restrictive Covenants in Our Credit Facility Could Have a Material Adverse     Affect on Our Business          Our credit <font color="blue">facility</font> contains restrictive covenants and <font color="blue">requirements</font> that we     <font color="blue"><font color="blue">comply with</font> certain financial ratios</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">covenants limit</font> our ability to     take  <font color="blue">various actions without</font> the consent of our lender, including the     incurrence of <font color="blue">additional</font> debt, the <font color="blue">guaranteeing</font> of <font color="blue">certain indebtedness</font> and     engaging in <font color="blue">various types</font> of <font color="blue">transactions</font>, including mergers and sales of     assets,  <font color="blue">paying dividends</font> and making <font color="blue">distributions</font> or other restricted     payments, including <font color="blue">investments</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">covenants could</font> have an adverse     effect on our business by limiting our ability to take advantage of business     <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>In  addition, failure to maintain the covenants required by our credit     <font color="blue">facility</font> could result in <font color="blue">acceleration</font> of our <font color="blue">indebtedness under</font> the credit     <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>As of the end of fiscal 2005, we were in violation of certain     <font color="blue">covenants under</font> the credit <font color="blue">facility</font>, which were <font color="blue">subsequently waived by</font> our     lender</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> in the future to <font color="blue">comply with</font> the covenant <font color="blue">requirements</font>     under the credit <font color="blue">facility</font> and to obtain a waiver of <font color="blue">such violations could</font>     impair  our  liquidity  and limit our ability to operate</td>
+    </tr>
+    <tr>
+      <td>Management’s Discussion and Analysis of Financial Condition and Results of     Operations—Liquidity and Capital Resources” and Note 1 of the Consolidated     Financial  Statements  for discussion of our credit <font color="blue">facility</font>, covenant     <font color="blue">requirements</font> and effects on our business</td>
+    </tr>
+    <tr>
+      <td>We May Be Unable to Maintain Favorable Comparable Restaurant Sales Results          Improvements in <font color="blue">comparable restaurant sales</font> are a key measure of financial     health for our overall company as well as for our individual <font color="blue">restaurants</font></td>
+    </tr>
+    <tr>
+      <td>We     experienced a decline in <font color="blue">comparable restaurant sales</font> in each year from     fiscal 2001 through fiscal 2004 for our Buca di Beppo <font color="blue">restaurants</font> and each     year since fiscal 2002 for our Vinny T’s of Boston <font color="blue">restaurants</font></td>
+    </tr>
+    <tr>
+      <td>Although we     experienced an increase in <font color="blue">comparable restaurant sales</font> for Buca di Beppo in     fiscal 2005, our Vinny T’s of Boston <font color="blue">restaurants</font> continued to experience     declines in <font color="blue">comparable restaurant sales</font> and we may not see <font color="blue">improvements</font> in     <font color="blue">comparable restaurant sales</font> in the future</td>
+    </tr>
+    <tr>
+      <td>If we are unable to achieve and     maintain positive <font color="blue">comparable restaurant sales</font>, we may continue to experience     operating losses or negative <font color="blue"><font color="blue">cash flow</font>s</font> and we may close those <font color="blue">restaurants</font>,     <font color="blue">which could</font> result in <font color="blue"><font color="blue">significant</font> exit costs</font>, including <font color="blue">lease termination</font>     costs</td>
+    </tr>
+    <tr>
+      <td>See Note 5 to our <font color="blue">Consolidated Financial Statements </font>for a discussion     of the <font color="blue">lease termination</font> costs that we incurred in fiscal 2004 and 2005</td>
+    </tr>
+    <tr>
+      <td>Insurers Could Deny or Rescind Coverage for Securities Litigation Filed     Against Us which Could Result in a Significant Uninsured Loss          A  civil  action  has <font color="blue">been filed against us</font> asserting claims under the     <font color="blue">Securities Exchange Act </font>of 1934, and seeking <font color="blue">compensatory</font> damages in an     unspecified  amount,  plus  an  award  of attorneys’ fees and costs of     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>We  are  not able to predict the <font color="blue">ultimate outcome</font> of this     <font color="blue">litigation</font>, and the <font color="blue">total costs cannot</font> be <font color="blue">reasonably</font> estimated at this time,     however the plaintiffs are likely to <font color="blue">seek damages</font> in an amount that would be     <font color="blue">significant</font> and material to us</td>
+    </tr>
+    <tr>
+      <td>While we have had and continue to maintain     <font color="blue">directors</font>’  and officers’ insurance and have submitted the suit to our     insurers for coverage, our insurers have reserved their <font color="blue">rights with respect</font>     to coverage</td>
+    </tr>
+    <tr>
+      <td>If our insurers were to attempt to deny or <font color="blue">rescind coverage</font> and     were <font color="blue">ultimately successful</font>, we could face <font color="blue">significant</font> legal expenses in     defending the action and we would have to pay any judgment to, or settlement     with, the <font color="blue">plaintiffs from</font> our own resources</td>
+    </tr>
+    <tr>
+      <td>Such denial or <font color="blue">rescission would</font>     likely have a material adverse effect on our <font color="blue">financial condition</font>, results of     operation and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>An  Unfavorable  Finding in the Ongoing SEC Investigation Could Have a     <font color="blue">Material Adverse Effect </font>on Us          As <font color="blue">previously</font> disclosed, we are the subject of an ongoing SEC <font color="blue">investigation</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">cooperated with</font> this <font color="blue">investigation</font> both before and after issuance of     the formal order of <font color="blue">investigation</font> in <font color="blue">February </font>2005</td>
+    </tr>
+    <tr>
+      <td>We understand that the     order of <font color="blue">investigation</font> relates to our <font color="blue">internal controls</font> and <font color="blue">compliance with</font>     <font color="blue">rules governing filings</font> and reports, including <font color="blue">public disclosures</font>, required     to be <font color="blue">filed with</font> the SEC, and the 2002 purchase of an old farmhouse in <font color="blue">Italy     </font>known as “Villa SermeniNodtta” We are <font color="blue">cooperating</font> and <font color="blue">assisting with</font> the SEC’s     <font color="blue">investigation</font> in order to bring the inquiry to a <font color="blue">conclusion as promptly as</font>     possible</td>
+    </tr>
+    <tr>
+      <td>We are unable to predict the <font color="blue">ultimate focus</font> or outcome of the     <font color="blue">investigation</font>, or when it will be completed</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">unfavorable finding from</font>     the SEC as a result of the <font color="blue">investigation</font> could have a material adverse     effect  on  our reputation, business, results of operations, financial</td>
+    </tr>
+  </tbody>
+</table>

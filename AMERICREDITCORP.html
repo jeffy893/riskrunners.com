@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: depend on various", fill: "#0014a8"},
+{source: "2: depend on various", target: "2: facilities", fill: "#0014a8"},
+{source: "2: facilities", target: "2: with financial institutions", fill: "#0014a8"},
+{source: "2: with financial institutions", target: "2: contracts pending", fill: "#0014a8"},
+{source: "2: contracts pending", target: "2: securitization", fill: "#0014a8"},
+{source: "2: depend on various", target: "6: facilities", fill: "#03c03c"},
+{source: "6: facilities", target: "6: interim financing", fill: "#03c03c"},
+{source: "6: interim financing", target: "6: financial position", fill: "#03c03c"},
+{source: "6: financial position", target: "6: operations", fill: "#03c03c"},
+{source: "6: facilities", target: "7: facilities contain various covenants", fill: "#ffbf00"},
+{source: "7: facilities contain various covenants", target: "7: certain minimum", fill: "#ffbf00"},
+{source: "7: certain minimum", target: "7: financial ratios asset quality", fill: "#ffbf00"},
+{source: "7: financial ratios asset quality", target: "7: portfolio performance ratios portfolio", fill: "#ffbf00"},
+{source: "7: portfolio performance ratios portfolio", target: "7: net loss delinquency", fill: "#ffbf00"},
+{source: "7: net loss delinquency", target: "7: repossession ratios", fill: "#ffbf00"},
+{source: "7: repossession ratios", target: "7: pool level cumulative net", fill: "#ffbf00"},
+{source: "7: pool level cumulative net", target: "7: loss ratios as well as limits on deferment levels", fill: "#ffbf00"},
+{source: "7: facilities contain various covenants", target: "20: securitizations relative", fill: "#a52a2a"},
+{source: "20: securitizations relative", target: "20: alternative forms", fill: "#a52a2a"},
+{source: "20: alternative forms", target: "20: financing available", fill: "#a52a2a"},
+{source: "20: financing available", target: "20: marketability", fill: "#a52a2a"},
+{source: "20: marketability", target: "20: transactions", fill: "#a52a2a"},
+{source: "20: securitizations relative", target: "23: Alternatively ", fill: "#195905"},
+{source: "23: Alternatively ", target: "23: securitizations", fill: "#195905"},
+{source: "23: securitizations", target: "23: enhancement", fill: "#195905"},
+{source: "23: Alternatively ", target: "START_HERE", fill: "#195905"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Flight_Facilities">Flight Facilities</a></td>
+      <td>Flight Facilities is an Australian electronic producer duo that also performs as Hugo &amp; Jimmy. In 2009, they began mixing songs by other artists before crafting their own original material.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NASA_facilities">NASA facilities</a></td>
+      <td>There are NASA facilities across the United States and around the world. NASA Headquarters in Washington, DC provides overall guidance and political leadership to the agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pedestrian_facilities">Pedestrian facilities</a></td>
+      <td>Pedestrian facilities include retail shops, museums, mass events (such as festivals or concert halls), hospitals, transport hubs (such as train stations or airports), sports infrastructure (such as stadiums) and religious infrastructures. The transport mode in such infrastructures is mostly walking, with rare exceptions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Essential_facilities_doctrine">Essential facilities doctrine</a></td>
+      <td>The essential facilities doctrine (sometimes also referred to as the essential facility doctrine) is a legal doctrine which describes a particular type of claim of monopolization made under competition laws.  In general, it refers to a type of anti-competitive behavior in which a firm with market power uses a "bottleneck" in a market to deny competitors entry into the market.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zubieta_Facilities">Zubieta Facilities</a></td>
+      <td>The Zubieta Facilities (Basque: Zubietako Kirol-instalakuntzak, Spanish: Instalaciones de Zubieta), is the training ground of the Primera Division club Real Sociedad. Located in Zubieta, an enclave of San Sebastian (adjacent to the San Sebastián Hippodrome), it was opened in 2004 in its modernised form, although was originally inaugurated in 1981.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Facilities_Society">The Facilities Society</a></td>
+      <td>The Facilities Society was founded in the UK on 9 December 2008 as a not-for-profit company limited by guarantee (registered in England nr. 6769050).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Attacks_on_U.S._diplomatic_facilities">Attacks on U.S. diplomatic facilities</a></td>
+      <td>The United States maintains numerous embassies and consulates around the world, many of which are in war-torn countries or other dangerous areas.\n\n\n== Diplomatic Security ==\nThe Regional Security Office is staffed by Special Agents of the Diplomatic Security Service (DSS), and is responsible for all security, protection, and law enforcement operations in the embassy or consulate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Securitization">Securitization</a></td>
+      <td>Securitization is the financial practice of pooling various types of contractual debt such as residential mortgages, commercial mortgages, auto loans or credit card debt obligations (or other non-debt assets which generate receivables) and selling their related cash flows to third party investors as securities, which may be described as bonds, pass-through securities, or collateralized debt obligations (CDOs). Investors are repaid from the principal and interest cash flows collected from the underlying debt and redistributed through the capital structure of the new financing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Securitization_(international_relations)">Securitization (international relations)</a></td>
+      <td>Securitization in international relations and national politics is the process of state actors transforming subjects from regular political issues into matters of "security": thus enabling extraordinary means to be used in the name of security. Issues that become securitized do not necessarily represent issues that are essential to the objective survival of a state, but rather represent issues where someone was successful in constructing an issue into an existential problem.Securitization theorists assert that successfully securitized subjects receive disproportionate amounts of attention and resources compared to unsuccessfully securitized subjects causing more human damage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage-backed_security">Mortgage-backed security</a></td>
+      <td>A mortgage-backed security (MBS) is a type of asset-backed security (an 'instrument') which is secured by a mortgage or collection of mortgages. The mortgages are aggregated and sold to a group of individuals (a government agency or investment bank) that securitizes, or packages, the loans together into a security that investors can buy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Predatory_mortgage_securitization">Predatory mortgage securitization</a></td>
+      <td>Predatory mortgage securitization (predatory securitization) is any mortgage securitization products created with lax underwriting standards and improper due diligence.A book titled The Crime of Our Time by author Danny Schechter delves deeply into the predatory securitization process and the financial collapse of 2007.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special-purpose_entity">Special-purpose entity</a></td>
+      <td>A special-purpose entity (SPE; or, in Europe and India, special-purpose vehicle/SPV; or, in some cases in each EU jurisdiction, FVC, financial vehicle corporation) is a legal entity (usually a limited company of some type or, sometimes, a limited partnership) created to fulfill narrow, specific or temporary objectives.  SPEs are typically used by companies to isolate the firm from financial risk.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Copenhagen_School_(international_relations)">Copenhagen School (international relations)</a></td>
+      <td>The Copenhagen School of security studies is a school of academic thought with its origins in international relations theorist Barry Buzan's book People, States and Fear: The National Security Problem in International Relations, first published in 1983. The Copenhagen School places particular emphasis on the non-military aspects of security, representing a shift away from traditional security studies.: 168  Theorists associated with the school include Barry Buzan, Ole Wæver and Jaap de Wilde.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_debt_obligation">Collateralized debt obligation</a></td>
+      <td>A collateralized debt obligation (CDO) is a type of structured asset-backed security (ABS). Originally developed as instruments for the corporate debt markets, after 2002 CDOs became vehicles for refinancing mortgage-backed securities (MBS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lewis_Ranieri">Lewis Ranieri</a></td>
+      <td>Lewis S. Ranieri (; born 1947) is a former bond trader, founding partner and current chairman of Ranieri Partners, a real estate firm. He is considered the "father" of mortgage-backed securities, for his pioneering role in their emergence in the 1970s, during his tenure in Salomon Brothers, where he reached the position of Vice Chairman.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_asset_securitization_investment_trust">Financial asset securitization investment trust</a></td>
+      <td>A financial asset securitization investment trust (FASIT) was a type of special purpose entity used for securitization of any debt and issuance of asset-backed securities, defined under section 1621 of the Small Business Job Protection Act of 1996, and repealed under section 835 of the American Jobs Creation Act of 2004. They were similar to a Real Estate Mortgage Investment Conduit (REMIC) but could also securitize non-mortgage debts, such as automobile loans and credit card debt.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subprime_mortgage_crisis">Subprime mortgage crisis</a></td>
+      <td>The United States subprime mortgage crisis was a multinational financial crisis that occurred between 2007 and 2010 that contributed to the 2007–2008 global financial crisis. It was triggered by a large decline in US home prices after the collapse of a housing bubble, leading to mortgage delinquencies, foreclosures, and the devaluation of housing-related securities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Moral_hazard">Moral hazard</a></td>
+      <td>In economics, a moral hazard is a situation where an economic actor has an incentive to increase its exposure to risk because it does not bear the full costs of that risk. For example, when a corporation is insured, it may take on higher risk knowing that its insurance will pay the associated costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Human_enhancement">Human enhancement</a></td>
+      <td>Human enhancement (HE) can be described as the natural, artificial, or technological alteration of the human body in order to enhance physical or mental capabilities.\n\n\n== Technologies ==\n\n\n=== Existing technologies ===\n\nThree forms of human enhancement currently exist: reproductive, physical, and mental.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Depletion_and_enhancement_modes">Depletion and enhancement modes</a></td>
+      <td>In field-effect transistors (FETs), depletion mode and enhancement mode are two major transistor types, corresponding to whether the transistor is in an on state or an off state at zero gate–source voltage.\nEnhancement-mode MOSFETs (metal–oxide–semiconductor FETs) are the common switching elements in most integrated circuits.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Progressive_enhancement">Progressive enhancement</a></td>
+      <td>Progressive enhancement is a strategy in web design that puts emphasis on web content first, allowing everyone to access the basic content and functionality of a web page, whilst users with additional browser features or faster Internet access receive the enhanced version instead. Additionally, it speeds up loading and facilitates crawling by web search engines, as pages' text is loaded immediately through the HTML source code rather than having to wait for JavaScript to initiate and load the content subsequently, meaning content ready for consumption "out of the box" is served imminently, not behind additional layers.This strategy involves separating the presentation semantics from the content, with presentation being implemented in one or more optional layers, activated based on aspects of the browser or Internet connection of the client.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Edge_enhancement">Edge enhancement</a></td>
+      <td>Edge enhancement is an image processing filter that enhances the edge contrast of an image or video in an attempt to improve its acutance (apparent sharpness).\nThe filter works by identifying sharp edge boundaries in the image, such as the edge between a subject and a background of a contrasting color, and increasing the image contrast in the area immediately around the edge.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Performance-enhancing_substance">Performance-enhancing substance</a></td>
+      <td>Performance-enhancing substances, also known as performance-enhancing drugs (PEDs), are substances that are used to improve any form of activity performance in humans. A well-known example involves doping in sport, where banned physical performance-enhancing drugs are used by athletes and bodybuilders.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Self-enhancement">Self-enhancement</a></td>
+      <td>Self-enhancement is a type of motivation that works to make people feel good about themselves and to maintain self-esteem. This motive becomes especially prominent in situations of threat, failure or blows to one's self-esteem.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Moral_enhancement">Moral enhancement</a></td>
+      <td>Moral enhancement  (abbreviated ME), also called moral bioenhancement (abbreviated MBE), is the use of biomedical technology to morally improve individuals. MBE is a growing topic in neuroethics, a field developing the ethics of neuroscience as well as the neuroscience of ethics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Antibody-dependent_enhancement">Antibody-dependent enhancement</a></td>
+      <td>Antibody-dependent enhancement (ADE), sometimes less precisely called immune enhancement or disease enhancement, is a phenomenon in which binding of a virus to suboptimal antibodies enhances its entry into host cells, followed by its replication. The suboptimal antibodies can result from natural infection or from vaccination.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AMERICREDIT CORP      ITEM 1A    RISK FACTORS        <font color="blue">Dependence </font>on <font color="blue">Credit Facilities</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on various</font> credit <font color="blue">facilities</font>     <font color="blue">with financial institutions</font> to finance our purchase of <font color="blue">contracts pending</font>     <font color="blue">securitization</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">At <font color="blue">September </font></font>8, 2006, we had <font color="blue">five separate</font> credit <font color="blue">facilities</font> that have     <font color="blue">available borrowing capacity</font> of dlra4cmam050dtta0 million, including:           (i)   a credit <font color="blue">facility</font> <font color="blue">providing up</font> to dlra1cmam950dtta0 million of <font color="blue">receivables</font>     financing, of which dlra150dtta0 million matures in November 2006 and the     remaining dlra1cmam800dtta0 million matures in November 2008;           (ii)   a <font color="blue">medium term</font> note <font color="blue">facility</font> providing dlra650dtta0 million of <font color="blue">receivables</font>     <font color="blue">financing which matures</font> in October 2007;                                           12     ______________________________________________________________________    [38]Table of <font color="blue"><font color="blue">Contents       </font>  </font>(iii)   a repurchase <font color="blue">facility</font> <font color="blue">providing up</font> to dlra600dtta0 million through     <font color="blue">February </font>2007 and declining to dlra500dtta0 million through the August 2007     maturity, for the financing of finance <font color="blue">receivables</font> repurchased from     <font color="blue">securitization</font> Trusts <font color="blue">upon exercise</font> of the <font color="blue">cleanup call option</font>;           (iv)   a near prime <font color="blue">facility</font> to fund higher credit quality <font color="blue">receivables</font>,     <font color="blue">providing up</font> to dlra400dtta0 million of <font color="blue">receivables</font> <font color="blue">financing which matures</font> in     July 2007; and           (v)   a BVAC credit <font color="blue">facility</font> to fund BVAC originated <font color="blue">receivables</font> providing     up to dlra450dtta0 million of <font color="blue">receivables</font> <font color="blue">financing which matures</font> in <font color="blue"><font color="blue">September </font>    </font>2007</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that any of these <font color="blue">financing resources <font color="blue">will continue</font></font> to     be <font color="blue">available beyond</font> the <font color="blue">current maturity dates at reasonable terms</font> or at     all</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of these <font color="blue">financing sources depends</font>, in part, on     <font color="blue">factors outside</font> of our control, including <font color="blue"><font color="blue">regulatory</font> capital treatment</font> for     <font color="blue">unfunded bank lines</font> of credit and the <font color="blue">availability</font> of <font color="blue">bank liquidity</font> in     general</td>
+    </tr>
+    <tr>
+      <td>If we are unable to extend or replace these <font color="blue">facilities</font> or arrange     new credit <font color="blue">facilities</font> or other types of <font color="blue">interim financing</font>, we will have to     curtail contract purchasing <font color="blue">activities</font>, <font color="blue">which would</font> have a material adverse     effect on our <font color="blue">financial position</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our credit <font color="blue">facilities</font> contain various covenants requiring <font color="blue">certain minimum</font>     financial ratios, asset quality, and <font color="blue">portfolio performance</font> ratios (portfolio     net loss, <font color="blue">delinquency</font> and <font color="blue"><font color="blue">repossession</font> ratios</font>, and <font color="blue">pool level cumulative net</font>     loss ratios) as well as limits on deferment levels</td>
+    </tr>
+    <tr>
+      <td>Failure to meet any of     these <font color="blue">covenants could</font> result in an event of <font color="blue">default under</font> these <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>If an event of default occurs under these <font color="blue">agreements</font>, the lenders could     elect  to declare all amounts outstanding under these <font color="blue">agreements</font> to be     <font color="blue">immediately</font> due and payable, enforce their interests against collateral     pledged under these <font color="blue">agreements</font> or restrict our ability to obtain <font color="blue">additional</font>     <font color="blue">borrowings</font>  under  these  <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of June </font>30, 2006, our credit     <font color="blue">facilities</font> were in <font color="blue">compliance with</font> all covenants</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dependence </font>on <font color="blue">Securitization Program</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Since December </font>1994, we have relied     upon our ability to transfer <font color="blue">receivables</font> to <font color="blue">securitization</font> Trusts and sell     securities in the asset-backed securities market to <font color="blue"><font color="blue">generate cash</font> proceeds</font>     for repayment of credit <font color="blue">facilities</font> and to purchase <font color="blue">additional</font> <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, adverse changes in our asset-backed securities program or in     the asset-backed securities market for automobile <font color="blue">receivables</font> in general     <font color="blue">could materially <font color="blue">adversely</font> affect</font> our ability to purchase and securitize     loans on a <font color="blue">timely basis</font> and upon terms acceptable to us</td>
+    </tr>
+    <tr>
+      <td>Any adverse change     or <font color="blue">delay would</font> have a material adverse effect on our <font color="blue">financial position</font>,     liquidity and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">will continue</font> to require the execution of <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> in     order to fund our <font color="blue">future liquidity</font> needs</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that     <font color="blue">funding will</font> be available to us through these sources or, if available, that     it will be on terms acceptable to us</td>
+    </tr>
+    <tr>
+      <td>If these sources of funding are not     available to us on a <font color="blue">regular basis</font> for any reason, including the occurrence     of events of default, deterioration in loss experience on the <font color="blue">receivables</font>,     breach of <font color="blue">financial covenants</font> or portfolio and <font color="blue">pool performance measures</font>,     <font color="blue">disruption</font> of the asset-backed market or otherwise, we will be required to     revise the scale of our business, including the <font color="blue">possible <font color="blue">discontinuation</font></font> of     loan origination <font color="blue">activities</font>, <font color="blue">which would</font> have a material adverse effect on     our ability to achieve our business and <font color="blue">financial <font color="blue">objectives</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dependence </font>on <font color="blue">Financial Guaranty Insurance</font></td>
+    </tr>
+    <tr>
+      <td>To date, all but six of our     <font color="blue">securitization</font>s  in the <font color="blue">United States </font>have <font color="blue">utilized financial guaranty</font>     insurance policies <font color="blue">provided by</font> various monoline <font color="blue">insurance providers</font> in order     to  achieve  AAA/Aaa  ratings  on the <font color="blue">insured securities issued</font> in the     <font color="blue">securitization</font>   <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These  ratings  reduce  the  costs  of     <font color="blue">securitization</font>s relative to <font color="blue">alternative forms</font> of <font color="blue">financing available</font> to us     and  enhance  the  <font color="blue">marketability</font> of these <font color="blue"><font color="blue">transaction</font>s</font> to investors in     asset-backed securities</td>
+    </tr>
+    <tr>
+      <td>However, the financial guaranty <font color="blue">insurance providers</font>     are not required to insure future <font color="blue">securitization</font>s sponsored by us, and there     can  be  no  assurance that they <font color="blue">will continue</font> to do so or that future     <font color="blue">securitization</font>s sponsored by us will be similarly rated</td>
+    </tr>
+    <tr>
+      <td>Our insurance     providers’ willingness to insure our future <font color="blue">securitization</font>s is subject to     many <font color="blue">factors beyond</font> our control, including <font color="blue">concentrations</font> of risk with any     given   insurance   provider,  the  insurance  providers’  own  rating     <font color="blue"><font color="blue">consideration</font>s</font>,  their ability to cede this risk to <font color="blue">reinsurers</font> and the     performance of the portion of our portfolio for                                           13     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>which the insurer has <font color="blue">provided insurance</font></td>
+    </tr>
+    <tr>
+      <td>Alternatively, in lieu of relying     on a <font color="blue"><font color="blue">financial guaranty insurance</font> policy</font>, in six of our <font color="blue">securitization</font>s in     the  United  States, we have sold or retained subordinate asset-backed     securities  in  order  to  provide  credit  <font color="blue">enhancement</font> for the senior     asset-backed securities</td>
+    </tr>
+    <tr>
+      <td>A downgrading of any of our <font color="blue">insurance providers</font>’ credit ratings or the     <font color="blue">inability</font> to <font color="blue">structure alternative</font> credit <font color="blue">enhancement</font>s, such as senior     subordinated <font color="blue"><font color="blue">transaction</font>s</font>, for our <font color="blue">securitization</font> program could result in     <font color="blue">higher interest costs</font> for future <font color="blue">securitization</font>s sponsored by us and larger     initial and/or target credit <font color="blue">enhancement</font> <font color="blue">requirement</font>s</td>
+    </tr>
+    <tr>
+      <td>The absence of a     <font color="blue"><font color="blue"><font color="blue">financial guaranty insurance</font> policy</font> may also impair</font> the <font color="blue">marketability</font> of our     <font color="blue">securitization</font>s</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">events could</font> have a material adverse effect on the     cost and <font color="blue">availability</font> of capital to <font color="blue">finance <font color="blue">contract purchase</font>s which</font> in turn     could have a material adverse effect on our <font color="blue">financial position</font>, liquidity     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to make <font color="blue">payments on</font> or to     refinance our <font color="blue">indebtedness</font> and to fund our <font color="blue">operations</font> and planned capital     <font color="blue">expenditures depends on</font> our ability to <font color="blue">generate cash</font> in the future</td>
+    </tr>
+    <tr>
+      <td>This, to     a certain extent, is subject to <font color="blue">general economic</font>, financial, <font color="blue">competitive</font>,     <font color="blue">legislative</font>, <font color="blue">regulatory</font> and other factors that are beyond our control</td>
+    </tr>
+    <tr>
+      <td>Our primary     <font color="blue">cash <font color="blue">requirement</font>s</font> include the funding of: (i) <font color="blue"><font color="blue">contract purchase</font>s pending</font>     their <font color="blue">securitization</font>; (ii) credit <font color="blue">enhancement</font> <font color="blue">requirement</font>s in <font color="blue">connection</font>     with the <font color="blue">securitization</font> of the <font color="blue">receivables</font>; (iii) interest and principal     <font color="blue">payments under</font> our credit <font color="blue">facilities</font> and other <font color="blue">indebtedness</font>; (iv) fees and     <font color="blue">expenses incurred</font> in <font color="blue">connection</font> with the <font color="blue">securitization</font> and servicing of     <font color="blue">receivables</font>; (v) ongoing operating expenses; (vi) income tax payments; and     (vii) capital expenditures</td>
+    </tr>
+    <tr>
+      <td>Additionally, we have been using cash to fund     our <font color="blue">stock repurchase program since</font> April 2004; to the extent we were unable     to  generate  sufficient  cash to fund the <font color="blue">aforementioned items</font>, it is     anticipated that <font color="blue">stock repurchases would</font> be curtailed or <font color="blue">discontinued</font></td>
+    </tr>
+    <tr>
+      <td>We require substantial amounts of cash to fund our <font color="blue">contract purchase</font> and     <font color="blue">securitization</font> <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">must fund certain</font> credit <font color="blue">enhancement</font>     <font color="blue"><font color="blue">requirement</font>s upon</font> the closing of a <font color="blue">securitization</font>, we typically receive the     cash  <font color="blue">representing</font>  <font color="blue"><font color="blue">excess cash</font> flows</font> and return of credit <font color="blue">enhancement</font>     <font color="blue">deposits over</font> the <font color="blue">actual life</font> of the <font color="blue">receivables</font> securitized</td>
+    </tr>
+    <tr>
+      <td>Assuming that     origination volume ranges from dlra7dtta2 billion to dlra7dtta8 billion in fiscal 2007     and  the initial credit <font color="blue">enhancement</font> <font color="blue">requirement</font> for our <font color="blue">securitization</font>     <font color="blue"><font color="blue">transaction</font>s</font> remains at 9dtta5prca (the level for the most recent <font color="blue">securitization</font>     completed in July 2006), we would require dlra684dtta0 million to dlra741dtta0 million     in cash or liquidity to <font color="blue">fund initial</font> credit <font color="blue">enhancement</font> in fiscal 2007</td>
+    </tr>
+    <tr>
+      <td>The     initial  credit  <font color="blue">enhancement</font>  <font color="blue">requirement</font>  could  increase  in  future     <font color="blue">securitization</font>s, <font color="blue">which would</font> result in an increased <font color="blue">requirement</font> for cash on     our  part</td>
+    </tr>
+    <tr>
+      <td>We  also  incur  <font color="blue">transaction</font>  costs  in  <font color="blue">connection</font> with a     <font color="blue">securitization</font>  <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our strategy of <font color="blue">securitizing</font>     <font color="blue">substantially</font>  all  of  our  newly  purchased <font color="blue">receivables</font> will require     <font color="blue">significant amounts</font> of cash</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">primary sources</font> of <font color="blue">future liquidity</font> are expected to be: (i) <font color="blue">excess cash</font>     flows received from <font color="blue">securitization</font> Trusts; (ii) interest and principal     <font color="blue">payments on</font> loans not yet securitized; (iii) servicing fees; (iv) <font color="blue">borrowings</font>     under our credit <font color="blue">facilities</font> or <font color="blue">proceeds from</font> <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font>;     and (v) further issuances of debt or <font color="blue">equity securities</font></td>
+    </tr>
+    <tr>
+      <td>Because we expect to continue to require substantial amounts of cash for the     <font color="blue">foreseeable future</font>, we anticipate that we will require the execution of     <font color="blue">additional</font> <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> and may choose to <font color="blue"><font color="blue">enter into</font> debt</font> or     <font color="blue">equity <font color="blue">financings</font></font></td>
+    </tr>
+    <tr>
+      <td>The type, timing and terms of financing selected by us     will be <font color="blue">dependent upon</font> our cash needs, the <font color="blue">availability</font> of other financing     sources and the <font color="blue">prevailing <font color="blue">conditions</font></font> in the <font color="blue">financial markets</font></td>
+    </tr>
+    <tr>
+      <td>There can be     no assurance that <font color="blue">funding will</font> be available to us through these sources or,     if available, that the <font color="blue">funding will</font> be on acceptable terms</td>
+    </tr>
+    <tr>
+      <td>If we are unable     to execute <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> on a <font color="blue">regular basis</font>, we would not have     <font color="blue">sufficient funds</font> to <font color="blue">finance new loan originations</font> and, in such event, we     would be required to revise the scale of our business, including possible     <font color="blue">discontinuation</font> of loan origination <font color="blue">activities</font>, <font color="blue">which would</font> have a material     adverse  effect  on  our ability to achieve our business and financial     <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>We  currently  have  a  substantial  amount  of outstanding     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to make payments of principal or <font color="blue">interest on</font>, or     to  refinance,  our  <font color="blue">indebtedness</font>  <font color="blue">will depend on</font> our future operating     performance,  including  the performance of <font color="blue">receivables</font> transferred to     <font color="blue">securitization</font>  Trusts,  and  our  ability  to  enter  into <font color="blue">additional</font>     <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> as well as debt and <font color="blue">equity <font color="blue">financings</font></font>, which, to     a certain extent, is subject to economic, financial, <font color="blue">competitive</font>, <font color="blue">regulatory</font>     and other <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">generate sufficient <font color="blue">cash flows</font></font> in the future to service     our debt, we may be required to refinance all or a portion of our existing     debt or to obtain <font color="blue">additional</font> financing</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that any     re<font color="blue">financings</font> will be possible or that any <font color="blue">additional</font> financing could be     obtained on acceptable terms</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">inability</font> to refinance our <font color="blue">existing debt</font>     or to obtain <font color="blue">additional</font> financing would have a material adverse effect on     our <font color="blue">financial position</font>, liquidity and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The degree to which we are leveraged creates risks including: (i) we may be     unable  to satisfy our <font color="blue">obligations under</font> our outstanding <font color="blue">indebtedness</font>;     (ii) we  may  find it more <font color="blue">difficult</font> to <font color="blue">fund future</font> credit <font color="blue">enhancement</font>     <font color="blue">requirement</font>s, operating costs, capital expenditures, stock repurchases,     <font color="blue">acquisitions</font>, or general corporate purposes; (iii) we may have to dedicate a     substantial portion of our <font color="blue">cash resources</font> to the <font color="blue">payments on</font> our outstanding     <font color="blue">indebtedness</font>, thereby reducing the <font color="blue">funds available</font> for <font color="blue">operations</font> and future     business <font color="blue">opportunities</font>; and (iv) we may be vulnerable to <font color="blue">adverse general</font>     economic and <font color="blue">industry <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>Our credit <font color="blue">facilities</font> require us to <font color="blue">comply with certain financial ratios</font> and     covenants</td>
+    </tr>
+    <tr>
+      <td>Additionally, our credit <font color="blue">facilities</font> have <font color="blue">minimum asset quality</font>     maintenance <font color="blue">requirement</font>s</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">restrictions may interfere with</font> our ability     to obtain financing or to engage in other <font color="blue">necessary</font> or desirable business     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of June </font>30, 2006, we were in <font color="blue">compliance with</font> all financial     and  portfolio  performance  covenants  on  our  credit <font color="blue">facilities</font> and     <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot comply with</font> the <font color="blue">requirement</font>s in our credit <font color="blue">facilities</font>, then the     <font color="blue"><font color="blue">lenders may</font> increase</font> our <font color="blue">borrowing costs</font> or require us to repay <font color="blue">immediately</font>     all of the <font color="blue">outstanding debt</font></td>
+    </tr>
+    <tr>
+      <td>If our debt payments were <font color="blue">accelerated</font>, our     <font color="blue">assets might</font> not be sufficient to <font color="blue">fully repay</font> the debt</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">lenders may</font>     require us to use all of our <font color="blue">available cash</font> to repay our debt, foreclose     upon their collateral or <font color="blue">prevent us from</font> making payments to other <font color="blue">creditors</font>     <font color="blue">on certain portions</font> of our <font color="blue">outstanding debt</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">events may also</font> result in     a <font color="blue">default under</font> our <font color="blue">convertible senior</font> note indenture</td>
+    </tr>
+    <tr>
+      <td>In such case, our <font color="blue">financial condition</font>, liquidity and     results of <font color="blue">operations</font> would suffer</td>
+    </tr>
+    <tr>
+      <td>Our results of <font color="blue">operations</font>, financial     condition and <font color="blue">liquidity depend</font>, to a material extent, on the performance of     loans in our portfolio</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Obligors </font><font color="blue">under contracts</font> acquired or <font color="blue">originated by</font>     <font color="blue">us may default during</font> the term of their loan</td>
+    </tr>
+    <tr>
+      <td>We bear the full risk of     losses resulting <font color="blue">from <font color="blue">defaults</font></font></td>
+    </tr>
+    <tr>
+      <td>In the event of a default, the collateral     value of the <font color="blue">financed vehicle usually</font> does not cover the <font color="blue">outstanding loan</font>     balance and costs of recovery</td>
+    </tr>
+    <tr>
+      <td>We maintain an allowance for <font color="blue"><font color="blue">loan losses</font> on loans</font> held on our <font color="blue">balance sheet</font>     which reflects management’s estimates of <font color="blue">inherent losses</font> for these loans</td>
+    </tr>
+    <tr>
+      <td>If     the allowance is inadequate, we would recognize the losses in excess of that     allowance  as  an expense and results of <font color="blue">operations</font> would be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>A material <font color="blue">adjustment</font> to our allowance for <font color="blue">loan losses</font> and the     <font color="blue">corresponding decrease</font> in <font color="blue">earnings could limit</font> our ability to <font color="blue">enter into</font>     future <font color="blue">securitization</font>s and other <font color="blue">financings</font>, thus impairing our ability to     finance our business</td>
+    </tr>
+    <tr>
+      <td>We are required to deposit substantial amounts of the <font color="blue"><font color="blue">cash flows</font> generated</font>     by our interests in <font color="blue">securitization</font>s sponsored by us to <font color="blue">satisfy targeted</font>     credit <font color="blue">enhancement</font> <font color="blue">requirement</font>s</td>
+    </tr>
+    <tr>
+      <td>An increase in <font color="blue">defaults</font> or <font color="blue">prepayments</font>     would reduce the <font color="blue"><font color="blue">cash flows</font> generated</font> by our interests in <font color="blue">securitization</font>     <font color="blue"><font color="blue">transaction</font>s</font>  <font color="blue">lengthening</font> the period required to <font color="blue">build targeted</font> credit     <font color="blue">enhancement</font> levels in the <font color="blue">securitization</font> trusts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Distributions </font>of cash from     the <font color="blue">securitization</font>s to us would be delayed and the <font color="blue">ultimate amount</font> of cash     <font color="blue">distributable</font> to us would be less, which                                           15     ______________________________________________________________________    [41]Table of <font color="blue">Contents       </font>would  have  an  adverse  effect on our liquidity</td>
+    </tr>
+    <tr>
+      <td>The targeted credit     <font color="blue">enhancement</font>  levels in future <font color="blue">securitization</font>s could also be increased,     <font color="blue">further impacting</font> our liquidity</td>
+    </tr>
+    <tr>
+      <td>Portfolio Performance—Negative Impact on <font color="blue">Cash Flows</font></td>
+    </tr>
+    <tr>
+      <td>Generally, the form     of <font color="blue">agreements</font> we <font color="blue">enter into</font> with our financial guaranty <font color="blue">insurance providers</font>     in <font color="blue">connection</font> with <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> contain specified limits on     <font color="blue">portfolio performance</font> ratios (<font color="blue">delinquency</font>, cumulative default and cumulative     net loss triggers) on the <font color="blue">receivables</font> included in each <font color="blue">securitization</font> Trust</td>
+    </tr>
+    <tr>
+      <td>If, at any <font color="blue">measurement date</font>, a <font color="blue"><font color="blue">portfolio performance</font> ratio <font color="blue">with respect</font></font> to     any Trust were to exceed the specified limits, provisions of the credit     <font color="blue">enhancement</font> agreement would automatically increase the level of credit     <font color="blue">enhancement</font> <font color="blue">requirement</font>s for that Trust, if a waiver was not obtained</td>
+    </tr>
+    <tr>
+      <td>During the period in which the specified <font color="blue">portfolio performance</font> ratio was     exceeded, <font color="blue"><font color="blue">excess cash</font> flows</font>, if any, from <font color="blue">the Trust </font>would be used to fund     the increased credit <font color="blue">enhancement</font> levels instead of being <font color="blue">distributed</font> to us,     <font color="blue">which would</font> have an adverse effect on our <font color="blue">cash flows</font> and liquidity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Prior to October </font>2002, the <font color="blue"><font color="blue">financial guaranty insurance</font> policies</font> for all of     our insured <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> were <font color="blue">provided by</font> Financial Security     Assurance, Inc</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">restricted cash account</font> for each <font color="blue">securitization</font>     Trust insured as part of the group of <font color="blue">securitization</font>s covered by a financial     guaranty insurance policy <font color="blue">provided by</font> FSA (<font color="blue">hereinafter referred</font> to as the     “FSA Program”) was cross-collateralized to the <font color="blue">restricted cash account</font>s     established in <font color="blue">connection</font> with our other <font color="blue">securitization</font> Trusts in the FSA     Program, such that <font color="blue"><font color="blue">excess cash</font> flows</font> from an FSA Program <font color="blue">securitization</font> that     had <font color="blue">already met</font> its credit <font color="blue">enhancement</font> <font color="blue">requirement</font> could be used to fund     target  credit  <font color="blue">enhancement</font>  <font color="blue">requirement</font>s  <font color="blue">with respect</font> to <font color="blue">FSA Program     </font><font color="blue">securitization</font>s in <font color="blue">which specified <font color="blue">portfolio performance</font> ratios</font> had been     exceeded,  <font color="blue">rather than</font> being <font color="blue">distributed</font> to us</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">previously breached</font>     <font color="blue"><font color="blue">cumulative net loss</font> performance triggers on certain</font> of our <font color="blue">FSA Program     </font><font color="blue">securitization</font>s causing a <font color="blue">postponement</font> of <font color="blue">substantially</font> all of the cash     otherwise <font color="blue">distributable</font> to us from the FSA Program <font color="blue">securitization</font>s as this     cash was used to <font color="blue">fund increased</font> credit <font color="blue">enhancement</font> <font color="blue">requirement</font>s on FSA     Program <font color="blue">securitization</font>s</td>
+    </tr>
+    <tr>
+      <td>As a result of constrained liquidity, we adopted a     revised operating plan in <font color="blue">February </font>2003 which included a decrease in our     targeted  loan  volume  and  a  reduction of operating expenses</td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">September </font>8, 2006, there are two remaining FSA Program <font color="blue">securitization</font>s     outstanding,  each  of  which  has  reached the <font color="blue">higher level</font> of credit     <font color="blue">enhancement</font> required as a result of the breach of <font color="blue">portfolio performance</font>     ratios</td>
+    </tr>
+    <tr>
+      <td>Generally, our <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> insured by financial guaranty     <font color="blue">insurance providers</font>, including FSA, from October 2002 through August 2005     are cross-collateralized to a limited extent</td>
+    </tr>
+    <tr>
+      <td>In the event of a shortfall in     the  original  target  credit <font color="blue">enhancement</font> <font color="blue">requirement</font> for any of these     <font color="blue">securitization</font> Trusts after a <font color="blue">certain period</font> of time, <font color="blue"><font color="blue">excess cash</font> flows</font> from     other <font color="blue"><font color="blue">transaction</font>s</font> insured by the <font color="blue">same <font color="blue">insurance provider would</font></font> be used to     satisfy the <font color="blue">shortfall amount</font></td>
+    </tr>
+    <tr>
+      <td>In one of our <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font>, if     a <font color="blue">secured party</font> receives a notice of a <font color="blue">rating agency review</font> for downgrade or     if  there  is  a  downgrade of any class of notes (without taking into     <font color="blue">consideration</font> the presence of the <font color="blue"><font color="blue">financial guaranty insurance</font> policy</font>)     <font color="blue"><font color="blue">excess cash</font> flows</font> from other <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> insured by the same     <font color="blue">insurance provider would</font> be utilized to satisfy any <font color="blue">increased target</font> credit     <font color="blue">enhancement</font>  <font color="blue">requirement</font>s</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> insured by     <font color="blue"><font color="blue">financial guaranty insurance</font> policies</font> after August 2005 did not contain any     cross-collateralization provisions</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Right to Terminate Normal Servicing</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreements</font> that we <font color="blue">enter into</font>     with  our  financial  guaranty  <font color="blue">insurance providers</font> in <font color="blue">connection</font> with     <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> contain <font color="blue">additional</font> specified targeted portfolio     performance ratios (<font color="blue">delinquency</font>, cumulative default and <font color="blue">cumulative net loss</font>     triggers) that are <font color="blue">higher than</font> the <font color="blue">limits referred</font> to in the <font color="blue">preceding risk</font>     factor</td>
+    </tr>
+    <tr>
+      <td>If, at any <font color="blue">measurement date</font>, the targeted <font color="blue">portfolio performance</font>     ratios <font color="blue">with respect</font> to any insured Trust were to exceed these <font color="blue">additional</font>     levels, provisions of the <font color="blue">agreements</font> permit the <font color="blue">financial guaranty insurance</font>     providers to terminate our <font color="blue">servicing rights</font> to the <font color="blue">receivables</font> sold to that     Trust</td>
+    </tr>
+    <tr>
+      <td>In  addition,  the  servicing  <font color="blue">agreements</font>  on  <font color="blue">certain insured</font>     <font color="blue">securitization</font>  Trusts are cross-defaulted so that a <font color="blue">default under</font> one     <font color="blue">servicing agreement would allow</font> the <font color="blue">financial guaranty insurance</font> provider to     terminate  our  servicing  rights  under  all servicing <font color="blue">agreements</font> for     <font color="blue">securitization</font> Trusts in which they issued a <font color="blue">financial guaranty insurance</font>     policy</td>
+    </tr>
+    <tr>
+      <td>Additionally, if these higher targeted <font color="blue">portfolio performance</font> levels     were exceeded, the financial guaranty <font color="blue">insurance providers</font> may elect to     retain  all <font color="blue">excess cash</font> generated by other <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font>     insured by them as <font color="blue">additional</font> credit <font color="blue">enhancement</font></td>
+    </tr>
+    <tr>
+      <td>This, in turn, could     result in <font color="blue">defaults</font> under our other                                           16     ______________________________________________________________________    [42]Table of <font color="blue">Contents       </font><font color="blue">securitization</font>s and other material <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>Although we have never     exceeded these <font color="blue">additional</font> targeted <font color="blue">portfolio performance</font> ratios, and do not     anticipate violating any event of <font color="blue">default triggers</font> for our <font color="blue">securitization</font>s,     there can be no assurance that our <font color="blue">servicing rights</font> <font color="blue">with respect</font> to the     automobile  <font color="blue">receivables</font> in such Trusts or any other Trusts will not be     terminated if (i) such targeted <font color="blue">portfolio performance</font> ratios are breached,     (ii) we breach our <font color="blue">obligations under</font> the servicing <font color="blue">agreements</font>, (iii) the     financial guaranty <font color="blue">insurance providers</font> are required to make <font color="blue">payments under</font> a     policy, or (iv) certain <font color="blue">bankruptcy</font> or <font color="blue">insolvency events</font> were to occur</td>
+    </tr>
+    <tr>
+      <td>As of     June 30, 2006, no such servicing right <font color="blue"><font color="blue">termination</font> events</font> have occurred with     respect to any of the Trusts <font color="blue">formed by us</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">termination</font> of any or all of     our <font color="blue">servicing rights</font> would have a material adverse effect on our financial     position, liquidity and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Implementation of Business Strategy</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">financial position</font>, liquidity     and results of <font color="blue">operations</font> depend on management’s ability to execute our     business strategy</td>
+    </tr>
+    <tr>
+      <td>Key <font color="blue">factors involved</font> in the execution of the business     strategy include achieving the desired loan origination volume, continued     and <font color="blue">successful use</font> of <font color="blue"><font color="blue">proprietary</font> scoring models</font> for credit <font color="blue">risk assessment</font>     and  risk-based  pricing,  the use of <font color="blue">effective</font> credit <font color="blue">risk management</font>     <font color="blue">techniques</font>  and servicing strategies, implementation of <font color="blue">effective</font> loan     servicing and collection practices, continued investment in <font color="blue">technology</font> to     support operating <font color="blue">efficiency</font> and <font color="blue">continued access</font> to <font color="blue">significant funding</font> and     <font color="blue">liquidity sources</font></td>
+    </tr>
+    <tr>
+      <td>Our failure or <font color="blue">inability</font> to execute any element of our     business strategy <font color="blue">could materially <font color="blue">adversely</font> affect</font> our <font color="blue">financial position</font>,     liquidity and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Sub-prime borrowers are     associated with higher-than-average <font color="blue">delinquency</font> and <font color="blue">default rates</font></td>
+    </tr>
+    <tr>
+      <td>While we     believe that we <font color="blue">effective</font>ly manage these risks with our <font color="blue">proprietary</font> credit     scoring system, risk-based loan pricing and other <font color="blue">underwriting policies</font> and     <font color="blue">collection methods</font>, no assurance can be given that these criteria or methods     will be <font color="blue">effective</font> in the future</td>
+    </tr>
+    <tr>
+      <td>In the event that we <font color="blue">underestimate</font> the     default  risk or under-price contracts that we purchase, our financial     position, liquidity and results of <font color="blue">operations</font> would be <font color="blue">adversely</font> affected,     possibly to a material degree</td>
+    </tr>
+    <tr>
+      <td>We are subject to changes in <font color="blue">general economic</font>     <font color="blue">conditions</font> that are beyond our control</td>
+    </tr>
+    <tr>
+      <td>During periods of <font color="blue">economic slowdown</font>     or recession, such as the <font color="blue">United States </font>and Canadian economies have at times     experienced, delinquencies, <font color="blue">defaults</font>, <font color="blue">repossession</font>s and <font color="blue">losses <font color="blue">generally</font></font>     increase</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">periods also may</font> be <font color="blue">accompanied by decreased consumer demand</font>     for <font color="blue">automobiles</font> and <font color="blue">declining values</font> of <font color="blue">automobiles</font> securing outstanding     loans, which weakens collateral coverage and increases the amount of a loss     in the event of default</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>increases in the inventory of used     <font color="blue">automobiles</font> <font color="blue">during periods</font> of <font color="blue">economic recession may also depress</font> the prices     at which repossessed <font color="blue">automobiles</font> may be sold or delay the timing of these     sales</td>
+    </tr>
+    <tr>
+      <td>Additionally, higher gasoline prices, unstable real estate values,     reset of <font color="blue">adjustable rate mortgages</font> to <font color="blue">higher <font color="blue">interest rate</font>s</font> or other factors     that <font color="blue">impact consumer confidence</font> or <font color="blue">disposable income could decrease consumer</font>     demand for <font color="blue">automobiles</font> as well as weaken collateral values on <font color="blue">certain types</font>     of <font color="blue">automobiles</font></td>
+    </tr>
+    <tr>
+      <td>Because we focus on sub-prime borrowers, the <font color="blue">actual rates</font> of     delinquencies, <font color="blue">defaults</font>, <font color="blue">repossession</font>s and losses on these loans are higher     than those experienced in the <font color="blue">general automobile finance industry</font> and could     be more <font color="blue">dramatically affected by</font> a <font color="blue">general economic</font> downturn</td>
+    </tr>
+    <tr>
+      <td>In addition,     during an <font color="blue">economic slowdown</font> or recession, our <font color="blue">servicing costs may increase</font>     without a <font color="blue">corresponding increase</font> in our <font color="blue">finance charge income</font></td>
+    </tr>
+    <tr>
+      <td>While we seek     to manage the <font color="blue">higher risk inherent</font> in loans made to sub-prime borrowers     through the <font color="blue">underwriting criteria</font> and <font color="blue">collection methods</font> we employ, no     assurance can be given that these criteria or <font color="blue">methods will afford adequate</font>     protection  against  these  risks</td>
+    </tr>
+    <tr>
+      <td>Any  <font color="blue">sustained period</font> of increased     delinquencies, <font color="blue">defaults</font>, <font color="blue">repossession</font>s or losses or <font color="blue">increased servicing</font>     costs could <font color="blue">adversely</font> affect our <font color="blue">financial position</font>, liquidity and results     of <font color="blue">operations</font> and our ability to <font color="blue">enter into</font> future <font color="blue">securitization</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Wholesale Auction Values</font></td>
+    </tr>
+    <tr>
+      <td>We sell repossessed <font color="blue">automobiles</font> at wholesale     <font color="blue">auction markets located throughout</font> the <font color="blue">United States </font>and Canada</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Auction     </font><font color="blue">proceeds from</font> the sale of <font color="blue">repossessed vehicles</font> and other <font color="blue">recoveries</font> are     usually not sufficient to cover the <font color="blue">outstanding balance</font> of the contract, and     the  resulting  <font color="blue">deficiency</font>  is <font color="blue">charged off</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Decreased </font><font color="blue">auction proceeds</font>     resulting from the depressed prices at which used <font color="blue">automobiles</font> may be sold     <font color="blue">during periods</font> of <font color="blue">economic slowdown</font> or <font color="blue">recession will</font> result in higher     credit losses for us</td>
+    </tr>
+    <tr>
+      <td>Furthermore,                                           17     ______________________________________________________________________    [43]Table of <font color="blue">Contents       </font><font color="blue">depressed wholesale prices</font> for used <font color="blue">automobiles</font> may result <font color="blue">from significant</font>     <font color="blue">liquidations</font> of rental or <font color="blue">fleet inventories</font>, and <font color="blue">from increased volume</font> of     trade-ins due to promotional programs offered by new vehicle manufacturers</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">higher gasoline prices may decrease</font> the <font color="blue">wholesale auction</font>     value of <font color="blue">certain types</font> of vehicles</td>
+    </tr>
+    <tr>
+      <td>Our net <font color="blue">recoveries</font> as a percentage of     <font color="blue">repossession</font> charge-offs was 48prca in fiscal 2006, 43prca in fiscal 2005 and 41prca     in fiscal 2004</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that our <font color="blue">recovery rates will</font>     <font color="blue">remain at current levels</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Interest Rates</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">profitability</font> may</font> be <font color="blue">directly affected by</font> the level     of and <font color="blue">fluctuations</font> in <font color="blue">interest rate</font>s, which affects the gross <font color="blue">interest rate</font>     spread we earn on our <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>As the level of <font color="blue">interest rate</font>s increase,     such  as  they  have since 2003, our gross <font color="blue">interest rate</font> spread on new     originations <font color="blue">generally</font> declines since the rates charged on the contracts     originated or purchased from dealers are limited by market and <font color="blue">competitive</font>     <font color="blue">conditions</font>, restricting our <font color="blue">opportunity</font> to pass on increased interest costs     to the consumer</td>
+    </tr>
+    <tr>
+      <td>We believe that our <font color="blue">profitability</font> and <font color="blue">liquidity could</font> be     <font color="blue">adversely</font> affected during any period of <font color="blue">higher <font color="blue">interest rate</font>s</font>, possibly to a     material  degree</td>
+    </tr>
+    <tr>
+      <td>We monitor the <font color="blue">interest rate</font> environment and employ     pre-funding in <font color="blue">securitization</font> <font color="blue"><font color="blue">transaction</font>s</font> and other <font color="blue">hedging strategies</font>     designed to mitigate the impact of increases in <font color="blue">interest rate</font>s</td>
+    </tr>
+    <tr>
+      <td>We can     provide no assurance, however, that pre-funding or other <font color="blue">hedging strategies</font>     <font color="blue">will mitigate</font> the impact of increases in <font color="blue">interest rate</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>to hire and retain personnel     possessing the skills and experience required by us could contribute to an     increase in our <font color="blue">employee turnover rate</font></td>
+    </tr>
+    <tr>
+      <td>High turnover or an <font color="blue">inability</font> to     attract and retain <font color="blue">qualified personnel could</font> have an adverse effect on our     <font color="blue">delinquency</font>,  default  and  net  loss  rates, our ability to grow and,     ultimately, our <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and liquidity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Data Integrity</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">third parties</font> or our employees are able to penetrate     our <font color="blue">network security</font> or <font color="blue">otherwise misappropriate</font> our customers’ personal     information  or  loan  information, or if we give <font color="blue">third parties</font> or our     <font color="blue">employees improper access</font> to our customers’ personal information or loan     information, we could be subject to <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">liability</font> could include     <font color="blue">identity theft</font> or other similar fraud-related claims</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">liability</font> could     also include claims for other misuses or losses of personal information,     including for <font color="blue">unauthorized marketing purposes</font></td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">liabilities could</font>     include claims alleging <font color="blue">misrepresentation</font> or our privacy and <font color="blue">data security</font>     practices</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on encryption</font> and authentication <font color="blue">technology</font> licensed from third     parties to provide the security and authentication <font color="blue">necessary</font> to effect     <font color="blue">secure online transmission</font> of <font color="blue">confidential consumer</font> information</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Advances </font>in     computer <font color="blue">capabilities</font>, new <font color="blue">discoveries</font> in the field of <font color="blue">cryptography</font> or other     events  or  <font color="blue">developments</font>  may  result in a compromise or breach of the     <font color="blue">algorithms</font> that we use to protect sensitive customer <font color="blue">transaction</font> data</td>
+    </tr>
+    <tr>
+      <td>A     party who is able to <font color="blue">circumvent</font> our <font color="blue"><font color="blue">security measures</font> could misappropriate</font>     <font color="blue">proprietary</font> information or cause <font color="blue">interruptions</font> in our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be     required to <font color="blue">expend capital</font> and other resources to <font color="blue">protect against such</font>     <font color="blue">security breaches</font> or to <font color="blue">alleviate problems</font> caused <font color="blue">by such breaches</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">security measures</font> are designed to protect against <font color="blue">security breaches</font>, but our     failure to prevent such <font color="blue">security breaches</font> could subject us to <font color="blue">liability</font>,     decrease our <font color="blue">profitability</font>, and damage our reputation</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reference </font>should be made to Item 1</td>
+    </tr>
+    <tr>
+      <td>“Business—Regulation” for     a discussion of <font color="blue">regulatory</font> risk factors</td>
+    </tr>
+    <tr>
+      <td>“Business—Competition”     for a discussion of <font color="blue">competitive</font> risk factors</td>
+    </tr>
+    <tr>
+      <td>As a consumer finance company, we are subject to various     consumer claims and <font color="blue">litigation</font> seeking damages and statutory penalties,     based upon, among other things, usury, <font color="blue">disclosure</font> <font color="blue">inaccuracies</font>, wrongful     <font color="blue">repossession</font>, violations of <font color="blue">bankruptcy</font> stay provisions, <font color="blue">certificate</font> of title     disputes, fraud, breach of contract and <font color="blue">discriminatory</font> treatment of credit     <font color="blue">applicants</font></td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">litigation</font> against us could take the form of class action     <font color="blue">complaints by consumers</font></td>
+    </tr>
+    <tr>
+      <td>As the assignee of finance contracts <font color="blue">originated by</font>     dealers,  we  may also be named as a co-defendant in lawsuits filed by     consumers <font color="blue">principally</font> against dealers</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">relief requested</font>     by the <font color="blue">plaintiffs varies</font>                                           18     ______________________________________________________________________    [44]Table of <font color="blue">Contents       </font>but can include requests for compensatory, statutory and <font color="blue">punitive damages</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we have <font color="blue">taken prudent</font> steps to address and mitigate the     <font color="blue">litigation</font> risks associated with our business <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>However, any     adverse resolution of <font color="blue">litigation</font> pending or threatened against us, including</td>
+    </tr>
+  </tbody>
+</table>

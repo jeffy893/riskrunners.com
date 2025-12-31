@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: incorporated by", fill: "#f94d00"},
+{source: "2: incorporated by", target: "2: risk factors", fill: "#f94d00"},
+{source: "2: risk factors", target: "2: financial failure", fill: "#f94d00"},
+{source: "2: financial failure", target: "2: tenants would", fill: "#f94d00"},
+{source: "2: tenants would", target: "2: significant", fill: "#f94d00"},
+{source: "2: significant", target: "2: reductions", fill: "#f94d00"},
+{source: "2: reductions", target: "2: unconsolidated joint", fill: "#f94d00"},
+{source: "2: unconsolidated joint", target: "2: real estate portfolio", fill: "#f94d00"},
+{source: "2: incorporated by", target: "5: Additionally ", fill: "#ffe4c4"},
+{source: "5: Additionally ", target: "5: rental revenues excluding rental revenues from", fill: "#ffe4c4"},
+{source: "5: rental revenues excluding rental revenues from", target: "5: joint ventures", fill: "#ffe4c4"},
+{source: "5: joint ventures", target: "5: December ", fill: "#ffe4c4"},
+{source: "5: December ", target: "5: derived from retail tenants", fill: "#ffe4c4"},
+{source: "5: Additionally ", target: "15: may also face liabilities", fill: "#8b0000"},
+{source: "15: may also face liabilities", target: "26: inability", fill: "#f4a460"},
+{source: "26: inability", target: "26: indebtedness could reduce cash available", fill: "#f4a460"},
+{source: "26: indebtedness could reduce cash available", target: "26: distributions", fill: "#f4a460"},
+{source: "26: inability", target: "28: As of December ", fill: "#ffb347"},
+{source: "28: As of December ", target: "28: mortgage debt", fill: "#ffb347"},
+{source: "28: mortgage debt", target: "28: total assets", fill: "#ffb347"},
+{source: "28: As of December ", target: "31: joint ventures", fill: "#b22222"},
+{source: "31: joint ventures", target: "31: cash flow", fill: "#b22222"},
+{source: "31: cash flow", target: "31: properties securing", fill: "#b22222"},
+{source: "31: properties securing", target: "31: mortgage indebtedness will", fill: "#b22222"},
+{source: "31: joint ventures", target: "32: collateralize payment", fill: "#722f37"},
+{source: "32: collateralize payment", target: "32: joint ventures", fill: "#722f37"},
+{source: "32: joint ventures", target: "32: mortgage payments on", fill: "#722f37"},
+{source: "32: mortgage payments on", target: "32: secured indebtedness", fill: "#722f37"},
+{source: "32: secured indebtedness", target: "32: lender could", fill: "#722f37"},
+{source: "32: lender could", target: "32: foreclose upon", fill: "#722f37"},
+{source: "32: collateralize payment", target: "33: with respect", fill: "#00827f"},
+{source: "33: with respect", target: "33: nonrecourse", fill: "#00827f"},
+{source: "33: nonrecourse", target: "33: lender may", fill: "#00827f"},
+{source: "33: lender may", target: "33: recover deficiencies from us", fill: "#00827f"},
+{source: "33: recover deficiencies from us", target: "33: under certain circumstances", fill: "#00827f"},
+{source: "33: under certain circumstances", target: "33: cash available", fill: "#00827f"},
+{source: "33: cash available", target: "33: meet expenses", fill: "#00827f"},
+{source: "33: meet expenses", target: "33: distributions", fill: "#00827f"},
+{source: "33: distributions", target: "33: stockholders", fill: "#00827f"},
+{source: "33: stockholders", target: "33: deterioration", fill: "#00827f"},
+{source: "33: deterioration", target: "33: financial condition", fill: "#00827f"},
+{source: "33: with respect", target: "START_HERE", fill: "#00827f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Provide shelter</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Joint_venture">Joint venture</a></td>
+      <td>A joint venture (JV) is a business entity created by two or more parties, generally characterized by shared ownership, shared returns and risks, and shared governance. Companies typically pursue joint ventures for one of four reasons: to access a new market, particularly emerging markets; to gain scale efficiencies by combining assets and operations; to share risk for major investments or projects; or to access skills and capabilities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_joint_venture">International joint venture</a></td>
+      <td>An international joint venture (IJV) occurs when two businesses based in two or more countries form a partnership. A company that wants to explore international trade without taking on the full responsibilities of cross-border business transactions has the option of forming a joint venture with a foreign partner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automotive_industry">Automotive industry</a></td>
+      <td>The automotive industry comprises a wide range of companies and organizations involved in the design, development, manufacturing, marketing, and selling of motor vehicles. It is one of the world's largest industries by revenue (from 16 % such as in France up to 40 % to countries like Slovakia).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/AMD–Chinese_joint_venture">AMD–Chinese joint venture</a></td>
+      <td>The AMD–Chinese joint venture is the agreement between the semiconductor company Advanced Micro Devices (AMD) and China-based partners to license and build x86-compatible CPUs for the Chinese-based market. It is an attempt to reduce the Chinese dependence on foreign technology, but was negotiated and agreed to well before the 2018 trade war between the US and China.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Siemens">Siemens</a></td>
+      <td>Siemens AG (German pronunciation: [ˈziːməns] (listen) or [-mɛns]) is a German multinational conglomerate corporation and the largest industrial manufacturing company in Europe headquartered in Munich with branch offices abroad.\nThe principal divisions of the corporation are Industry, Energy, Healthcare (Siemens Healthineers), and Infrastructure &amp; Cities, which represent the main activities of the corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_automobile_manufacturers_of_China">List of automobile manufacturers of China</a></td>
+      <td>This is a list of current and defunct automobile manufacturers and brand names of China.\n\n\n== State-owned manufacturers ==\nBeijing Automotive Industry Holding Corporation (BAIC) (1988–present)\nBeijing Automobile Works (1958–present)\nHeibao Auto (1990–present)\nBeijing (Previously Senova)\nFoton (1996–present)\nChanghe\nBeijing Hyundai (Joint venture with Hyundai Motor Company)\nBeijing Benz (Joint venture with Daimler AG)\nBisu Auto (Joint venture with Yinxiang Group)\nWeiwang (Joint venture with Yinxiang Group)\nHuansu (Joint venture with Yinxiang Group)\nBrilliance Auto Group (1992–present)\nJinbei  (1991–present)\nZhonghua (2002–present)\nBrilliance BMW (Joint venture with BMW)\nZinoro (2013–present)\nChang'an Motors (1990–present)\nChangan\nOshan\nKaicene\nAvatar (2021–present)\nChangan Ford (Joint venture with Ford Motor Company)\nChangan Mazda (Joint venture with Mazda)\nChery Automobile (1997–present)\nKarry\nExeed\nJetour\nDongfeng (1969–present)\nAeolus (Dongfeng Fengshen) (2009–present)\nVenucia (2010–present)\nVoyah\nSkio\nDongfeng Nissan (Joint venture with Nissan)\nDongfeng Honda (Joint venture with Honda)\nLuxgen (Dongfeng Yulon) (Joint venture with Yulon)\nFirst Automobile Works  (1953–present)\nBestune\nSenia\nHaima Automobile (1992–present)\nHongqi (1958–present)\nFAW Tianjin (Junpai) (1965–present)\nFAW-Volkswagen (Joint venture with Volkswagen Group)\nFAW-Toyota (Joint venture with Toyota)\nFujian Motors Group\nSoueast (1995–present)\nYudo\nKeyton\nGAC Group (1955–present)\nAion (2018–present)\nTrumpchi (2010–present)\nChangfeng Motor (Leopaard) (1950–present)\nGonow\nGuangqi Honda (1998–present) (Joint venture with Honda)\nEverus (2008–present)\nGAC Toyota (2004–present) (Joint venture with Toyota)\nLeahead (2015–present)\nJAC Motors (Anhui Jianghuai) (1964–present)\nRefine\nSehol (Joint venture with Volkswagen Group)\nJiangling Motor Holding (2004–present)\nJiangling (JMC) (1993–present)\nJMC Yusheng\nJMC Ford (Joint venture with Ford Motor Company)\nLandwind (2004–present)\nJMCG (1947–present)\nJingma Motor (1958–present)\nJMCGL (2013–present)\nJMEV (2015–present) (Joint venture with Renault)\nSAIC Motor (1955–present)\nMaxus (2011–present)\nMG Motor (2006–present)\nNanjing Automobile Corporation (NAC) (1947–present)\nYuejin (1995–present)\nRoewe (2006–present)\niM (Zhiji Motor)\nSAIC-GM (Joint venture with General Motors)\nSAIC-GM-Wuling (1958–present) (Joint venture with General Motors and Wuling Motors)\nBaojun\nSAIC Volkswagen (Joint venture with Volkswagen Group)\n\n\n== Independent manufacturers ==\nAiways (2017–present)\nBYD (2003–present)\nDenza (2010–present) (Joint venture with Daimler AG)\nFoday (1988–present)\nGeely (1998–present)\nFarizon\nGeometry\nLotus\nLynk &amp; Co (2016–present)\nMaple\nPolestar\nVolvo Cars (2010–present)\nZeekr\nZhidou\nJidu Auto (Joint venture with Baidu)\nGreat Wall Motors (1984–present)\nHaval (2013–present)\nTANK (2021–present)\nORA (2018–present)\nWEY (2017–present)\nSG Automotive (1984–present)\nHuanghai\nHawtai (Huatai) (2000–present)\nHiPhi (Human Horizons) (2017–present)\nKing Long (1988–present)\nLeapmotor (2016–present)\nFujian New Forta (2001–present)\nLi Auto (2015–present)\nLifan (1992–present)\nNIO (2014–present)\nNeta (Hozon Auto) (2014–present)\nQoros (2013–present)\nSeres (2016–present)\nAITO(2021–present)\nShaanxi Automobile Group (1968–present)\nShandong Heibao (1990–present)\nSichuan Tengzhong (2005–present)\nSinomach\nZedriv (2017–present)\nSiTech (2018–present)\nShuguang Group (1984–present)\nHuanghai Bus (1951–present)\nSkywell\nSkyworth Auto\nNanjing Golden Dragon Bus\nSoar Automotive (1991–present)\nSokon (1986–present)\nSeres (2016–present)\nSuda (2010–present)\nSunlong Bus (2001–present)\nTangjun Ou Ling\nTesla (2019– present)\nTianma (1995–present)\nTechrules (2016–present)\nTengzhong (2005–present)\nWanshan Special Vehicle\nWanxiang (1969–present)\nWeltmeister (2015–present)\nWuling Automobile (2007–present)\nWuzhoulong (2000–present)\nXinkai (1984–present)\nXPeng (2014–present)\nYema Auto (1994–present)\nYutong Group (1963–present)\nZX Auto (1999–present)\nZhongyu (2004–present)\n\n\n== Former manufacturers ==\nAnda'er (1991–2016)\nBamin (1980's–2010)\nBaolong (1998–2005)\nBinzhou Pride (2006–2008)\nBordrin (2016–2021; went bankrupt due to the COVID-19 pandemic)\nByton (2016–2021)\nChangfeng Motor\nDadi Auto (1988–2012; bought by CHTC)\nDatong (1954–2000's; acquired by FAW)\nYungang (1989–2000's; acquired by FAW)\nDisai (1989–1996)\nDorcen (2018–2021)\nEmgrand (2009–2014; subsidiary of Geely Auto, rolled back into Geely)\nFuzhou Automobile Works (1956–1984)\nFuzhou Automotive Industry Corporation (1984–1990)\nForta (1990–2001) (became New Forta)\nFuqi (1969–2013)\nFuxing (1994–1998)\nGuizhou Yunque (1989–2005)\nGonow (2003–2016)\nGreen Field Motor (2010–2016)\nGreentech Automotive (2009–2018)\nHafei (1950–2015)\nHanjiang (car manufacturer under Tonghui Machinery Works until 2005; acquired by Gonow)\nHongxing (1960–2004; acquired by Shuanghuan)\nHuali (1984–2002)\nHuayang (1990's–2004; acquired by Lifan Group)\nLiming (1986–2001)\nNanjing Yuejin Soyat (1999–2007)\nNational Electric Vehicle Experimental &amp; Demonstration Area (NEVEDA) (1995–2004)\nNushen (1990–2001; currently a subsidiary of JAC Motors)\nPolarsun Automobile (2003–2018)\nRiich (2009–2013; subsidiary of Chery)\nSanxing (1990–2002)\nShanlu Motors (1991–2001)\nShuanghuan Auto (1988–2016)\nShenyang Heibao (2001–2005)\nTianju Automobile (1987–2011)\nYemingzhu (1988–2011)\nTongtian (2002–2005)\nXiali (1997–2015)\nOley (2012–2015)\nYangchang Motors (1958–1993; sold to Guangzhou Automobile Industry Group in 2009)\nYcaco (1987–1993; Joint-venture with the Jiangxi Automobile Manufacturing Plant producing Isuzu trucks)\nYemingzhu (1987–2011)\nYoungman (2001–2019)\nZotye (2005–2021)\nTraum (2017–2021)\nDomy Auto (2015–2021)\nJiangnan Automobile (2006–2021)\n\n\n== Joint ventures ==\nIn the past, a foreign car manufacturer had to pair with a local car company to produce cars locally, and was allowed at most 2 joint ventures in China.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dongfeng_Motor_Corporation">Dongfeng Motor Corporation</a></td>
+      <td>Dongfeng Motor Corporation Ltd. is a Chinese state-owned automobile manufacturer headquartered in Wuhan, Hubei.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Future_Group">Future Group</a></td>
+      <td>Future Group is an Indian conglomerate, founded by Kishore Biyani and based in Mumbai, Maharashtra. The company is known for having a significant prominence in Indian retail and fashion sectors, with popular supermarket chains like Big Bazaar and Food Bazaar, lifestyle stores like Brand Factory, Central, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December">December</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_10">December 10</a></td>
+      <td>December 10 is the 344th day of the year (345th in leap years) in the Gregorian calendar;  21 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n1317 – The "Nyköping Banquet": King Birger of Sweden treacherously seizes his two brothers Valdemar, Duke of Finland and Eric, Duke of Södermanland, who were subsequently starved to death in the dungeon of Nyköping Castle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1924_German_federal_election">December 1924 German federal election</a></td>
+      <td>Federal elections were held in Germany on 7 December 1924, the second that year after the Reichstag had been dissolved on 20 October. The Social Democratic Party remained the largest party in the Reichstag, receiving an increased share of the vote and winning 131 of the 493 seats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1">December 1</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2016_in_aviation">2016 in aviation</a></td>
+      <td>This is a list of aviation-related events from 2016.\n\n\n== Events ==\n\n\n=== January ===\nThe Government of Italy permitted United States unmanned aerial vehicles (UAVs or drones) to fly strike missions from Naval Air Station Sigonella in Sicily where the US has operated unarmed surveillance UAVs since 2001 against Islamic State targets in Libya, but only if they are "defensive," protecting U.S. forces or rescuers retrieving downed pilots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_12">December 12</a></td>
+      <td>December 12 is the 346th day of the year (347th in leap years) in the Gregorian calendar;  19 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n627 – Battle of Nineveh: A Byzantine army under Emperor Heraclius defeats Emperor Khosrau II's Persian forces, commanded by General Rhahzadh.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Linux_distribution">Linux distribution</a></td>
+      <td>A Linux distribution (often abbreviated as distro) is an operating system made from a software collection that includes the Linux kernel and, often, a package management system. Linux users usually obtain their operating system by downloading one of the Linux distributions, which are available for a wide variety of systems ranging from embedded devices (for example, OpenWrt) and personal computers (for example, Linux Mint) to powerful supercomputers (for example, Rocks Cluster Distribution).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pareto_distribution">Pareto distribution</a></td>
+      <td>The Pareto distribution, named after the Italian civil engineer, economist, and sociologist Vilfredo Pareto, (Italian: [paˈreːto] US:  pə-RAY-toh), is a power-law probability distribution that is used in description of social, quality control, scientific, geophysical, actuarial, and many other types of observable phenomena. Originally applied to describing the distribution of wealth in a society, fitting the trend that a large portion of wealth is held by a small fraction of the population.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heavy-tailed_distribution">Heavy-tailed distribution</a></td>
+      <td>In probability theory, heavy-tailed distributions are probability distributions whose tails are not exponentially bounded: that is, they have heavier tails than the exponential distribution.  In many applications it is the right tail of the distribution that is of interest, but a distribution may have a heavy left tail, or both tails may be heavy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Distribution_(mathematics)">Distribution (mathematics)</a></td>
+      <td>Distributions, also known as Schwartz distributions or generalized functions, are objects that generalize the classical notion of functions in mathematical analysis. Distributions make it possible to differentiate functions whose derivatives do not exist in the classical sense.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dirichlet_distribution">Dirichlet distribution</a></td>
+      <td>In probability and statistics, the Dirichlet distribution (after Peter Gustav Lejeune Dirichlet), often denoted \n  \n    \n      \n        Dir\n        ⁡\n        (\n        \n          α\n        \n        )\n      \n    \n    {\displaystyle \operatorname {Dir} ({\boldsymbol {\alpha }})}\n  , is a family of continuous multivariate probability distributions parameterized by a vector \n  \n    \n      \n        \n          α\n        \n      \n    \n    {\displaystyle {\boldsymbol {\alpha }}}\n   of positive reals. It is a multivariate generalization of the beta distribution, hence its alternative name of multivariate beta distribution (MBD).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_debt_obligation">Collateralized debt obligation</a></td>
+      <td>A collateralized debt obligation (CDO) is a type of structured asset-backed security (ABS). Originally developed as instruments for the corporate debt markets, after 2002 CDOs became vehicles for refinancing mortgage-backed securities (MBS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Free_cash_flow">Free cash flow</a></td>
+      <td>In corporate finance, free cash flow (FCF) or free cash flow to firm (FCFF) is the amount by which a business's operating cash flow exceeds its working capital needs and expenditures on fixed assets (known as capital expenditures). It is that portion of cash flow that can be extracted from a company and distributed to creditors and securities holders  without causing issues in its operations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Equity_(finance)">Equity (finance)</a></td>
+      <td>In finance, equity is ownership of assets that may have debts or other liabilities attached to them. Equity is measured for accounting purposes by subtracting liabilities from the value of the assets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_RTO_districts_in_Kerala">List of RTO districts in Kerala</a></td>
+      <td>\n== Regional Transport Offices ==\n\n\n== Sub Regional Transport Offices ==\n\n\n== Future Sub Regional Transport Offices ==\nGovernment of Kerala has repeatedly intimated multiple legislative members that there are no plans to setup any new RTOs/SRTOs in Kerala unless the financial condition of Kerala improves.\n\n\n== References ==\n\nOfficial list of Regional Transport Offices\nOfficial list of Sub Regional Transport Offices\n\n\n== External links ==\nhttps://www.mvd.kerala.gov.in (Link to Kerala Motor Vehicles Department.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ONE LIBERTY PROPERTIES INC    Item 1A  <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>------------             In addition to the other information contained or <font color="blue">incorporated by</font>  reference in this Form 10-K, readers should carefully consider the following  <font color="blue">risk factors</font>:    Risks Related to Our Business  - -----------------------------    The <font color="blue">financial failure</font> of our <font color="blue">tenants would</font> be likely to cause <font color="blue">significant</font>  <font color="blue">reductions</font> in our revenues, our equity in earnings of <font color="blue">unconsolidated joint</font>  ventures and in the value of our <font color="blue"><font color="blue">real estate</font> portfolio</font></td>
+    </tr>
+    <tr>
+      <td>Based on 2006 contractual <font color="blue">rental income</font>, 85prca of our <font color="blue">rental revenues</font> are  <font color="blue">generated from properties which</font> are leased to <font color="blue">single tenants</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, the  <font color="blue">financial failure</font> or other default of a tenant in non-payment of rent or  property related expenses or the <font color="blue">termination</font> of a <font color="blue">lease could</font> cause a  <font color="blue">significant</font> reduction in our revenues</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">approximately</font> 45prca of our  <font color="blue">rental revenues</font> (excluding <font color="blue">rental revenues</font> from our <font color="blue"><font color="blue">joint venture</font>s</font>) for the year  ended <font color="blue">December </font>31, 2005 was <font color="blue">derived from retail tenants</font> and <font color="blue">approximately</font> 44prca of  our 2006 contractual <font color="blue">rental income</font> will be <font color="blue">derived from retail tenants</font></td>
+    </tr>
+    <tr>
+      <td>We also  anticipate that <font color="blue">significant</font> revenues will be realized in 2006 by our two movie  theater <font color="blue"><font color="blue">joint venture</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Weakening </font><font color="blue">economic <font color="blue">conditions</font></font> in the retail or theater  <font color="blue">industries could</font> result in the <font color="blue">financial failure</font>, or other default, of a  <font color="blue">significant</font> number of our tenants and the tenants of our <font color="blue"><font color="blue">joint venture</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In 2004  and 2005 three retail tenants, each the <font color="blue">only tenant at</font> a <font color="blue">retail property</font> owned  by us, filed for <font color="blue">protection under</font> <font color="blue">Chapter II </font>of the <font color="blue">federal <font color="blue">bankruptcy</font> laws</font></td>
+    </tr>
+    <tr>
+      <td>One  of these properties was vacant for <font color="blue">approximately</font> 17 months (until the property  was sold in <font color="blue">December </font>2005) after the <font color="blue">tenant rejected</font> the lease</td>
+    </tr>
+    <tr>
+      <td>This property  was sold for a loss of dlra9cmam400, after we had <font color="blue">previously recorded</font> a valuation  allowance aggregating dlra835cmam000</td>
+    </tr>
+    <tr>
+      <td>With respect to the other two properties, each  <font color="blue">tenant rejected</font> its lease, <font color="blue">one property</font> was vacant for <font color="blue">approximately</font> three  months (until the property was sold in <font color="blue">September </font>2005 for a gain of dlra639cmam000)  and <font color="blue">one property</font> was sold in November 2005 for a gain of dlra369cmam000 (we did not  experience a <font color="blue">vacancy at</font> this property)</td>
+    </tr>
+    <tr>
+      <td>In addition, a building owned by a joint  venture in which we have a 50prca economic interest, was leased to a <font color="blue">tenant which</font>  filed for <font color="blue">protection under</font> <font color="blue">Chapter II </font>The <font color="blue">tenant rejected</font> the lease in June  2004 and the property has <font color="blue">been vacant since</font> that time</td>
+    </tr>
+    <tr>
+      <td>It is possible that other  <font color="blue"><font color="blue">tenants could</font> file</font> for <font color="blue">protection under</font> <font color="blue">federal <font color="blue">bankruptcy</font> laws</font> or state  insolvency proceedings or could face similar <font color="blue"><font color="blue">difficult</font>ies</font> in the future</td>
+    </tr>
+    <tr>
+      <td>In the  event of a <font color="blue">default by</font> a tenant, we may experience delays in enforcing our rights  as landlord and sustain a loss of revenues and substantial costs in protecting  our <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may also face liabilities</font> arising from the tenantapstas actions  or omissions that would reduce our revenues and the value of our portfolio</td>
+    </tr>
+    <tr>
+      <td>Also, if we are unable to re-rent a property when an <font color="blue">existing lease terminates</font>,  we receive <font color="blue">no <font color="blue">revenues from</font> such property</font> and are required to pay taxes,  insurance and other operating <font color="blue">expenses during</font> the <font color="blue">vacancy period</font>, and could as a  result experience a decline in the value of the property</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our revenues and/or our 2006 contractual <font color="blue">rental income</font>  is <font color="blue">derived from five tenants</font></td>
+    </tr>
+    <tr>
+      <td>The default, <font color="blue">financial distress</font> or failure of any  of these <font color="blue">tenants could</font> <font color="blue">significant</font>ly reduce our revenues</td>
+    </tr>
+    <tr>
+      <td>( a tenant at three separate locations) accounted for <font color="blue">approximately</font>  6dtta5prca, 6dtta1prca, and 5dtta2prca, respectively, of our <font color="blue">rental revenues</font> (excluding rental  <font color="blue">revenues from</font> our <font color="blue"><font color="blue">joint venture</font>s</font>) for the year ended <font color="blue">December </font>31, 2005 and  account for 5dtta4prca, 5dtta8prca, and 5dtta2prca, respectively, of our 2006 contractual rental  income</td>
+    </tr>
+    <tr>
+      <td>DSM Nutritional Products, Inc, a tenant at a property we acquired in  <font color="blue">September </font>2005 <font color="blue">accounts</font> for 6dtta3prca of our 2006 contractual <font color="blue">rental income</font></td>
+    </tr>
+    <tr>
+      <td>Regal  Cinemas, Inc, a tenant at four theaters owned by our movie theater joint  ventures, accounted for 36prca of the total <font color="blue">rental revenues</font> of our <font color="blue"><font color="blue">joint venture</font>s</font>  for the year ended <font color="blue">December </font>31, 2005 and <font color="blue">will account</font> for 37prca of our share of  projected rent payable in 2006 to our <font color="blue"><font color="blue">joint venture</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In addition, Regal  Cinemas, Inc, is a tenant at a theater owned by us and accounted for  <font color="blue">approximately</font> 4dtta3prca of our <font color="blue">rental revenues</font> for the year ended <font color="blue">December </font>31, 2005  and <font color="blue">accounts</font> for 4prca of our 2006 contractual <font color="blue">rental income</font></td>
+    </tr>
+    <tr>
+      <td>The default,  <font color="blue">financial distress</font> or <font color="blue">bankruptcy</font> of any of these <font color="blue">tenants could</font> cause  <font color="blue"><font color="blue">interruption</font>s</font> in the receipt or the loss of a <font color="blue">significant</font> amount of rental  revenues and result in the vacancy of the property occupied by the <font color="blue">defaulting</font>  tenant, <font color="blue">which would</font> <font color="blue">significant</font>ly reduce our <font color="blue">rental revenues</font> (or the rental  revenues of our <font color="blue"><font color="blue">joint venture</font>s</font>) and <font color="blue">net income until</font> the property is re-rented,  and <font color="blue">could decrease</font> the <font color="blue">ultimate sale value</font> of the property</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">inability</font> to repay our <font color="blue"><font color="blue">indebtedness</font> <font color="blue">could reduce</font> <font color="blue">cash available</font></font> for  <font color="blue"><font color="blue">distribution</font>s</font> and cause losses</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had outstanding <font color="blue">approximately</font> dlra167 million in  long-term mortgage <font color="blue">indebtedness</font>, all of which is non-recourse (subject to  standard carve-outs)</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, our ratio of <font color="blue">mortgage debt</font> to  <font color="blue">total assets</font> was <font color="blue">approximately</font> 51prca</td>
+    </tr>
+    <tr>
+      <td>In addition, as of <font color="blue">December </font>31, 2005, our  <font color="blue"><font color="blue">joint venture</font>s</font> had <font color="blue">approximately</font> dlra74dtta5 million in total long-term mortgage  <font color="blue">indebtedness</font> (all of which is non-recourse subject to standard carve-outs)</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">mortgages on properties</font> owned by each of our two  &amp;quote movie theater &amp;quote  <font color="blue"><font color="blue">joint venture</font>s</font>  are <font color="blue">cross collateralized</font></td>
+    </tr>
+    <tr>
+      <td>The risks associated with our debt and the debt of our  <font color="blue"><font color="blue">joint venture</font>s</font> include the risk that <font color="blue">cash flow</font> for the <font color="blue">properties securing</font> the  mortgage <font color="blue">indebtedness</font> will be insufficient to meet required payments of  principal and interest</td>
+    </tr>
+    <tr>
+      <td>Further, if a property or properties are mortgaged to  <font color="blue">collateralize payment</font> of <font color="blue">indebtedness</font> and we or any of our <font color="blue"><font color="blue">joint venture</font>s</font> is  unable to make <font color="blue">mortgage payments on</font> the secured <font color="blue">indebtedness</font>, the <font color="blue">lender could</font>  <font color="blue">foreclose upon</font> the property or properties resulting in a loss of revenues to us  and a decline in the value of our portfolio</td>
+    </tr>
+    <tr>
+      <td>Even <font color="blue">with respect</font> to non-recourse  <font color="blue">indebtedness</font>, the <font color="blue">lender may</font> have the right to <font color="blue">recover deficiencies from us</font>  <font color="blue">under certain <font color="blue">circumstances</font></font> that could result in a reduction in the amount of  <font color="blue">cash available</font> to <font color="blue">meet expenses</font> and to make <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">stockholders</font>  and in a <font color="blue">deterioration</font> of our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to refinance our <font color="blue"><font color="blue">borrowings</font> at maturity at</font> favorable rates or  <font color="blue">otherwise raise funds</font>, our <font color="blue">net income may decline</font> or we may be forced to sell  <font color="blue">properties on <font color="blue">disadvantageous</font> terms</font>, <font color="blue">which would</font> result in the loss of revenues  and in a decline in the value of our portfolio</td>
+    </tr>
+    <tr>
+      <td>Only a small portion of the principal of our mortgage <font color="blue">indebtedness</font> and  the mortgage <font color="blue">indebtedness</font> of our <font color="blue"><font color="blue">joint venture</font>s</font> will be <font color="blue">repaid prior</font> to maturity  and neither we nor our <font color="blue"><font color="blue">joint venture</font>s</font> plan to retain <font color="blue">sufficient cash</font> to repay  such <font color="blue">indebtedness</font> at maturity</td>
+    </tr>
+    <tr>
+      <td>Accordingly, in order to meet these <font color="blue">obligations</font>,  we will have to use funds available under our credit line, if any, to refinance  debt or seek to <font color="blue">raise funds through</font> the financing of <font color="blue">unencumbered properties</font>,  sale of properties or sale of <font color="blue">additional equity</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Between January </font>2006 and  <font color="blue">December </font>31, 2010, we will have to refinance an aggregate of <font color="blue">approximately</font> dlra32  million of <font color="blue">maturing debt</font>, of which <font color="blue">approximately</font> dlra2dtta2 will have to be refinanced  in 2006 and <font color="blue">approximately</font> dlra3dtta8 million will have to be refinanced in 2007</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue"><font color="blue">joint venture</font>s</font> do not have <font color="blue">maturing debt</font> until 2012</td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">give no assurance</font>  that we (or our <font color="blue"><font color="blue">joint venture</font>s</font>) will be able to refinance this debt or arrange  additional debt financing on <font color="blue">unencumbered properties</font> on terms as favorable as  the terms of existing <font color="blue">indebtedness</font>, or at all</td>
+    </tr>
+    <tr>
+      <td>If interest rates or other  <font color="blue">factors at</font> the time of <font color="blue">refinancing</font> result in <font color="blue">interest rates higher than</font> the  <font color="blue">interest rates currently</font> being paid, interest expense would increase, which  <font color="blue">would <font color="blue">adversely affect</font></font> our net income, <font color="blue">financial condition</font> and the amount of  <font color="blue">cash available</font> for <font color="blue">distribution</font> to <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>If we (or our <font color="blue"><font color="blue">joint venture</font>s</font>)  are not successful in <font color="blue">refinancing</font> existing <font color="blue">indebtedness</font> or financing  <font color="blue">unencumbered properties</font>, selling properties on favorable terms or raising  <font color="blue">additional equity</font>, our <font color="blue">cash flow</font> (or the <font color="blue">cash flow</font> of a <font color="blue">joint venture</font>) will not  be sufficient to repay all <font color="blue">maturing debt</font> when <font color="blue">payments become due</font>, and we (or a  <font color="blue">joint venture</font>) may be forced to dispose of <font color="blue">properties on <font color="blue">disadvantageous</font> terms</font>,  <font color="blue">which would</font> result in the loss of revenues and in a decline in the value of our  portfolio</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had <font color="blue">zero outstanding on</font> our revolving credit  <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>on our <font color="blue"><font color="blue">acquisition</font> program</font>, we <font color="blue">could borrow</font> a <font color="blue">significant</font>  <font color="blue">amount under</font> our credit <font color="blue">facility</font> in 2006</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">facility</font> is <font color="blue">guaranteed by</font> all of  our <font color="blue">subsidiaries</font> which own <font color="blue">unencumbered properties</font> and the shares of stock of  all other <font color="blue">subsidiaries</font> are <font color="blue">pledged as collateral</font></td>
+    </tr>
+    <tr>
+      <td>The risks associated with our  revolving credit <font color="blue">facility</font> include the risk that our <font color="blue">cash flow</font> will be  insufficient to meet required payments of interest</td>
+    </tr>
+    <tr>
+      <td>Also, we may be unable to  negotiate a new <font color="blue">facility</font> at the <font color="blue">maturity date</font> and may be unable to pay off the  <font color="blue">amount then outstanding</font></td>
+    </tr>
+    <tr>
+      <td>This could result in a reduction in the amount of cash  available to <font color="blue">meet expenses</font> and to make <font color="blue"><font color="blue">distribution</font>s</font> to holders of our common  stock</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue"><font color="blue">borrowings</font> could</font> result in <font color="blue">increased risk</font> of <font color="blue">default on</font> our repayment  <font color="blue">obligations</font> and <font color="blue">increased debt service <font color="blue">requirements</font></font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">governing documents</font> do not contain any <font color="blue">limitation on</font> the amount of  <font color="blue">indebtedness</font> we may incur</td>
+    </tr>
+    <tr>
+      <td>However, the terms of our credit <font color="blue">facility</font> with Valley  National Bank, Merchants Bank Division, Bank Leumi, USA, Manufacturers and  Traders Trust Company and Israel Discount Bank of New York limit the total  <font color="blue">indebtedness</font> that we may incur to an amount equal to <font color="blue">approximately</font> 70prca of the  value (as defined) of our properties, among other <font color="blue">limitations</font> in the credit  <font color="blue">facility</font> on our ability to incur additional <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font>leverage  could result in <font color="blue">increased risk</font> of <font color="blue">default on</font> our payment <font color="blue">obligations</font> related to  <font color="blue">borrowings</font> and in an increase in debt service <font color="blue">requirements</font>, which <font color="blue">could reduce</font>  our net income and the amount of <font color="blue">cash available</font> to <font color="blue">meet expenses</font> and to make  <font color="blue"><font color="blue">distribution</font>s</font> to holders of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to re-rent properties upon the expiration of our leases, it  could <font color="blue">adversely affect</font> our revenues and ability to make <font color="blue"><font color="blue">distribution</font>s</font>, and could  reduce the value of our portfolio</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of our revenues are <font color="blue">derived from <font color="blue">rental income</font> paid by</font>  <font color="blue">tenants at</font> our properties</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue"><font color="blue">cannot predict</font> whether current tenants will renew</font>  their <font color="blue">leases upon</font> the expiration of their terms</td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">cannot predict</font>  <font color="blue">whether current tenants will attempt</font> to terminate their leases (including taking  advantage of provisions of the <font color="blue">federal <font color="blue">bankruptcy</font> laws</font>), or <font color="blue">whether <font color="blue">defaults</font> by</font>  <font color="blue">tenants may</font> result in <font color="blue">termination</font> of their <font color="blue">leases prior</font> to the expiration of  their <font color="blue">current terms</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">tenants terminate</font> or fail to renew their leases, or if  <font color="blue">leases terminate due</font> to <font color="blue">defaults</font> or in the course of a <font color="blue">bankruptcy</font> proceeding, we  may not be able to <font color="blue">locate qualified <font color="blue">replacement</font> tenants</font> and, as a result, we  would lose a source of <font color="blue">revenue while remaining responsible</font> for the payment of  our mortgage <font color="blue">obligations</font> and the expenses related to the properties, including  <font color="blue"><font color="blue">real estate</font> taxes</font> and insurance</td>
+    </tr>
+    <tr>
+      <td>Even if tenants decide to renew their leases or  we <font color="blue">find <font color="blue">replacement</font> tenants</font>, the terms of renewals or new leases, including the  cost of required <font color="blue">renovations</font> or <font color="blue">concessions</font> to tenants, or the expense of  <font color="blue">reconfiguration</font> of a <font color="blue">single tenancy property</font> for use by multiple tenants, may be  less favorable <font color="blue">than current lease terms</font> and <font color="blue">could reduce</font> the amount of cash  available to <font color="blue">meet expenses</font> and to make <font color="blue"><font color="blue">distribution</font>s</font> to holders of our common  stock</td>
+    </tr>
+    <tr>
+      <td>Uninsured and <font color="blue">underinsured</font> losses may affect the revenues generated by, the  value of, and the <font color="blue">return from</font>, a <font color="blue">property <font color="blue">affected by</font></font> a casualty or other claim</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of our tenants obtain, for our benefit, comprehensive  <font color="blue">insurance covering</font> our properties in amounts that are intended to be sufficient  to provide for the <font color="blue">replacement</font> of the <font color="blue"><font color="blue">improvements at</font> each property</font></td>
+    </tr>
+    <tr>
+      <td>However,  the amount of insurance coverage maintained for any property may not be  sufficient to pay the full <font color="blue">replacement</font> cost of the <font color="blue">improvements at</font> the property  following a <font color="blue">casualty event</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">rent loss coverage under</font> the policy  may not extend for the full period of time that a <font color="blue">tenant may</font> be entitled to a  <font color="blue">rent abatement as</font> a result of, or that may be required to complete <font color="blue">restoration</font>  following, a <font color="blue">casualty event</font></td>
+    </tr>
+    <tr>
+      <td>In addition, there are <font color="blue">certain types</font> of losses,  such as those arising from earthquakes, floods, hurricanes and terrorist  attacks, that may be uninsurable or that may not be <font color="blue">economically insurable</font></td>
+    </tr>
+    <tr>
+      <td>Changes in zoning, building codes and ordinances, <font color="blue">environmental</font> <font color="blue"><font color="blue">consideration</font>s</font>  and other <font color="blue">factors also may</font> make it impossible or impracticable for us to use  <font color="blue">insurance proceeds</font> to <font color="blue">replace damaged</font> or destroyed <font color="blue">improvements at</font> a property</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">restoration</font> is not or cannot be completed to the extent, or within the period  of time specified in certain of our leases, the <font color="blue">tenant may</font> have the right to  terminate the lease</td>
+    </tr>
+    <tr>
+      <td>If any of these or similar events occur, it may reduce our  revenues, or the value of, or our <font color="blue">return from</font>, an <font color="blue">affected property</font></td>
+    </tr>
+    <tr>
+      <td>Our revenues and the value of our portfolio are <font color="blue">affected by</font> a number of factors  that affect <font color="blue">investment</font>s in <font color="blue"><font color="blue">real estate</font> <font color="blue">generally</font></font></td>
+    </tr>
+    <tr>
+      <td>We are subject to the <font color="blue">general risks</font> of investing in <font color="blue">real estate</font></td>
+    </tr>
+    <tr>
+      <td>These  include adverse changes in <font color="blue">economic <font color="blue">conditions</font></font> and <font color="blue">local <font color="blue">conditions</font> such as</font>  changing demographics, retailing trends and traffic patterns, declines in the  <font color="blue">rental rates</font>, changes in the supply and price of <font color="blue">quality properties</font> and the  market supply and demand of <font color="blue">competing properties</font>, the impact of <font color="blue">environmental</font>  laws, security concerns, prepayment penalties applicable under mortgage  financing, changes in tax, zoning, building code, fire safety and other laws,  the type of <font color="blue">insurance coverages available</font> in the market, and changes in the  type, <font color="blue">capacity</font> and <font color="blue">sophistication</font> of <font color="blue">building systems</font></td>
+    </tr>
+    <tr>
+      <td>In particular,  <font color="blue">approximately</font> 44prca of our 2006 contractual <font color="blue">rental income</font> will come from retail  tenants; therefore vulnerable to any <font color="blue">economic decline</font> that <font color="blue">negatively impacts</font>  the retail sector of the economy</td>
+    </tr>
+    <tr>
+      <td>Any of these <font color="blue">conditions</font> could have an adverse  effect on our results of <font color="blue">operations</font>, liquidity and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our revenues and the value of our portfolio are <font color="blue">affected by</font> a number of factors  that affect <font color="blue">investment</font>s in leased <font color="blue"><font color="blue">real estate</font> <font color="blue">generally</font></font></td>
+    </tr>
+    <tr>
+      <td>We are subject to the <font color="blue">general risks</font> of investing in leased <font color="blue">real estate</font></td>
+    </tr>
+    <tr>
+      <td>These include the non-performance of lease <font color="blue">obligations</font> by tenants, improvements  that will be costly or <font color="blue">difficult</font> to <font color="blue">remove should</font> it <font color="blue">become necessary</font> to re-rent  the <font color="blue">leased space</font> for other uses, covenants in <font color="blue">certain retail leases</font> that limit  the types of tenants to <font color="blue">which available space</font> can be rented (which may limit  demand or reduce the rents realized on re-renting), rights of <font color="blue">termination</font> of  <font color="blue">leases due</font> to events of casualty or <font color="blue">condemnation</font> affecting the <font color="blue">leased space</font> or  the property or due to <font color="blue">interruption</font> of the tenantapstas quiet enjoyment of the  <font color="blue">leased premises</font>, and <font color="blue">obligations</font> of a landlord to restore the <font color="blue">leased premises</font> or  the <font color="blue">property following events</font> of casualty or <font color="blue">condemnation</font></td>
+    </tr>
+    <tr>
+      <td>Any of these  <font color="blue">conditions</font> could have an <font color="blue">adverse impact on</font> our results of <font color="blue">operations</font>, liquidity  and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">real estate</font> <font color="blue">investment</font>s are <font color="blue">relatively illiquid</font> and their <font color="blue">values may</font>  decline</td>
+    </tr>
+    <tr>
+      <td>Real estate <font color="blue">investment</font>s are <font color="blue">relatively illiquid</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, we will be  limited in our ability to <font color="blue">reconfigure</font> our <font color="blue"><font color="blue">real estate</font> portfolio</font> in response to  economic changes</td>
+    </tr>
+    <tr>
+      <td>We may encounter <font color="blue">difficult</font>y in disposing of properties when  <font color="blue">tenants vacate either at</font> the expiration of the <font color="blue">applicable lease</font> or otherwise</td>
+    </tr>
+    <tr>
+      <td>If  we decide to sell any of our properties, our ability to sell these properties  and the prices we receive on their sale may be <font color="blue">affected by</font> many factors,  including the number of <font color="blue">potential buyers</font>, the number of <font color="blue">competing properties</font> on  the market and other market <font color="blue">conditions</font>, as well as whether the property is  leased and if it is leased, the terms of the lease</td>
+    </tr>
+    <tr>
+      <td>As a result, we may be  unable to sell our properties for an <font color="blue">extended period</font> of time <font color="blue">without incurring</font> a  loss, which <font color="blue">would <font color="blue">adversely affect</font></font> our results of <font color="blue">operations</font>, liquidity and  <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">concentration</font> of our properties in <font color="blue">certain geographic areas may</font> make our  revenues and the value of our <font color="blue">portfolio vulnerable</font> to adverse changes in local  <font color="blue">economic <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>We do not have specific <font color="blue">limitations</font> on the <font color="blue">total percentage</font> of our real  <font color="blue">estate properties</font> that may be located in any one area</td>
+    </tr>
+    <tr>
+      <td>Consequently, properties  that we own may be located in the same or a limited number of geographic  regions</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>36prca of our <font color="blue">rental income</font> (excluding our share of the  <font color="blue"><font color="blue">rental income</font> from</font> our <font color="blue"><font color="blue">joint venture</font>s</font>) for the year ended <font color="blue">December </font>31, 2005  were, and <font color="blue">approximately</font> 35prca of our 2006 contractual <font color="blue">rental income</font> will be,  <font color="blue">derived from properties located</font> in <font color="blue">New York and Texas</font></td>
+    </tr>
+    <tr>
+      <td>As a result, a decline in  the <font color="blue">economic <font color="blue">conditions</font></font> in these <font color="blue">geographic regions</font>, or in <font color="blue">geographic regions</font>  where our properties may be <font color="blue">concentrated</font> in the future, may have an adverse  effect on the rental and <font color="blue">occupancy rates</font> for, and the <font color="blue">property values</font> of, these  properties, which could lead to a reduction in our <font color="blue">rental income</font> and in the  value of these properties</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to control our <font color="blue"><font color="blue">joint venture</font>s</font> could result in diversion of time  and <font color="blue">effort by</font> our <font color="blue">management</font> and the <font color="blue">inability</font> to achieve the goals of the joint  venture or the tenancy in common</td>
+    </tr>
+    <tr>
+      <td>We presently are a venturer in six <font color="blue"><font color="blue">joint venture</font>s</font> which own fourteen  properties and we own 50prca of another <font color="blue">property as tenant</font> in <font color="blue">common with</font> a group  of <font color="blue">investors pursuant</font> to a tenancy in <font color="blue">common agreement</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005 our  <font color="blue">investment</font> in <font color="blue">unconsolidated joint</font> ventures is <font color="blue">approximately</font> dlra27 million and the  tenancy in <font color="blue"><font color="blue">common interest</font> represents</font> a net <font color="blue">investment</font> of <font color="blue">approximately</font> dlra500cmam000  by us</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">investment</font>s may involve risks not <font color="blue">otherwise present</font> in <font color="blue">investment</font>s  made <font color="blue">solely by us</font>, including that our co-investors may have <font color="blue">different interests</font>  or <font color="blue">goals than</font> we do, or that our co-investors may not be able or willing to take  an action that is desired by us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dis<font color="blue">agreements</font> </font>with or among our co-investors  could result in substantial diversion of time and <font color="blue">effort by</font> our <font color="blue">management</font> team  and the <font color="blue">inability</font> of the <font color="blue">joint venture</font> or the tenancy in common to <font color="blue">successfully</font>  operate, finance, lease or <font color="blue">sell properties as intended by</font> our <font color="blue">joint venture</font>  <font color="blue">agreements</font> or tenancy in <font color="blue">common agreement</font></td>
+    </tr>
+    <tr>
+      <td>In addition, because we may, under  the terms of our credit <font color="blue">facility</font>, invest a total of dlra90 million in joint  ventures, we may invest a <font color="blue">significant</font> amount of our funds into <font color="blue"><font color="blue">joint venture</font>s</font>  <font color="blue">which ultimately may</font> not be <font color="blue">profitable as</font> a result of dis<font color="blue">agreements</font> with or  among our co-investors</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">joint venture</font> <font color="blue">agreements</font> and tenancy in <font color="blue">common agreement</font> contain provisions  related to the transfer of our interest, resolution of disputes and future  <font color="blue">capital <font color="blue">contribution</font>s</font> that <font color="blue">could limit</font> our ability to liquidate our interest or  <font color="blue">adversely affect</font> the value of our <font color="blue">investment</font>s</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">joint venture</font> <font color="blue">agreements</font> <font color="blue">entered into</font> for each of our <font color="blue">ventures <font color="blue">generally</font></font>  provide that we <font color="blue">cannot finance</font> or transfer our interest in the <font color="blue">joint venture</font>  without the consent of the other venturers</td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain the  consent of our co-venturers to a <font color="blue">proposed financing</font> or transfer of our interest,  we may be unable to dispose of <font color="blue">such <font color="blue">interest on</font></font> favorable terms</td>
+    </tr>
+    <tr>
+      <td>The tenancy in  <font color="blue">common agreement</font> provides each party with a right of <font color="blue">first refusal</font> in the event  the other <font color="blue">party decides</font> to transfer its tenancy in <font color="blue">common interest</font></td>
+    </tr>
+    <tr>
+      <td>The right of  <font color="blue">first refusal</font> may make it more <font color="blue">difficult</font> for us to sell our interest in the  property</td>
+    </tr>
+    <tr>
+      <td>In addition, the tenancy in <font color="blue">common agreement</font> requires the consent of  the other parties to a <font color="blue">proposed financing</font> of the property</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">joint venture</font>  <font color="blue">agreements</font> and tenancy in <font color="blue">common agreement</font> also contain provisions governing  disputes that could cause us to acquire the interest of co-investors on  <font color="blue">unfavorable terms</font> or <font color="blue">without adequate</font> time to obtain satisfactory financing or  cause us to sell our <font color="blue"><font color="blue">interest on</font> terms</font> that may be <font color="blue">disadvantageous</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  if we fail to contribute any <font color="blue">additional capital</font> that we are required to  contribute in the future to any of these <font color="blue">investment</font>s, our <font color="blue">interest may</font> be  <font color="blue">reduced disproportionately</font>, or a co-investor may elect to fund our portion of  the capital <font color="blue">contribution</font>, <font color="blue">which would</font> result in that co-investor acquiring a  <font color="blue">preferred rate</font> of return and a right to receive <font color="blue">interest on</font> the amount of such  <font color="blue">contribution</font></td>
+    </tr>
+    <tr>
+      <td>The occurrence of any of these events <font color="blue">would <font color="blue">adversely affect</font></font> the  value of our <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>in the <font color="blue">real estate</font> business is intense and <font color="blue">could reduce</font> our revenues  and harm our business</td>
+    </tr>
+    <tr>
+      <td>We compete for <font color="blue">real estate</font> <font color="blue">investment</font>s with all types of investors,  including domestic and <font color="blue">foreign corporations</font> and <font color="blue">real estate</font> companies, financial  institutions, insurance companies, pension funds, <font color="blue">investment</font> funds, other REITs  and <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>Many of these <font color="blue">competitors</font> have <font color="blue">significant</font> <font color="blue">advantages</font> over us,  including a larger, more diverse group of properties and greater financial and  other resources</td>
+    </tr>
+    <tr>
+      <td>We have recently experienced <font color="blue">increased competition</font> for the  <font color="blue">acquisition</font> of <font color="blue">net leased properties</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to compete <font color="blue">successfully</font> with  these <font color="blue">competitors</font> could result in our <font color="blue">inability</font> to identify and acquire valuable  properties and to achieve our <font color="blue">growth objectives</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with <font color="blue">environmental</font> <font color="blue">regulations</font> and <font color="blue">associated costs could adversely</font>  affect our liquidity</td>
+    </tr>
+    <tr>
+      <td>Under <font color="blue">various federal</font>, state and local laws, ordinances and <font color="blue">regulations</font>,  an owner or operator of <font color="blue">real property may</font> be required to investigate and clean  <font color="blue">up <font color="blue">hazardous</font></font> or <font color="blue">toxic substances</font> or <font color="blue">petroleum product releases at</font> the property  and may be held liable to a <font color="blue">governmental</font> entity or to <font color="blue">third parties</font> for property  damage and for <font color="blue">investigation</font> and <font color="blue">cleanup costs incurred</font> in <font color="blue">connection with</font>  <font color="blue">contamination</font></td>
+    </tr>
+    <tr>
+      <td>The cost of <font color="blue">investigation</font>, remediation or removal of <font color="blue">hazardous</font> or  <font color="blue">toxic substances</font> may be substantial, and the presence of <font color="blue">such substances</font>, or the  failure to <font color="blue">properly remediate</font> a property, may <font color="blue">adversely affect</font> our ability to  sell or rent the property or to <font color="blue">borrow money using</font> the <font color="blue">property as collateral</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font> our ownership, operation and <font color="blue">management</font> of <font color="blue">real properties</font>,  we may be considered an owner or operator of the properties and, therefore,  <font color="blue">potentially liable</font> for removal or remediation costs, as well as certain other  related costs, including <font color="blue">governmental</font> fines and <font color="blue">liability</font> for injuries to  persons and property, not only <font color="blue">with respect</font> to properties we own now or may  acquire, but also <font color="blue">with respect</font> to properties we have owned in the past</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide</font> any assurance that existing <font color="blue">environmental</font> studies with  respect to any of our properties reveal all potential <font color="blue">environmental</font> liabilities,  that any <font color="blue">prior owner</font> of a property did not create any material <font color="blue">environmental</font>  condition not known to us, or that a material <font color="blue">environmental</font> condition does not  otherwise exist, or may not exist in the future, as to any one or more of our  properties</td>
+    </tr>
+    <tr>
+      <td>If a material <font color="blue">environmental</font> condition does in fact exist, or exists  in the future, it could have a material <font color="blue">adverse impact upon</font> our results of  <font color="blue">operations</font>, liquidity and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our senior <font color="blue">management</font> and other <font color="blue">key personnel</font> are critical to our business and  our <font color="blue">future success depends on</font> our ability to retain them</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> the services of Fredric H Gould, chairman of our board of  <font color="blue">directors</font> and <font color="blue">chief executive officer</font>, Patrick J Callan, Jr, our president,  Lawrence G Ricketts, our <font color="blue">vice president</font> and other members of our senior  <font color="blue">management</font> to carry out our business and <font color="blue">investment</font> strategies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Callan and Mr</font></td>
+    </tr>
+    <tr>
+      <td>Ricketts, <font color="blue">devote <font color="blue">substantially</font></font> all of their  business time to our company</td>
+    </tr>
+    <tr>
+      <td>The remainder of our senior <font color="blue">management</font> personnel  share their <font color="blue">services on</font> a part-time basis with entities <font color="blue">affiliated with us</font> and  located in the <font color="blue">same executive offices under</font> the <font color="blue">Shared Services Agreement</font></td>
+    </tr>
+    <tr>
+      <td>As we  expand, we <font color="blue">will continue</font> to need to attract and retain <font color="blue">qualified senior</font>  <font color="blue">management</font> and other <font color="blue">key personnel</font>, both on a full-time and <font color="blue">shared basis</font></td>
+    </tr>
+    <tr>
+      <td>The  loss of the services of any of our senior <font color="blue">management</font> or other <font color="blue">key personnel</font>, or  our <font color="blue">inability</font> to recruit and retain <font color="blue">qualified personnel</font> in the future, could  impair our ability to carry out our business and <font color="blue">investment</font> strategies</td>
+    </tr>
+    <tr>
+      <td>We do  not carry <font color="blue">key main life insurance on members</font> of our senior <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">entered into</font> a number of <font color="blue"><font color="blue">transactions</font> with persons</font> and entities  <font color="blue">affiliated with us</font> and <font color="blue">with certain</font> of our officers and <font color="blue">directors</font> and we intend  to <font color="blue">enter into <font color="blue">transactions</font> with such persons</font> in the future</td>
+    </tr>
+    <tr>
+      <td>In particular,  during the year ended <font color="blue">December </font>31, 2005, <font color="blue">Majestic Property Management Corp</font>, a  company owned by Mr</td>
+    </tr>
+    <tr>
+      <td>Gould and in <font color="blue">which certain</font> of our <font color="blue">executive officers</font> are  officers, received an aggregate of dlra131cmam000 for <font color="blue">management</font> fees and dlra156cmam000 for  <font color="blue">mortgage brokerage fees from</font> our <font color="blue"><font color="blue">joint venture</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In addition in 2005, we paid  <font color="blue">Majestic Property Management Corp</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">approximately</font> dlra1 million for mortgage  brokerage fees, sales commissions, <font color="blue">management</font> fees and <font color="blue">construction supervisory</font>  fees</td>
+    </tr>
+    <tr>
+      <td>Our policy is to insure that we receive terms in <font color="blue">transactions</font> with  <font color="blue">affiliates</font> that are <font color="blue">at least as</font> favorable to us as similar <font color="blue">transactions</font> we would  <font color="blue">enter into with unaffiliated persons</font> and these <font color="blue">transactions</font> have <font color="blue">been approved</font>  by our <font color="blue">Audit Committee </font>and by a majority of our board of <font color="blue">directors</font>, including a  majority of our <font color="blue">independent</font> <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>However, these <font color="blue">transactions</font> raise the  potential that we may not receive terms as favorable as those that we would  receive if the <font color="blue">transactions</font> were <font color="blue">entered into</font> with unaffiliated entities</td>
+    </tr>
+    <tr>
+      <td>We are required by certain of our net lease <font color="blue">agreements</font> to <font color="blue">pay property</font> related  expenses that are not the <font color="blue">obligations</font> of our tenants</td>
+    </tr>
+    <tr>
+      <td>Under the terms of <font color="blue">substantially</font> all of our net lease <font color="blue">agreements</font>, in  addition to satisfying their rent <font color="blue">obligations</font>, our tenants are responsible for  the payment of <font color="blue"><font color="blue">real estate</font> taxes</font>, insurance and ordinary maintenance and  repairs</td>
+    </tr>
+    <tr>
+      <td>However, in the case of <font color="blue">certain leases</font>, we may pay some expenses, such  as the costs of <font color="blue">environmental</font> liabilities, roof and <font color="blue">structural repairs</font>,  insurance and certain non-<font color="blue">structural repairs</font> and repairs and maintenance</td>
+    </tr>
+    <tr>
+      <td>If our  properties incur <font color="blue">significant</font> expenses that must be <font color="blue">paid by us under</font> the terms of  our lease <font color="blue">agreements</font>, our business, <font color="blue">financial condition</font> and results of  <font color="blue">operations</font> will be <font color="blue">adversely affect</font>ed and the amount of <font color="blue">cash available</font> to meet  expenses and to make <font color="blue"><font color="blue">distribution</font>s</font> to holders of our <font color="blue">common stock</font> may be  reduced</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with the <font color="blue">Americans </font>with <font color="blue">Disabilities Act </font>could be costly</td>
+    </tr>
+    <tr>
+      <td>Under the <font color="blue">Americans </font>with <font color="blue">Disabilities Act </font>of 1990, all public  <font color="blue">accommodations</font> must meet federal <font color="blue">requirements</font> for access and use by disabled  persons</td>
+    </tr>
+    <tr>
+      <td>A de<font color="blue">termination</font> that our properties do not <font color="blue">comply with</font> the <font color="blue">Americans </font> with <font color="blue">Disabilities Act </font>could result in <font color="blue">liability</font> for both <font color="blue">governmental</font> fines and  damages</td>
+    </tr>
+    <tr>
+      <td>If we are required to make <font color="blue">unanticipated major modifications</font> to any of  our properties to <font color="blue">comply with</font> the <font color="blue">Americans </font>with Disabilities Act, which are  determined not to be the <font color="blue">responsibility</font> of our tenants, we could incur  <font color="blue">unanticipated expenses</font> that could have an <font color="blue">adverse impact upon</font> our results of  <font color="blue">operations</font>, liquidity and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you of our ability to <font color="blue">pay dividends</font> in the future</td>
+    </tr>
+    <tr>
+      <td>We intend to <font color="blue">pay quarterly dividends</font> and to make <font color="blue"><font color="blue">distribution</font>s</font> to our  <font color="blue">stockholders</font> in <font color="blue">amounts such</font> that all or <font color="blue">substantially</font> all of our <font color="blue">taxable income</font>  in <font color="blue">each year</font>, subject to <font color="blue">certain adjustments</font>, is <font color="blue">distributed</font></td>
+    </tr>
+    <tr>
+      <td>This, <font color="blue">along with</font>  other factors, should enable us to quality for the <font color="blue">tax benefits accorded</font> to a  REIT under the <font color="blue">Internal Revenue Code </font>of 1986, as amended</td>
+    </tr>
+    <tr>
+      <td>We have not  established a <font color="blue">minimum dividend payment level</font> and our ability to <font color="blue">pay dividends</font>  may be adversely <font color="blue">affected by</font> the <font color="blue">risk factors</font> described in this <font color="blue">Annual Report</font></td>
+    </tr>
+    <tr>
+      <td>All <font color="blue"><font color="blue">distribution</font>s</font> will be made at the <font color="blue">discretion</font> of our board of <font color="blue">directors</font> and  will <font color="blue">depend on</font> our earnings, our <font color="blue">financial condition</font>, maintenance of our REIT  status and such other <font color="blue">factors as</font> our board of <font color="blue">directors</font> may deem <font color="blue">relevant from</font>  time to time</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be able to <font color="blue">pay dividends</font> in the  future</td>
+    </tr>
+    <tr>
+      <td>Risks Related to the REIT Industry  - ----------------------------------    Failure to <font color="blue">qualify as</font> a REIT would result in material <font color="blue">adverse tax consequences</font>  and would <font color="blue">significant</font>ly reduce <font color="blue">cash available</font> for <font color="blue"><font color="blue">distribution</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we operate so as to <font color="blue">qualify as</font> a REIT under the Internal  Revenue Code of 1986, as amended</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Qualification </font>as a REIT involves the  <font color="blue">application</font> of technical and <font color="blue">complex legal provisions</font> for <font color="blue">which there</font> are  limited judicial and <font color="blue">administrative interpretations</font></td>
+    </tr>
+    <tr>
+      <td>The de<font color="blue">termination</font> of  various factual matters and <font color="blue">circumstances</font> not <font color="blue">entirely within</font> our <font color="blue">control may</font>  affect our ability to <font color="blue">qualify as</font> a REIT In addition, no assurance can be given  that legislation, new <font color="blue">regulations</font>, <font color="blue">administrative interpretations</font> or court  <font color="blue">decisions will</font> not <font color="blue">significant</font>ly change the tax laws <font color="blue">with respect</font> to  <font color="blue">qualification</font> as a REIT or the <font color="blue">federal income tax consequences</font> of such  <font color="blue">qualification</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">quality as</font> a REIT, we will be subject to federal,  <font color="blue">certain additional</font> state and <font color="blue">local income tax</font> (including any applicable  alternative minimum tax) on our <font color="blue">taxable income</font> at regular corporate rates and  would not be allowed a <font color="blue">deduction</font> in computing our <font color="blue">taxable income</font> for amounts  <font color="blue">distributed</font> to <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>In addition, unless entitled to <font color="blue">relief under</font>  <font color="blue">certain statutory provisions</font>, we would be <font color="blue">disqualified from treatment as</font> a REIT  for the <font color="blue">four taxable years following</font> the year during which <font color="blue">qualification</font> is  lost</td>
+    </tr>
+    <tr>
+      <td>The additional tax would reduce <font color="blue">significant</font>ly our net income and the cash  available for <font color="blue"><font color="blue">distribution</font>s</font> to <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to certain <font color="blue">distribution</font> <font color="blue">requirements</font> that may result in our  having to <font color="blue">borrow funds at unfavorable rates</font></td>
+    </tr>
+    <tr>
+      <td>To obtain the favorable <font color="blue">tax treatment associated with</font> being a REIT, we  <font color="blue">generally</font> are required, among other things, to distribute to our <font color="blue">stockholders</font> at  least 90prca of our ordinary <font color="blue">taxable income</font> (subject to <font color="blue">certain adjustments</font>) each  year</td>
+    </tr>
+    <tr>
+      <td>To the extent that we satisfy these <font color="blue">distribution</font> <font color="blue">requirements</font>, but  distribute less than 100prca of our <font color="blue">taxable income</font> we will be subject to federal  corporate tax on our un<font color="blue">distributed</font> <font color="blue">taxable income</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we will be  subject to a 4prca <font color="blue">nondeductible</font> excise tax on the amount, if any, by <font color="blue">which certain</font>  <font color="blue"><font color="blue">distribution</font>s</font> paid by us <font color="blue">with respect</font> to any <font color="blue">calendar year</font> are less than the sum  of 85prca of our ordinary income, 95prca of our <font color="blue">capital gain net income</font> and 100prca of  our un<font color="blue">distributed</font> income from prior years</td>
+    </tr>
+    <tr>
+      <td>As a result of <font color="blue">differences</font> in timing between the receipt of income and  the payment of expenses, and the inclusion of such income and the <font color="blue">deduction</font> of  <font color="blue">such expenses</font> in arriving at <font color="blue">taxable income</font>, and the effect of <font color="blue">nondeductible</font>  <font color="blue">capital expenditures</font>, the creation of reserves and the timing of required debt  service (including amortization) payments, we may need to <font color="blue">borrow funds on</font> a  short-term basis in order to make the <font color="blue"><font color="blue">distribution</font>s</font> necessary to retain the tax  <font color="blue">benefits associated with qualifying as</font> a REIT, even if we believe that then  prevailing market <font color="blue">conditions</font> are not <font color="blue">generally</font> favorable for such <font color="blue">borrowings</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">borrowings</font> could</font> reduce our net income and the <font color="blue">cash available</font> for  <font color="blue"><font color="blue">distribution</font>s</font> to holders of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with REIT <font color="blue">requirements</font> may hinder our ability to <font color="blue">maximize profits</font></td>
+    </tr>
+    <tr>
+      <td>In order to <font color="blue">qualify as</font> a REIT for federal income tax purposes, we must  <font color="blue">continually</font> satisfy tests <font color="blue">concerning</font> among other things, our sources of income,  the amounts we distribute to our <font color="blue">stockholders</font> and the ownership of our stock</td>
+    </tr>
+    <tr>
+      <td>We  may also be required to make <font color="blue"><font color="blue">distribution</font>s</font> to <font color="blue">stockholders</font> at <font color="blue">disadvantageous</font>  times or when we do not have <font color="blue">funds readily available</font> for <font color="blue">distribution</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, <font color="blue">compliance with</font> REIT <font color="blue">requirements</font> may hinder our ability to operate  solely on the basis of <font color="blue">maximizing profits</font></td>
+    </tr>
+    <tr>
+      <td>In order to <font color="blue">qualify as</font> a REIT, we <font color="blue">must also ensure</font> that at the end of  each <font color="blue">calendar quarter</font>, at least 75prca of the value of our <font color="blue">assets consists</font> of cash,  cash items, government securities and qualified REIT <font color="blue">real estate</font> assets</td>
+    </tr>
+    <tr>
+      <td>Any  <font color="blue">investment</font> in securities cannot include more than 10prca of the <font color="blue">outstanding voting</font>  securities of any one issuer or more than 10prca of the <font color="blue">total value</font> of the  <font color="blue">outstanding securities</font> of any one issuer</td>
+    </tr>
+    <tr>
+      <td>In addition, no more than 5prca of the  value of our assets can consist of the securities of any one issuer, other than  a qualified REIT security</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> these <font color="blue">requirements</font>, we must  dispose of such portion of these securities in excess of these <font color="blue">percentages</font>  within 30 days after the end of the <font color="blue">calendar quarter</font> in order to <font color="blue">avoid losing</font>  our REIT status and suffering <font color="blue">adverse tax consequences</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">requirement could</font>  cause us to dispose of assets for <font color="blue">consideration</font> that is less than their true  value and could lead to a material <font color="blue">adverse impact on</font> our results of <font color="blue">operations</font>  and <font color="blue">financial condition</font></td>
+    </tr>
+  </tbody>
+</table>

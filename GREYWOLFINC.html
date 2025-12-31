@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: extended decline", fill: "#e97451"},
+{source: "2: extended decline", target: "2: expenditures by oil", fill: "#e97451"},
+{source: "2: expenditures by oil", target: "2: natural gas", fill: "#e97451"},
+{source: "2: natural gas", target: "2: exploration", fill: "#e97451"},
+{source: "2: exploration", target: "2: production companies due", fill: "#e97451"},
+{source: "2: production companies due", target: "2: volatility", fill: "#e97451"},
+{source: "2: volatility", target: "2: natural gas prices", fill: "#e97451"},
+{source: "2: natural gas prices", target: "2: factors would reduce", fill: "#e97451"},
+{source: "2: extended decline", target: "16: environment", fill: "#f5fffa"},
+{source: "16: environment", target: "16: operations", fill: "#f5fffa"},
+{source: "16: operations", target: "16: adversely", fill: "#f5fffa"},
+{source: "16: environment", target: "35: drilling operations involve", fill: "#035096"},
+{source: "35: drilling operations involve", target: "35: operations", fill: "#035096"},
+{source: "35: operations", target: "35: hazards which", fill: "#035096"},
+{source: "35: hazards which", target: "35: adequately", fill: "#035096"},
+{source: "35: adequately", target: "35: indemnified against could adversely affect", fill: "#035096"},
+{source: "35: indemnified against could adversely affect", target: "35: financial condition", fill: "#035096"},
+{source: "35: drilling operations involve", target: "49: indebtedness", fill: "#d73b3e"},
+{source: "49: indebtedness", target: "49: finance future acquisitions", fill: "#d73b3e"},
+{source: "49: finance future acquisitions", target: "49: also may issue equity securities", fill: "#d73b3e"},
+{source: "49: also may issue equity securities", target: "49: convertible securities", fill: "#d73b3e"},
+{source: "49: convertible securities", target: "49: connection", fill: "#d73b3e"},
+{source: "49: connection", target: "49: such acquisitions", fill: "#d73b3e"},
+{source: "49: indebtedness", target: "84: Grey Wolf Drilling Company LP ", fill: "#704214"},
+{source: "84: Grey Wolf Drilling Company LP ", target: "84: entered into", fill: "#704214"},
+{source: "84: entered into", target: "84: facility", fill: "#704214"},
+{source: "84: facility", target: "84: contains covenants restricting", fill: "#704214"},
+{source: "84: contains covenants restricting", target: "84: transactions", fill: "#704214"},
+{source: "84: transactions", target: "84: contains financial ratio covenants", fill: "#704214"},
+{source: "84: contains financial ratio covenants", target: "84: certain conditions", fill: "#704214"},
+{source: "84: Grey Wolf Drilling Company LP ", target: "88: facility contains default terms", fill: "#cd5b45"},
+{source: "88: facility contains default terms", target: "88: effectively cross", fill: "#cd5b45"},
+{source: "88: effectively cross", target: "88: default with", fill: "#cd5b45"},
+{source: "88: default with", target: "88: debt agreements", fill: "#cd5b45"},
+{source: "88: debt agreements", target: "88: indentures", fill: "#cd5b45"},
+{source: "88: indentures", target: "88: Contingent Convertible Floating Rate Notes ", fill: "#cd5b45"},
+{source: "88: Contingent Convertible Floating Rate Notes ", target: "88: Contingent Convertible Notes ", fill: "#cd5b45"},
+{source: "88: facility contains default terms", target: "89: indentures", fill: "#d10056"},
+{source: "89: indentures", target: "89: Notes and Floating Rate Notes ", fill: "#d10056"},
+{source: "89: Notes and Floating Rate Notes ", target: "89: default under", fill: "#d10056"},
+{source: "89: default under", target: "89: Floating Rate Notes ", fill: "#d10056"},
+{source: "89: Floating Rate Notes ", target: "89: facility", fill: "#d10056"},
+{source: "89: facility", target: "89: then outstanding debt obligations owed by us", fill: "#d10056"},
+{source: "89: indentures", target: "START_HERE", fill: "#d10056"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Home Improvement Retail</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas">Natural gas</a></td>
+      <td>Natural law (Latin: ius naturale, lex naturalis) is a system of law based on a close observation of human nature, and based on values intrinsic to human nature that can be deduced and applied independently of positive law (the express enacted laws of a state or society). According to natural law theory, all people have inherent rights, conferred not by act of legislation but by "God, nature, or reason." Natural law theory can also refer to "theories of ethics, theories of politics, theories of civil law, and theories of religious morality."In the Western tradition it was anticipated by the Pre-Socratics, for example in their search for principles that governed the cosmos and human beings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liquefied_natural_gas">Liquefied natural gas</a></td>
+      <td>Liquefied natural gas (LNG) is natural gas (predominantly methane, CH4, with some mixture of ethane, C2H6) that has been cooled down to liquid form for ease and safety of non-pressurized storage or transport. It takes up about 1/600th the volume of natural gas in the gaseous state (at standard conditions for temperature and pressure).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_countries_by_natural_gas_production">List of countries by natural gas production</a></td>
+      <td>This is a list of countries by natural gas production  based on statistics from The World Factbook, and OECD members natural gas production by International Energy Agency (down) \n\n\n== Countries by natural gas production ==\nThe data in the following table comes from The World Factbook.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pipeline_transport">Pipeline transport</a></td>
+      <td>Pipeline transport is the long-distance transportation of a liquid or gas through a system of pipes—a pipeline—typically to a market area for consumption. The latest data from 2014 gives a total of slightly less than 2,175,000 miles (3,500,000 km) of pipeline in 120 countries of the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_condensate">Natural-gas condensate</a></td>
+      <td>Natural-gas condensate, also called natural gas liquids, is a low-density mixture of hydrocarbon liquids that are present as gaseous components in the raw natural gas produced from many natural gas fields. Some gas species within the raw natural gas will condense to a liquid state if the temperature is reduced to below the hydrocarbon dew point temperature at a set pressure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_prices">Natural gas prices</a></td>
+      <td>Natural gas prices, as with other commodity prices, are mainly driven by supply and demand fundamentals.  However, natural gas prices may also be linked to the price of crude oil and petroleum products, especially in continental Europe.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Debt">Debt</a></td>
+      <td>Death is the irreversible cessation of all biological functions that sustain an organism. Brain death is sometimes used as a legal definition of death.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Indebted">Indebted</a></td>
+      <td>Indebted is an American television sitcom that aired on NBC from February 6 to April 16, 2020. The series was created by Dan Levy and co-executive produced with Doug Robinson, Andy Ackerman and David Guarascio for Sony Pictures Television.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loan">Loan</a></td>
+      <td>A man is an adult male human. Prior to adulthood, a male human is referred to as a boy (a male child or adolescent).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bond_(finance)">Bond (finance)</a></td>
+      <td>In finance, a bond is a type of security under which the issuer (debtor) owes the holder (creditor) a debt, and is obliged – depending on the terms – to repay the principal (i.e. amount borrowed) of the bond at the maturity date as well as interest (called the coupon) over a specified amount of time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_most_indebted_companies">List of most indebted companies</a></td>
+      <td>The following article lists the indebted companies in the world by total corporate debt according estimates by the British-Australian investment firm Janus Henderson. In 2019, the total debt of the 900 most indebted companies was $8,325 billion.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heavily_indebted_poor_countries">Heavily indebted poor countries</a></td>
+      <td>The heavily indebted poor countries (HIPC) are a group of 39 developing countries with high levels of poverty and debt overhang which are eligible for special assistance from the International Monetary Fund (IMF) and the World Bank.\n\n\n== HIPC Initiative ==\nThe HIPC Initiative was initiated by the International Monetary Fund and the World Bank in 1996, following extensive lobbying by NGOs and other bodies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Treasury_security">United States Treasury security</a></td>
+      <td>United States Treasury securities, also called Treasuries or Treasurys, are government debt instruments issued by the United States Department of the Treasury to finance government spending as an alternative to taxation. Since 2012, U.S. government debt has been managed by the Bureau of the Fiscal Service, succeeding the Bureau of the Public Debt.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cancellation_of_Debt_Income">Cancellation of Debt Income</a></td>
+      <td>Taxpayers in the United States may have tax consequences when debt is cancelled. This is commonly known as COD (Cancellation of Debt) Income.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gratitude">Gratitude</a></td>
+      <td>Gratitude, thankfulness or gratefulness, from the Latin word gratus, meaning "pleasing" or "thankful", is regarded as a feeling of appreciation (or similar positive response) by a recipient of another's kindness, gifts, help, favours, or other form of generosity to the giver of such gifts.\nHistorically, gratitude has been a part of several world religions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_management">Facility management</a></td>
+      <td>Facility management, or facilities management, (FM) is a professional management discipline focused on the efficient and effective delivery of logistics and other support services related to real property, it encompasses multiple disciplines to ensure functionality, comfort, safety and efficiency of the built environment by integrating people, place, process and technology, as defined by the International Organization for Standardization (ISO). The profession is certified through Global Facility Management Association (Global FM) member organizations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Health_facility">Health facility</a></td>
+      <td>A health facility is, in general, any location where healthcare is provided. Health facilities range from small clinics and doctor's offices to urgent care centers and large hospitals with elaborate emergency rooms and trauma centers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_location">Facility location</a></td>
+      <td>Facility location is a name given to several different problems in computer science and in game theory:</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_Reserve">Federal Reserve</a></td>
+      <td>The Federal Reserve System (also known as the Federal Reserve or simply the Fed) is the central banking system of the United States of America. It was created on December 23, 1913, with the enactment of the Federal Reserve Act, after a series of financial panics (particularly the panic of 1907) led to the desire for central control of the monetary system in order to alleviate financial crises.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Structured_product">Structured product</a></td>
+      <td>A structured product, also known as a market-linked investment, is a pre-packaged structured finance investment strategy based on a single security, a basket of securities, options, indices, commodities, debt issuance or foreign currencies, and to a lesser extent, derivatives.\nStructured products are not homogeneous — there are numerous varieties of derivatives and underlying assets — but they can be classified under the aside categories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Floating_rate_note">Floating rate note</a></td>
+      <td>Floating rate notes (FRNs) are bonds that have a variable coupon, equal to a money market reference rate, like LIBOR or federal funds rate, plus a quoted spread (also known as quoted margin). The spread is a rate that remains constant.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Inverse_floating_rate_note">Inverse floating rate note</a></td>
+      <td>An inverse floating rate note, or simply an inverse floater, is a type of bond or other type of debt instrument used in finance whose coupon rate has an inverse relationship to short-term interest rates (or its reference rate). With an inverse floater, as interest rates rise the coupon rate falls.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Floating_rate">Floating rate</a></td>
+      <td>In macroeconomics and economic policy, a floating exchange rate (also known as a fluctuating or flexible exchange rate) is a type of exchange rate regime in which a currency's value is allowed to fluctuate in response to foreign exchange market events. A currency that uses a floating exchange rate is known as a floating currency, in contrast to a fixed currency, the value of which is instead specified in terms of material goods, another currency, or a set of currencies (the idea of the last being to reduce currency fluctuations).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/External_commercial_borrowing">External commercial borrowing</a></td>
+      <td>External commercial borrowing (ECBs) are loans in India made by non-resident lenders in foreign currency to Indian borrowers. They are used widely in India to  facilitate access to foreign money by Indian corporations and PSUs (public sector undertakings).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Forward_rate">Forward rate</a></td>
+      <td>The forward rate is the future yield on a bond. It is calculated using the yield curve.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GREY WOLF INC      Item 1A <font color="blue">Risk Factors </font>           Below we describe the risks and <font color="blue">uncertainties</font> that we believe were     material to our business as of <font color="blue">February </font>23, 2006</td>
+    </tr>
+    <tr>
+      <td>A material or <font color="blue">extended decline</font> in <font color="blue">expenditures by oil</font> and <font color="blue">natural gas</font>     <font color="blue">exploration</font> and production companies, due to a decline or <font color="blue">volatility</font> in oil     and <font color="blue">natural gas</font> prices, a decrease in demand for oil and <font color="blue">natural gas</font>, an     increase  in rig supply or other factors, would reduce our revenue and     income</td>
+    </tr>
+    <tr>
+      <td>As a supplier of <font color="blue">land drilling services</font>, our business depends on the     level of drilling activity by oil and <font color="blue">natural gas</font> <font color="blue">exploration</font> and production     companies operating in the <font color="blue">geographic markets</font> where we operate</td>
+    </tr>
+    <tr>
+      <td>The number     of wells they choose to drill is <font color="blue">strongly influenced by past trends</font> in oil     and <font color="blue">natural gas</font> prices, current prices                                        -8-       _________________________________________________________________    [59]Table of <font color="blue">Contents       </font>and their outlook for future prices</td>
+    </tr>
+    <tr>
+      <td>Natural gas storage is <font color="blue">at <font color="blue">historically</font></font>     high  <font color="blue">levels which</font> has affected the price of <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>Mild weather     <font color="blue">conditions</font> and <font color="blue">increased supply</font> for any other <font color="blue">reason could continue</font> to     affect these prices</td>
+    </tr>
+    <tr>
+      <td>Low oil and <font color="blue">natural gas</font> prices, or the <font color="blue"><font color="blue">perception</font> among</font>     oil  and  <font color="blue">natural gas</font> companies that prices are likely to decline, can     <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affect us</font> in many ways, including:       •   our revenues, <font color="blue">cash flow</font>s and earnings;         •   the <font color="blue">fair market value</font> of our rig fleet, which in turn <font color="blue">could trigger</font> a     writedown of the carrying value of these assets for <font color="blue">accounting purposes</font>;         •   our ability to maintain or increase our <font color="blue">borrowing capacity</font>;         •   our ability to obtain <font color="blue"><font color="blue">additional</font> capital</font> to finance our business and     make <font color="blue"><font color="blue">acquisition</font>s</font>, and the cost of that capital; and         •   our ability to retain <font color="blue">skilled rig personnel</font> who we would need in the     event of an increase in the demand for our services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>on the <font color="blue"><font color="blue">market price</font>s</font> of oil and <font color="blue">natural gas</font>, oil and natural     gas  <font color="blue">exploration</font>  and <font color="blue">production companies may cancel</font> or curtail their     <font color="blue">drilling programs</font>, thereby reducing demand for our services</td>
+    </tr>
+    <tr>
+      <td>Even during     periods when prices for oil and <font color="blue">natural gas</font> are high, companies exploring     for oil and <font color="blue">natural gas</font> may cancel or curtail their <font color="blue">drilling programs</font> for a     variety of other <font color="blue">reasons beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Any reduction in the demand for     drilling services may <font color="blue">materially</font> erode dayrates, the prices we receive for     our <font color="blue">turnkey drilling services</font> and reduce the number of <font color="blue">rigs under contract</font>,     any of <font color="blue"><font color="blue">which could</font> <font color="blue">adversely</font> affect</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>Oil and natural     gas prices have been volatile <font color="blue">historically</font> and, we believe, <font color="blue">will continue</font> to     be so in the future</td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue">factors beyond</font> our <font color="blue">control affect oil</font> and natural     gas prices, including:       •   weather <font color="blue">conditions</font> <font color="blue">in the <font color="blue">United States </font></font>and elsewhere;         •   economic <font color="blue">conditions</font> <font color="blue">in the <font color="blue">United States </font></font>and elsewhere;         •   actions by OPEC, the Organization of Petroleum Exporting Countries;         •   <font color="blue">political instability</font> in the Middle East, Venezuela, Nigeria and other     major producing regions;         •   governmental <font color="blue">regulations</font>, both domestic and foreign;         •   the <font color="blue">pace adopted by foreign governments</font> for <font color="blue">exploration</font> of their     <font color="blue">national reserves</font>; and         •   the <font color="blue">overall supply</font> and demand for oil and <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue"><font color="blue">economic downturn may</font> <font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">economic downturn may</font> cause <font color="blue">reduced demand</font> for oil and <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>In addition, many oil and <font color="blue">natural gas</font> production companies often reduce or     <font color="blue">delay expenditures</font> to reduce costs, which in turn may cause a reduction in     the  demand  for  our  services  during these periods</td>
+    </tr>
+    <tr>
+      <td>If the economic     <font color="blue">environment</font>  worsens, our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font> may be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">intense price <font color="blue">competition</font></font> and cyclical nature of our <font color="blue">industry could</font> have     an adverse effect on our revenues and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">contract drilling</font> business is <font color="blue">highly <font color="blue">competitive</font> with numerous</font>     <font color="blue">industry participants</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">drilling contract</font>s</font> we compete for are usually     awarded  on  the basis of <font color="blue"><font color="blue">competitive</font> bids</font></td>
+    </tr>
+    <tr>
+      <td>We believe pricing and rig     <font color="blue">availability</font> are the <font color="blue">primary factors</font> considered by our <font color="blue">potential customers</font>     in determining <font color="blue">which <font color="blue">drilling contract</font>or</font> to select</td>
+    </tr>
+    <tr>
+      <td>We believe other factors     are <font color="blue">also important</font></td>
+    </tr>
+    <tr>
+      <td>Among those factors are:       •   the type and condition of <font color="blue">drilling rigs</font>;         •   the quality of service and experience of rig crews;         •   the <font color="blue">safety record</font> of the company and the <font color="blue">particular drilling rig</font>;         •   the offering of <font color="blue">ancillary services</font>; and         •   the ability to <font color="blue">provide drilling equipment adaptable</font> to, and personnel     familiar with, new technologies and <font color="blue">drilling techniques</font></td>
+    </tr>
+    <tr>
+      <td>While we <font color="blue">must <font color="blue">generally</font></font> be <font color="blue">competitive</font> in our pricing, our <font color="blue">competitive</font>     <font color="blue">strategy emphasizes</font> the quality of our equipment, the <font color="blue">safety record</font> of our     rigs  and the experience of our rig crews to differentiate us from our     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>This strategy is <font color="blue">less effective during</font> an <font color="blue">industry downturn as</font>     lower demand for <font color="blue">drilling services intensifies price <font color="blue">competition</font></font> and makes     it more <font color="blue">difficult</font> for us to <font color="blue">compete on</font> the basis of factors other than     price</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">contract drilling</font> industry <font color="blue">historically</font> has <font color="blue">been cyclical</font> and has     experienced periods of low demand, excess rig supply, and <font color="blue">low dayrates</font>,     followed  by  periods  of high demand, short rig supply and increasing     dayrates</td>
+    </tr>
+    <tr>
+      <td>Periods of excess rig supply intensify the <font color="blue">competition</font> in our     industry and often result in rigs being idle</td>
+    </tr>
+    <tr>
+      <td>There are numerous <font color="blue">competitors</font>     in each of the markets in which we compete</td>
+    </tr>
+    <tr>
+      <td>In all of those markets, an     <font color="blue">oversupply</font> of rigs                                        -9-       _________________________________________________________________    [60]Table of <font color="blue">Contents       </font>can cause greater price <font color="blue">competition</font></td>
+    </tr>
+    <tr>
+      <td>Contract <font color="blue">drilling companies compete</font>     <font color="blue">primarily on</font> a <font color="blue">regional basis</font>, and the intensity of <font color="blue">competition</font> may vary     <font color="blue"><font color="blue">significant</font>ly from region</font> to region at any particular time</td>
+    </tr>
+    <tr>
+      <td>If demand for     <font color="blue">drilling services improves</font> in a region where we operate, our <font color="blue">competitors</font>     might respond by moving in <font color="blue">suitable rigs from</font> other regions, by reactivating     <font color="blue">previously stacked rigs</font> or <font color="blue">purchasing new rigs</font></td>
+    </tr>
+    <tr>
+      <td>An influx of rigs into a     <font color="blue">market area from</font> any source could rapidly intensify <font color="blue">competition</font> and make any     <font color="blue">improvement</font> in demand for <font color="blue">drilling rigs</font> short-lived</td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> have greater financial and human resources than     do we</td>
+    </tr>
+    <tr>
+      <td>Their <font color="blue">greater capabilities</font> in these <font color="blue">areas may enable them</font> to:       •   <font color="blue">build new rigs</font> or acquire and <font color="blue">refurbish existing rigs</font> to be able to     place <font color="blue">rigs into service</font> more <font color="blue">quickly than us</font> in periods of <font color="blue">high drilling</font>     demand;         •   compete more <font color="blue">effectively on</font> the basis of price and <font color="blue">technology</font>;         •   <font color="blue">better withstand industry downturns</font>; and         •   retain <font color="blue">skilled rig personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our drilling <font color="blue">operations</font> involve operating <font color="blue">hazards which</font> if not <font color="blue">adequately</font>     insured  or  indemnified against could <font color="blue">adversely</font> affect our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to the <font color="blue">usual hazards inherent</font> in the land     drilling business including the risks of:       •   blowouts;         •   <font color="blue">reservoir damage</font>;         •   cratering;         •   fires, pollution and <font color="blue">explosions</font>;         •   collapse of the borehole;         •   lost or <font color="blue">stuck drill strings</font>; and         •   damage or <font color="blue">loss from natural disasters</font></td>
+    </tr>
+    <tr>
+      <td>If these events occur they can produce substantial <font color="blue">liabilities</font> to us     which include:       •   suspension of drilling <font color="blue">operations</font>;         •   damage to the <font color="blue">environment</font>;         •   damage to, or <font color="blue">destruction</font> of, our property and equipment and that of     others;         •   <font color="blue">personal injury</font> and loss of life; and         •   damage to producing or <font color="blue">potentially productive oil</font> and <font color="blue">natural gas</font>     <font color="blue">formations through which</font> we drill</td>
+    </tr>
+    <tr>
+      <td>We attempt to obtain <font color="blue"><font color="blue">indemnification</font> from</font> our <font color="blue">customers by contract</font> for     certain of these <font color="blue">risks under <font color="blue">daywork contract</font>s but</font> are not <font color="blue">always able</font> to do     so</td>
+    </tr>
+    <tr>
+      <td>We also seek to <font color="blue">protect ourselves from</font> some but not all operating risks     through  insurance  coverage</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">indemnification</font> we receive from our     customers and our own <font color="blue"><font color="blue">insurance coverage</font> may</font> not, however, be sufficient to     <font color="blue">protect us against liability</font> for all <font color="blue">consequences</font> of disasters, personal     injury and <font color="blue">property damage</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, our <font color="blue">insurance coverage</font> <font color="blue">generally</font>     provides that we bear a portion of the claim through substantial insurance     <font color="blue">coverage deductibles</font></td>
+    </tr>
+    <tr>
+      <td>Our insurance or <font color="blue">indemnification</font> arrangements may not     <font color="blue">adequately</font>  protect  <font color="blue">us against liability from</font> all of the risks of our     business</td>
+    </tr>
+    <tr>
+      <td>If we were to incur a <font color="blue"><font color="blue">significant</font> liability</font> for which we were not     fully  insured or indemnified, it could <font color="blue">adversely</font> affect our financial     position and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to obtain or renew     <font color="blue">insurance coverage</font> of the type and amount we desire <font color="blue">at reasonable rates</font></td>
+    </tr>
+    <tr>
+      <td>Business <font color="blue"><font color="blue">acquisition</font>s</font> entail numerous risks and <font color="blue">may disrupt</font> our business or     <font color="blue">distract <font color="blue">management</font> attention</font></td>
+    </tr>
+    <tr>
+      <td>As part of our business strategy, we plan to consider <font color="blue"><font color="blue">acquisition</font>s</font> of,     or <font color="blue"><font color="blue">significant</font> <font color="blue">investment</font>s</font> in, <font color="blue">businesses</font> and assets that are <font color="blue">complementary</font>     to ours</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">acquisition</font> that we complete could have a material adverse     affect  on  our  operating results and/or the price of our securities</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font>involve numerous risks, including:       •   <font color="blue">unanticipated costs</font> and <font color="blue">liabilities</font>;         •   <font color="blue">difficult</font>y of <font color="blue">integrating</font> the <font color="blue">operations</font> and assets of the acquired     business;                                        -10-       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font>  •   our ability to <font color="blue">properly access</font> and maintain an <font color="blue">effective internal</font>     control <font color="blue">environment</font> over an acquired company, in order to <font color="blue">comply with public</font>     reporting <font color="blue">requirements</font>;          •     <font color="blue">potential loss</font> of <font color="blue">key employees</font> and customers of the acquired     companies; and         •   an increase in our expenses and working capital <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>We may incur substantial <font color="blue">indebtedness</font> to finance future <font color="blue"><font color="blue">acquisition</font>s</font>     and <font color="blue">also may issue equity securities</font> or <font color="blue">convertible securities</font> in <font color="blue">connection</font>     with any such <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Debt service <font color="blue">requirements</font> could represent a     <font color="blue"><font color="blue">significant</font> burden on</font> our results of <font color="blue">operations</font> and <font color="blue">financial condition</font> and     the  issuance  of  <font color="blue"><font color="blue">additional</font> equity could</font> be dilutive to our existing     <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font><font color="blue">could also divert</font> the attention of our <font color="blue">management</font>     and other <font color="blue">employees from</font> our day-to-day <font color="blue">operations</font> and the <font color="blue">development</font> of     new business <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are subject to <font color="blue">environment</font>al laws that <font color="blue">may expose us</font> to     <font color="blue">liabilities</font> for <font color="blue">noncompliance</font>, which may <font color="blue"><font color="blue">adversely</font> affect us</font></td>
+    </tr>
+    <tr>
+      <td>Many  aspects  of our <font color="blue">operations</font> are subject to <font color="blue">domestic laws</font> and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>For example, our drilling <font color="blue">operations</font> are typically subject to     extensive and <font color="blue">evolving laws</font> and <font color="blue">regulations</font> governing:       •   <font color="blue">environment</font>al quality;         •   <font color="blue">pollution control</font>; and         •   <font color="blue">remediation</font> of <font color="blue">environment</font>al contamination</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are <font color="blue">often conducted</font> in or near <font color="blue">ecologically sensitive</font>     areas, such as wetlands, which are subject to <font color="blue">special protective measures</font>     and which <font color="blue">may expose us</font> to <font color="blue">additional</font> operating costs and <font color="blue">liabilities</font> for     <font color="blue"><font color="blue">noncompliance</font> <font color="blue">with applicable laws</font></font></td>
+    </tr>
+    <tr>
+      <td>The handling of <font color="blue">waste materials</font>, some of     which are <font color="blue">classified as hazardous substances</font>, is a <font color="blue">necessary</font> part of our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Consequently,  our  <font color="blue">operations</font>  are  subject to stringent     <font color="blue">regulations</font> relating to protection of the <font color="blue">environment</font> and <font color="blue">waste handling</font>     <font color="blue">which may impose liability on us</font> for our own <font color="blue">noncompliance</font> and, in addition,     that  of  other <font color="blue">parties without</font> regard to whether we were negligent or     <font color="blue">otherwise at fault</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font><font color="blue">with applicable laws</font> and <font color="blue">regulations</font> may     require us to <font color="blue">incur <font color="blue">significant</font> expenses</font> and <font color="blue"><font color="blue">capital expenditures</font> which</font>     could have a material and adverse effect on our <font color="blue">operations</font> by increasing our     expenses and limiting our future <font color="blue">contract drilling</font> <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to achieve <font color="blue">profitability</font> in the     <font color="blue">future <font color="blue">will depend on</font></font> many factors, but <font color="blue">primarily on</font> the number of days our     rigs work during any period and the rates we charge our customers for them     during that period</td>
+    </tr>
+    <tr>
+      <td>In the years in which we incurred losses, those losses     were primarily due to the fact that the number of days our rigs worked and     the rates we were able to <font color="blue">charge customers</font> for the days worked generated     insufficient revenue to cover our expenses</td>
+    </tr>
+    <tr>
+      <td>In some years, we have also     incurred  charges for <font color="blue">impairment</font> of our <font color="blue">drilling equipment assets</font> that     <font color="blue">contributed</font> to our losses in a year</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unexpected </font><font color="blue">cost <font color="blue">overruns on</font></font> our turnkey and <font color="blue">footage drilling jobs could</font>     <font color="blue"><font color="blue">adversely</font> affect us</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">historically</font> derived a <font color="blue">significant</font> portion of our revenues from     turnkey and footage <font color="blue"><font color="blue">drilling contract</font>s</font> and we expect that they <font color="blue">will continue</font>     to represent a <font color="blue">significant</font> component of our revenues</td>
+    </tr>
+    <tr>
+      <td>The occurrence of     operating  cost  <font color="blue">overruns on</font> our turnkey and <font color="blue">footage jobs could</font> have a     material adverse effect on our <font color="blue">financial position</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Under a typical turnkey or footage <font color="blue">drilling contract</font>, we agree to drill a     well for our customer to a <font color="blue">specified depth</font> and under specified <font color="blue">conditions</font>     for a fixed price</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">typically provide technical expertise</font> and <font color="blue">engineering</font>     services, as well as most of the equipment required for the drilling of     turnkey and <font color="blue">footage wells</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">often subcontract</font> for related services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under     </font>typical turnkey drilling arrangements, we do not receive progress payments     and are entitled to be paid by our <font color="blue">customer only</font> after we have performed the     terms of the <font color="blue">drilling contract</font> in full</td>
+    </tr>
+    <tr>
+      <td>For these reasons, our risk under     turnkey and footage <font color="blue"><font color="blue">drilling contract</font>s</font> is <font color="blue">substantially greater than</font> for     wells drilled on a <font color="blue">daywork basis</font> because we must assume most of the risks     associated  with drilling <font color="blue">operations</font> that are <font color="blue">generally</font> assumed by our     <font color="blue">customer under</font> a <font color="blue">daywork contract</font></td>
+    </tr>
+    <tr>
+      <td>-11-       _________________________________________________________________    [62]Table of <font color="blue">Contents       </font>We could be <font color="blue">adversely</font> affected if <font color="blue">delivery times</font> for rigs and <font color="blue">rig equipment</font>     lengthen</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">land drilling industry</font> is experiencing <font color="blue">price increases</font> and extended     <font color="blue">delivery times</font> for newly-built rigs</td>
+    </tr>
+    <tr>
+      <td>Prices and <font color="blue">delivery times</font> for important     rig <font color="blue">components</font>, including engines, mud pumps, top drives and drill pipe that     may be needed to refurbish or repair rigs have also increased</td>
+    </tr>
+    <tr>
+      <td>If these     <font color="blue">price increases</font> continue or extended <font color="blue">delivery times</font> lengthen, it could     <font color="blue">adversely</font> affect our business and results of <font color="blue">operations</font> by increasing our     costs for, and delaying:       •   <font color="blue">deployment</font> of newly-built rigs;         •   re<font color="blue">deployment</font> of the rigs we are refurbishing or plan to refurbish;         •   upgrades to our <font color="blue">marketed fleet</font> of rigs; and         •   repair and maintenance of our rigs</td>
+    </tr>
+    <tr>
+      <td>We could be <font color="blue">adversely</font> affected if the demand for <font color="blue">qualified rig personnel</font>     increases</td>
+    </tr>
+    <tr>
+      <td>Although we have not <font color="blue">encountered</font> material <font color="blue">difficult</font>y in hiring and     retaining  qualified  rig crews, shortages of <font color="blue">qualified personnel</font> have     occurred in the past in our <font color="blue">industry during periods</font> of high demand</td>
+    </tr>
+    <tr>
+      <td>The     demand for <font color="blue">qualified rig personnel</font> has increased as a result of overall     <font color="blue">stronger demand</font> for <font color="blue">land drilling services</font> in 2005 and 2006</td>
+    </tr>
+    <tr>
+      <td>We believe the     demand  for  qualified  rig  <font color="blue">personnel may increase further as new</font> and     <font color="blue">refurbished rigs</font> are <font color="blue">brought into service by us</font> and our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>If the demand for <font color="blue">qualified rig personnel</font> persists or increases, we may     experience shortages of <font color="blue">qualified personnel</font> to operate our rigs despite     these and any other <font color="blue">employee retention</font> and <font color="blue">hiring measures</font> we may implement</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such personnel shortages could</font> have a material adverse effect on our     <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  credit  <font color="blue">agreement</font>  may  <font color="blue">prohibit us from participation</font> in certain     <font color="blue"><font color="blue">transaction</font>s</font> that we may consider <font color="blue">advantageous</font></td>
+    </tr>
+    <tr>
+      <td>Our subsidiary, <font color="blue">Grey Wolf </font>Drilling Company LP, has <font color="blue">entered into</font> a     credit <font color="blue">facility</font> that <font color="blue">contains covenants restricting</font> our ability to undertake     many types of <font color="blue"><font color="blue">transaction</font>s</font> and <font color="blue">contains financial ratio covenants</font> when     certain <font color="blue">conditions</font> are met</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">restrictions may limit</font> our ability to     respond to changes in market <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to meet the financial     ratio  covenants of our credit <font color="blue">agreement</font> can be <font color="blue">affected by events</font> and     <font color="blue">conditions</font> beyond our control and we may be unable to meet those tests (see     Note 4 to the <font color="blue"><font color="blue">consolidated</font> <font color="blue">financial statements</font></font>)</td>
+    </tr>
+    <tr>
+      <td>We may in the <font color="blue">future incur</font>     <font color="blue">additional</font> <font color="blue">indebtedness</font> that may contain <font color="blue">additional</font> covenants that may be     more <font color="blue">restrictive than</font> our <font color="blue">current covenants</font></td>
+    </tr>
+    <tr>
+      <td>Our credit <font color="blue">facility</font> contains default terms that <font color="blue">effectively cross</font>     <font color="blue">default with</font> any of our other debt <font color="blue">agreement</font>s, including the <font color="blue">indentures</font> for     our <font color="blue">Contingent Convertible <font color="blue"><font color="blue">Floating Rate Notes</font> </font></font>due April 2024 (the “Floating     Rate Notes”) and our 3dtta75prca <font color="blue">Contingent Convertible Notes </font>due May 2023 (the     “3dtta75prca Notes”)</td>
+    </tr>
+    <tr>
+      <td>Thus, if we breach the covenants in the <font color="blue">indentures</font> for our     3dtta75prca Notes and <font color="blue">Floating Rate Notes</font>, it could cause our <font color="blue">default under</font> our     3dtta75prca Notes, our <font color="blue">Floating Rate Notes</font>, our credit <font color="blue">facility</font> and, possibly,     other <font color="blue">then outstanding debt <font color="blue">obligation</font>s owed by us</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">indebtedness</font>     under our credit <font color="blue">facility</font> or other <font color="blue">indebtedness</font> owed by us is more than     dlra10dtta0 million and is not paid when due, or is <font color="blue">accelerated by</font> the holders of     the debt, then an event of <font color="blue">default under</font> the <font color="blue">indentures</font> covering our 3dtta75prca     Notes and our <font color="blue"><font color="blue">Floating Rate Notes</font> </font>would occur</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">circumstances</font> arise in     which we are in <font color="blue">default under</font> our various credit <font color="blue">agreement</font>s, our cash and     other <font color="blue">assets may</font> be insufficient to repay our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>We have a <font color="blue">significant</font> amount of <font color="blue">indebtedness</font> and could incur <font color="blue">additional</font>     <font color="blue">indebtedness</font>, <font color="blue">which could</font> <font color="blue">materially</font> and <font color="blue">adversely</font> affect our financial     condition and results of <font color="blue">operations</font> and <font color="blue">prevent us from</font> fulfilling our     <font color="blue"><font color="blue">obligation</font>s under</font> the notes and our other outstanding <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>We  have  now  and  <font color="blue">will continue</font> to have a <font color="blue">significant</font> amount of     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On <font color="blue">December </font></font>31, 2005, our total long-term <font color="blue">indebtedness</font> was     approximately dlra275dtta0 million in principal amount, (primarily consisting of     dlra150dtta0 million in principal amount of our 3dtta75prca Notes and dlra125dtta0 million in     principal amount of our <font color="blue">Floating Rate Notes</font>)</td>
+    </tr>
+    <tr>
+      <td>-12-       _________________________________________________________________    [63]Table of <font color="blue">Contents       </font>     Our substantial <font color="blue">indebtedness</font> could:       •   make it more <font color="blue">difficult</font> for us to satisfy our <font color="blue"><font color="blue">obligation</font>s with respect</font>     to the 3dtta75prca Notes and the <font color="blue">Floating Rate Notes</font>;         •   increase our <font color="blue">vulnerability</font> to <font color="blue">general adverse economic</font> and industry     <font color="blue">conditions</font>;         •   require us to dedicate a substantial portion of our <font color="blue">cash flow</font> from     <font color="blue">operations</font> to <font color="blue">payments on</font> our <font color="blue">indebtedness</font> thereby reducing the <font color="blue">availability</font>     of our <font color="blue">cash flow</font> to fund working capital, <font color="blue">capital expenditures</font> and other     <font color="blue">general corporate purposes</font>;         •   limit our <font color="blue">flexibility</font> in planning for, or reacting to, changes in our     business and the industry in which we operate;         •   place us at a <font color="blue">competitive</font> disadvantage compared to our <font color="blue">competitors</font>     that have less debt; and         •   limit our ability to borrow <font color="blue">additional</font> funds</td>
+    </tr>
+    <tr>
+      <td>Neither the <font color="blue">indentures</font> governing our 3dtta75prca Notes and our Floating Rate     Notes nor the terms of our 3dtta75prca Notes or our <font color="blue"><font color="blue">Floating Rate Notes</font> </font>limit our     ability to incur <font color="blue">additional</font> <font color="blue">indebtedness</font>, including senior <font color="blue">indebtedness</font>, or     to  grant  liens  on  our  assets</td>
+    </tr>
+    <tr>
+      <td>We, and our <font color="blue">subsidiaries</font>, may incur     substantial <font color="blue">additional</font> <font color="blue">indebtedness</font> and liens on our assets in the future</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">Floating Rate Notes</font> </font><font color="blue">bear interest annually at</font> a rate equal to     3-month LIBOR, adjusted quarterly, minus a spread of 0dtta05prca</td>
+    </tr>
+    <tr>
+      <td>Although the     interest rate on the <font color="blue"><font color="blue">Floating Rate Notes</font> </font>will never be more 6dtta00prca, we are     subject to <font color="blue">market risk exposure</font> related to changes in <font color="blue">interest rates on</font> the     <font color="blue"><font color="blue">Floating Rate Notes</font> </font>up to 6dtta00prca</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> increase in 3-month <font color="blue">LIBOR     </font><font color="blue">would increase</font> the interest rate on the <font color="blue"><font color="blue">Floating Rate Notes</font> </font>and the amount     of interest we pay on the <font color="blue">Floating Rate Notes</font>, which may have an adverse     <font color="blue">affect on</font> our <font color="blue">financial condition</font> and liquidity</td>
+    </tr>
+    <tr>
+      <td>Our existing senior <font color="blue">indebtedness</font> is, and any senior <font color="blue">indebtedness</font> we incur     will be, <font color="blue">effectively subordinated</font> to any present or <font color="blue">future <font color="blue">obligation</font>s</font> to     <font color="blue">secured <font color="blue">creditors</font></font> and <font color="blue">liabilities</font> of our <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of our assets and the assets of our <font color="blue">subsidiaries</font>,     including  our  drilling  equipment  and  the  equity  interest in our     <font color="blue">subsidiaries</font>, are <font color="blue">pledged as collateral under</font> our credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>Our     credit <font color="blue">facility</font> is <font color="blue">also secured by</font> our guarantee and the <font color="blue">guarantees</font> of our     <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>The 3dtta75prca Notes and the <font color="blue"><font color="blue">Floating Rate Notes</font> </font>are, and any     senior <font color="blue">indebtedness</font> we <font color="blue">incur will</font> be, <font color="blue">effectively subordinated</font> to all of our     and our <font color="blue">subsidiaries</font>’ existing and future secured <font color="blue">indebtedness</font>, including     any  future  <font color="blue">indebtedness</font>  incurred  under  our credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">February </font>23, 2006, we had the ability to borrow approximately dlra76dtta1 million     under our credit <font color="blue">facility</font> (after <font color="blue">reductions</font> for undrawn outstanding standby     letters of credit of dlra23dtta9 million)</td>
+    </tr>
+    <tr>
+      <td>In addition, the 3dtta75prca Notes and the     <font color="blue"><font color="blue">Floating Rate Notes</font> </font>are <font color="blue">effectively subordinated</font> to the claims of all of the     <font color="blue">creditors</font>,  including  trade  <font color="blue">creditors</font>  and  tort  <font color="blue">claimants</font>,  of our     <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>To service our <font color="blue">indebtedness</font>, we will require a <font color="blue">significant</font> amount of cash</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue"><font color="blue">generate cash</font> depends on</font> many <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Although our operating <font color="blue">activities</font> did <font color="blue">provide net cash sufficient</font> to     pay our <font color="blue">debt service <font color="blue">obligation</font>s</font> for the years ended <font color="blue">December </font>31, 2005 and     2004, respectively, there can be <font color="blue">no assurances</font> that we will be able to     generate sufficient <font color="blue">cash flow</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Our ability to make <font color="blue">payments on</font>     and to refinance our <font color="blue">indebtedness</font> and to fund planned <font color="blue">capital expenditures</font>     <font color="blue">will depend on</font> our ability to <font color="blue">generate cash</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Credit <font color="blue">ratings affect</font> our ability to obtain financing and the cost of such     financing</td>
+    </tr>
+    <tr>
+      <td>Our credit <font color="blue">ratings affect</font> our ability to obtain financing and the cost     of <font color="blue">such financing</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, our corporate and <font color="blue">unsecured debt</font>     ratings were rated B1 by Moody’s <font color="blue">Investors </font>Service and BB- by Standard &amp;     Poor’s Ratings group</td>
+    </tr>
+    <tr>
+      <td>In determining our credit ratings, the <font color="blue">rating agencies</font>     consider  a number of <font color="blue">both quantitative</font> and <font color="blue">qualitative factors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>factors include earnings, fixed charges such as interest, <font color="blue">cash flow</font>s, total     debt outstanding, off balance sheet <font color="blue">obligation</font>s and other commitments, total     <font color="blue">capitalization</font> and <font color="blue">various ratios calculated from</font> these factors</td>
+    </tr>
+    <tr>
+      <td>The rating     <font color="blue">agencies also</font> consider <font color="blue">predictability</font> of <font color="blue">cash flow</font>s, business strategy,     industry <font color="blue">conditions</font> and <font color="blue">contingencies</font></td>
+    </tr>
+    <tr>
+      <td>Lower <font color="blue">ratings on</font> our <font color="blue">senior unsecured</font>     debt  <font color="blue">could impair</font> our ability to obtain <font color="blue">additional</font> financing and will     increase the cost of the financing that we do obtain</td>
+    </tr>
+    <tr>
+      <td>-13-       _________________________________________________________________    [64]Table of <font color="blue">Contents       </font><font color="blue">Investors </font>in our <font color="blue">common stock</font> should not expect to receive dividend income,     and will be <font color="blue">dependent</font> on the <font color="blue">appreciation</font> of our <font color="blue">common stock</font> to earn a     return on their <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The decision to pay a <font color="blue">dividend on</font> our <font color="blue"><font color="blue">common stock</font> rests with</font> our board     of  <font color="blue">directors</font> and <font color="blue">will depend on</font> our earnings, available cash, capital     <font color="blue">requirements</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We have never declared a <font color="blue">cash dividend</font>     on our <font color="blue">common stock</font> and do not expect to pay <font color="blue">cash dividend</font>s on our common     stock for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>We expect that all <font color="blue">cash flow</font> generated     from our <font color="blue">operations</font> in the <font color="blue">foreseeable future</font> will be retained and used to     develop or expand our business, <font color="blue">pay debt service</font> and <font color="blue">reduce outstanding</font>     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investors </font><font color="blue">will likely</font> have to <font color="blue">depend on sales</font> of our common     stock at appreciated prices, which we <font color="blue">cannot assure</font>, in order to achieve a     positive return on their <font color="blue">investment</font> in our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Certain provisions of our organizational documents, securities and credit     <font color="blue">agreement</font> have anti-takeover effects which may prevent our <font color="blue">shareholders</font> from     receiving the <font color="blue">maximum value</font> for their shares</td>
+    </tr>
+    <tr>
+      <td>Our articles of incorporation, bylaws, securities and credit <font color="blue">agreement</font>     <font color="blue">contain certain provisions</font> that may delay or <font color="blue">prevent entirely</font> a change of     control  <font color="blue">transaction</font>  not  <font color="blue">supported by</font> our board of <font color="blue">directors</font>, or any     <font color="blue">transaction</font> which may have that general effect</td>
+    </tr>
+    <tr>
+      <td>These provisions include:       •   classification of our board of <font color="blue">directors</font> into three classes, with each     class serving a <font color="blue">staggered three year term</font>;         •   giving our board of <font color="blue">directors</font> the <font color="blue">exclusive authority</font> to adopt, amend     or repeal our bylaws and thus prohibiting <font color="blue">shareholders</font> from doing so;         •   requiring our <font color="blue">shareholders</font> to <font color="blue">give advance</font> notice of their intent to     submit a <font color="blue">proposal at</font> the <font color="blue">annual meeting</font>; and         •   limiting the ability of our <font color="blue">shareholders</font> to call a <font color="blue">special meeting</font> and     act <font color="blue">by written consent</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, the <font color="blue">indentures</font> under which our 3dtta75prca Notes and Floating     Rate Notes are issued require us to offer to repurchase the 3dtta75prca Notes and     <font color="blue"><font color="blue">Floating Rate Notes</font> </font><font color="blue">then outstanding at</font> a <font color="blue">purchase price</font> equal to 100prca and     100prca, respectively, of the <font color="blue">principal amount plus accrued</font> and <font color="blue">unpaid interest</font>     to the date of purchase in the event that we become subject to a change of     control, as defined in the <font color="blue">indentures</font></td>
+    </tr>
+    <tr>
+      <td>This feature of the <font color="blue">indentures</font> could     also  have the effect of <font color="blue">discouraging potentially attractive</font> change of     <font color="blue">control offers</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, we have adopted a <font color="blue">shareholder rights</font> plan which may have     the effect of impeding a <font color="blue">hostile attempt</font> to acquire control of us</td>
+    </tr>
+    <tr>
+      <td>Large amounts of our <font color="blue">common stock</font> may be <font color="blue">resold into</font> the market in the     future  <font color="blue">which could</font> cause the <font color="blue">market price</font> of our <font color="blue">common stock</font> to drop     <font color="blue">significant</font>ly, even if our business is doing well</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">February </font>23, 2006, 192cmam715cmam080 million shares of our <font color="blue">common stock</font>     were issued and outstanding</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">additional</font> 4dtta5 million shares of our common     stock were issuable upon exercise of <font color="blue">outstanding stock options</font> (of which     2dtta3 million shares are <font color="blue">currently exercisable</font>) and 23dtta3 million shares were     <font color="blue">issuable upon <font color="blue">conversion</font></font> of the 3dtta75prca Notes and 19dtta2 million shares are     <font color="blue">issuable upon <font color="blue">conversion</font></font> of the <font color="blue">Floating Rate Notes</font>, in each case once a     <font color="blue">conversion</font> <font color="blue">contingency</font> is met</td>
+    </tr>
+    <tr>
+      <td>Our 3dtta75prca Notes are <font color="blue">presently convertible</font>     through the end of the <font color="blue">first quarter</font> of 2006</td>
+    </tr>
+    <tr>
+      <td>See Note 4 to the <font color="blue">consolidated</font>     <font color="blue">financial statements</font> for information on the <font color="blue">conditions</font> under which our 3dtta75prca     Notes and our <font color="blue"><font color="blue">Floating Rate Notes</font> </font><font color="blue">become convertible into</font> our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our <font color="blue">common stock</font> could drop <font color="blue">significant</font>ly if future     sales of substantial amounts of our <font color="blue">common stock</font> occur, if the <font color="blue">perception</font>     exists that substantial sales may occur or if our convertible notes become     convertible</td>
+    </tr>
+    <tr>
+      <td>Forward-Looking Statements          This annual report on Form 10-K contains “forward-looking statements”     within the meaning of Section 27A of the <font color="blue">Securities Act </font>of 1933, as amended,     <font color="blue">and Section </font>21E of the <font color="blue">Securities Exchange Act </font>of 1934, as amended</td>
+    </tr>
+    <tr>
+      <td>All     statements other <font color="blue">than statements</font> of <font color="blue">historical facts</font> included in this report     are  forward-looking  statements,  including  statements regarding the     following:       •   business strategy;         •   demand for our services;         •   <font color="blue">spending by</font> our customers;         •   2006 rig activity and financial results;         •   projected <font color="blue">depreciation</font> expense and <font color="blue">interest expense</font>;                                        -14-       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>  •   <font color="blue">reactivation</font>, timing and cost of <font color="blue">reactivation</font> of rigs available for     <font color="blue">refurbishment</font>;         •   cost of <font color="blue">building new rigs</font>;         •   projected dayrates;         •   the ability to recover our <font color="blue">refurbishment</font> costs or the <font color="blue">purchase price</font>     of <font color="blue">rigs from <font color="blue">term contracts</font></font>;         •   the <font color="blue">availability</font> and <font color="blue">financial terms</font> of <font color="blue">term contracts</font>;         •   rigs expected to be engaged in turnkey and footage <font color="blue">operations</font>;         •   projected tax rate;         •   <font color="blue">wage rates</font> and retention of employees;         •   <font color="blue">sufficiency</font> of our <font color="blue">capital resources</font> and liquidity; and         •   <font color="blue">depreciation</font> and <font color="blue">capital expenditures</font> in 2006</td>
+    </tr>
+    <tr>
+      <td>Although we believe the forward-looking statements are reasonable, we     <font color="blue">cannot assure</font> you that these <font color="blue">statements will prove</font> to be correct</td>
+    </tr>
+    <tr>
+      <td>We have     based  these  statements  on  <font color="blue">assumptions</font> and analyses in light of our     experience and <font color="blue">perception</font> of historical trends, current <font color="blue">conditions</font>, expected     future <font color="blue">development</font>s and other factors we believe were <font color="blue">appropriate</font> when the     statements were made</td>
+    </tr>
+    <tr>
+      <td>The risks and <font color="blue">uncertainties</font> <font color="blue">generally</font> described above in this Item 1A     <font color="blue">Risk Factors </font>could cause actual results to differ <font color="blue">materially</font> from those     expressed in our forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we urge you not to     place undue reliance on forward-looking statements</td>
+    </tr>
+    <tr>
+      <td>Our forward-looking statements speak only as of the date specified in     <font color="blue">such statements</font> or, if no date is stated, as of the date of this report</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Grey Wolf </font><font color="blue">expressly disclaims</font> any <font color="blue">obligation</font> or undertaking to release     publicly any updates or revisions to any forward-looking statement contained     in this report to reflect any change in our <font color="blue">expectations</font> or with regard to     any  change  in  events,  <font color="blue">conditions</font>  or  <font color="blue">circumstances</font>  on  which our     forward-looking statements are based</td>
+    </tr>
+  </tbody>
+</table>

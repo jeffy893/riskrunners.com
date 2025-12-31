@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: availability", fill: "#4b5320"},
+{source: "1: availability", target: "1: manufactured homes on leased land", fill: "#4b5320"},
+{source: "1: manufactured homes on leased land", target: "1: higher costs", fill: "#4b5320"},
+{source: "1: higher costs", target: "1: financing could limit", fill: "#4b5320"},
+{source: "1: financing could limit", target: "1: purchase manufactured homes", fill: "#4b5320"},
+{source: "1: purchase manufactured homes", target: "1: reduced demand", fill: "#4b5320"},
+{source: "1: availability", target: "2: Frequently ", fill: "#d70040"},
+{source: "2: Frequently ", target: "2: manufactured homes", fill: "#d70040"},
+{source: "2: manufactured homes", target: "2: land on which", fill: "#d70040"},
+{source: "2: Frequently ", target: "3: manufactured", fill: "#592720"},
+{source: "3: manufactured", target: "3: without land also called chattel loans", fill: "#592720"},
+{source: "3: without land also called chattel loans", target: "3: shorter terms", fill: "#592720"},
+{source: "3: shorter terms", target: "3: interest rates", fill: "#592720"},
+{source: "3: interest rates", target: "3: difficult", fill: "#592720"},
+{source: "3: difficult", target: "3: than mortgages", fill: "#592720"},
+{source: "3: manufactured", target: "9: repossessions", fill: "#f6c"},
+{source: "9: repossessions", target: "9: manufactured homes could", fill: "#f6c"},
+{source: "9: manufactured homes could", target: "9: manufacturers", fill: "#f6c"},
+{source: "9: manufacturers", target: "9: reduce production", fill: "#f6c"},
+{source: "9: reduce production", target: "9: new manufactured homes", fill: "#f6c"},
+{source: "9: new manufactured homes", target: "9: reduced demand", fill: "#f6c"},
+{source: "9: repossessions", target: "32: competition may", fill: "#f77fbe"},
+{source: "32: competition may", target: "32: price increases future increases", fill: "#f77fbe"},
+{source: "32: price increases future increases", target: "32: costs could adversely impact", fill: "#f77fbe"},
+{source: "32: costs could adversely impact", target: "32: financial condition", fill: "#f77fbe"},
+{source: "32: competition may", target: "START_HERE", fill: "#f77fbe"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability">Availability</a></td>
+      <td>In reliability engineering, the term availability has the following meanings:\n\nThe degree to which a system, subsystem or equipment is in a specified operable and committable state at the start of a mission, when the mission is called for at an unknown, i.e. a random, time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High_availability">High availability</a></td>
+      <td>High availability (HA) is a characteristic of a system which aims to ensure an agreed level of operational performance, usually uptime, for a higher than normal period.\nModernization has resulted in an increased reliance on these systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_heuristic">Availability heuristic</a></td>
+      <td>The availability heuristic, also known as availability bias, is a mental shortcut that relies on immediate examples that come to a given person's mind when evaluating a specific topic, concept, method or decision. The availability heuristic operates on the notion that if something can be recalled, it must be important, or at least more important than alternative solutions which are not as readily recalled.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Not_Available">Not Available</a></td>
+      <td>Not Available is the second studio album (released as the fourth) by the Residents, recorded in 1974. The album was allegedly meant to only be released once its creators completely forgot about its existence (adhering to their "Theory of Obscurity," in which an artist's purest work is created without an audience) - however, due to ongoing delays in the release of Eskimo, Not Available was released to supply the demand for new Residents material, given their unexpected critical and commercial success following the release of the Duck Stab EP.\n\n\n== History ==\nIt is said that the lyrics and themes of Not Available arose from personal tensions within the group, and that the project began as a private psychodrama before being adapted into a possible operetta.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Route_availability">Route availability</a></td>
+      <td>Route Availability (RA) is the system by which the permanent way and supporting works (bridges, embankments, etc.) of the railway network of Great Britain are graded. All routes are allocated an RA number between 1 and 10.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Continuous_availability">Continuous availability</a></td>
+      <td>Continuous availability is an approach to computer system and application design that protects users against downtime, whatever the cause and ensures that users remain connected to their documents, data files and business applications. Continuous availability describes the information technology methods to ensure business continuity.In early days of computing, availability was not considered business critical.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Clayton_Homes">Clayton Homes</a></td>
+      <td>Clayton Homes (or Clayton) is the largest builder of manufactured housing and modular homes in the United States. It is owned by Warren Buffett's Berkshire Hathaway.Clayton Homes' corporate headquarters are in Maryville, Tennessee.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mobile_home">Mobile home</a></td>
+      <td>A mobile home (also known as a house trailer, park home, trailer, or trailer home) is a prefabricated structure, built in a factory on a permanently attached chassis before being transported to site (either by being towed or on a trailer). Used as permanent homes, or for holiday or temporary accommodation, they are often left permanently or semi-permanently in one place, but can be moved, and may be required to move from time to time for legal reasons.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_housing">Manufactured housing</a></td>
+      <td>Manufactured housing (commonly known as mobile homes in the United States) is a type of prefabricated housing that is largely assembled in factories and then transported to sites of use.  The definition of the term in the United States is regulated by federal law (Code of Federal Regulations, 24 CFR 3280): "Manufactured homes are built as dwelling units of at least 320 square feet (30 m2) in size with a permanent chassis to assure the initial and continued transportability of the home."  The requirement to have a wheeled chassis permanently attached differentiates "manufactured housing" from other types of prefabricated homes, such as modular homes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Excel_Homes">Excel Homes</a></td>
+      <td>Excel Homes Group, LLC, in Camp Hill, PA, was a manufacturer of custom modular homes in the United States. According to the company, Excel Homes built more than 28,000 modular homes in its climate-controlled plants in Liverpool, Pennsylvania and Avis, Pennsylvania, since its founding in 1984.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Final_good">Final good</a></td>
+      <td>A final good or consumer good is a final product ready for sale that is used by the consumer to satisfy current wants or needs, unlike intermediate goods which is utilized to produce other goods. A microwave oven or a bicycle is a final good, whereas the parts purchased to manufacture it are intermediate goods.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Demand_response">Demand response</a></td>
+      <td>Demand response is a change in the power consumption of an electric utility customer to better match the demand for power with the supply. Until recentlyrecently electric energy could not be easily stored, so utilities have traditionally matched demand and supply by throttling the production rate of their power plants, taking generating units on or off line, or importing power from other utilities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Aggregate_demand">Aggregate demand</a></td>
+      <td>In macroeconomics, aggregate demand (AD) or domestic final demand (DFD) is the total demand for final goods and services in an economy at a given time. It is often called effective demand, though at other times this term is distinguished.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bedsit">Bedsit</a></td>
+      <td>A bedsit, bedsitter, or bed-sitting room is a form of accommodation common in some parts of the United Kingdom which consists of a single room per occupant with all occupants typically sharing a bathroom. Bedsits are included in a legal category of dwellings referred to as houses in multiple occupation (HMO).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Energy_demand_management">Energy demand management</a></td>
+      <td>Energy demand management, also known as demand-side management (DSM) or demand-side response (DSR), is the modification of consumer demand for energy through various methods such as financial incentives and behavioral change through education.\nUsually, the goal of demand-side management is to encourage the consumer to use less energy during peak hours, or to move the time of energy use to off-peak times such as nighttime and weekends.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Supply_and_demand">Supply and demand</a></td>
+      <td>In microeconomics, supply and demand is an economic model of price determination in a market. It postulates that, holding all else equal, in a competitive market, the unit price for a particular good, or other traded item such as labor or liquid financial assets, will vary until it settles at a point where the quantity demanded (at the current price) will equal the quantity supplied (at the current price), resulting in an economic equilibrium for price and quantity transacted.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chemical_oxygen_demand">Chemical oxygen demand</a></td>
+      <td>In environmental chemistry, the chemical oxygen demand (COD) is an indicative measure of the amount of oxygen that can be consumed by reactions in a measured solution. It is commonly expressed in mass of oxygen consumed over volume of solution which in SI units is milligrams per litre (mg/L).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Modular_building">Modular building</a></td>
+      <td>A modular building is a prefabricated building that consists of repeated sections called modules. Modularity involves constructing sections away from the building site, then delivering them to the intended site.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prefabricated_home">Prefabricated home</a></td>
+      <td>Prefabricated homes, often referred to as prefab homes or simply prefabs, are specialist dwelling types of prefabricated building, which are manufactured off-site in advance, usually in standard sections that can be easily shipped and assembled. Some current prefab home designs include architectural details inspired by postmodernism or futurist architecture.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_risk">Manufactured risk</a></td>
+      <td>Manufactured risks are risks that are produced by the modernization process, particularly by innovative developments in science and technology. They create risk environments that have little historical reference, and are therefore largely unpredictable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing_Consent">Manufacturing Consent</a></td>
+      <td>Manufacturing Consent: The Political Economy of the Mass Media is a 1988 book by Edward S. Herman and Noam Chomsky. It argues that the mass communication media of the U.S. "are effective and powerful ideological institutions that carry out a system-supportive propaganda function, by reliance on market forces, internalized assumptions, and self-censorship, and without overt coercion", by means of the propaganda model of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufactured_controversy">Manufactured controversy</a></td>
+      <td>A manufactured controversy (sometimes shortened to manufactroversy) is a contrived disagreement, typically motivated by profit or ideology, designed to create public confusion concerning an issue about which there is no substantial academic dispute. This concept has also been referred to as manufactured uncertainty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Popular_music">Popular music</a></td>
+      <td>Popular music is music with wide appeal that is typically distributed to large audiences through the music industry. These forms and styles can be enjoyed and performed by people with little or no musical training.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_aircraft_manufacturers">List of aircraft manufacturers</a></td>
+      <td>This is a list of aircraft manufacturers sorted alphabetically by International Civil Aviation Organization (ICAO)/common name. It contains the ICAO/common name, manufacturers name(s), country and other data, with the known years of operation in parentheses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_modern_armament_manufacturers">List of modern armament manufacturers</a></td>
+      <td>The following list of modern armament manufacturers presents major companies producing modern weapons and munitions for military, paramilitary, government agency and civilian use. The companies are listed by their full name followed by the short form, or common acronym, if any, in parentheses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_computer_hardware_manufacturers">List of computer hardware manufacturers</a></td>
+      <td>Current notable computer hardware manufacturers:\n\n\n== Cases ==\nList of computer case manufacturers:\n\n\n=== Rack-mount computer cases ===\n\n\n== Laptop computer cases ==\nClevo\nMSI\n\n\n== Motherboards ==\nTop motherboard manufacturers:\n\nList of motherboard manufacturers:\n\nDefunct:\n\n\n== Chipsets for motherboards ==\n\n\n== Central processing units (CPUs) ==\nNote: most of these companies only make designs, and do not manufacture their own designs. \nTop x86 CPU manufacturers:\n\nList of CPU manufacturers (most of the companies sell ARM-based CPUs, assumed if nothing else stated):\n\nAcquired or defunct:\n\n\n== Hard disk drives (HDDs) ==\n\n\n=== Internal ===\nList of current hard disk drive manufacturers:\n\nSeagate Technology\nToshiba\nWestern Digital\n\n\n=== External ===\nNote: the HDDs internal to these devices are manufactured only by the internal HDD manufacturers listed above.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automotive_industry">Automotive industry</a></td>
+      <td>The automotive industry comprises a wide range of companies and organizations involved in the design, development, manufacturing, marketing, and selling of motor vehicles. It is one of the world's largest industries by revenue (from 16 % such as in France up to 40 % to countries like Slovakia).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_automobile_manufacturers_of_Russia">List of automobile manufacturers of Russia</a></td>
+      <td>This is a list of current and defunct automobile manufacturers of Russia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>DREW INDUSTRIES INC      Item 1A RISK FACTORS           Industry Risk Factors           Limited <font color="blue">availability</font> of financing for <font color="blue"><font color="blue"><font color="blue">manufactured</font> homes</font> on leased land</font> and     <font color="blue">higher costs</font> of this <font color="blue">financing could limit</font> the ability of consumers to     <font color="blue">purchase <font color="blue"><font color="blue">manufactured</font> homes</font></font>, resulting in <font color="blue">reduced demand</font> for our products</td>
+    </tr>
+    <tr>
+      <td>Frequently, <font color="blue"><font color="blue">manufactured</font> homes</font> are purchased, and the <font color="blue">land on which</font> they are     placed is leased</td>
+    </tr>
+    <tr>
+      <td>Loans used to finance the purchase of <font color="blue"><font color="blue">manufactured</font> homes</font>     without land, also called <font color="blue">chattel loans</font>, have <font color="blue">shorter terms</font> and higher     <font color="blue">interest rates</font>, and may be more <font color="blue">difficult</font> to obtain <font color="blue">than mortgages</font> for     <font color="blue">manufactured</font> or site-built homes that are on owned land</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font>,     cost  and  terms of these <font color="blue">chattel loans</font> are <font color="blue">also dependent on economic</font>     <font color="blue">conditions</font>,  <font color="blue">lending practices</font> of financial <font color="blue">institutions</font>, governmental     policies, and other factors that are beyond our control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reductions </font>in the     <font color="blue">availability</font> of financing for <font color="blue"><font color="blue">manufactured</font> homes</font> and increases in the costs     of  this  financing  could  limit the ability of consumers to purchase     <font color="blue"><font color="blue">manufactured</font> homes</font>, resulting in <font color="blue">reduced demand</font> for our products</td>
+    </tr>
+    <tr>
+      <td>4       _________________________________________________________________       <font color="blue">Reductions </font>in the <font color="blue">availability</font> of <font color="blue"><font color="blue">wholesale financing</font> may prevent retailers</font>     from carrying an <font color="blue">adequate inventory</font> of RVs or <font color="blue"><font color="blue">manufactured</font> homes</font>, which     could <font color="blue">reduce demand</font> for our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Retailers </font>of RVs </font>and <font color="blue"><font color="blue">manufactured</font> homes</font> <font color="blue">generally</font> finance their purchases of     inventory with financing provided by lending <font color="blue">institutions</font>, often called     floor plan financing</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reductions </font>in the <font color="blue">availability</font> of <font color="blue">wholesale financing</font>     may  prevent  retailers  from carrying an <font color="blue">adequate inventory</font> of RVs or     <font color="blue"><font color="blue">manufactured</font> homes</font>, <font color="blue">which could</font> <font color="blue">reduce demand</font> for our products</td>
+    </tr>
+    <tr>
+      <td>High levels of <font color="blue">repossessions</font> of <font color="blue"><font color="blue">manufactured</font> homes</font> could cause <font color="blue">manufacturers</font>     to <font color="blue">reduce production</font> of new <font color="blue"><font color="blue">manufactured</font> homes</font>, resulting in <font color="blue">reduced demand</font>     for our products</td>
+    </tr>
+    <tr>
+      <td>Lower credit <font color="blue">standards by lenders several years ago</font> and <font color="blue">prevailing economic</font>     <font color="blue">conditions</font>  caused  an  increase  in  the number of <font color="blue"><font color="blue">manufactured</font> homes</font>     <font color="blue">repossessed by lenders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Repossessed </font>homes are resold by lenders, often at     substantially reduced prices, which reduces the demand for new <font color="blue">manufactured</font>     homes</td>
+    </tr>
+    <tr>
+      <td>High levels of <font color="blue">repossessions</font> could cause <font color="blue">manufacturers</font> to reduce     production of new <font color="blue"><font color="blue">manufactured</font> homes</font>, resulting in <font color="blue">reduced demand</font> for our     products</td>
+    </tr>
+    <tr>
+      <td>Changes in zoning <font color="blue">regulations</font> for <font color="blue"><font color="blue">manufactured</font> homes</font> could lead to reduced     demand for our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Manufactured </font><font color="blue">housing communities</font> and individual <font color="blue">home placements</font> are subject     to local zoning <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>In the past, there has been resistance by local     property owners and zoning officials to zoning ordinances allowing the     location  of  <font color="blue">manufactured</font>  homes  in  areas comprised of <font color="blue">conventional</font>     residences</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Continued </font>resistance to these <font color="blue">zoning ordinances could</font> have an     <font color="blue">adverse impact on sales</font> of <font color="blue"><font color="blue">manufactured</font> homes</font>, <font color="blue">which could</font> <font color="blue">reduce demand</font> for     our products</td>
+    </tr>
+    <tr>
+      <td>Gasoline shortages, or <font color="blue">higher prices</font> for gasoline, could lead to reduced     demand for our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Increases </font> </font>in the price of gasoline, or <font color="blue">anticipation</font> of <font color="blue">potential fuel</font>     shortages, could <font color="blue">adversely</font> affect consumer demand for RVs, <font color="blue">which could</font>     <font color="blue">reduce demand</font> for our products</td>
+    </tr>
+    <tr>
+      <td>Excess inventories by retailers and <font color="blue">manufacturers</font> could cause a decline in     the demand for our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Retailers </font>and <font color="blue">manufacturers</font> of RVs and <font color="blue"><font color="blue">manufactured</font> homes</font> may carry excess     inventory, as they <font color="blue">periodically</font> have in the past</td>
+    </tr>
+    <tr>
+      <td>When <font color="blue">excess inventory</font> is     sold, the <font color="blue">manufacturers</font> of RVs and <font color="blue"><font color="blue">manufactured</font> homes</font> may <font color="blue">reduce production</font>     of new vehicles and homes, <font color="blue">which could</font> cause a decline in demand for our     products</td>
+    </tr>
+    <tr>
+      <td>Business <font color="blue">cycles may</font> cause substantial <font color="blue">fluctuations</font> in our operating results</td>
+    </tr>
+    <tr>
+      <td>Both  the <font color="blue">manufactured</font> housing and <font color="blue">recreational</font> vehicle <font color="blue">industries</font> are     impacted by business cycles and this may cause substantial <font color="blue">fluctuations</font> in     our operating results</td>
+    </tr>
+    <tr>
+      <td>Business <font color="blue">cycles may</font> depend upon general economic     <font color="blue">conditions</font>, <font color="blue">interest rates</font>, consumer confidence, demographic changes, and     other <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Company-specific Risk Factors           <font color="blue"><font color="blue">Increases </font> </font>in  raw material costs could <font color="blue">adversely</font> impact our financial     condition and operating results</td>
+    </tr>
+    <tr>
+      <td>In mid-December 2003 and during 2004, we were     <font color="blue">notified by</font> our <font color="blue">steel suppliers</font> of <font color="blue">unprecedented steel cost increases</font></td>
+    </tr>
+    <tr>
+      <td>The     prices we pay for steel, depending on the type of <font color="blue">steel purchased</font>, are     <font color="blue">currently approximately double</font> the <font color="blue">price levels at</font> the end of 2003</td>
+    </tr>
+    <tr>
+      <td>The     impact of <font color="blue">higher steel costs</font> has <font color="blue">been offset by surcharges</font> and <font color="blue">sales price</font>     increases to our customers</td>
+    </tr>
+    <tr>
+      <td>In addition to steel, our other <font color="blue">primary raw</font>     materials are aluminum, vinyl, glass and ABS resin, which are also subject     to <font color="blue">cost fluctuation</font></td>
+    </tr>
+    <tr>
+      <td>In 2004 and 2005, we also received <font color="blue">cost increases from</font>     suppliers of aluminum, vinyl, glass and ABS resin</td>
+    </tr>
+    <tr>
+      <td>Because <font color="blue">competition may</font>     limit the amount of increases in raw material costs that can be passed     through to customers in the form of price increases, future increases in raw     material costs could <font color="blue">adversely</font> impact our <font color="blue">financial condition</font> and operating     results</td>
+    </tr>
+    <tr>
+      <td>5       _________________________________________________________________           <font color="blue">Inadequate </font>supply of <font color="blue">imported <font color="blue">raw materials</font> used</font> to make our <font color="blue">products could</font>     <font color="blue">adversely</font> impact our <font color="blue">financial condition</font> and operating results</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">recently begun</font> to import a <font color="blue">significant</font> portion of the <font color="blue">raw materials</font>     that we use in <font color="blue">manufacturing</font> our products</td>
+    </tr>
+    <tr>
+      <td>If these imported <font color="blue">raw materials</font>     become unavailable, or if the supply of these <font color="blue">raw materials</font> is <font color="blue">interrupted</font>,     our <font color="blue">manufacturing</font> operations could be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in labor rates or reduced <font color="blue">availability</font> of labor could <font color="blue">adversely</font>     impact our <font color="blue">financial condition</font> and operating results</td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">geographic regions</font> in which we have <font color="blue">manufacturing</font> facilities have     very <font color="blue">low unemployment rates</font></td>
+    </tr>
+    <tr>
+      <td>This could result in shortages of qualified     employees and <font color="blue">increased labor costs</font></td>
+    </tr>
+    <tr>
+      <td>Because <font color="blue">competition may</font> limit the     amount of <font color="blue">labor increases</font> that can be <font color="blue">passed through</font> to customers in the     form of price increases, <font color="blue">increased labor costs</font> could <font color="blue">adversely</font> impact our     <font color="blue">financial condition</font> and operating results</td>
+    </tr>
+    <tr>
+      <td>We are involved in certain litigation, which if decided <font color="blue">adversely</font> to us     could have a material <font color="blue">adverse affect on</font> our <font color="blue">financial condition</font></td>
+    </tr>
+  </tbody>
+</table>

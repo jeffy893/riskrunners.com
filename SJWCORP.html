@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: subsidiaries may", fill: "#ff69b4"},
+{source: "2: subsidiaries may", target: "2: adversely affected by", fill: "#ff69b4"},
+{source: "2: adversely affected by", target: "2: legislation policies", fill: "#ff69b4"},
+{source: "2: legislation policies", target: "2: regulations", fill: "#ff69b4"},
+{source: "2: subsidiaries may", target: "3: legislation", fill: "#036"},
+{source: "3: legislation", target: "3: legislation by federal", fill: "#036"},
+{source: "3: legislation by federal", target: "3: local governments", fill: "#036"},
+{source: "3: local governments", target: "3: administrative", fill: "#036"},
+{source: "3: administrative", target: "3: operations", fill: "#036"},
+{source: "3: legislation", target: "5: San Jose Water Company ", fill: "#893f45"},
+{source: "5: San Jose Water Company ", target: "5: regulated by", fill: "#893f45"},
+{source: "5: regulated by", target: "5: CPUC The ", fill: "#893f45"},
+{source: "5: CPUC The ", target: "5: authorized by", fill: "#893f45"},
+{source: "5: authorized by", target: "5: return on common", fill: "#893f45"},
+{source: "5: San Jose Water Company ", target: "14: balancing", fill: "#87cefa"},
+{source: "14: balancing", target: "29: San Jose Water Company ", fill: "#ffe5b4"},
+{source: "29: San Jose Water Company ", target: "29: allowed by", fill: "#ffe5b4"},
+{source: "29: allowed by", target: "29: additional", fill: "#ffe5b4"},
+{source: "29: additional", target: "29: adversely", fill: "#ffe5b4"},
+{source: "29: San Jose Water Company ", target: "54: Conservation ", fill: "#343434"},
+{source: "54: Conservation ", target: "54: construction codes which", fill: "#343434"},
+{source: "54: construction codes which", target: "54: diminish water", fill: "#343434"},
+{source: "54: diminish water", target: "54: consumption", fill: "#343434"},
+{source: "54: consumption", target: "54: reduced revenue", fill: "#343434"},
+{source: "54: Conservation ", target: "56: San Jose Water Company ", fill: "#195905"},
+{source: "56: San Jose Water Company ", target: "56: water quality risks", fill: "#195905"},
+{source: "56: water quality risks", target: "56: environmental", fill: "#195905"},
+{source: "56: environmental", target: "56: regulations", fill: "#195905"},
+{source: "56: San Jose Water Company ", target: "START_HERE", fill: "#195905"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Utilities</td>
+    </tr>
+    <tr>
+      <td>Gas Utilities</td>
+    </tr>
+    <tr>
+      <td>Electric Utilities</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Defy norms</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Ask for protection</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SJW_Group">SJW Group</a></td>
+      <td>SJW Group ("SJW") is a water utility processing, distribution, wholesale and retail company based in San Jose, California. It serves 228,000 connections that serves over 1 million residents in regions of California, and approximately 17,000 connections, which serves about 60,000 people in Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/San_Francisco_and_San_Jose_Railroad">San Francisco and San Jose Railroad</a></td>
+      <td>The San Francisco and San Jose Railroad (SF&amp;SJ) was a railroad which linked the communities of San Francisco and San Jose, California, running the length of the San Francisco Peninsula. The company incorporated in 1860 and was one of the first railroads to employ Chinese laborers in its construction.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/San_Jose_del_Monte">San Jose del Monte</a></td>
+      <td>San Jose del Monte, officially known as the City of San Jose del Monte (abbreviated as SJDM or CSJDM; Filipino: Lungsod ng San Jose del Monte), is a 1st class component city in the province of Bulacan, Philippines. According to the 2020 census, it has a population of 651,813 people, making it the largest local government unit within the province of Bulacan and Central Luzon and the 18th most populated city in the Philippines.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/San_Jose_State_University">San Jose State University</a></td>
+      <td>San José State University (San Jose State or SJSU) is a public university in San Jose, California. Established in 1857, SJSU is the oldest public university on the West Coast and the founding campus of the California State University (CSU) system.Located in downtown San Jose, the SJSU main campus is situated on 154 acres (62 ha), or roughly 19 square blocks.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/California_Water_Service">California Water Service</a></td>
+      <td>California Water Service, commonly known as Cal Water, is an American public utility company providing drinking water and wastewater services to a number of regions within the state of California. It was founded in 1926 and is based in San Jose, California, and provides service across multiple local districts, reaching more than 484,900 customers.In 1997, California Water Service formed a new parent holding company, California Water Service Group, in order to expand its service coverage into other regions and states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/San_José,_Costa_Rica">San José, Costa Rica</a></td>
+      <td>San José (Spanish: [saŋ xoˈse]; meaning "Saint Joseph") is the capital and largest city of Costa Rica, and the capital of the province of the same name. It is in the center of the country, in the mid-west of the Central Valley, within San José Canton.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alviso,_San_Jose">Alviso, San Jose</a></td>
+      <td>Alviso is a district of San Jose, California, located in North San Jose on the southern shores of San Francisco Bay. Originally an independent town, founded in 1852, today Alviso is San Jose's only waterfront district, primarily residential in nature, with several Silicon Valley tech companies and recreation-oriented businesses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Almaden_Valley,_San_Jose">Almaden Valley, San Jose</a></td>
+      <td>Almaden Valley (Spanish: Valle de Almadén), commonly known simply as Almaden (Spanish: Almadén), is a valley and neighborhood of San Jose, California, located in South San Jose. It is nestled between the Santa Cruz Mountains to the west and the Santa Teresa Hills to the east.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Soft_balancing">Soft balancing</a></td>
+      <td>Soft balancing is a recent addition to balance of power theory used to describe non-military forms of balancing evident since the end of the Cold War, particularly during and after the 2003 Iraq War. Soft balancing as a strategy can be attributed to the work of Robert Pape and T. V. Paul.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Load_balancing">Load balancing</a></td>
+      <td>In computing, load balancing refers to the process of distributing a set of tasks over a set of resources (computing units), with the aim of making their overall processing more efficient. Load balancing can optimize the response time and avoid unevenly overloading some compute nodes while other compute nodes are left idle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balancing_test">Balancing test</a></td>
+      <td>A balancing test is any judicial test in which the jurists weigh the importance of multiple factors in a legal case. Proponents of such legal tests argue that they allow a deeper consideration of complex issues than a bright-line rule can allow.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Game_balance">Game balance</a></td>
+      <td>Game balance is a part of game design that can be described as a mathematical-algorithmic model of a game’s numbers, game mechanics and relations between those. Therefore, game balancing consists in adjusting those to create the intended experiences, usually positive ones.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Battery_balancing">Battery balancing</a></td>
+      <td>Battery balancing and battery redistribution refer to techniques that improve the available capacity of a battery pack with multiple cells (usually in series) and increase each cell's longevity. A battery balancer or battery regulator is an electrical device in a battery pack that performs battery balancing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_possession">Adverse possession</a></td>
+      <td>Adverse possession, sometimes colloquially described as "squatter's rights", is a legal principle in the Anglo-American common law under which a person who does not have legal title to a piece of property—usually land (real property)—may acquire legal ownership based on continuous possession or occupation of the property without the permission (licence) of its legal owner. The possession by a person is not adverse if they are in possession as a tenant or licensee of the legal owner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_food_reaction">Adverse food reaction</a></td>
+      <td>An adverse food reaction is an adverse response by the body to food or a specific type of food.The most common adverse reaction is a food allergy, which is an adverse immune response to either a specific type or a range of food proteins.\nHowever, other adverse responses to food are not allergies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Anthony_Adverse">Anthony Adverse</a></td>
+      <td>Anthony Adverse is a 1936 American epic historical drama film directed by Mervyn LeRoy and starring Fredric March and Olivia de Havilland. The screenplay by Sheridan Gibney draws elements of its plot from eight of the nine books in Hervey Allen's historical novel, Anthony Adverse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmentalism">Environmentalism</a></td>
+      <td>Environmentalism or environmental rights is a broad philosophy, ideology, and social movement regarding concerns for environmental protection and improvement of the health of the environment, particularly as the measure for this health seeks to incorporate the impact of changes to the environment on humans, animals, plants and non-living matter. While environmentalism focuses more on the environmental and nature-related aspects of green ideology and politics, ecologism combines the ideology of social ecology and environmentalism.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmental_protection">Environmental protection</a></td>
+      <td>Environmental protection is the practice of protecting the natural environment by individuals, organizations and governments. Its objectives are to conserve natural resources and the existing natural environment and, where possible, to repair damage and reverse trends.Due to the pressures of overconsumption, population growth and technology, the biophysical environment is being degraded, sometimes permanently.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmental_health">Environmental health</a></td>
+      <td>Environmental health is the branch of public health concerned with all aspects of the natural and built environment affecting human health. Environmental health focuses on the natural and built environments for the benefit of human health.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmental_ethics">Environmental ethics</a></td>
+      <td>In environmental philosophy, environmental ethics is an established field of practical philosophy "which reconstructs the essential types of argumentation that can be made for protecting natural entities and the sustainable use of natural resources." The main competing paradigms are anthropocentrism, physiocentrism (called ecocentrism as well), and theocentrism. Environmental ethics exerts influence on a large range of disciplines including environmental law, environmental sociology, ecotheology, ecological economics, ecology and environmental geography.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>and its <font color="blue"><font color="blue">subsidiaries</font> may</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affected</font> by</font>       new and changing <font color="blue">legislation</font>, policies and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>New <font color="blue">legislation</font> and changes in existing  <font color="blue">legislation</font> by federal,  state and  <font color="blue">local governments</font> and  <font color="blue">administrative</font>  agencies can affect the <font color="blue">operations</font> of SJW  Corp</td>
+    </tr>
+    <tr>
+      <td>and its <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font>is <font color="blue">regulated by</font> the <font color="blue">CPUC The  </font>operating  revenue of San Jose Water  Company  results from the sale of water at  rates  <font color="blue">authorized by</font> the CPUC  The CPUC sets rates that are intended to provide  revenues  sufficient  to recover  operating  expenses  and produce a  reasonable  <font color="blue">return on common</font>  equity</td>
+    </tr>
+    <tr>
+      <td>As  required  by law,  San Jose Water  Company  files  <font color="blue">general rate <font color="blue">application</font>s with</font> the CPUC on a <font color="blue">periodic basis</font></td>
+    </tr>
+    <tr>
+      <td>As  required,  on <font color="blue">December </font>9, 2005,  San Jose Water  Company  filed a draft  General  Rate Case  <font color="blue">application</font>  (Proposed  Application)  with the CPUC  seeking  authority to <font color="blue">increase rates</font> for 2007,  2008 and 2009 to recover the <font color="blue">higher costs</font>  of <font color="blue">providing water service</font>,  including  <font color="blue">higher costs</font> of labor,  security,  water                                           11  <PAGE>    quality  testing and reporting,  and to allow for <font color="blue">necessary</font>  <font color="blue">improvements</font> to the  <font color="blue">water system</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">draft filing</font> is a <font color="blue">preliminary</font>  filing that allows the CPUC to  identify any procedural  <font color="blue">deficiencies</font> so that they may be corrected prior to the  filing of the actual <font color="blue">General Rate Case  </font>Application</td>
+    </tr>
+    <tr>
+      <td>It is anticipated that the  <font color="blue">General Rate Case  </font><font color="blue">application</font>  for San Jose Water  Company was submitted to the  <font color="blue">CPUC in February </font>2006</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue"><font color="blue">San Jose Water Company</font> </font>believes that the rates currently in effect  provide it with a reasonable  rate of return,  there is no guarantee  such rates  will be sufficient to provide a reasonable  rate of return in the future</td>
+    </tr>
+    <tr>
+      <td>There  is no guarantee that the companyapstas  <font color="blue">future rate filings will</font> be able to obtain a  satisfactory rate of return in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  San Jose Water  Company  <font color="blue">relies on policies</font>  and  <font color="blue">regulations</font>  promulgated  by the CPUC in  order to  recover  capital  <font color="blue">expenditures</font>,  maintain  favorable  treatment  on  gains  from  the  sale of real  property,  offset  its  production and operating  costs,  recover the cost of debt,  maintain an optimal  equity  structure  without  over-leveraging,  and have financial and operational  <font color="blue">flexibility</font>  to  engage  in  <font color="blue">nonregulated</font>  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If the  CPUC  <font color="blue">implements</font>  policies and <font color="blue">regulations</font>  that do not allow <font color="blue"><font color="blue">San Jose Water Company</font> </font>to accomplish  some or all of the <font color="blue">items listed</font> above, <font color="blue">San Jose Water Company</font>apstas future operating  results may be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>Pursuant  to Section  792dtta5 of the  <font color="blue">California </font> Public  <font color="blue">Utilities  </font>Code,  a  <font color="blue">balancing</font>  account must be kept for each expense item for which revenue  offsets  have been authorized (ie,  purchased water, purchased power and pump tax)</td>
+    </tr>
+    <tr>
+      <td>The  purpose  of  a   <font color="blue">balancing</font>   account  is  to  track  the   under-collection   or  over-collection  <font color="blue"><font color="blue">associated with</font> expense</font>  changes and the revenue  <font color="blue">authorized by</font>  the CPUC to offset those expense changes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On November </font>29, 2001, the CPUC issued  <font color="blue">Resolution  </font>W-4294  (the  Resolution)  <font color="blue">implementing</font>  <font color="blue">significant</font>  changes in the  long-established  <font color="blue">offset rate increase</font> and <font color="blue">balancing</font> account recovery procedures  applicable to <font color="blue">water utilities</font></td>
+    </tr>
+    <tr>
+      <td>These changes could have a <font color="blue">significant</font> impact on  the risk  profile of the water  industry</td>
+    </tr>
+    <tr>
+      <td>As  required  by the  Resolution,  in  <font color="blue">December </font>2001, the CPUC opened an Order Instituting Rulemaking (OIR) to evaluate  existing <font color="blue">balancing</font> account and offset rate practices and policies</td>
+    </tr>
+    <tr>
+      <td>On June 19, 2003 the CPUC issued its final OIR  decision  (D03-06-072)  in  which the CPUC revised the <font color="blue">existing procedures</font> for recovery of <font color="blue">under <font color="blue">collections</font></font>  and over  <font color="blue">collections</font>  in <font color="blue">balancing</font>  <font color="blue">accounts</font>  <font color="blue">existing on</font> or after November 29,  2001, as follows: (1) If a utility is within its rate case cycle and is not over  earning,   the  utility  shall  recover  its   <font color="blue">balancing</font>   account   subject  to  <font color="blue">reasonableness</font>  review;  and (2) If a utility is either within or outside of its  rate case cycle and is over earning, the utilityapstas recovery of expenses from the  <font color="blue">balancing</font>  <font color="blue">accounts</font>  will be reduced by the  amount of the over  earning,  again  subject to  <font color="blue">reasonableness</font>  review</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Utilities  </font>shall use the  recorded  rate of  <font color="blue">return test</font> to <font color="blue">evaluate earnings</font> for all years</td>
+    </tr>
+    <tr>
+      <td>It is  uncertain  how any future CPUC  regulation  dealing  with  <font color="blue">balancing</font>  account  balances  accrued  after  <font color="blue">November  </font>29, 2001 will affect San Jose Water  Companyapstas  ability to collect  such  balance or to receive  future  offset  rate  relief</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005,  the net amount of the CPUC reviewed  <font color="blue">accounts</font>  and those <font color="blue">pending review</font> are an under-collection of dlra244cmam000</td>
+    </tr>
+    <tr>
+      <td>12  <PAGE>         As of <font color="blue">December </font>31, 2005, <font color="blue"><font color="blue">San Jose Water Company</font> </font>has received all its offset  <font color="blue">rate requests</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">future impact on</font> <font color="blue">San Jose Water Company</font>apstas ability to recover  <font color="blue">balancing</font>   account  balances  and  receive  offset  rate  increases  cannot  be  determined  <font color="blue">at least until</font> San Jose Water  Companyapstas  <font color="blue">next offset rate</font>  increase  request, which is anticipated for July 2006</td>
+    </tr>
+    <tr>
+      <td>Changes in water  supply,  water  supply  costs or the mix of water  supply       <font color="blue">could <font color="blue">adversely</font> affect</font> the operating results and business of San Jose Water       Company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">San Jose Water Company</font>apstas  supply of water primarily  <font color="blue">relies upon three main</font>  sources:  water  purchased  from the  SCVWD,  surface  <font color="blue">water from</font> its Santa Cruz  Mountains  Watershed,  and pumped <font color="blue">underground</font>  water</td>
+    </tr>
+    <tr>
+      <td>Changes and <font color="blue">variations</font> in  quantities  from each of these three sources affect the overall mix of the water  supply, therefore <font color="blue">affecting</font> the cost of <font color="blue">water supply</font></td>
+    </tr>
+    <tr>
+      <td>Surface water is the least  <font color="blue">costly source</font> of water</td>
+    </tr>
+    <tr>
+      <td>If there is an adverse change to the mix of <font color="blue">water supply</font>  and <font color="blue"><font color="blue">San Jose Water Company</font> </font>is not <font color="blue">allowed by</font> the CPUC to recover the  <font color="blue">additional</font>  or  increased  water  supply  costs,  its  operating  results  may be  <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The SCVWD  </font>receives  an  allotment  of <font color="blue">water from</font> state and  federal  water  projects</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue"><font color="blue">San Jose Water Company</font> </font>has  <font color="blue">difficulties</font>  obtaining a <font color="blue">high quality</font>  <font color="blue">water supply</font> from the SCVWD due to  <font color="blue">availability</font> or legal  <font color="blue"><font color="blue">restriction</font>s</font>,  it may  not be able to satisfy  customer  demand in its service  area and its  operating  results and business may be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>Additionally,  the <font color="blue">availability</font>  of <font color="blue">water from</font> <font color="blue">San Jose Water Company</font>apstas Santa Cruz Mountains Watershed <font color="blue">depends on</font>  the weather and  <font color="blue">fluctuates</font>  <font color="blue">with each season</font></td>
+    </tr>
+    <tr>
+      <td>In a normal year,  surface water  supply  provides  6-8prca of the total <font color="blue">water supply</font> of the system</td>
+    </tr>
+    <tr>
+      <td>In a dry season  with little  rainfall,  water  supply  from  surface  water  sources may be low,  thereby causing <font color="blue"><font color="blue">San Jose Water Company</font> </font>to increase the amount of water purchased  from  outside  sources at a higher cost than surface  water and thus  increasing  <font color="blue">water production costs</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  San Jose Water  Companyapstas  ability to use  surface  water is  subject to <font color="blue">regulations</font>  regarding <font color="blue">water quality</font> and volume  <font color="blue">limitations</font></td>
+    </tr>
+    <tr>
+      <td>If new  <font color="blue">regulations</font>  are  imposed  or  existing  <font color="blue">regulations</font>  are  changed  or given new  <font color="blue">interpretations</font>,  the <font color="blue">availability</font> of <font color="blue">surface water may</font> be <font color="blue">materially reduced</font></td>
+    </tr>
+    <tr>
+      <td>A  reduction in <font color="blue">surface <font color="blue">water could</font></font> result in the need to procure more <font color="blue">costly water</font>  from other sources,  <font color="blue">thereby increasing</font> the <font color="blue">water production costs</font> and <font color="blue">adversely</font>  <font color="blue">affecting</font> the operating results of <font color="blue">San Jose Water Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because  </font>the  extraction  of  water  from  the  <font color="blue">groundwater</font>  basin  and the  operation  of the water  <font color="blue">distribution</font>  system  require a  <font color="blue">significant</font>  amount of  energy, increases in <font color="blue">energy prices could increase</font> operating expenses of <font color="blue">San Jose  </font>Water  Company</td>
+    </tr>
+    <tr>
+      <td>In the  aftermath of the attempt to <font color="blue">deregulate</font>  the  <font color="blue">California </font> <font color="blue">energy market</font>,  <font color="blue">energy costs still remain</font> in flux, with resulting <font color="blue">uncertainty</font> in  the companyapstas ability to <font color="blue">contain energy costs into</font> the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font> continues to utilize  Pacific Gas &amp; Electricapstas time  of use rate  schedules  to  minimize  its overall  energy  costs  primarily  for  <font color="blue">groundwater</font>  pumping</td>
+    </tr>
+    <tr>
+      <td>During the winter  months,  typically  90prca or more of the  <font color="blue">groundwater</font> is produced during off-peak hours when <font color="blue">electrical energy</font> is consumed  at the <font color="blue">lowest rates</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Optimization </font>and energy <font color="blue">management</font>  <font color="blue">efficiency</font> is achieved  through the <font color="blue">implementation</font> of Supervisory  Control and Data Acquisition  (SCADA)                                           13  <PAGE>    system  software  <font color="blue">application</font>s  that  control  <font color="blue">pumps based on demand</font> and cost of  energy</td>
+    </tr>
+    <tr>
+      <td>An  increase in demand or a reduction  in the  <font color="blue">availability</font>  of surface  water or import  <font color="blue">water could</font>  result in the need to pump more water  <font color="blue">during peak</font>  hours <font color="blue">adversely</font> <font color="blue">affecting</font> the operating results of <font color="blue">San Jose Water Company</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in customer demand for water due to <font color="blue">seasonality</font>,  <font color="blue"><font color="blue">restriction</font>s</font>       of use, weather and lifestyle can <font color="blue">adversely</font> affect operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font><font color="blue">operations</font> are seasonal</td>
+    </tr>
+    <tr>
+      <td>Thus, results of <font color="blue">operations</font>  for <font color="blue">one quarter</font> do not indicate  results to be expected in subsequent  quarters</td>
+    </tr>
+    <tr>
+      <td>Rainfall and other  weather  <font color="blue">conditions</font>  also affect the  <font color="blue">operations</font> of <font color="blue">San Jose  </font>Water Company</td>
+    </tr>
+    <tr>
+      <td>Most water  <font color="blue">consumption</font>  occurs during the <font color="blue">third quarter</font> of each  year when <font color="blue">weather tends</font> to be warm and dry</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">drought seasons</font>, if customers are  encouraged  and required to conserve  water due to a shortage of <font color="blue">water supply</font> or  <font color="blue">restriction</font>  of use,  revenue  tends to be lower</td>
+    </tr>
+    <tr>
+      <td>Similarly,  in unusually  wet  seasons,  <font color="blue">water supply</font> tends to be higher and customer demand tends to be lower,  again resulting in lower revenues</td>
+    </tr>
+    <tr>
+      <td>Furthermore,  <font color="blue">certain lifestyle choices</font> made  <font color="blue">by customers</font> can <font color="blue">affect demand</font> for water</td>
+    </tr>
+    <tr>
+      <td>For example, a <font color="blue">significant</font>  portion of  residential  water use is for outside  irrigation of lawns and  <font color="blue">landscaping</font></td>
+    </tr>
+    <tr>
+      <td>If  there is a  decreased  desire by  customers  to maintain  <font color="blue">landscaping</font>  for their  homes,  residential  water  demand  could  decrease,  which may  result in lower  revenues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conservation </font>efforts and construction codes, which require the use of  low-flow  plumbing  fixtures,  could  <font color="blue">diminish water</font>  <font color="blue">consumption</font>  and result in  <font color="blue">reduced revenue</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">contamination</font> event</font> or other decline in source <font color="blue">water quality</font> could affect       the <font color="blue">water supply</font> of <font color="blue"><font color="blue">San Jose Water Company</font> </font>and therefore  <font color="blue">adversely</font>  affect       the business and operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font>is subject to certain  <font color="blue">water quality</font> risks  relating  to <font color="blue">environmental</font>  <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Through <font color="blue">water quality</font> compliance  programs,  San  Jose Water Company  <font color="blue">continually</font>  monitors for <font color="blue">contamination</font> and pollution of its  sources of water</td>
+    </tr>
+    <tr>
+      <td>In the event of a  <font color="blue">contamination</font>,  <font color="blue"><font color="blue">San Jose Water Company</font> </font>will  likely  have to procure  <font color="blue">water from</font> more  costly  sources  and  increase  future  capital  <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>Although the costs would likely be recovered in the form  of higher  rates,  there can be no  assurance  that  CPUC  would  approve a rate  increase to recover the costs</td>
+    </tr>
+    <tr>
+      <td>San Jose Water  Company is subject to  <font color="blue">litigation</font>  risks  <font color="blue">concerning</font>  water       quality and <font color="blue">contamination</font></td>
+    </tr>
+    <tr>
+      <td>Although  San  Jose  Water  Company  has not been and is not a party to any  <font color="blue">environmental</font> and  product-related  lawsuits,  <font color="blue">such lawsuits against</font> other water  utilities have increased in frequency in <font color="blue">recent years</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue"><font color="blue">San Jose Water Company</font> </font> is  subject to an  <font color="blue">environmental</font>  or  product-related  lawsuit,  it might  incur  <font color="blue">significant</font>  <font color="blue">legal costs</font> and it is <font color="blue">uncertain whether</font> it would be able to recover  the <font color="blue">legal costs</font> from ratepayers or other <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  if current  <font color="blue">California </font>law regarding CPUCapstas  preemptive  <font color="blue">jurisdiction</font>  <font color="blue">over regulated public</font>  utilities  for claims about  compliance  with  <font color="blue">California </font> Department  of Health  Services (CDHS) and United States  Environmental  Protection  Agency (EPA) water  <font color="blue">quality standards</font>  changes,  the <font color="blue">legal exposure</font> of <font color="blue"><font color="blue">San Jose Water Company</font> </font>may be  <font color="blue">significant</font>ly increased</td>
+    </tr>
+    <tr>
+      <td>14  <PAGE>         New or more  stringent  <font color="blue">environmental</font>  <font color="blue">regulations</font>  could increase <font color="blue">San Jose  </font>     Water Companyapstas operating costs and affect its business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">San Jose  </font>Water  Companyapstas  <font color="blue">operations</font>  are  subject to water  quality  and  pollution  control  <font color="blue">regulations</font>  issued by the EPA, the CDHS and the  <font color="blue">California </font> Regional Water Quality Control Board</td>
+    </tr>
+    <tr>
+      <td>It is also subject to  <font color="blue">environmental</font>  laws  and <font color="blue">regulations</font> administered by other state and <font color="blue">local <font color="blue">regulatory</font> agencies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Stringent  </font><font color="blue">environmental</font>  and <font color="blue">water quality</font>  <font color="blue">regulations</font> could increase San  Jose Water  Companyapstas  water  quality  compliance  costs,  hamper San Jose Water  Companyapstas <font color="blue">available water supplies</font>, and <font color="blue">increase future capital expenditure</font></td>
+    </tr>
+    <tr>
+      <td>Under the federal Safe Drinking Water Act (SDWA), <font color="blue"><font color="blue">San Jose Water Company</font> </font>is  subject to  <font color="blue">regulation by</font> the EPA of the quality of water it sells and treatment  <font color="blue">techniques</font> it uses to make the water  potable</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The EPA  </font>promulgates  <font color="blue">nationally</font>  applicable  standards,  including <font color="blue">maximum contaminant levels</font> (MCLs) for drinking  water</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that San Jose Water  Company will be able to continue to <font color="blue">comply with</font> all <font color="blue">water quality</font> <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font>has implemented  <font color="blue">monitoring <font color="blue">activities</font></font> and installed  <font color="blue">specific water treatment</font>  <font color="blue">improvements</font>  enabling it to <font color="blue">comply with</font> existing MCLs  and plan for compliance with future drinking water <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>However, the EPA  and CDHS have continuing  authority to issue  <font color="blue">additional</font>  <font color="blue">regulations</font>  under the  SDWA It is possible that new or more stringent <font color="blue">environmental</font> standards could be  imposed  that will  raise  <font color="blue">San Jose  </font>Water  Companyapstas  operating  costs</td>
+    </tr>
+    <tr>
+      <td>Future  drinking  water  <font color="blue">regulations</font>  may  require  increased   monitoring,   <font color="blue">additional</font>  treatment of <font color="blue">underground</font>  water  supplies,  <font color="blue">fluoridation</font>  of all supplies,  more  stringent  performance  standards for <font color="blue">treatment plants</font> and procedures to further  <font color="blue">reduce levels</font> of <font color="blue">disinfection</font>  <font color="blue">byproducts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font> continues to  seek to <font color="blue">establish <font color="blue">mechanisms</font></font> for recovery of  government-mandated  <font color="blue">environmental</font>  compliance  costs</td>
+    </tr>
+    <tr>
+      <td>There  are  currently  limited  <font color="blue">regulatory</font>   <font color="blue">mechanisms</font>  and  <font color="blue">procedures available</font> to the company for the recovery of <font color="blue">such costs</font> and there can  be no assurance that <font color="blue">such costs</font> will be <font color="blue">fully recovered</font></td>
+    </tr>
+    <tr>
+      <td>Costs  associated  <font color="blue">with security</font>  <font color="blue"><font color="blue">precautions</font> may</font> have an adverse effect on       the operating results of <font color="blue">San Jose Water Company</font></td>
+    </tr>
+    <tr>
+      <td>Water utility  companies have <font color="blue">generally been on</font> a heightened state of alert  since the threats to the nationapstas  health and security in the fall of 2001</td>
+    </tr>
+    <tr>
+      <td>San  Jose Water  Company has taken steps to  increase  security at its water  utility  <font color="blue">facilities</font> and continues to implement a <font color="blue">comprehensive</font>  security  <font color="blue">upgrade program</font>  for production and storage <font color="blue">facilities</font>,  <font color="blue">pump stations</font> and <font color="blue">company buildings</font></td>
+    </tr>
+    <tr>
+      <td>San  Jose Water  Company also  <font color="blue">coordinates</font>  security and  planning  information  with  SCVWD,  other  Bay  Area  water  utilities  and  various  <font color="blue">governmental</font>  and  law  <font color="blue">enforcement agencies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font>conducted a system-wide  <font color="blue"><font color="blue">vulnerability</font> <font color="blue">assessment</font></font> in  compliance  with  federal  <font color="blue">regulations</font>  <font color="blue">Public Law </font>107-188  <font color="blue">imposed on</font> all water  utilities</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">assessment</font>  report was <font color="blue">filed with</font> the EPA on March 31, 2003</td>
+    </tr>
+    <tr>
+      <td><font color="blue">San                                           </font>15  <PAGE>    Jose Water Company has <font color="blue">also actively participated</font> in the security  <font color="blue">vulnerability</font>  <font color="blue">assessment</font>  training  offered by the American Water Works  Association  Research  Foundation and the EPA         The <font color="blue">vulnerability</font>  <font color="blue">assessment</font>  identified <font color="blue">system security enhancements</font> that  impact  water  quality,  health,  safety  and  <font color="blue">continuity</font>  of  service  totaling  <font color="blue">approximately</font>  dlra2cmam300cmam000,  exclusive  of the years  2001 to 2002  <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">improvements</font>  were incorporated into the <font color="blue">capital budgets</font> and are expected  to be completed in the <font color="blue">first quarter</font> of 2006</td>
+    </tr>
+    <tr>
+      <td>For the years ended  <font color="blue">December </font>31,  2005, 2004 and 2003 dlra1cmam031cmam000, dlra643cmam000 and dlra540cmam000,  <font color="blue">respectively</font>, were spent  on capital projects to improve and <font color="blue">enhance security</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">San Jose Water Company</font> </font>has  and <font color="blue">will continue</font> to bear costs <font color="blue">associated with</font> <font color="blue">additional</font> security  <font color="blue">precautions</font>  to protect its <font color="blue">water utility</font> business and other <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>While some of these  costs are likely to be  recovered in the form of higher  rates,  there can be no  assurance  that the CPUC <font color="blue">will approve</font> a rate  increase to recover all or part of  <font color="blue">such costs</font>, and as a result, the companyapstas operating results and business may be  <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  the  <font color="blue">independent</font>  <font color="blue">auditors must</font> report on <font color="blue">management</font>apstas  <font color="blue">evaluation</font> of those controls</td>
+    </tr>
+    <tr>
+      <td>apstas <font color="blue">evaluation</font> of <font color="blue">internal controls</font> and the  <font color="blue">independent</font>  auditorapstas  <font color="blue">evaluation</font>  are  unable to  provide  SJW  Corp</td>
+    </tr>
+    <tr>
+      <td>with an  unqualified  report  as to the  <font color="blue">effectiveness</font>  of  its  internal  controls  over  financial reporting for future year-ends, investors could lose confidence in the  <font color="blue">reliability</font>  of SJW  Corp</td>
+    </tr>
+    <tr>
+      <td>apstas  financial  statements,  which  could  result  in a  decrease in the <font color="blue">intrinsic value</font> of SJW Corp</td>
+    </tr>
+    <tr>
+      <td>Other factors that affect operating results         Other  factors that could  <font color="blue">adversely</font>  affect the  operating  results of SJW  Corp</td>
+    </tr>
+    <tr>
+      <td>and its <font color="blue">subsidiaries</font> include the following:         o    SJW Corp</td>
+    </tr>
+    <tr>
+      <td>apstas  growth  strategy  <font color="blue">depends on</font> its ability to acquire water            systems in order to broaden  the  service  areas,  SJW Land  Companyapstas            ability to continue to develop and invest in the  <font color="blue">nonutility</font>  property            at favorable terms,  and <font color="blue">San Jose Water Company</font>apstas  ability to continue            to broaden  and  expand  its  <font color="blue">nonregulated</font>  contract  services  in the            <font color="blue">metropolitan</font>  <font color="blue">San Jose  </font>area</td>
+    </tr>
+    <tr>
+      <td>apstas  growth            <font color="blue">strategy will expose</font> it to <font color="blue">different risks than</font> those  <font color="blue">associated with</font>            the utility  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional  </font>costs are incurred in <font color="blue">connection</font>            with the  execution  of the growth  strategy and risks are involved in            potential  <font color="blue">integration</font> of acquired  <font color="blue">businesses</font>/properties  <font color="blue">which could</font>            require <font color="blue">significant</font> costs and cause diversion of <font color="blue">management</font>apstas time and            resources</td>
+    </tr>
+    <tr>
+      <td>Any future  <font color="blue">acquisition</font> SJW Corp</td>
+    </tr>
+    <tr>
+      <td><font color="blue">apstas core</font>            business,  impact SJW  Corp</td>
+    </tr>
+    <tr>
+      <td>apstas  ability to finance  the  business  and            affect its compliance with <font color="blue">regulatory</font> <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">businesses</font> SJW            Corp</td>
+    </tr>
+    <tr>
+      <td>acquires may not achieve sales,  customer  growth and projected            <font color="blue">profitability</font>  that <font color="blue">would justify</font> the <font color="blue">investment</font> and any  <font color="blue">difficulties</font>                                           16  <PAGE>              SJW  Corp</td>
+    </tr>
+    <tr>
+      <td><font color="blue">encounters</font>  in  the  <font color="blue">integration</font>  process,  including  the            <font color="blue">integration</font> of controls  <font color="blue">necessary</font> for internal  control and financial            reporting,  <font color="blue">could interfere with</font> its <font color="blue">operations</font>,  reduce its operating            margins and <font color="blue">adversely</font> affect its <font color="blue">internal controls</font></td>
+    </tr>
+    <tr>
+      <td>o    The successful  <font color="blue">acquisition</font>  of the announced  purchase of Canyon Lake            Water Supply  Corporation  <font color="blue">depends on</font> SJWapstas ability to operate  within            the  various  Texas  <font color="blue">regulatory</font>   regimes,   including  the  economic,            <font color="blue">environmental</font> and treasury  <font color="blue">regulatory</font>  agencies,  retire the existing            <font color="blue">Canyon Lake Water Supply Corporation </font><font color="blue">mortgaged loan on</font> favorable terms            and  <font color="blue">conditions</font>,  to  <font color="blue">efficiently</font>  integrate an  out-of-state  utility            operation  and to <font color="blue">find cost savings</font>  arising from  synergies and other            <font color="blue">unforeseen circumstances</font></td>
+    </tr>
+    <tr>
+      <td>o    The level of labor and non-labor operating and <font color="blue">maintenance expenses</font> as            <font color="blue"><font color="blue">affected by</font> inflationary forces</font> and <font color="blue">collective</font>  <font color="blue">bargaining power could</font>            <font color="blue">adversely</font> affect the operating and <font color="blue">maintenance expenses</font> of SJW Corp</td>
+    </tr>
+    <tr>
+      <td>o    The City of Cupertinoapstas <font color="blue">lease operation could</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affected</font> by</font>            capital  <font color="blue">requirements</font>,  the ability of <font color="blue"><font color="blue">San Jose Water Company</font> </font>to raise            rates through the Cupertino  City Council,  and the level of operating            and <font color="blue">maintenance expenses</font></td>
+    </tr>
+    <tr>
+      <td>o    If <font color="blue">recycled water</font> is <font color="blue">widely accepted as</font> a substitute for <font color="blue">potable water</font>            and if rights are granted to others to serve San Jose Water  Companyapstas            customers <font color="blue">recycled water</font>, <font color="blue">San Jose Water Company</font>apstas sales,  revenue and            operating results would be <font color="blue"><font color="blue">negatively</font> impacted</font></td>
+    </tr>
+    <tr>
+      <td>o    SJW Land  Companyapstas  expenses  and  operating  results  also  could be            <font color="blue">adversely</font>  <font color="blue">affected by</font> the parking lot <font color="blue">activities</font>,  <font color="blue">the HP Pavilion</font> at            San Jose events, ongoing local, state and <font color="blue">federal land use <font color="blue">development</font></font>            <font color="blue">activities</font>  and  <font color="blue">regulations</font>,  future  economic  <font color="blue">conditions</font>,  and  the            <font color="blue">development</font>   and   <font color="blue">fluctuations</font>   in  the  sale  of  the  undeveloped            properties</td>
+    </tr>
+    <tr>
+      <td>The San Jose Sharks, a <font color="blue">professional</font> hockey team, performs            at <font color="blue">the HP Pavilion</font></td>
+    </tr>
+    <tr>
+      <td>As a result of the  <font color="blue">cancellation</font> of the 2004-2005            hockey  season  by the  National  Hockey  League,  SJW Land  Companyapstas            parking lot revenue was <font color="blue">negatively</font>  impacted</td>
+    </tr>
+    <tr>
+      <td>The success of SJW Land            Companyapstas real estate <font color="blue">development</font>  <font color="blue">strategy depends largely on ongoing</font>            local,   state  and  federal  land  use  <font color="blue">development</font>   <font color="blue">activities</font>  and            <font color="blue">regulations</font>,   future   economic   <font color="blue">conditions</font>,   the  <font color="blue">development</font>  and            <font color="blue">fluctuations</font> in the sale of the <font color="blue">undeveloped properties</font>, the ability to            identify the developer/potential  buyer of the available for sale real            estate, the timing of the <font color="blue">transaction</font>,  favorable tax law, the ability            to identify and acquire <font color="blue">high quality</font>,  <font color="blue">relatively low risk replacement</font>            property  at  reasonable  terms  and  <font color="blue">conditions</font>  and the  ability  to            maintain and manage the <font color="blue">replacement property</font></td>
+    </tr>
+  </tbody>
+</table>

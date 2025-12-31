@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: common stock", fill: "#ffc40c"},
+{source: "2: common stock", target: "2: periodic filings with", fill: "#ffc40c"},
+{source: "2: periodic filings with", target: "2: SEC Investors ", fill: "#ffc40c"},
+{source: "2: SEC Investors ", target: "2: should carefully", fill: "#ffc40c"},
+{source: "2: should carefully", target: "2: risks along with", fill: "#ffc40c"},
+{source: "2: risks along with", target: "2: investment decision", fill: "#ffc40c"},
+{source: "2: common stock", target: "3: additional risks", fill: "#00703c"},
+{source: "3: additional risks", target: "4: operations", fill: "#9dc209"},
+{source: "4: operations", target: "5: based on", fill: "#6495ed"},
+{source: "5: based on", target: "5: market value", fill: "#6495ed"},
+{source: "5: market value", target: "5: composition", fill: "#6495ed"},
+{source: "5: composition", target: "5: management", fill: "#6495ed"},
+{source: "5: management", target: "5: fluctuation", fill: "#6495ed"},
+{source: "5: fluctuation", target: "5: factors outside", fill: "#6495ed"},
+{source: "5: based on", target: "6: subsidiaries", fill: "#7c1c05"},
+{source: "6: subsidiaries", target: "6: institutional investors", fill: "#7c1c05"},
+{source: "6: institutional investors", target: "6: mutual funds", fill: "#7c1c05"},
+{source: "6: mutual funds", target: "6: investment portfolios", fill: "#7c1c05"},
+{source: "6: subsidiaries", target: "7: investment advisory", fill: "#fffafa"},
+{source: "7: investment advisory", target: "7: fees typically", fill: "#fffafa"},
+{source: "7: fees typically", target: "7: calculated as", fill: "#fffafa"},
+{source: "7: calculated as", target: "7: market value", fill: "#fffafa"},
+{source: "7: market value", target: "7: management", fill: "#fffafa"},
+{source: "7: investment advisory", target: "8: generally earn higher fees on assets", fill: "#0892d0"},
+{source: "8: generally earn higher fees on assets", target: "8: equity funds", fill: "#0892d0"},
+{source: "8: equity funds", target: "8: equity investment portfolios than", fill: "#0892d0"},
+{source: "8: equity investment portfolios than", target: "8: on assets invested", fill: "#0892d0"},
+{source: "8: on assets invested", target: "8: income funds", fill: "#0892d0"},
+{source: "8: generally earn higher fees on assets", target: "11: dependent", fill: "#b7410e"},
+{source: "11: dependent", target: "11: composition", fill: "#b7410e"},
+{source: "11: composition", target: "11: assets under", fill: "#b7410e"},
+{source: "11: assets under", target: "11: management", fill: "#b7410e"},
+{source: "11: management", target: "11: fluctuation due", fill: "#b7410e"},
+{source: "11: fluctuation due", target: "11: of the Investor Mobility", fill: "#b7410e"},
+{source: "11: dependent", target: "27: assets under", fill: "#ffebcd"},
+{source: "27: assets under", target: "27: management", fill: "#ffebcd"},
+{source: "27: management", target: "27: composition could", fill: "#ffebcd"},
+{source: "27: composition could", target: "27: investment", fill: "#ffebcd"},
+{source: "27: investment", target: "27: advisory fees", fill: "#ffebcd"},
+{source: "27: assets under", target: "37: different regulatory environment than", fill: "#ed1c24"},
+{source: "37: different regulatory environment than", target: "37: may give them certain competitive advantages", fill: "#ed1c24"},
+{source: "37: may give them certain competitive advantages", target: "37: investment products", fill: "#ed1c24"},
+{source: "37: investment products", target: "37: portfolio structures", fill: "#ed1c24"},
+{source: "37: different regulatory environment than", target: "START_HERE", fill: "#ed1c24"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Investigate</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Finance">Finance</a></td>
+      <td>Finance is the study and discipline of money, currency and capital assets. It is related with, but not synonymous with economics, the study of production, distribution, and consumption of money, assets, goods and services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_management">Investment management</a></td>
+      <td>Investment management is the professional asset management of various securities, including shareholdings, bonds, and other assets, such as real estate, to meet specified investment goals for the benefit of investors. Investors may be institutions, such as insurance companies, pension funds, corporations, charities, educational establishments, or private investors, either directly via investment contracts or, more commonly, via collective investment schemes like mutual funds, exchange-traded funds, or REITs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_fund">Investment fund</a></td>
+      <td>An investment fund is a way of investing money alongside other investors in order to benefit from the inherent advantages of working as part of a group such as reducing the risks of the investment by a significant percentage. These advantages include an ability to:\n\nhire professional investment managers, who may offer better returns and more adequate risk management;\nbenefit from economies of scale, i.e., lower transaction costs;\nincrease the asset diversification to reduce some unsystematic risk.It remains unclear whether professional active investment managers can reliably enhance risk adjusted returns by an amount that exceeds fees and expenses of investment management.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Risk_management">Risk management</a></td>
+      <td>Risk management is the identification, evaluation, and prioritization of risks (defined in ISO 31000 as the effect of uncertainty on objectives) followed by coordinated and economical application of resources to minimize, monitor, and control the probability or impact of unfortunate events or to maximize the realization of opportunities.\nRisks can come from various sources including uncertainty in international markets, threats from project failures (at any phase in design, development, production, or sustaining of life-cycles), legal liabilities, credit risk, accidents, natural causes and disasters, deliberate attack from an adversary, or events of uncertain or unpredictable root-cause.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Management">Management</a></td>
+      <td>Management (or managing) is the administration of an organization, whether it is a business, a non-profit organization, or a government body. It is the art and science of managing resources of the business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Agile_management">Agile management</a></td>
+      <td>Agile management is the application of the principles of Agile software development to various management processes, particularly project management. Following the appearance of the Manifesto for Agile Software Development in 2001, Agile techniques started to spread into other areas of activity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_management">Network management</a></td>
+      <td>Network management is the process of administering and managing computer networks. Services provided by this discipline include fault analysis, performance management, provisioning of networks and maintaining quality of service.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_management">Sport management</a></td>
+      <td>Sport management is the field of business dealing with sports and recreation. Sports management involves any combination of skills that correspond with planning, organizing, directing, controlling, budgeting, leading, or evaluating of any organization or business within the sports field.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_management">Emergency management</a></td>
+      <td>Emergency management, also called emergency response or disaster management, is the organization and management of the resources and responsibilities for dealing with all humanitarian aspects of emergencies (prevention, preparedness, response, mitigation, and recovery). The aim is to prevent and reduce the harmful effects of all hazards, including disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Test_management">Test management</a></td>
+      <td>Test management most commonly refers to the activity of managing a testing process. A test management tool is software used to manage tests (automated or manual) that have been previously specified by a test procedure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Problem_management">Problem management</a></td>
+      <td>Problem management is the process responsible for managing the lifecycle of all problems that happen or could happen in an IT service. The primary objectives of problem management are to prevent problems and resulting incidents from happening, to eliminate recurring incidents, and to minimize the impact of incidents that cannot be prevented.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mutual_fund">Mutual fund</a></td>
+      <td>A mutual fund is a professionally managed investment fund that pools money from many investors to purchase securities. The term is typically used in the United States, Canada, and India, while similar structures across the globe include the SICAV in Europe ('investment company with variable capital') and open-ended investment company (OEIC) in the UK.\nMutual funds are often classified by their principal investments: money market funds, bond or fixed income funds, stock or equity funds, or hybrid funds.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Assets_under_management">Assets under management</a></td>
+      <td>In finance, assets under management (AUM), sometimes called funds under management, measures the total market value of all the financial assets which an individual or financial institution—such as a mutual fund, venture capital firm, or depository institution—or a decentralized network protocol controls, typically on behalf of a client.  These funds may be managed for clients/users or for themselves in the case of a financial institution which has mutual funds or holds its own venture capital.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_US_mutual_funds_by_assets_under_management">List of US mutual funds by assets under management</a></td>
+      <td>This is a list of mutual funds and ETFs in the United States ordered by assets under management as of March 31, 2016. The numbers listed below are from the Lipper Performance Report.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Foreign_direct_investment">Foreign direct investment</a></td>
+      <td>A foreign direct investment (FDI) is an investment in the form of a controlling ownership in a business in one country by an entity based in another country. It is thus distinguished from a foreign portfolio investment by a notion of direct control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_banking">Investment banking</a></td>
+      <td>Investment banking denotes certain activities of a financial services company or a corporate division that consist in advisory-based financial transactions on behalf of individuals, corporations, and governments. Traditionally associated with corporate finance, such a bank might assist in raising financial capital by underwriting or acting as the client's agent in the issuance of debt or equity securities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment">Investment</a></td>
+      <td>Investment is the dedication of an asset to attain an increase in value over a period of time. Investment requires a sacrifice of some present asset, such as time, money, or effort.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alternative_investment">Alternative investment</a></td>
+      <td>An alternative investment (also called an alternative asset) is an investment in any asset class excluding stocks, bonds, and cash. The term is a relatively loose one and includes tangible assets such as precious metals, collectibles (art, wine, antiques, cars, coins, musical instruments, or stamps) and some financial assets such as real estate, commodities, private equity, distressed securities, hedge funds, exchange funds, carbon credits, venture capital, film production, financial derivatives, cryptocurrencies, non-fungible tokens, and tax receivable agreements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_largest_banks">List of largest banks</a></td>
+      <td>These are lists of the banks in the world, as measured by total assets.\n\n\n== By total assets ==\nThe list is based on the April 2021 S&amp;P Global Market Intelligence report of the 100 largest banks in the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Asset">Asset</a></td>
+      <td>In financial accounting, an asset is any resource owned or controlled by a business or an economic entity. It is anything (tangible or intangible) that can be used to produce positive economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_largest_banks_in_the_United_States">List of largest banks in the United States</a></td>
+      <td>The following table lists the 100 largest bank holding companies in the United States ranked by total assets of September 30, 2021 per the Federal Financial Institutions Examination Council; their market capitalization is also shown. This list does not include some large commercial banks, which are not holding companies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Global_assets_under_management">Global assets under management</a></td>
+      <td>Global assets under management consists of assets held by asset management firms, pension funds, sovereign wealth funds, hedge funds, and private equity funds.\n\n\n== Assets by classification ==\nAM - Asset Management Firm\nFOREX - Foreign Exchange Reserves\nHF - Hedge Fund\nMF - (Exchange Traded) Mutual Fund\nPEN - Pension Fund\nPE - Private Equity Firm\nSWF - Sovereign Wealth Fund\nUHNWI - (Billionaire) Ultra High-Net-Worth Individual^1 Around one third of private wealth is incorporated in conventional investment management (Pension funds, Mutual funds and Insurance assets).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_asset">Financial asset</a></td>
+      <td>A financial asset is a non-physical asset whose value is derived from a contractual claim, such as bank deposits, bonds, and participations in companies' share capital. Financial assets are usually more liquid than other tangible assets, such as commodities or real estate.The opposite of financial assets is non-financial assets, which include both tangible property (sometimes also called real assets) such as land, real estate or commodities, and intangible assets such as intellectual property, including copyrights, patents, trademarks and data.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cascade_Investment">Cascade Investment</a></td>
+      <td>Cascade Investment, L.L.C. is an American holding company and private investment firm headquartered in Kirkland, Washington, United States. It is controlled by Bill Gates, and managed by Michael Larson.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_company">Investment company</a></td>
+      <td>An investment company is a financial institution principally engaged in investing in securities. These companies in the United States are regulated by the U.S. Securities and Exchange Commission and must be registered under the Investment Company Act of 1940.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>PRICE T ROWE GROUP INC      Item 1A   <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">investment</font> in our <font color="blue">common stock</font> involves various risks, including those     mentioned below and those that are discussed from time-to-time in our other     <font color="blue">periodic filings with</font> the <font color="blue">SEC Investors </font><font color="blue">should carefully</font> consider these     risks, along with the other information contained in this report, before     making an <font color="blue"><font color="blue">investment</font> decision</font> regarding our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>There may be     <font color="blue"><font color="blue">additional</font> risks</font> of which we are currently unaware, or which we currently     consider immaterial</td>
+    </tr>
+    <tr>
+      <td>All of these risks could have a material adverse effect     on our financial condition, results of <font color="blue">operations</font>, and value of our common     stock</td>
+    </tr>
+    <tr>
+      <td>RISKS RELATING TO OUR BUSINESS AND THE FINANCIAL SERVICES INDUSTRY     Our revenues are <font color="blue">based on</font> the <font color="blue">market value</font> and <font color="blue">composition</font> of the assets     under our <font color="blue">management</font>, all of which are subject to <font color="blue">fluctuation</font> caused by     <font color="blue">factors outside</font> of our control</td>
+    </tr>
+    <tr>
+      <td>We derive our revenues primarily from <font color="blue"><font color="blue">investment</font> advisory</font> services provided     by our <font color="blue">subsidiaries</font> to individual and <font color="blue">institutional investors</font> in the T Rowe     Price <font color="blue"><font color="blue">mutual fund</font>s</font> and other <font color="blue"><font color="blue">investment</font> portfolios</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">investment</font> advisory</font>     <font color="blue">fees typically</font> are <font color="blue">calculated as</font> a percentage of the <font color="blue">market value</font> of the     assets  under  our <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue"><font color="blue">generally</font> earn higher fees on assets</font>     invested in our <font color="blue">equity funds</font> and equity <font color="blue"><font color="blue">investment</font> portfolios</font> than we earn     <font color="blue">on <font color="blue">assets invested</font></font> in our fixed <font color="blue">income funds</font> and portfolios</td>
+    </tr>
+    <tr>
+      <td>Among equity     <font color="blue"><font color="blue">investment</font>s</font>,  there  is  a  <font color="blue">significant</font>  variation in <font color="blue">fees earned from</font>     index-based  <font color="blue"><font color="blue"><font color="blue">investment</font>s</font> at</font> the low end and <font color="blue"><font color="blue">emerging market</font>s funds</font> and     <font color="blue">portfolios at</font> the high end</td>
+    </tr>
+    <tr>
+      <td>Fees <font color="blue">also vary across</font> the fixed <font color="blue">income funds</font> and     portfolios, though not as widely as equity <font color="blue"><font color="blue">investment</font>s</font>, with money market     <font color="blue">securities at</font> the low end and non-US bonds at the high end</td>
+    </tr>
+    <tr>
+      <td>As a result,     our revenues are <font color="blue">dependent</font> on the value and <font color="blue">composition</font> of the <font color="blue">assets under</font>     our <font color="blue">management</font>, all of which are subject to substantial <font color="blue">fluctuation</font> due to     many factors, including:     •   Investor Mobility</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investors <font color="blue">generally</font> may withdraw</font> their funds at     any time, on very short notice and without any <font color="blue">significant</font> penalty</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">General Market Declines</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">general downturn</font> in stock or <font color="blue">bond prices</font>     would cause the value of <font color="blue">assets under</font> our <font color="blue">management</font> to decrease, and may     also  cause  investors  to withdraw their <font color="blue"><font color="blue">investment</font>s</font>, thereby further     <font color="blue">decreasing</font> the level of <font color="blue">assets under</font> our <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue"><font color="blue">Investment </font>Performance</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">investment</font> performance of our managed     portfolios is less than that of our <font color="blue">competitors</font> or applicable third-party     <font color="blue">benchmarks</font>, we <font color="blue">could lose</font> existing and potential customers and suffer a     decrease in <font color="blue">assets under</font> <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Institutional </font>investors in particular     consider changing <font color="blue">investment</font> advisors based upon poor relative <font color="blue">investment</font>     performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Individual </font>investors in contrast are more likely to react to     <font color="blue">poor absolute <font color="blue">investment</font> performance</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Global Economies</font></td>
+    </tr>
+    <tr>
+      <td>National and <font color="blue">international</font> political and economic     events may cause financial market declines that lower the value of assets     under our <font color="blue">management</font>, and may cause investors to withdraw funds</td>
+    </tr>
+    <tr>
+      <td>Changes in investing trends and, in particular,     <font color="blue">retirement savings trends may reduce interest</font> in our funds and portfolios     and may alter our mix of assets</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Interest Rate Changes</font></td>
+    </tr>
+    <tr>
+      <td>Investor interest in and the valuation of our     fixed <font color="blue">income <font color="blue">investment</font> funds</font> and portfolios are <font color="blue">affected by</font> changes in     <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Tax Regulation Changes</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the status of <font color="blue">tax deferred retirement</font>     plan  <font color="blue"><font color="blue">investment</font>s</font>  and tax-free municipal bonds, the <font color="blue">capital gains</font> and     <font color="blue">corporate dividend tax rates</font>, and other individual and <font color="blue">corporate tax rates</font>     and <font color="blue"><font color="blue">regulations</font> <font color="blue">could <font color="blue">adversely</font> affect</font> investor behavior</font> and may cause     investors to view <font color="blue">certain <font color="blue">investment</font> offerings less favorably</font> and withdraw     their <font color="blue">investment</font> assets, thereby <font color="blue">decreasing</font> the level of <font color="blue">assets under</font> our     <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>A decrease in the value of <font color="blue">assets under</font> our <font color="blue">management</font>, or adverse change in     their <font color="blue">composition</font>, could have a material adverse effect on our <font color="blue">investment</font>     <font color="blue">advisory fees</font> and revenues</td>
+    </tr>
+    <tr>
+      <td>-8-       _________________________________________________________________           A <font color="blue">significant</font> majority of our revenues are <font color="blue">based on</font> contracts with the <font color="blue">Price     </font>funds that are subject to <font color="blue"><font color="blue">termination</font> without</font> cause and on short notice</td>
+    </tr>
+    <tr>
+      <td>We  provide <font color="blue"><font color="blue">investment</font> advisory</font>, <font color="blue">distribution</font> and other <font color="blue">administrative</font>     services to the Price <font color="blue">funds under various agreements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investment </font>advisory     services  are  provided to each Price fund under individual <font color="blue">investment</font>     <font color="blue">management</font> agreements</td>
+    </tr>
+    <tr>
+      <td>The board of each Price <font color="blue">fund must annually approve</font>     the  terms of the <font color="blue">investment</font> <font color="blue">management</font> and <font color="blue">service agreements</font> and can     terminate the agreement upon 60-day notice</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If a Price </font>fund seeks to lower     the  fees  that we receive or terminate its <font color="blue">contract with us</font>, we would     experience a decline in <font color="blue">fees earned from</font> the Price funds, <font color="blue">which could</font> have a     material adverse effect on our revenues and net income</td>
+    </tr>
+    <tr>
+      <td>We operate in an intensely competitive industry, <font color="blue">which could</font> cause a loss of     customers and their assets, thereby reducing our <font color="blue">assets under</font> <font color="blue">management</font> and     our revenues and net income</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">competition</font> in all aspects of our business from:     •   asset <font color="blue">management</font> firms,     •   <font color="blue"><font color="blue">mutual fund</font> companies</font>,     •   <font color="blue">commercial banks</font> and <font color="blue">thrift <font color="blue">institutions</font></font>,     •   <font color="blue">insurance companies</font>,     •   <font color="blue">hedge funds</font>,     •   <font color="blue">exchange traded funds</font>,     •   brokerage and <font color="blue">investment</font> banking firms, and     •   other  financial  <font color="blue">institutions</font>  including  <font color="blue">multinational firms</font> and     <font color="blue">subsidiaries</font> of <font color="blue">diversified conglomerates</font></td>
+    </tr>
+    <tr>
+      <td>Many of these financial <font color="blue">institutions</font> have <font color="blue">substantially</font> greater resources     than we do and may offer a broader range of products or operate in more     markets</td>
+    </tr>
+    <tr>
+      <td>Some operate in a <font color="blue">different <font color="blue">regulatory</font> environment than</font> we do which     <font color="blue">may give them certain competitive advantages</font> in the <font color="blue">investment</font> products and     <font color="blue">portfolio structures</font> that they offer</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> other providers of     <font color="blue">investment</font>  advisory  services primarily <font color="blue">based on</font> the <font color="blue">availability</font> and     <font color="blue">objectives</font> of the <font color="blue"><font color="blue">investment</font> portfolios</font> offered, our <font color="blue">investment</font> performance,     and  the  scope  and quality of our <font color="blue">investment</font> advice and other client     services</td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">institutions</font> have <font color="blue"><font color="blue">proprietary</font> products</font> and <font color="blue">distribution</font>     channels that make it more <font color="blue">difficult</font> for us to <font color="blue">compete with</font> them</td>
+    </tr>
+    <tr>
+      <td>We believe     that <font color="blue">competition</font> within the <font color="blue">investment</font> <font color="blue">management</font> industry will increase as     a  result  of  <font color="blue">consolidation</font>  and <font color="blue">acquisition activity</font> and because new     <font color="blue">competitors</font> face few barriers to entry</td>
+    </tr>
+    <tr>
+      <td>Most of our <font color="blue"><font color="blue">investment</font> portfolios</font>     are available without sales or <font color="blue">redemption</font> fees, which means that investors     may be more willing to transfer assets to competing funds</td>
+    </tr>
+    <tr>
+      <td>If current or <font color="blue">potential customers decide</font> to use one of our <font color="blue">competitors</font>, we     could face a <font color="blue">significant</font> decline in market share, <font color="blue">assets under</font> <font color="blue">management</font>,     revenues, and net income</td>
+    </tr>
+    <tr>
+      <td>If we are required to lower our fees in order to     <font color="blue">remain competitive</font>, our <font color="blue">net income could</font> be <font color="blue">significant</font>ly reduced because     some of our expenses are fixed, <font color="blue">especially over shorter periods</font> of time, and     <font color="blue">others may</font> not decrease in proportion to the decrease in revenues</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends on</font> our <font color="blue">key personnel</font> and our <font color="blue">financial performance could</font>     be negatively <font color="blue">affected by</font> the loss of their services</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends on</font> our <font color="blue">highly skilled personnel</font>, including our portfolio     and fund managers, <font color="blue">investment</font> analysts, <font color="blue">management</font> and <font color="blue">client relationship</font>     personnel, and <font color="blue">corporate officers</font>, many of whom have <font color="blue">specialized expertise</font>     and extensive experience in our industry</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font><font color="blue">services <font color="blue">professionals</font></font>     are  in high demand, and we face <font color="blue">significant</font> <font color="blue">competition</font> for qualified     employees</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">key employees</font> do not have <font color="blue">employment contracts</font>, and <font color="blue">generally</font>     can terminate their <font color="blue">employment with us at</font> any time</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that we     will be able to retain or replace <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>In order to retain or     replace our <font color="blue">key personnel</font>, we may be required to <font color="blue">increase compensation</font>,     <font color="blue">which would <font color="blue">decrease net income</font></font></td>
+    </tr>
+    <tr>
+      <td>The loss of <font color="blue">key personnel</font> could damage our     reputation and make it more <font color="blue">difficult</font> to retain and <font color="blue">attract new employees</font>     and investors</td>
+    </tr>
+    <tr>
+      <td>Losses of assets from our client investors <font color="blue">would decrease</font> our     revenues and net income, possibly <font color="blue">materially</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Certain of the Price </font>funds and other <font color="blue"><font color="blue">investment</font> portfolios</font> are vulnerable to     market-specific risks that <font color="blue">could <font color="blue">adversely</font> affect</font> <font color="blue">investment</font> performance,     our reputation and our revenues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Several of the Price </font>funds and <font color="blue"><font color="blue">investment</font> portfolios</font>, particularly the     <font color="blue">emerging market</font> and non-US <font color="blue"><font color="blue">investment</font>s</font>, are subject to political and     economic  instability, exchange-rate <font color="blue">fluctuation</font>s, illiquid and highly     volatile  markets,  and other risks that could <font color="blue">materially</font> decrease the     <font color="blue">investment</font> returns available in <font color="blue">foreign markets</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> decrease in     the <font color="blue">investment</font> return or <font color="blue">net asset value</font> of any Price fund or <font color="blue">investment</font>     <font color="blue">portfolio <font color="blue">could harm</font></font> our reputation and cause a decrease in <font color="blue">assets under</font>     <font color="blue">management</font>, including <font color="blue">from client asset withdrawals</font></td>
+    </tr>
+    <tr>
+      <td>-9-       _________________________________________________________________           Our <font color="blue">operations</font> are complex and a failure to perform <font color="blue">operational tasks</font> or the     <font color="blue">misrepresentation</font> of products and <font color="blue">services could</font> have an <font color="blue">adverse affect on</font>     our reputation and subject us to <font color="blue">regulatory</font> sanctions, fines, penalties, and     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Operating </font>risks include:     •   failure  to  properly  perform  fund  or  portfolio  recordkeeping     <font color="blue">responsibilities</font>,  including  portfolio  <font color="blue">accounting</font>, security pricing,     corporate actions, <font color="blue">investment</font> restrictions compliance, daily <font color="blue">net asset value</font>     <font color="blue">computations</font>,  <font color="blue">account reconciliations</font>, required <font color="blue">distribution</font>s to fund     <font color="blue">shareholders</font> to <font color="blue"><font color="blue">comply with</font> tax <font color="blue">regulations</font></font>;     •   failure to properly perform <font color="blue">transfer agent</font> and <font color="blue">participant recordkeeping</font>     <font color="blue">responsibilities</font>, including <font color="blue">transaction</font> processing, tax reporting and record     retention; and failure to identify <font color="blue">excessive trading</font> in <font color="blue"><font color="blue">mutual fund</font>s</font> by our     customers or plan <font color="blue">participants</font>;     •   sales and <font color="blue">marketing risks</font>, including the <font color="blue">intentional</font> or un<font color="blue">intentional</font>     <font color="blue">misrepresentation</font> of products and services in advertising materials, public     relations information, or other <font color="blue">external communications</font>, and failure to     <font color="blue">properly calculate</font> and present <font color="blue">investment</font> performance data <font color="blue">accurately</font> and in     <font color="blue">accordance with established guidelines</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Any damage to our <font color="blue">reputation <font color="blue">could harm</font></font> our business and lead to a loss of     revenues and net income</td>
+    </tr>
+    <tr>
+      <td>We have spent many years developing our reputation for integrity, strong     <font color="blue">investment</font>  performance,  and superior <font color="blue">client services</font></td>
+    </tr>
+    <tr>
+      <td>Our brand is a     valuable intangible asset, but it is vulnerable to a variety of threats that     can be <font color="blue">difficult</font> or impossible to control, and costly or <font color="blue">even impossible</font> to     remediate</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font>inquiries and rumors can tarnish or <font color="blue">substantially</font>     damage our reputation, even if they are <font color="blue">satisfactorily addressed</font></td>
+    </tr>
+    <tr>
+      <td>Any damage     to our brand <font color="blue">could impede</font> our ability to attract and retain customers and     <font color="blue">key personnel</font>, and reduce the amount of <font color="blue">assets under</font> our <font color="blue">management</font>, any of     <font color="blue">which could</font> have a material adverse effect on our revenues and net income</td>
+    </tr>
+    <tr>
+      <td>Our expenses are subject to <font color="blue">significant</font> <font color="blue">fluctuation</font>s that could <font color="blue">materially</font>     <font color="blue">decrease net income</font></td>
+    </tr>
+    <tr>
+      <td>Our operating results are <font color="blue">dependent</font> on the level of our expenses, which can     vary <font color="blue">significant</font>ly for many reasons, including:     •   changes in the level of our <font color="blue">advertising expenses</font>, including the costs of     expanding <font color="blue"><font color="blue">investment</font> advisory</font> services to <font color="blue">investors outside</font> of the United     States and further <font color="blue">penetrating</font> US <font color="blue">distribution</font> channels,     •   <font color="blue">variations</font> in the level of <font color="blue">total compensation expense due</font> to, among     other  things,  bonuses, stock option grants, stock awards, changes in     <font color="blue">employee benefit costs due</font> to <font color="blue">regulatory</font> or plan design changes, changes in     our <font color="blue">employee count</font> and mix, and <font color="blue">competitive factors</font>,     •   a <font color="blue">future impairment</font> of goodwill recognized in our <font color="blue">balance sheet</font>,     •   material <font color="blue">fluctuation</font> in <font color="blue">foreign currency exchange rates applicable</font> to     the costs of our <font color="blue">operations</font> abroad,     •   expenses and <font color="blue">capital costs incurred</font> to enhance our <font color="blue">administrative</font> and     operating services infrastructure, such as <font color="blue">technology</font> assets, depreciation,     <font color="blue">amortization</font>, and research and <font color="blue">development</font>,     •   <font color="blue">unanticipated costs incurred</font> to <font color="blue">protect <font color="blue">investor account</font>s</font> and client     goodwill, and     •   <font color="blue">disruptions</font> of third-party services such as communications, power, and     <font color="blue">mutual fund</font> <font color="blue">transfer agent</font> and <font color="blue"><font color="blue">accounting</font> systems</font></td>
+    </tr>
+    <tr>
+      <td>Under our <font color="blue">agreements with</font> our <font color="blue"><font color="blue">mutual fund</font>s</font>, we charge our <font color="blue"><font color="blue">mutual fund</font>s</font>     certain <font color="blue">administrative</font> and other <font color="blue">expenses based upon contracted terms</font></td>
+    </tr>
+    <tr>
+      <td>If we     fail to <font color="blue">accurately</font> estimate our <font color="blue">underlying expense levels</font> or otherwise are     required to <font color="blue">incur expenses</font> relating to the <font color="blue"><font color="blue">mutual fund</font>s</font> that are not paid by     the funds, our operating results will be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>-10-       _________________________________________________________________           We have contracted with third-party <font color="blue">financial <font color="blue">intermediaries</font></font> that distribute     our <font color="blue"><font color="blue">investment</font> portfolios</font>, and <font color="blue">such relationships may</font> not be available or     profitable to us in the future</td>
+    </tr>
+    <tr>
+      <td>About  30prca of our <font color="blue">assets under</font> <font color="blue">management</font> are sourced from third-party     <font color="blue">financial <font color="blue">intermediaries</font></font> that distribute our managed <font color="blue"><font color="blue">investment</font> portfolios</font>     in the US and abroad</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">intermediaries</font> <font color="blue">generally</font> offer their clients     various <font color="blue">investment</font> products in addition to, and in <font color="blue">competition</font> with, our     <font color="blue">investment</font>  offerings, and have <font color="blue">no contractual obligation</font> to encourage     <font color="blue">investment</font> in our portfolios</td>
+    </tr>
+    <tr>
+      <td>It would be <font color="blue">difficult</font> for us to acquire or     retain  the  <font color="blue">management</font>  of those <font color="blue">assets without</font> the assistance of the     <font color="blue">intermediaries</font>, and we <font color="blue">cannot assure</font> that we will be able to maintain an     adequate number of successful <font color="blue">distribution</font> relationships</td>
+    </tr>
+    <tr>
+      <td>In addition, some     investors rely on third party financial planners, registered <font color="blue">investment</font>     advisers, and other <font color="blue">consultants</font> or <font color="blue">financial <font color="blue">professionals</font></font> to <font color="blue">advise them on</font>     the  choice  of  <font color="blue">investment</font>  adviser  and  <font color="blue">investment</font> portfolio</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">professionals</font> and <font color="blue">consultants</font> can favor a competing <font color="blue">investment</font> portfolio as     <font color="blue">better meeting</font> their particular client’s needs</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that our     <font color="blue">investment</font> offerings will be among their <font color="blue">recommended choices</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Further, their <font color="blue">recommendation</font>s can change over time and we <font color="blue">could lose</font> their     <font color="blue">recommendation</font> and the related client <font color="blue">assets under</font> <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>Mergers,     <font color="blue">acquisitions</font>, and other ownership or <font color="blue">management</font> changes <font color="blue">could also <font color="blue">adversely</font></font>     impact our <font color="blue">relationships with</font> these third party <font color="blue">intermediaries</font></td>
+    </tr>
+    <tr>
+      <td>The presence     of any of the <font color="blue">adverse conditions discussed</font> above <font color="blue">would reduce revenues</font> and     net income, possibly by material amounts</td>
+    </tr>
+    <tr>
+      <td>Natural <font color="blue">disasters</font> and other <font color="blue">unpredictable events <font color="blue">could <font color="blue">adversely</font> affect</font></font> our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Armed conflict, terrorist attacks, power failures, and natural <font color="blue">disasters</font>     <font color="blue">could <font color="blue">adversely</font> affect</font> our revenues, expenses and <font color="blue">net income by</font>:     •   <font color="blue">decreasing</font> <font color="blue">investment</font> returns on our portfolios,     •   causing  <font color="blue">disruptions</font> in national or <font color="blue">global economies</font> that decrease     <font color="blue">investor confidence</font> and make <font color="blue">investment</font> products <font color="blue">generally</font> less attractive,     •   <font color="blue">inflicting losses</font> in <font color="blue">human capital</font>,     •   <font color="blue">interrupting</font> our business <font color="blue">operations</font>,     •   <font color="blue">triggering <font color="blue">technology</font> delays</font> or failures, and     •   requiring substantial <font color="blue">capital <font color="blue">expenditures</font></font> and operating expenses to     remediate damage, replace facilities, and restore <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have developed <font color="blue">various backup systems</font> and <font color="blue">contingency</font> plans to <font color="blue">deal with</font>     these <font color="blue">possible events but</font> we cannot be assured that they will be adequate in     all  <font color="blue">circumstances</font> that could arise or that material <font color="blue"><font color="blue">interruption</font>s</font> and     <font color="blue">disruptions</font> will not occur</td>
+    </tr>
+    <tr>
+      <td>In addition, we rely to <font color="blue">varying degrees on</font>     <font color="blue">outside vendors</font> for disaster <font color="blue">contingency</font> support, and we cannot be assured     that these <font color="blue">vendors will</font> be able to perform in an adequate and <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>If we lose any employees, or if we are unable to respond <font color="blue">adequately</font> to such     an event in a <font color="blue">timely manner</font>, we may be unable to continue our business     <font color="blue">operations</font>, <font color="blue">which could</font> lead to a <font color="blue">tarnished reputation</font> and loss of customers     that results in a decrease in <font color="blue">assets under</font> <font color="blue">management</font>, lower revenues and     <font color="blue">materially</font> reduced net income</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">investment</font>  income and <font color="blue">asset levels may</font> be <font color="blue">negatively impacted by</font>     <font color="blue">fluctuation</font>s in our <font color="blue">investment</font> portfolio</td>
+    </tr>
+    <tr>
+      <td>We currently have a substantial portion of our <font color="blue">assets invested</font> in our money     market, stock, and bond <font color="blue"><font color="blue">mutual fund</font>s</font></td>
+    </tr>
+    <tr>
+      <td>All of these <font color="blue"><font color="blue">investment</font>s</font> are subject     to <font color="blue">investment</font> market risk and our income from these <font color="blue"><font color="blue">investment</font>s</font> could be     <font color="blue">adversely</font> <font color="blue">affected by</font> a decline in value</td>
+    </tr>
+    <tr>
+      <td>In addition, related <font color="blue">investment</font>     income  has fluctuated <font color="blue">significant</font>ly over the <font color="blue">years depending upon</font> the     performance of our <font color="blue">investment</font> portfolio, including the impact of market     conditions, liquid corporate positions, and the size of our longer-term     <font color="blue">investment</font>  portfolio</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in other <font color="blue">investment</font> income can be     expected to occur in the future</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">investment</font> performance of our savings bank subsidiary could <font color="blue">adversely</font>     affect our assets and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have a propriety savings bank subsidiary, which accepts deposits from our     customers, pays a fixed rate of interest to our <font color="blue">depositors</font> and invests in     fixed  income  securities</td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">generally</font> hold our fixed income     <font color="blue"><font color="blue">investment</font>s</font> to <font color="blue">maturity on</font> a <font color="blue">basis which correlates</font> to the maturities of our     <font color="blue">customer deposits</font>, <font color="blue">fluctuation</font>s in <font color="blue">interest rates</font> could result in losses in     these fixed income <font color="blue"><font color="blue">investment</font>s</font> and could result in a <font color="blue">mismatch between</font> the     <font color="blue">interest rate return on</font> our <font color="blue">investment</font> portfolio and the <font color="blue">interest paid on</font>     our  <font color="blue">customer deposits</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that this occurs, our assets and     results of <font color="blue">operations</font> could be <font color="blue"><font color="blue">adversely</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>-11-       _________________________________________________________________           We  may elect to <font color="blue">pursue growth</font> in the <font color="blue">United States </font>and abroad through     <font color="blue">acquisitions</font>  or joint ventures, which exposes us to risks inherent in     <font color="blue">assimilating</font> new <font color="blue">operations</font> and in <font color="blue">expanding into new <font color="blue">jurisdiction</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In order to maintain and enhance our <font color="blue">competitive position</font>, we may review and     <font color="blue">pursue acquisition</font> and <font color="blue">venture opportunities</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that we will     identify and consummate any such <font color="blue">transaction</font>s on acceptable terms or have     sufficient  resources  to accomplish such a strategy</td>
+    </tr>
+    <tr>
+      <td>In addition, any     <font color="blue">strategic <font color="blue">transaction</font></font> can involve a number of risks, including: <font color="blue">additional</font>     demands  on our staff; unanticipated problems regarding <font color="blue">integration</font> of     <font color="blue">investor account</font> and <font color="blue">investment</font> security recordkeeping, different facilities     and <font color="blue">technologies</font>, and new employees; adverse affects in the event acquired     intangible  assets  or  <font color="blue">goodwill become impaired</font>; and the existence of     <font color="blue">liabilities</font> or <font color="blue">contingencies</font> not disclosed to or <font color="blue">otherwise known by us prior</font>     to closing a <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>LEGAL AND REGULATORY RISKS     <font color="blue">Compliance </font> with  a complex <font color="blue">regulatory</font> environment imposes <font color="blue">significant</font>     financial and <font color="blue">strategic costs on</font> our business, and non-compliance could     result in fines and penalties</td>
+    </tr>
+    <tr>
+      <td>We are subject to extensive regulation by foreign and <font color="blue">domestic governments</font>,     <font color="blue">regulatory</font> agencies such as the SEC in the <font color="blue">United States </font>and the FSA in     United Kingdom, and self-<font color="blue">regulatory</font> <font color="blue">organizations</font> such as <font color="blue">the NASD Our     </font>ability  to  conduct  our  business  is in large part <font color="blue">dictated by such</font>     regulation, including <font color="blue">federal laws such as</font> the Sarbanes-Oxley Act of 2002,     <font color="blue">the USA Patriot Act </font>of 2001, <font color="blue">the Employee Retirement Income Security Act </font>of     1974 (ERISA), <font color="blue">regulations</font> relating to the <font color="blue"><font color="blue">mutual fund</font> industry specifically</font>     and securities laws <font color="blue">generally</font>, <font color="blue">accounting</font> rules, and banking and tax laws</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these complex <font color="blue">regulations</font> and our <font color="blue">disclosure</font> and financial     reporting <font color="blue">obligations</font> requires <font color="blue">significant</font> <font color="blue"><font color="blue">investment</font>s</font> of time and money and     <font color="blue">could limit</font> our ability to <font color="blue">enter into new lines</font> of business</td>
+    </tr>
+    <tr>
+      <td>Further, the     <font color="blue">regulations</font> imposed by one <font color="blue">jurisdiction</font> may conflict with the <font color="blue">regulations</font>     imposed by another, and these <font color="blue">differences may</font> be <font color="blue">difficult</font> or impossible to     reconcile</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">regulatory</font> environment is frequently altered by new <font color="blue">regulations</font> and by     revisions to, and <font color="blue">evolving interpretations</font> of, existing <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Future     </font>changes could require us to modify or curtail our <font color="blue">investment</font> offerings and     business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If  we  are  unable  to  maintain  <font color="blue">compliance with applicable laws</font> and     <font color="blue">regulations</font>,  we could be subject to criminal and <font color="blue">civil <font color="blue">liability</font></font>, the     suspension of our employees, fines, penalties, sanctions, injunctive relief,     <font color="blue">exclusion from certain markets</font>, or temporary or <font color="blue">permanent loss</font> of licenses     or <font color="blue">registrations necessary</font> to conduct our business</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">regulatory</font> proceeding,     even if it does not result in a finding of wrongdoing or sanctions, could     consume  substantial  <font color="blue">expenditures</font> of time and capital</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">regulatory</font>     <font color="blue">investigation</font>, and any failure to maintain <font color="blue">compliance with applicable laws</font>     and <font color="blue">regulations</font>, could <font color="blue">severely damage</font> our reputation, <font color="blue">adversely</font> affect our     ability to conduct business, and <font color="blue">decrease revenue</font> and net income</td>
+    </tr>
+    <tr>
+      <td>Legal and <font color="blue">regulatory</font> <font color="blue">development</font>s in the <font color="blue">mutual fund</font> and <font color="blue"><font color="blue">investment</font> advisory</font>     <font color="blue">industry could increase</font> our <font color="blue">regulatory</font> burden, cause a loss of <font color="blue">mutual fund</font>     investors, and reduce our revenues</td>
+    </tr>
+    <tr>
+      <td>Because of trading abuses at several <font color="blue">investment</font> <font color="blue">management</font> firms, <font color="blue">regulators</font>     have shown increasing interest in the oversight of the <font color="blue">mutual fund</font> and     <font color="blue"><font color="blue">investment</font> advisory</font> industry</td>
+    </tr>
+    <tr>
+      <td>Federal agencies have adopted <font color="blue">regulations</font>     designed to <font color="blue">strengthen controls</font> and restore <font color="blue">investor confidence</font> in the     industry and more rules are expected in the future</td>
+    </tr>
+    <tr>
+      <td>These new and proposed     rules will place <font color="blue">greater compliance</font> and <font color="blue">administrative</font> burdens on us, which     could  increase our <font color="blue">expenses without increasing revenues</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     proposed <font color="blue">regulations</font> could require the Price funds to reduce the level of     certain  mutual  <font color="blue">fund fees paid</font> to us or require us to bear <font color="blue">additional</font>     expenses, which would affect our operating results</td>
+    </tr>
+    <tr>
+      <td>Further, adverse results     of <font color="blue">regulatory</font> <font color="blue">investigation</font>s of <font color="blue">mutual fund</font> and <font color="blue"><font color="blue">investment</font> advisory</font> firms     could  tarnish  the reputation of <font color="blue"><font color="blue">mutual fund</font>s</font> and <font color="blue">investment</font> advisers     <font color="blue">generally</font>, causing investors to avoid further fund <font color="blue"><font color="blue">investment</font>s</font> or redeem     their balances</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Redemptions </font><font color="blue">would decrease</font> the <font color="blue">assets under</font> our <font color="blue">management</font>,     <font color="blue">which would reduce</font> our <font color="blue">advisory revenues</font> and net income</td>
+    </tr>
+    <tr>
+      <td>We may in the future be involved in legal and <font color="blue">regulatory</font> proceedings that     may not be <font color="blue">covered by insurance</font></td>
+    </tr>
+    <tr>
+      <td>We  are  subject  to  <font color="blue">regulatory</font>  and <font color="blue">governmental inquiries</font> and civil     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>An  adverse  outcome of any <font color="blue">such proceeding could involve</font>     substantial <font color="blue">financial penalties</font></td>
+    </tr>
+    <tr>
+      <td>There has <font color="blue">been increased incidence</font> of     <font color="blue">litigation</font> and <font color="blue">regulatory</font> <font color="blue">investigation</font>s in the <font color="blue">financial services industry</font>     in <font color="blue">recent years</font>, including customer claims and class <font color="blue">action suits</font> alleging     substantial <font color="blue">monetary damages</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, various claims <font color="blue">against us</font>     arise in the <font color="blue">ordinary course</font> of business, including employment-related     claims</td>
+    </tr>
+    <tr>
+      <td>-12-       _________________________________________________________________           We  carry  insurance  in  amounts  and <font color="blue">under terms</font> that we believe are     <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that our <font color="blue">insurance will cover</font> all <font color="blue">liabilities</font>     and losses to which we may be exposed, or that our <font color="blue">insurance policies will</font>     continue to be <font color="blue">available on</font> acceptable terms</td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">insurance coverage may</font>     not be available or may be <font color="blue">prohibitively expensive</font> in <font color="blue">future periods</font></td>
+    </tr>
+    <tr>
+      <td>As our     insurance  policies  come up for renewal, we may need to assume higher     <font color="blue">deductibles</font> or other co-insurance <font color="blue">liability</font>, or pay higher premiums, which     <font color="blue">would increase</font> our expenses and reduce our net income</td>
+    </tr>
+    <tr>
+      <td>Net  capital  <font color="blue">requirements</font>  may  impede the business <font color="blue">operations</font> of our     <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Certain of our <font color="blue">subsidiaries</font> are subject to net capital <font color="blue">requirements</font> imposed     by various federal, state, and foreign <font color="blue">authorities</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">subsidiaries</font>’ net     <font color="blue">capital meets</font> or exceeds all minimum <font color="blue">requirements</font>; however, a <font color="blue">significant</font>     operating loss or extraordinary charge against net capital could <font color="blue">adversely</font>     affect the ability of our <font color="blue">subsidiaries</font> to expand or even maintain their     <font color="blue">operations</font> if we were unable to make <font color="blue">additional</font> <font color="blue"><font color="blue">investment</font>s</font> in them</td>
+    </tr>
+    <tr>
+      <td>TECHNOLOGY RISKS     We require <font color="blue">specialized <font color="blue">technology</font></font> to operate our business and would be     <font color="blue"><font color="blue">adversely</font> affected</font> if our <font color="blue"><font color="blue">technology</font> became inoperative</font> or obsolete</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on highly specialized</font> and, in many cases, <font color="blue">proprietary</font> <font color="blue">technology</font>     to support our business functions, including, among other functions:     •   <font color="blue">securities analysis</font>,       •   <font color="blue">securities trading</font>,       •   portfolio <font color="blue">management</font>,       •   <font color="blue">customer service</font>,       •   <font color="blue">accounting</font> and <font color="blue">internal financial processes</font> and controls, and       •   <font color="blue">regulatory</font> compliance and reporting</td>
+    </tr>
+    <tr>
+      <td>All of our <font color="blue">technology</font> systems are vulnerable to <font color="blue">disability</font> or failures due     to hacking, viruses, natural <font color="blue">disasters</font>, power failures, acts of war or     terrorism, and other causes</td>
+    </tr>
+    <tr>
+      <td>A suspension or <font color="blue">termination</font> of these licenses or the related     support, upgrades and <font color="blue">maintenance could</font> cause <font color="blue">system delays</font> or <font color="blue">interruption</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">technology</font> systems were to fail and we were unable to recover in a     timely way, we would be unable to fulfill critical business functions, which     could  lead  to  a  loss  of  customers and <font color="blue">could harm</font> our reputation</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technological </font><font color="blue">breakdown could also interfere with</font> our ability to <font color="blue">comply with</font>     financial  reporting and other <font color="blue">regulatory</font> <font color="blue">requirements</font>, exposing us to     <font color="blue">disciplinary action</font> and to <font color="blue">liability</font> to our customers</td>
+    </tr>
+    <tr>
+      <td>In addition, our continued <font color="blue">success depends on</font> our ability to <font color="blue">effectively</font>     integrate  <font color="blue">operations</font> across many countries, and to <font color="blue">adopt new</font> or adapt     existing <font color="blue">technologies</font> to meet client, industry and <font color="blue">regulatory</font> demands</td>
+    </tr>
+    <tr>
+      <td>We     might be required to make <font color="blue">significant</font> <font color="blue">capital <font color="blue">expenditures</font></font> to maintain     competitive <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to upgrade our <font color="blue">technology</font> in a     <font color="blue">timely fashion</font>, we <font color="blue">might lose customers</font> and fail to maintain <font color="blue">regulatory</font>     compliance, <font color="blue">which could</font> affect our results of <font color="blue">operations</font> and <font color="blue">severely damage</font>     our reputation</td>
+    </tr>
+    <tr>
+      <td>We could be subject to losses if we fail to <font color="blue">properly safeguard sensitive</font> and     <font color="blue">confidential</font> information</td>
+    </tr>
+    <tr>
+      <td>As part of our normal <font color="blue">operations</font>, we maintain and transmit <font color="blue">confidential</font>     information about our <font color="blue">clients as well as <font color="blue">proprietary</font></font> information relating to     our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">systems could</font> be <font color="blue">victimized by unauthorized</font>     users or <font color="blue">corrupted by computer viruses</font> or other <font color="blue">malicious software code</font>, or     <font color="blue">authorized persons could inadvertently</font> or <font color="blue">intentional</font>ly release <font color="blue">confidential</font>     or <font color="blue">proprietary</font> information</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">disclosure</font> could, among other things:     •   <font color="blue">seriously damage</font> our reputation,       •   allow <font color="blue">competitors</font> access to our <font color="blue">proprietary</font> business information,       •   subject us to <font color="blue">liability</font> for a failure to <font color="blue">safeguard client data</font>,       •   result in the <font color="blue">termination</font> of <font color="blue">contracts by</font> our <font color="blue">existing customers</font>,       •   subject us to <font color="blue">regulatory</font> action, and       •   require <font color="blue">significant</font> capital and operating <font color="blue">expenditures</font> to investigate     and remediate the breach</td>
+    </tr>
+  </tbody>
+</table>

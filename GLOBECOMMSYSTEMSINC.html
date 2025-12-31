@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: significant", fill: "#009e60"},
+{source: "1: significant", target: "1: inability", fill: "#009e60"},
+{source: "1: inability", target: "1: key customer contract", fill: "#009e60"},
+{source: "1: key customer contract", target: "1: would adversely affect", fill: "#009e60"},
+{source: "1: would adversely affect", target: "1: operations", fill: "#009e60"},
+{source: "1: operations", target: "1: financial condition", fill: "#009e60"},
+{source: "1: significant", target: "16: difficulties", fill: "#0077be"},
+{source: "16: difficulties", target: "16: operations", fill: "#0077be"},
+{source: "16: difficulties", target: "52: efficiently", fill: "#4b5320"},
+{source: "52: efficiently", target: "52: substantially utilize", fill: "#4b5320"},
+{source: "52: substantially utilize", target: "52: transponder space capacity", fill: "#4b5320"},
+{source: "52: transponder space capacity", target: "52: requirements may increase", fill: "#4b5320"},
+{source: "52: requirements may increase", target: "52: operations will", fill: "#4b5320"},
+{source: "52: efficiently", target: "57: catastrophic event", fill: "#b06500"},
+{source: "57: catastrophic event", target: "57: facility", fill: "#b06500"},
+{source: "57: facility", target: "57: surrounding area would", fill: "#b06500"},
+{source: "57: surrounding area would", target: "57: significant", fill: "#b06500"},
+{source: "57: significant", target: "57: data communications services", fill: "#b06500"},
+{source: "57: data communications services", target: "57: capabilities", fill: "#b06500"},
+{source: "57: catastrophic event", target: "58: capabilities permit us", fill: "#f0f8ff"},
+{source: "58: capabilities permit us", target: "58: integrated suite", fill: "#f0f8ff"},
+{source: "58: integrated suite", target: "58: incapacity", fill: "#f0f8ff"},
+{source: "58: incapacity", target: "58: communications", fill: "#f0f8ff"},
+{source: "58: communications", target: "58: infrastructure", fill: "#f0f8ff"},
+{source: "58: infrastructure", target: "58: would negatively impact", fill: "#f0f8ff"},
+{source: "58: capabilities permit us", target: "97: difficult", fill: "#873260"},
+{source: "97: difficult", target: "97: raise capital", fill: "#873260"},
+{source: "97: raise capital", target: "97: communications", fill: "#873260"},
+{source: "97: communications", target: "97: placed fewer orders", fill: "#873260"},
+{source: "97: difficult", target: "194: government regulations", fill: "#e03c31"},
+{source: "194: government regulations", target: "194: comply with", fill: "#e03c31"},
+{source: "194: comply with", target: "194: them will harm", fill: "#e03c31"},
+{source: "194: government regulations", target: "START_HERE", fill: "#e03c31"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Human Resource and Employment Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Telecommunications Equipment</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Ask for protection</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Condor">Operation Condor</a></td>
+      <td>Operation Condor (Spanish: Operación Cóndor, also known as Plan Cóndor; Portuguese: Operação Condor) was a United States-backed campaign of political repression and state terror involving intelligence operations and assassination of opponents. It was officially and formally implemented in November 1975 by the right-wing dictatorships of the Southern Cone of South America.Due to its clandestine nature, the precise number of deaths directly attributable to Operation Condor is highly disputed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Communications_satellite">Communications satellite</a></td>
+      <td>A communications satellite is an artificial satellite that relays and amplifies radio telecommunication signals via a transponder; it creates a communication channel between a source transmitter and a receiver at different locations on Earth. Communications satellites are used for television, telephone, radio, internet, and military applications.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tata_Communications">Tata Communications</a></td>
+      <td>Tata Communications Limited is an Indian telecommunications company previously known as Videsh Sanchar Nigam Limited (VSNL). It was previously a government- owned-telecommunications service provider and under the ownership of Department of Telecommunications, Ministry of Communications, Government of India.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Communication">Communication</a></td>
+      <td>Communication (from the Latin communicare, meaning "to share" or "to be in relation with") is "an apparent answer to the painful divisions between self and other, private and public, and inner thought and outer world." As this definition indicates, communication is difficult to define in a consistent manner, because in common use it refers to a very wide range of different behaviours involved in the propagation of information. John Peters argues the difficulty of defining communication emerges from the fact that communication is both a universal phenomenon (because everyone communicates) and a specific discipline of institutional academic study.One definitional strategy involves limiting what can be included in the category of communication (for example, requiring a "conscious intent" to persuade).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Verizon_Communications">Verizon Communications</a></td>
+      <td>Verizon Communications Inc., commonly known as Verizon, is an American multinational telecommunications conglomerate and a corporate component of the Dow Jones Industrial Average. The company is headquartered at 1095 Avenue of the Americas in Midtown Manhattan, New York City, but is incorporated in Delaware.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Charter_Communications">Charter Communications</a></td>
+      <td>Charter Communications, Inc., is an American telecommunications and mass media company with services branded as Spectrum. With over 26 million customers in 41 states, it is the second-largest cable operator in the United States by subscribers, just behind Comcast, and third-largest pay TV operator behind Comcast and AT&amp;T. Charter is the fifth-largest telephone provider based on number of residential lines.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_Communications_Commission">Federal Communications Commission</a></td>
+      <td>The Federal Communications Commission (FCC) is an independent agency of the United States federal government that regulates communications by radio, television, wire, satellite, and cable across the United States. The FCC maintains jurisdiction over the areas of broadband access, fair competition, radio frequency use, media responsibility, public safety, and homeland security.The FCC was formed by the Communications Act of 1934 to replace the radio regulation functions of the Federal Radio Commission.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marketing_communications">Marketing communications</a></td>
+      <td>Marketing Communications (MC, marcom(s), marcomm(s) or just simply communications) refers to the use of different marketing channels and tools in combination. Marketing communication channels focus on how businesses communicate a message to its desired market, or the market in general.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Frontier_Communications">Frontier Communications</a></td>
+      <td>Frontier Communications (known as Citizens Utilities Company until May 2000 and Citizens Communications Company until July 31, 2008) is an American telecommunications company. The company previously served primarily rural areas and smaller communities, but now also serves several large metropolitan markets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Healing_Is_Difficult">Healing Is Difficult</a></td>
+      <td>Healing Is Difficult is the second studio album by Australian singer and songwriter Sia. It was released in the United Kingdom on 9 July 2001 and in the United States on 28 May 2002.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_People">Difficult People</a></td>
+      <td>Difficult People is an American dark comedy streaming television series created by Julie Klausner.  Klausner stars alongside Billy Eichner as two struggling and jaded comedians living in New York City; the duo seemingly hate everyone but each other.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/A_Difficult_Woman">A Difficult Woman</a></td>
+      <td>A Difficult Woman is an Australian television series which screened in 1998 on the ABC. The three part series starred Caroline Goodall, in the title role of a woman whose best friend is murdered and is determined to find out why. It was written by Nicholas Hammond and Steven Vidler and directed by Tony Tilse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second-language_acquisition">Second-language acquisition</a></td>
+      <td>Second-language acquisition (SLA), sometimes called second-language learning — otherwise referred to as L2 (language 2) acquisition, is the process by which people learn a second language. Second-language acquisition is also the scientific discipline devoted to studying that process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Difficult_Couple">The Difficult Couple</a></td>
+      <td>The Difficult Couple (Chinese: 难夫难妻; pinyin: Nànfū Nànqī), also translated as Die for Marriage, is a 1913 Chinese film. It is known for being the earliest Chinese feature film.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_Loves">Difficult Loves</a></td>
+      <td>Difficult Loves (Italian: Gli amori difficili) is a 1970 short story collection by Italo Calvino. It concerns love and the difficulty of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_(song)">Difficult (song)</a></td>
+      <td>"Difficult" is the fourth single from French-American recording artist Uffie's debut album, Sex Dreams and Denim Jeans. The single was produced by Uffie's label-mate and friend SebastiAn and was released by Ed Banger Records, Because Music and Elektra Records on October 18, 2010.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLOBECOMM SYSTEMS INC      Item 1A    Risk Factors       A limited number of <font color="blue">customer contracts</font> account for a <font color="blue">significant</font> portion of     our revenues, and the <font color="blue">inability</font> to replace a <font color="blue">key customer contract</font> or the     failure of the customer to implement its plans <font color="blue">would <font color="blue">adversely</font> affect</font> our     results of <font color="blue">operations</font>, business and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We rely on a small number of <font color="blue">customer contracts</font> for a large portion of our     revenue</td>
+    </tr>
+    <tr>
+      <td>Specifically, we have <font color="blue">agreements with three customers</font> to provide     equipment and services, from which we expect to generate a <font color="blue">significant</font>     portion of our revenues</td>
+    </tr>
+    <tr>
+      <td>If any key customer is     unable to implement its business plan, the market for these customers’     services       12     _________________________________________________________________       declines, political or military <font color="blue">conditions</font> make performance impossible or if     all or any of the <font color="blue">major customers modifies</font> or terminates its <font color="blue">agreement with</font>     us, and we are unable to replace these contracts, our results of <font color="blue">operations</font>,     business and <font color="blue">financial condition</font> would be <font color="blue"><font color="blue">materially</font> harmed</font></td>
+    </tr>
+    <tr>
+      <td>Risks <font color="blue">associated with</font> operating in <font color="blue"><font color="blue"><font color="blue">international</font> markets</font> could restrict</font> our     ability to <font color="blue">expand globally</font> and harm our business and prospects</td>
+    </tr>
+    <tr>
+      <td>We  market and sell a substantial portion of our products and services     <font color="blue"><font color="blue">international</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate that <font color="blue">international</font> sales <font color="blue">will continue</font> to     account for a <font color="blue">significant</font> portion of our <font color="blue">total revenues</font> for the foreseeable     <font color="blue">future with</font> a <font color="blue">significant</font> portion of the <font color="blue"><font color="blue">international</font> revenue coming from</font>     developing  countries,  including  countries in areas of conflict like     <font color="blue">Afghanistan</font></td>
+    </tr>
+    <tr>
+      <td>There are a number of <font color="blue">risks inherent</font> in conducting our business     <font color="blue"><font color="blue">international</font>ly</font>, including:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">general political</font> and <font color="blue">economic instability</font> in <font color="blue"><font color="blue">international</font> markets</font>,     including the <font color="blue">hostilities</font> in Iraq and <font color="blue">Afghanistan</font>, <font color="blue">could impede</font> our ability     to deliver our products and services to customers and harm our results of     <font color="blue">operations</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue"><font color="blue">difficult</font>ies</font> in collecting accounts receivable could <font color="blue">adversely</font> affect our     results of <font color="blue">operations</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  changes in <font color="blue"><font color="blue">regulatory</font> <font color="blue">requirements</font> could restrict</font> our ability to deliver     services to our <font color="blue"><font color="blue">international</font> customers</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  export <font color="blue">restrictions</font>, tariffs, licenses and other <font color="blue">trade barriers could</font>     <font color="blue">prevent us from adequately equipping</font> our <font color="blue">network <font color="blue">facilities</font></font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  differing <font color="blue">technology</font> standards across countries may impede our ability to     integrate our products and <font color="blue">services across <font color="blue">international</font> borders</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">protectionist laws</font> and business <font color="blue">practices favoring local <font color="blue">competition</font> may</font>     <font color="blue">give unequal bargaining leverage</font> to <font color="blue">key vendors</font> in countries where     <font color="blue">competition</font> is scarce, <font color="blue">significant</font>ly increasing our operating costs;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  increased expenses <font color="blue">associated with</font> marketing services in foreign     <font color="blue">countries <font color="blue">could affect</font></font> our ability to compete;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">relying on local subcontractors</font> for <font color="blue">installation</font> of our products and     <font color="blue">services could</font> <font color="blue">adversely</font> impact the quality of our products and services;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue"><font color="blue">difficult</font>ies</font> in staffing and managing foreign <font color="blue">operations</font> <font color="blue">could affect</font> our     ability to compete;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">complex foreign laws</font> and <font color="blue">treaties <font color="blue">could affect</font></font> our ability to compete;     and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">potentially adverse taxes <font color="blue">could affect</font></font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>These and other risks <font color="blue">could impede</font> our ability to manage our <font color="blue">international</font>     <font color="blue">operations</font> effectively, limit the <font color="blue">future growth</font> of our business, increase     our costs and require <font color="blue">significant</font> management attention</td>
+    </tr>
+    <tr>
+      <td>We derive a substantial portion of our <font color="blue">revenues from</font> fixed-price projects,     under  which we assume <font color="blue">greater financial risk</font> if we fail to <font color="blue">accurately</font>     estimate the costs of the projects</td>
+    </tr>
+    <tr>
+      <td>We  assume  <font color="blue">greater financial risk</font>s on a fixed-price project than on a     time-and-expense based project</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">miscalculate</font> the resources or time we     need for these fixed-price projects, the costs of completing these projects     may exceed our original estimates, <font color="blue">which <font color="blue">would <font color="blue">negatively</font> impact</font></font> our results     of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If GNSC does not continue to execute its business strategy or if the market     for its <font color="blue">services fails</font> to develop or develops more <font color="blue">slowly than</font> we expect,     our results of <font color="blue">operations</font> will be harmed</td>
+    </tr>
+    <tr>
+      <td>GNSC’s  <font color="blue">future revenues</font> and results of <font color="blue">operations</font> are <font color="blue">dependent on</font> its     execution of its business strategy and <font color="blue">development</font> of the market for its     current and <font color="blue">future services</font></td>
+    </tr>
+    <tr>
+      <td>GNSC has had, and we expect <font color="blue">will continue</font> to     have, cash <font color="blue">requirements</font>, which have decreased and <font color="blue">will continue</font> to decrease     our <font color="blue">cash resources</font></td>
+    </tr>
+    <tr>
+      <td>If GNSC does not <font color="blue">efficiently</font> and <font color="blue">substantially utilize</font>     its <font color="blue">transponder space capacity</font> and increase its level of orders, its cash     <font color="blue"><font color="blue">requirements</font> may increase</font> and our results of <font color="blue">operations</font> will be harmed</td>
+    </tr>
+    <tr>
+      <td>In     addition, <font color="blue">significant</font> <font color="blue">capital expenditures</font> have been required as we have     built our <font color="blue">content delivery</font> and <font color="blue">telephony service offerings</font></td>
+    </tr>
+    <tr>
+      <td>If our content     delivery and <font color="blue">telephony service offerings</font> are not       13     _________________________________________________________________       accepted, or if the <font color="blue">market fails</font> to grow, we <font color="blue">cannot assure</font> you that we will     be able to realize an <font color="blue"><font color="blue">appropriate</font> return on</font> these <font color="blue">capital expenditures</font></td>
+    </tr>
+    <tr>
+      <td>In the event of a <font color="blue">catastrophic loss affecting</font> our <font color="blue">operations</font> in Hauppauge,     New York our results of <font color="blue">operations</font> would be harmed</td>
+    </tr>
+    <tr>
+      <td>GNSC revenues and results of <font color="blue">operations</font> are <font color="blue">dependant on</font> the <font color="blue">infrastructure</font>     of the Network Operations Center and the International Teleport at our     <font color="blue">headquarters</font> in Hauppauge, New York</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">catastrophic event</font> to this <font color="blue">facility</font>     or to the <font color="blue">infrastructure</font> of the <font color="blue">surrounding area would</font> result in <font color="blue">significant</font>     delays  in  restoring  a  majority of the <font color="blue">data <font color="blue"><font color="blue">communication</font>s</font> services</font>     <font color="blue">capabilities</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">capabilities</font> permit us to offer an <font color="blue">integrated suite</font> of     products  and  services  and  the  <font color="blue">incapacity</font>  of  our  <font color="blue"><font color="blue">communication</font>s</font>     <font color="blue">infrastructure</font>  <font color="blue">would <font color="blue">negatively</font> impact</font> our ability to sell our ground     segment systems and networks</td>
+    </tr>
+    <tr>
+      <td>This would result in the loss of revenues and     <font color="blue">adversely</font>  affect  our  business,  results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>Our markets are <font color="blue">highly competitive</font> and we have many <font color="blue">established <font color="blue">competitors</font></font>,     and we <font color="blue">may lose market</font> share as a result</td>
+    </tr>
+    <tr>
+      <td>The markets in which we operate are <font color="blue">highly competitive</font> and this <font color="blue">competition</font>     <font color="blue">could harm</font> our ability to sell our products and <font color="blue">services on prices</font> and terms     favorable to us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">primary <font color="blue">competitors</font></font> in the <font color="blue">satellite ground</font> segment     systems and networks market <font color="blue">generally</font> fall into two groups: (1) system     <font color="blue">integrators</font>, like Thales, Data Path, and SED Systems, and (2) equipment     <font color="blue">manufacturers</font> who also provide integrated systems, like General Dynamics,     Andrew Corporation, Viasat, Alcatel and ND Satcom AG       In  the  end-to-end satellite-based enterprise solutions and broadcast     services markets, we compete with other satellite <font color="blue">communication</font> companies     who provide similar services, like Ascent Media, Globecast, and Convergent     Media Systems</td>
+    </tr>
+    <tr>
+      <td>In addition, in <font color="blue">managed network services</font> we <font color="blue">may compete with</font>     other <font color="blue"><font color="blue">communication</font>s</font> service providers like Segovia and satellite owners     like <font color="blue">SES Americom and Intelsat</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate that our <font color="blue"><font color="blue">competitors</font> may</font>     develop or acquire services that <font color="blue">provide functionality</font> that is similar to     that <font color="blue">provided by</font> our services and that those <font color="blue">services may</font> be <font color="blue">offered at</font>     <font color="blue">significant</font>ly lower prices or <font color="blue">bundled with</font> other services</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">competitors</font>     may have the <font color="blue">financial resources</font> to withstand substantial price <font color="blue">competition</font>,     may be in a <font color="blue">better position</font> to endure <font color="blue">difficult</font> economic <font color="blue">conditions</font> in     <font color="blue"><font color="blue">international</font> markets</font> and may be able to respond more <font color="blue">quickly than</font> we can to     new or <font color="blue">emerging <font color="blue">technologies</font></font> and changes in <font color="blue">customer <font color="blue">requirements</font></font></td>
+    </tr>
+    <tr>
+      <td>Moreover,     many of our <font color="blue">competitors</font> have more extensive customer bases, broader customer     <font color="blue">relationships</font> and <font color="blue">broader industry alliances than</font> we do that they could use     to their advantage in <font color="blue">competitive situations</font></td>
+    </tr>
+    <tr>
+      <td>The markets in which we operate have limited barriers to entry, and we     expect that we will face additional <font color="blue">competition</font> from existing <font color="blue">competitors</font>     and <font color="blue">new market entrants</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Moreover, our current and potential     <font color="blue">competitors</font> have established or may establish strategic <font color="blue">relationships</font> among     themselves or <font color="blue">with third parties</font> to increase the ability of their products     and services to address the needs of our current and <font color="blue">prospective customers</font></td>
+    </tr>
+    <tr>
+      <td>The potential strategic <font color="blue">relationships</font> of existing and new <font color="blue"><font color="blue">competitors</font> may</font>     rapidly acquire <font color="blue">significant</font> market share, <font color="blue"><font color="blue">which would</font> harm</font> our business and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>If our products and services are not accepted in developing <font color="blue">countries with</font>     <font color="blue">emerging markets</font>, our <font color="blue">revenues will</font> be impaired</td>
+    </tr>
+    <tr>
+      <td>We anticipate that a substantial portion of the growth in the demand for our     products and <font color="blue">services will come from customers</font> in developing countries due     to  a  lack of basic <font color="blue"><font color="blue">communication</font>s</font> <font color="blue">infrastructure</font> in these countries</td>
+    </tr>
+    <tr>
+      <td>However, we <font color="blue">cannot guarantee</font> an increase in the demand for our products and     services in developing countries or that customers in these <font color="blue">countries will</font>     accept our products and <font color="blue">services at</font> all</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">penetrate emerging</font>     markets in developing countries is <font color="blue">dependent upon various factors</font> including:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the speed at which <font color="blue"><font color="blue">communication</font>s</font> <font color="blue">infrastructure</font>, including terrestrial     microwave, coaxial cable and fiber optic <font color="blue"><font color="blue">communication</font>s</font> systems, which     compete with satellite-based services, is built;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the <font color="blue">effectiveness</font> of our <font color="blue">local resellers</font> and <font color="blue">sales representatives</font> in     marketing and selling our products and services; and       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  the <font color="blue">acceptance</font> of our products and <font color="blue">services by customers</font></td>
+    </tr>
+    <tr>
+      <td>14     _________________________________________________________________       If our products and services are not accepted, or the <font color="blue">market potential</font> we     anticipate does not develop, our <font color="blue">revenues will</font> be impaired</td>
+    </tr>
+    <tr>
+      <td>We  have had a history of operating losses and <font color="blue">negative cash flow</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">negative cash flow</font>s may increase as we pursue our business plan and our     losses may reoccur, which may strain our <font color="blue">capital resources</font></td>
+    </tr>
+    <tr>
+      <td>Although we have <font color="blue">recently been profitable</font>, we had incurred <font color="blue">significant</font> net     losses  in the past and continue to recognize <font color="blue">negative cash flow</font>s from     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to maintain <font color="blue"><font color="blue">profitability</font> will depend upon</font> our     ability to generate <font color="blue">significant</font> revenues through new profitable customer     contracts and the expansion of our <font color="blue"><font color="blue">existing product</font>s</font> and services, including     our <font color="blue">data <font color="blue"><font color="blue">communication</font>s</font> services</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be able     to  obtain  new  profitable <font color="blue">customer contracts</font> or generate <font color="blue">significant</font>     <font color="blue">additional <font color="blue">revenues from</font></font> those contracts or any <font color="blue">new products</font> or services     that we introduce</td>
+    </tr>
+    <tr>
+      <td>In the past, we have incurred <font color="blue">significant</font> negative cash     flows, which may reoccur if our business plan is not successful</td>
+    </tr>
+    <tr>
+      <td>Also, if we     are unable to sustain or increase our <font color="blue">profits on</font> a quarterly or <font color="blue">annual basis</font>     in the future or if our business undergoes a period of <font color="blue">rapid growth</font>, our     operating <font color="blue">cash flows may</font> be <font color="blue"><font color="blue">negatively</font> impacted</font></td>
+    </tr>
+    <tr>
+      <td>Since sales of satellite <font color="blue"><font color="blue">communication</font>s</font> equipment are <font color="blue">dependent on</font> the     growth of <font color="blue"><font color="blue">communication</font>s</font> networks, if <font color="blue">market demand</font> for these networks     declines, our revenue and <font color="blue">profitability</font> are likely to decline</td>
+    </tr>
+    <tr>
+      <td>We  derive,  and expect to continue to derive, a <font color="blue">significant</font> amount of     <font color="blue">revenues from</font> the sale of <font color="blue">satellite ground</font> segment systems and networks</td>
+    </tr>
+    <tr>
+      <td>If     the long-term growth in demand for <font color="blue"><font color="blue">communication</font>s</font> networks does not continue     to return from recent depressed levels, the demand for our <font color="blue">satellite ground</font>     segment systems and networks may decline or grow more <font color="blue">slowly than</font> we expect</td>
+    </tr>
+    <tr>
+      <td>As a result, we may not be able to grow our business, our revenues may     decline from current levels and our results of <font color="blue">operations</font> may be harmed</td>
+    </tr>
+    <tr>
+      <td>The     demand for <font color="blue"><font color="blue">communication</font>s</font> networks and the <font color="blue">products used</font> in these networks     is <font color="blue">affected by various factors</font>, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>For     example, the uncertain general economic <font color="blue">conditions</font> have affected the overall     rate of <font color="blue">capital spending by</font> many of our customers</td>
+    </tr>
+    <tr>
+      <td>Also, many companies have     found it <font color="blue">difficult</font> to <font color="blue">raise capital</font> to finish building their <font color="blue"><font color="blue">communication</font>s</font>     networks and, therefore, have <font color="blue">placed fewer orders</font></td>
+    </tr>
+    <tr>
+      <td>Past <font color="blue">economic slowdowns</font>     resulted in a softening of <font color="blue">demand from</font> our customers</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> the     extent to <font color="blue">which demand will increase</font></td>
+    </tr>
+    <tr>
+      <td>Further, increased <font color="blue">competition</font> among     <font color="blue">satellite ground</font> segment systems and network <font color="blue">manufacturers</font> has increased     <font color="blue">pricing pressures</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">future reduction</font> in <font color="blue">opportunities from</font> <font color="blue">US Government     </font>and <font color="blue">government</font> related agencies would also <font color="blue">negatively</font> impact our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend upon certain key personnel</font> and may not be able to retain these     employees</td>
+    </tr>
+    <tr>
+      <td>If we lose the services of these <font color="blue">individuals</font> or <font color="blue">cannot hire</font>     <font color="blue">additional qualified personnel</font>, our business will be harmed</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success also depends</font> to a substantial <font color="blue">degree on</font> our ability to attract,     motivate  and retain highly-qualified personnel</td>
+    </tr>
+    <tr>
+      <td>There is considerable     <font color="blue">competition</font> for the services of highly-qualified technical and <font color="blue">engineering</font>     personnel</td>
+    </tr>
+    <tr>
+      <td>We may not be <font color="blue">able either</font> to retain our <font color="blue">current personnel</font> or hire     <font color="blue">additional qualified personnel</font> if and when needed</td>
+    </tr>
+    <tr>
+      <td>Our  future  performance  depends  on the <font color="blue">continued service</font> of our key     technical,  managerial  and  <font color="blue">marketing personnel</font>; in particular, David     Hershberg  and  <font color="blue">Kenneth Miller </font>are key to our <font color="blue">success based upon</font> their     individual knowledge of the markets in which we operate</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">employment</font> of     any of our <font color="blue">key personnel could cease at</font> any time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Satellites </font>upon which we <font color="blue">rely may malfunction</font> or be damaged or lost</td>
+    </tr>
+    <tr>
+      <td>In the delivery of our <font color="blue">data <font color="blue"><font color="blue">communication</font>s</font> services</font>, we lease space segment     from various satellite transponder vendors</td>
+    </tr>
+    <tr>
+      <td>The damage or loss of any of the     <font color="blue">satellites used by us</font>, or the temporary or <font color="blue">permanent malfunction</font> of any of     the <font color="blue">satellites upon which</font> we rely, would likely result in the <font color="blue">interruption</font>     of our satellite-based <font color="blue"><font color="blue">communication</font>s</font> services</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">interruption</font> could have     a  material  adverse effect on our business, results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> our suppliers, some of which are our sole or a limited source     of supply, and the loss of these suppliers could <font color="blue">materially</font> <font color="blue">adversely</font> affect     our business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We  currently obtain most of our <font color="blue">critical <font color="blue">components</font></font> and <font color="blue">services from</font>     limited sources and <font color="blue">generally</font> do not maintain <font color="blue">significant</font> inventories or     have long-term or <font color="blue">exclusive supply contracts with</font> our vendors</td>
+    </tr>
+    <tr>
+      <td>15     _________________________________________________________________       We have from time to time experienced delays in receiving <font color="blue">products from</font>     vendors  due to lack of <font color="blue">availability</font>, quality control or <font color="blue">manufacturing</font>     problems,  shortages  of  materials  or  <font color="blue">components</font>  or <font color="blue">product design</font>     <font color="blue"><font color="blue">difficult</font>ies</font></td>
+    </tr>
+    <tr>
+      <td>We  may experience delays in the future and <font color="blue">replacement</font>     services or <font color="blue">products may</font> not be available when needed, or at all, or at     <font color="blue"><font color="blue">commercially reasonable</font> rates</font> or prices</td>
+    </tr>
+    <tr>
+      <td>If we were to change some of our     vendors, we would have to perform <font color="blue">additional testing procedures on</font> the     service or <font color="blue">product supplied by</font> the new vendors, <font color="blue">which would</font> prevent or delay     the <font color="blue">availability</font> of our products and services</td>
+    </tr>
+    <tr>
+      <td>Furthermore, our <font color="blue">costs could</font>     increase <font color="blue">significant</font>ly if we need to change vendors</td>
+    </tr>
+    <tr>
+      <td>If we do not receive     timely  <font color="blue">deliveries</font>  of  <font color="blue">quality products</font> and services, or if there are     <font color="blue">significant</font> increases in the prices of these products or services, it could     have a material adverse effect on our business, results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">network may</font> experience security breaches, <font color="blue">which could</font> disrupt our     services</td>
+    </tr>
+    <tr>
+      <td>Our network <font color="blue">infrastructure</font> may be vulnerable to computer viruses, break-ins,     denial of <font color="blue">service attacks</font> and similar <font color="blue">disruptive problems</font> caused by our     customers or other Internet users</td>
+    </tr>
+    <tr>
+      <td>Computer viruses, break-ins, denial of     <font color="blue">service attacks</font> or other problems caused <font color="blue">by third parties could lead</font> to     <font color="blue">interruption</font>s,  delays or cessation in service to our customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">There     </font>currently is <font color="blue">no existing <font color="blue">technology</font></font> that <font color="blue">provides absolute security</font></td>
+    </tr>
+    <tr>
+      <td>We may     <font color="blue">face liability</font> to customers for <font color="blue">such security breaches</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, these     <font color="blue">incidents could deter potential customers</font> and <font color="blue">adversely</font> affect existing     customer <font color="blue">relationships</font></td>
+    </tr>
+    <tr>
+      <td>If the satellite <font color="blue"><font color="blue">communication</font>s</font> industry fails to continue to develop or new     <font color="blue">technology</font> makes it obsolete, our business and <font color="blue">financial condition</font> will be     harmed</td>
+    </tr>
+    <tr>
+      <td>Our  business is <font color="blue">dependent on</font> the <font color="blue">continued success</font> and <font color="blue">development</font> of     satellite  <font color="blue"><font color="blue">communication</font>s</font>  <font color="blue">technology</font>, which competes with terrestrial     <font color="blue"><font color="blue">communication</font>s</font> transport <font color="blue">technologies</font> like terrestrial microwave, coaxial     cable and fiber optic <font color="blue"><font color="blue">communication</font>s</font> systems</td>
+    </tr>
+    <tr>
+      <td>Fiber optic <font color="blue"><font color="blue">communication</font>s</font>     systems  have <font color="blue">penetrated areas</font> in which we have <font color="blue">traditionally provided</font>     services</td>
+    </tr>
+    <tr>
+      <td>If the satellite <font color="blue"><font color="blue">communication</font>s</font> industry fails to continue to     develop, or if any <font color="blue">technological</font> <font color="blue">development</font> <font color="blue">significant</font>ly improves the cost     or  <font color="blue">efficiency</font>  of competing terrestrial systems relative to satellite     systems, then our business and <font color="blue">financial condition</font> would be <font color="blue">materially</font>     harmed</td>
+    </tr>
+    <tr>
+      <td>We may not be able to keep pace with <font color="blue">technological</font> changes, <font color="blue">which would</font> make     our products and services become non-competitive and obsolete</td>
+    </tr>
+    <tr>
+      <td>The tele<font color="blue"><font color="blue">communication</font>s</font> industry, including satellite-based <font color="blue"><font color="blue">communication</font>s</font>     services, is <font color="blue">characterized by rapidly</font> changing <font color="blue">technologies</font>, frequent new     product and <font color="blue">service introductions</font> and <font color="blue">evolving industry standards</font></td>
+    </tr>
+    <tr>
+      <td>If we are     unable, for <font color="blue">technological</font> or other reasons, to develop and introduce new     products and services or <font color="blue">enhancements</font> to <font color="blue"><font color="blue">existing product</font>s</font> and services in a     <font color="blue">timely manner</font> or in response to changing market <font color="blue">conditions</font> or customer     <font color="blue">requirements</font>, our products and services would become non-competitive and     obsolete, <font color="blue"><font color="blue">which would</font> harm</font> our business, results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">raise <font color="blue">additional funds</font></font> to meet our capital <font color="blue">requirements</font>     in the future</td>
+    </tr>
+    <tr>
+      <td>We believe that our available <font color="blue">cash resources</font> will be sufficient to meet our     working capital and capital expenditure <font color="blue">requirements</font> through at least <font color="blue">June     </font>30,  2007</td>
+    </tr>
+    <tr>
+      <td>However, our <font color="blue">future liquidity</font> and capital <font color="blue">requirements</font> are     <font color="blue">difficult</font> to predict, as they <font color="blue">depend on</font> numerous factors, including the     success of our <font color="blue">existing product</font> and service offerings, as well as competing     <font color="blue">technological</font> and market <font color="blue">development</font>s</td>
+    </tr>
+    <tr>
+      <td>We may need to <font color="blue">raise <font color="blue">additional funds</font></font>     in order to <font color="blue">meet additional</font> working capital <font color="blue">requirements</font> and to support     additional <font color="blue">capital expenditures</font> or <font color="blue">acquisition</font> of assets or a business</td>
+    </tr>
+    <tr>
+      <td>Should this need arise, <font color="blue">additional funds</font> may not be available when needed     and, even if <font color="blue">additional funds</font> are available, we may not find the terms     favorable or <font color="blue">commercially reasonable</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">adequate funds</font> are unavailable, we     may be required to delay, scale back or eliminate some of our operating     <font color="blue">activities</font>, including, <font color="blue">without limitation</font>, the timing and extent of our     marketing  programs, <font color="blue">capital expenditures</font> and research and <font color="blue">development</font>     <font color="blue">activities</font>  and  we  may  be required to <font color="blue">reduce headcount</font></td>
+    </tr>
+    <tr>
+      <td>If we raise     <font color="blue">additional funds</font> by issuing equity securities, our <font color="blue">existing <font color="blue">stockholders</font></font>     will own a <font color="blue">smaller percentage</font> of our <font color="blue">capital stock</font> and <font color="blue">new investors may pay</font>     <font color="blue">less on average</font> for their <font color="blue">securities than</font>, and could have rights superior     to, <font color="blue">existing <font color="blue">stockholders</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unauthorized </font>use of our <font color="blue"><font color="blue"><font color="blue">intellectual</font> property by</font> <font color="blue">third parties may damage</font></font>     our business</td>
+    </tr>
+    <tr>
+      <td>We regard our <font color="blue">trademarks</font>, trade secrets and other <font color="blue"><font color="blue">intellectual</font> property as</font>     <font color="blue">beneficial</font> to our success</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unauthorized </font>use of our <font color="blue"><font color="blue">intellectual</font> property by</font>     <font color="blue">third parties may damage</font> our business</td>
+    </tr>
+    <tr>
+      <td>We rely on       16     _________________________________________________________________       trademark, trade secret and <font color="blue">patent protection</font> and contracts, including     <font color="blue">confidentiality</font>  and <font color="blue">license agreements with</font> our employees, customers,     strategic collaborators, consultants and others, to protect our <font color="blue">intellectual</font>     <font color="blue">property rights</font></td>
+    </tr>
+    <tr>
+      <td>Despite our <font color="blue">precautions</font>, it may be possible for third     parties  to  obtain  and  use  our  <font color="blue">intellectual</font>  <font color="blue">property without</font> our     <font color="blue">authorization</font></td>
+    </tr>
+    <tr>
+      <td>We currently have <font color="blue">been granted four patents</font> in the <font color="blue">United States</font>, one for     remote  access  to  the  <font color="blue">Internet  </font>using satellites, one for satellite     <font color="blue">communication</font>  with automatic frequency control, one for a monitor and     <font color="blue">control system</font> for satellite <font color="blue"><font color="blue">communication</font>s</font> networks and the like, and one     for <font color="blue">implementing facsimile</font> and data <font color="blue"><font color="blue">communication</font>s</font> using Internet protocols</td>
+    </tr>
+    <tr>
+      <td>We have one other <font color="blue">patent pending</font> in the <font color="blue"><font color="blue">United States</font> </font>for a <font color="blue">distributed</font>     satellite-based cellular network</td>
+    </tr>
+    <tr>
+      <td>We currently have one Patent Cooperation     Treaty  <font color="blue">patent application pending</font> for <font color="blue">implementing facsimile</font> and data     <font color="blue"><font color="blue">communication</font>s</font> using Internet protocols</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also intend</font> to <font color="blue">seek further</font>     <font color="blue">patents on</font> our <font color="blue">technology</font>, if <font color="blue">appropriate</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that patents     will be issued for any of our pending or <font color="blue">future patent applications</font> or that     any claims allowed from such applications will be of <font color="blue">sufficient scope</font>, or be     issued in all countries where our products and services can be sold, to     <font color="blue">provide meaningful protection</font> or any <font color="blue">commercial advantage</font> to us</td>
+    </tr>
+    <tr>
+      <td>Also, our     <font color="blue"><font color="blue">competitors</font> may</font> be able to <font color="blue">design around</font> our patents</td>
+    </tr>
+    <tr>
+      <td>The laws of some     foreign  countries  in  which  our products and services are or may be     developed, <font color="blue">manufactured</font> or sold may not protect our products and services or     <font color="blue">intellectual</font> <font color="blue">property rights</font> to the <font color="blue">same extent as</font> do the laws of the United     States  and  thus make the <font color="blue">possibility</font> of piracy of our <font color="blue">technology</font> and     products and services more likely</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">filed applications</font> for <font color="blue">trademark <font color="blue">registration</font></font> of Globecomm Systems     Inc, Globecomm and GSI in the <font color="blue"><font color="blue">United States</font> </font>and various other countries,     and have been granted <font color="blue"><font color="blue">registration</font>s</font> for some of these terms in the United     States, Europe and Russia</td>
+    </tr>
+    <tr>
+      <td>We have various other <font color="blue">trademarks</font> and service     marks registered or pending for <font color="blue">registration</font> in the <font color="blue"><font color="blue">United States</font> </font>and in     other countries and may seek <font color="blue">registration</font> of other <font color="blue">trademarks</font> and service     marks in the future</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue"><font color="blue">registration</font>s</font> will be granted     from any of our pending or <font color="blue">future applications</font>, or that any <font color="blue"><font color="blue">registration</font>s</font>     that  are <font color="blue">granted will prevent others from using</font> similar <font color="blue">trademarks</font> in     <font color="blue">connection with</font> related goods and services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Defending </font>against <font color="blue">intellectual</font> <font color="blue">property infringement</font> claims could be time     consuming  and  expensive,  and  if we are not successful, could cause     substantial expenses and disrupt our business</td>
+    </tr>
+    <tr>
+      <td>We cannot be sure that the products, services, <font color="blue">technologies</font> and <font color="blue">advertising</font>     we  employ  in our business do not or will not <font color="blue">infringe valid patents</font>,     <font color="blue">trademarks</font>, copyrights or other <font color="blue">intellectual</font> <font color="blue">property rights</font> held by third     parties</td>
+    </tr>
+    <tr>
+      <td>We may be subject to <font color="blue">legal proceedings</font> and claims from time to time     relating to the <font color="blue">intellectual</font> property of others in the <font color="blue">ordinary course</font> of     our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Prosecuting </font><font color="blue">infringers</font> and <font color="blue">defending against</font> <font color="blue">intellectual</font>     <font color="blue">property infringement</font> claims could be time consuming and expensive, and     <font color="blue">regardless</font> of whether we are or are not successful, could cause substantial     expenses and disrupt our business</td>
+    </tr>
+    <tr>
+      <td>We may incur substantial expenses in     <font color="blue">defending against</font> these <font color="blue">third party</font> claims, <font color="blue">regardless</font> of their merit</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Successful </font>infringement claims <font color="blue">against us may</font> result in substantial monetary     liability and/or may <font color="blue">materially</font> disrupt the conduct of, or <font color="blue">necessitate</font> the     cessation of, segments of our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">From July </font>1, 2005 through June 30, 2006, our <font color="blue">stock price ranged from</font> a low     of dlra5dtta77 per share to a high of dlra8dtta44 per share</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our     <font color="blue">common stock</font>, like that of the securities of many tele<font color="blue"><font color="blue">communication</font>s</font> and     high  <font color="blue">technology</font>  industry  companies, could be subject to <font color="blue">significant</font>     <font color="blue">fluctuations</font>  and  is likely to <font color="blue">remain volatile based on</font> many factors,     including the following:       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]                             •  <font color="blue">quarterly variations</font> in operating results;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  <font color="blue">announcements</font> of new <font color="blue">technology</font>, products or <font color="blue">services by us</font> or any of our     <font color="blue">competitors</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  changes in financial estimates or <font color="blue">recommendations by securities analysts</font>;       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]                             •  general market <font color="blue">conditions</font>; or       [spacer</td>
+    </tr>
+    <tr>
+      <td>gif]     •  domestic and <font color="blue">international</font> economic factors unrelated to our performance</td>
+    </tr>
+    <tr>
+      <td>17     _________________________________________________________________       Additionally,  numerous  factors  relating  to  our business may cause     <font color="blue">fluctuations</font> or declines in our stock price</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">stock markets</font> in general and the markets for tele<font color="blue"><font color="blue">communication</font>s</font> stocks     in  particular have experienced <font color="blue">extreme volatility</font> that has often been     unrelated to the operating performance of <font color="blue">particular companies</font></td>
+    </tr>
+    <tr>
+      <td>These broad     market <font color="blue">fluctuations</font> may <font color="blue">adversely</font> affect the <font color="blue">trading price</font> of our common     stock</td>
+    </tr>
+    <tr>
+      <td>Because our <font color="blue">common stock</font> is <font color="blue">thinly traded</font>, it may be <font color="blue">difficult</font> to sell     shares of our <font color="blue">common stock</font> into the <font color="blue">markets without</font> experiencing <font color="blue">significant</font>     <font color="blue">price volatility</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">common stock</font> is <font color="blue">currently traded on</font> the <font color="blue">Nasdaq Global Market</font></td>
+    </tr>
+    <tr>
+      <td>Because of     the <font color="blue">relatively</font> small number of shares that are traded, it may be <font color="blue">difficult</font>     for an investor to find a purchaser for shares of our <font color="blue">common stock</font> without     experiencing <font color="blue">significant</font> <font color="blue">price volatility</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that an     <font color="blue">active trading market will</font> develop, that our <font color="blue">common stock</font> will have a higher     <font color="blue">trading volume than</font> it has <font color="blue">historically</font> had or that it will maintain its     current <font color="blue">market price</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">illiquidity could</font> have a material adverse effect     on the <font color="blue">market price</font> of our stock</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">third party</font> could be <font color="blue">prevented from</font> acquiring shares of our stock at a     premium to the <font color="blue">market price</font> because of our anti-takeover provisions</td>
+    </tr>
+    <tr>
+      <td>Various <font color="blue"><font color="blue">provisions with</font> respect</font> to votes in the election of <font color="blue">directors</font>,     special  meetings of <font color="blue">stockholders</font>, and advance notice <font color="blue">requirements</font> for     <font color="blue">stockholder proposals</font> and <font color="blue">director nominations</font> of our amended and restated     <font color="blue">certificate</font>  of  incorporation, by-laws and Section 203 of the General     Corporation Law of the State of Delaware could make it more <font color="blue">difficult</font> for a     <font color="blue">third party</font> to acquire us, even if doing so might be <font color="blue">beneficial</font> to our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we have a <font color="blue">poison pill</font> in place and <font color="blue">employment</font>     <font color="blue">provisions with</font> our <font color="blue">senior executives</font> that have change of <font color="blue">control provisions</font>     that could make an <font color="blue">acquisition</font> of us by a <font color="blue">third party</font> more <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>We have not <font color="blue">paid dividends</font> in the past and do not expect to <font color="blue">pay dividends</font> in     the future, and any <font color="blue">return on <font color="blue">investment</font> may</font> be limited to the value of our     stock</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">never paid cash <font color="blue">dividends on</font></font> our <font color="blue">common stock</font> and do not anticipate     <font color="blue">paying cash <font color="blue">dividends on</font></font> our <font color="blue">common stock</font> in the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>The     payment of <font color="blue">dividends on</font> our <font color="blue">common stock</font> will <font color="blue">depend on</font> our <font color="blue">future earnings</font>,     capital  <font color="blue">requirements</font>, <font color="blue">financial condition</font>, future prospects and other     <font color="blue">factors as</font> the board of <font color="blue">directors</font> might deem relevant</td>
+    </tr>
+    <tr>
+      <td>If we do not pay     dividends our stock may be less valuable because a return on your <font color="blue">investment</font>     will only occur if our stock price appreciates</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Government Approvals       We are subject to many <font color="blue">government</font> <font color="blue">regulations</font>, and failure to <font color="blue">comply with</font>     <font color="blue">them will harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>Operations and Use of <font color="blue">Satellites </font>      We are subject to <font color="blue">various federal laws</font> and <font color="blue">regulations</font>, which may have     <font color="blue">negative effects on</font> our business</td>
+    </tr>
+    <tr>
+      <td>We operate FCC <font color="blue">licensed <font color="blue">earth stations</font></font> in     Hauppauge, New York, subject to the <font color="blue">Communications Act </font>of 1934, as amended     (the ‘‘FCC Act’’), and the rules and <font color="blue">regulations</font> of FCC Pursuant to the FCC     Act  and  rules,  we  have obtained and are required to maintain radio     <font color="blue">transmission</font> licenses from the FCC for both domestic and foreign <font color="blue">operations</font>     of our <font color="blue">earth stations</font></td>
+    </tr>
+    <tr>
+      <td>We have also obtained and are required to maintain     <font color="blue">authorization</font>  issued  under  <font color="blue">Section  </font>214  of <font color="blue">the FCC Act </font>to act as a     tele<font color="blue"><font color="blue">communication</font>s</font> carrier, which <font color="blue">authorization</font> also extends <font color="blue">to GNSC <font color="blue">These     </font></font><font color="blue">licenses should</font> be <font color="blue">renewed by</font> the FCC in the <font color="blue">normal course as long as</font> we     <font color="blue">remain in<font color="blue">compliance with</font></font> FCC rules and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>However, we cannot     guarantee that the FCC will grant additional licenses when our existing     licenses expire, nor are we assured that the FCC will not <font color="blue">adopt new</font> or     modified technical <font color="blue">requirements</font> that will require us to <font color="blue">incur expenditures</font>     to modify or upgrade our <font color="blue">equipment as</font> a condition of retaining our licenses</td>
+    </tr>
+    <tr>
+      <td>We are also required to <font color="blue">comply with</font> FCC <font color="blue">regulations</font> regarding the exposure     of  humans to <font color="blue">radio frequency radiation from</font> our <font color="blue">earth stations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">regulations</font>, as well as local land use <font color="blue">regulations</font>, restrict our freedom to     choose where to locate our <font color="blue">earth stations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, prior to a third     party <font color="blue">acquisition</font> of us, we would need to <font color="blue">seek approval from</font> the FCC to     transfer the radio <font color="blue">transmission</font> licenses we have obtained to the <font color="blue">third party</font>     upon the <font color="blue">consummation</font> of the <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>However, we <font color="blue">cannot assure</font> you that     the FCC <font color="blue">will permit</font> the transfer of these licenses</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">approvals may</font> make     it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire us</td>
+    </tr>
+    <tr>
+      <td>18     _________________________________________________________________       Foreign Regulations       Regulatory  schemes  in  countries in which we may seek to provide our     satellite-delivered <font color="blue">data <font color="blue"><font color="blue">communication</font>s</font> services</font> may impose impediments on     our  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Some  countries  in  which we intend to operate have     tele<font color="blue"><font color="blue">communication</font>s</font> laws and <font color="blue">regulations</font> that do not currently contemplate     <font color="blue">technical advances</font> in tele<font color="blue"><font color="blue">communication</font>s</font> <font color="blue">technology</font> like Internet/intranet     <font color="blue">transmission</font> by satellite</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that the <font color="blue">present <font color="blue">regulatory</font></font>     <font color="blue">environment</font> in any of those <font color="blue">countries will</font> not be changed in a manner that     may have a material <font color="blue">adverse impact on</font> our business</td>
+    </tr>
+    <tr>
+      <td>Either we or our local     <font color="blue">partners typically must</font> obtain <font color="blue">authorization</font> from <font color="blue">each country</font> in which we     provide our satellite-delivered <font color="blue">data <font color="blue"><font color="blue">communication</font>s</font> services</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">regulatory</font>     schemes in <font color="blue">each country</font> are <font color="blue">different</font>, and <font color="blue">thus there may</font> be instances of     <font color="blue">noncompliance</font> of which we are not aware</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that our     licenses and approvals are or <font color="blue">will remain sufficient</font> in the view of foreign     <font color="blue">regulatory</font> authorities, or that <font color="blue">necessary licenses</font> and <font color="blue">approvals will</font> be     <font color="blue">granted on</font> a <font color="blue">timely basis</font> in all <font color="blue">jurisdictions</font> in which we wish to offer our     products and services or that <font color="blue"><font color="blue">restrictions</font> applicable thereto will</font> not be     <font color="blue">unduly burdensome</font></td>
+    </tr>
+    <tr>
+      <td>Regulation of the <font color="blue"><font color="blue">Internet  </font>   </font>  Due to the <font color="blue">increasing popularity</font> and use of the Internet, it is possible     that a number of laws and <font color="blue">regulations</font> may be <font color="blue">adopted at</font> the local, national     or  <font color="blue">international</font> levels with respect to the Internet, <font color="blue">covering issues</font>     including <font color="blue">user privacy</font> and expression, pricing of products and services,     taxation, <font color="blue">advertising</font>, <font color="blue">intellectual</font> <font color="blue">property rights</font>, information security or     the  convergence  of  traditional <font color="blue">communication</font> services with <font color="blue"><font color="blue">Internet  </font>   </font><font color="blue"><font color="blue">communication</font>s</font></td>
+    </tr>
+    <tr>
+      <td>It is anticipated that a substantial portion of our <font color="blue"><font color="blue">Internet  </font>   </font><font color="blue">operations</font>  will  be  carried out in countries that <font color="blue">may impose greater</font>     regulation of the content of information <font color="blue">coming into</font> the <font color="blue">country than</font> that     which  is <font color="blue">generally</font> applicable in the <font color="blue">United States</font>, including but not     limited to privacy <font color="blue">regulations</font> in numerous European countries and content     <font color="blue">restrictions</font> in <font color="blue">countries such as</font> the People’s Republic of China</td>
+    </tr>
+    <tr>
+      <td>To the     extent that we provide content as a part of our Internet services, it will     be subject to <font color="blue">laws regulating content</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, the adoption of laws or     <font color="blue">regulations</font> may decrease the growth of the Internet, <font color="blue">which could</font> in turn     decrease the demand for our Internet services or increase our cost of doing     business or in some other manner have a material adverse effect on our     business,  operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the     <font color="blue">applicability</font>  of  existing  laws  <font color="blue">governing issues</font> including property     ownership, copyrights and other <font color="blue">intellectual</font> property issues, taxation,     libel, court jurisdiction and <font color="blue">personal privacy</font> to the Internet is uncertain</td>
+    </tr>
+    <tr>
+      <td>The vast majority of these laws were <font color="blue">adopted prior</font> to the advent of the     <font color="blue">Internet  </font>and  related  <font color="blue">technologies</font> and, as a result, the laws do not     contemplate  or  address the unique issues <font color="blue">of the Internet </font>and related     <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>Changes to these laws intended to address these issues,     including some recently proposed changes, could create <font color="blue">uncertainty</font> in the     marketplace <font color="blue">which could</font> reduce demand for our products and services, could     increase our cost of doing business as a result of costs of <font color="blue">litigation</font> or     increased product <font color="blue">development</font> costs, or could in some other manner have a     material adverse effect on our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Tele<font color="blue"><font color="blue">communication</font>s</font> Taxation, Support Requirements, and Access Charges       Tele<font color="blue"><font color="blue">communication</font>s</font> <font color="blue">carriers providing domestic services</font> in the <font color="blue"><font color="blue">United States</font> </font>    are required to contribute a portion of their gross revenues for the support     of universal tele<font color="blue"><font color="blue">communication</font>s</font> services, tele<font color="blue"><font color="blue">communication</font>s</font> relay services     for the deaf, and/or other <font color="blue">regulatory</font> fees</td>
+    </tr>
+    <tr>
+      <td>We are subject to some of these     fees, and we may be subject to other fees or new or <font color="blue">increased taxes</font> and     contribution <font color="blue">requirements</font> that <font color="blue">could affect</font> our <font color="blue">profitability</font>, particularly     if we are not able to <font color="blue">pass them through</font> to customers for <font color="blue">either competitive</font>     or <font color="blue">regulatory</font> reasons</td>
+    </tr>
+    <tr>
+      <td>Internet services are <font color="blue">currently exempt from charges</font> that <font color="blue">long distance</font>     telephone  companies pay for access to the networks of <font color="blue">local telephone</font>     companies in the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>If these     access charges are <font color="blue">imposed on telephone lines used</font> to reach Internet service     providers and/or if <font color="blue">flat rate telephone services</font> for Internet access are     eliminated or curtailed, the cost to customers who access our satellite     <font color="blue">facilities</font> using telephone company-provided <font color="blue">facilities</font> could increase to an     extent that <font color="blue">could discourage</font> the demand for our services</td>
+    </tr>
+    <tr>
+      <td>Likewise, the     demand  for  our  services  in  other countries may be affected by the     <font color="blue">availability</font>  and  cost of <font color="blue">local telephone</font> or other tele<font color="blue"><font color="blue">communication</font>s</font>     <font color="blue">facilities</font> to reach our <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>19     _________________________________________________________________       Export of Tele<font color="blue"><font color="blue">communication</font>s</font> Equipment       The  sale  of our ground segment systems, networks, and <font color="blue"><font color="blue">communication</font>s</font>     services  outside  the <font color="blue"><font color="blue">United States</font> </font>is subject to <font color="blue">compliance with</font> the     <font color="blue">regulations</font> of the <font color="blue"><font color="blue">United States</font> </font>Export Administration and, in certain     circumstances, with <font color="blue">International Traffic in Arms </font><font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>The absence     of comparable <font color="blue">restrictions</font> on <font color="blue">competitors</font> in other countries may <font color="blue">adversely</font>     affect our <font color="blue">competitive position</font></td>
+    </tr>
+    <tr>
+      <td>In addition, in order to ship our products     into and implement our services in some countries, the <font color="blue">products must satisfy</font>     the technical <font color="blue">requirements</font> of that <font color="blue">particular country</font></td>
+    </tr>
+    <tr>
+      <td>If we were unable to     <font color="blue">comply with</font> such <font color="blue">requirements</font> with respect to a <font color="blue">significant</font> quantity of our     products, our sales in those <font color="blue">countries could</font> be restricted, <font color="blue">which could</font> have     a  material  adverse effect on our business, results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Foreign Ownership       We may, in the future, be required to seek FCC or other <font color="blue">government</font> approval     if  <font color="blue">foreign ownership</font> of our <font color="blue">stock exceeds certain specified criteria</font></td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> these policies could result in an order to divest the     offending <font color="blue">foreign ownership</font>, fines, denial of license renewal and/or license     <font color="blue">revocation proceedings against</font> the <font color="blue">licensee by</font> the FCC, or denial of certain     contracts from other <font color="blue"><font color="blue">United States</font> </font>Government Agencies</td>
+    </tr>
+  </tbody>
+</table>

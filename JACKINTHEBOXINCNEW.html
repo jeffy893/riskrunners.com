@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: restaurants", fill: "#99badd"},
+{source: "3: restaurants", target: "3: adversely affected by factors such as traffic", fill: "#99badd"},
+{source: "3: adversely affected by factors such as traffic", target: "3: demographics", fill: "#99badd"},
+{source: "3: restaurants", target: "7: illness attributed", fill: "#b53389"},
+{source: "7: illness attributed", target: "7: food service industry", fill: "#b53389"},
+{source: "7: food service industry", target: "7: widespread negative publicity", fill: "#b53389"},
+{source: "7: widespread negative publicity", target: "7: general could", fill: "#b53389"},
+{source: "7: general could", target: "7: operations", fill: "#b53389"},
+{source: "7: illness attributed", target: "8: Dependence ", fill: "#0095b6"},
+{source: "8: Dependence ", target: "8: on frequent deliveries", fill: "#0095b6"},
+{source: "8: on frequent deliveries", target: "8: subjects food service businesses such as ours", fill: "#0095b6"},
+{source: "8: subjects food service businesses such as ours", target: "8: interruptions", fill: "#0095b6"},
+{source: "8: interruptions", target: "8: by adverse weather", fill: "#0095b6"},
+{source: "8: by adverse weather", target: "8: conditions", fill: "#0095b6"},
+{source: "8: conditions", target: "8: could adversely affect", fill: "#0095b6"},
+{source: "8: could adversely affect", target: "8: availability quality", fill: "#0095b6"},
+{source: "8: availability quality", target: "8: ingredients", fill: "#0095b6"},
+{source: "8: Dependence ", target: "14: grow primarily", fill: "#9ab973"},
+{source: "14: grow primarily", target: "14: additional", fill: "#9ab973"},
+{source: "14: additional", target: "14: restaurants", fill: "#9ab973"},
+{source: "14: restaurants", target: "14: through new", fill: "#9ab973"},
+{source: "14: through new", target: "14: by franchisees", fill: "#9ab973"},
+{source: "14: grow primarily", target: "16: development", fill: "#92000a"},
+{source: "16: development", target: "16: reduce such risks", fill: "#92000a"},
+{source: "16: reduce such risks", target: "16: cannot assure", fill: "#92000a"},
+{source: "16: cannot assure", target: "16: future development will", fill: "#92000a"},
+{source: "16: future development will", target: "16: accordance with", fill: "#92000a"},
+{source: "16: accordance with", target: "16: expectations", fill: "#92000a"},
+{source: "16: development", target: "START_HERE", fill: "#92000a"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Restaurants</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+    <tr>
+      <td>Negotiation</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Restaurant">Restaurant</a></td>
+      <td>A restaurant is a business that prepares and serves food and drinks to customers. Meals are generally served and eaten on the premises, but many restaurants also offer take-out and food delivery services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Darden_Restaurants">Darden Restaurants</a></td>
+      <td>Darden Restaurants, Inc. is an American multi-brand restaurant operator headquartered in Orlando.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Types_of_restaurants">Types of restaurants</a></td>
+      <td>Restaurants fall into several industry classifications, based upon menu style, preparation methods and pricing, as well as the means by which the food is served to the customer.\n\n\n== Origin of categories ==\nHistorically, restaurant referred only to places that provided tables where one ate while seated, typically served by a waiter.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chain_store">Chain store</a></td>
+      <td>A chain store or retail chain is a retail outlet in which several locations share a brand, central management, and standardized business practices. They have come to dominate the retail and dining markets, and many service categories, in many parts of the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/McDonald's">McDonald's</a></td>
+      <td>McDonald's Corporation is an American-based multinational fast food chain, founded in 1940 as a restaurant operated by Richard and Maurice McDonald, in San Bernardino, California, United States. They rechristened their business as a hamburger stand, and later turned the company into a franchise, with the Golden Arches logo being introduced in 1953 at a location in Phoenix, Arizona.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prime_Restaurants">Prime Restaurants</a></td>
+      <td>Prime Restaurants Inc. (formerly Prime Restaurant Royalty Income Fund) is a Canadian holding company, which operates the restaurant chains East Side Mario's, Tir Nan Og, Paddy Flaherty's, D'Arcy McGee's, Fionn MacCool's and Bier Markt.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_World's_50_Best_Restaurants">The World's 50 Best Restaurants</a></td>
+      <td>The World's Best 50 Restaurants  is a list produced by UK media company William Reed Business Media, which originally appeared in the British magazine Restaurant, based on a poll of international chefs, restaurateurs, gourmands and restaurant critics. In addition to the main ranking, the organisation awards a series of special prizes for individuals and restaurants, including the One To Watch award, the Lifetime Achievement Award and the Chefs' Choice Award, the latter based on votes from the fifty head chefs from the restaurants on the previous year's list.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/BJ's_Restaurants">BJ's Restaurants</a></td>
+      <td>BJ's Restaurants, Inc. is an American restaurant chain, headquartered in Huntington Beach, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/CKE_Restaurants">CKE Restaurants</a></td>
+      <td>CKE Restaurants Holdings (an acronym from Carl Karcher Enterprises) is an American fast food corporation and is the parent organization for the Carl's Jr., Hardee's, Green Burrito, and Red Burrito brands. CKE Restaurants is a subsidiary of the private equity firm, Roark Capital Group, and is headquartered in Franklin, Tennessee.In October 2020, CKE Restaurants operated or franchised to locations in 44 US states and 43 foreign countries and US territories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Yoda_conditions">Yoda conditions</a></td>
+      <td>In programming jargon, Yoda conditions (also called Yoda notation) is a programming style where the two parts of an expression are reversed from the typical order in a conditional statement. A Yoda condition places the constant portion of the expression on the left side of the conditional statement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dirichlet_conditions">Dirichlet conditions</a></td>
+      <td>In mathematics, the Dirichlet conditions are sufficient conditions for a real-valued, periodic function f to be equal to the sum of its Fourier series at each point where f is continuous. Moreover, the behavior of the Fourier series at points of discontinuity is determined as well (it is the midpoint of the values of the discontinuity).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Twenty-one_Conditions">Twenty-one Conditions</a></td>
+      <td>The Twenty-one Conditions, officially the Conditions of Admission to the Communist International, refer to the conditions, most of which were suggested by Vladimir Lenin, to the adhesion of the socialist parties to the Third International (Comintern) created in 1919. The conditions were formally adopted by the Second Congress of the Comintern in 1920.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nervous_Conditions">Nervous Conditions</a></td>
+      <td>Nervous Conditions is a novel by Zimbabwean author Tsitsi Dangarembga, first published in the United Kingdom in 1988. It was the first book published by a black woman from Zimbabwe in English.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Wolfe_conditions">Wolfe conditions</a></td>
+      <td>In the unconstrained minimization problem, the Wolfe conditions are a set of inequalities for performing inexact line search, especially in quasi-Newton methods, first published by Philip Wolfe in 1969.In these methods the idea is to find\n\n  \n    \n      \n        \n          min\n          \n            x\n          \n        \n        f\n        (\n        \n          x\n        \n        )\n      \n    \n    {\displaystyle \min _{x}f(\mathbf {x} )}\n  for some smooth \n  \n    \n      \n        f\n        :\n        \n          \n            R\n          \n          \n            n\n          \n        \n        →\n        \n          R\n        \n      \n    \n    {\displaystyle f\colon \mathbb {R} ^{n}\to \mathbb {R} }\n  . Each step often involves approximately solving the subproblem\n\n  \n    \n      \n        \n          min\n          \n            α\n          \n        \n        f\n        (\n        \n          \n            x\n          \n          \n            k\n          \n        \n        +\n        α\n        \n          \n            p\n          \n          \n            k\n          \n        \n        )\n      \n    \n    {\displaystyle \min _{\alpha }f(\mathbf {x} _{k}+\alpha \mathbf {p} _{k})}\n  where \n  \n    \n      \n        \n          \n            x\n          \n          \n            k\n          \n        \n      \n    \n    {\displaystyle \mathbf {x} _{k}}\n   is the current best guess, \n  \n    \n      \n        \n          \n            p\n          \n          \n            k\n          \n        \n        ∈\n        \n          \n            R\n          \n          \n            n\n          \n        \n      \n    \n    {\displaystyle \mathbf {p} _{k}\in \mathbb {R} ^{n}}\n   is a search direction, and \n  \n    \n      \n        α\n        ∈\n        \n          R\n        \n      \n    \n    {\displaystyle \alpha \in \mathbb {R} }\n   is the step length.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_races">Conditions races</a></td>
+      <td>Conditions races are horse races in which the weights carried by the runners are laid down by the conditions attached to the race. Weights are allocated according to the sex of the runners, with female runners carrying less weight than males; the age of the runners, with younger horses receiving weight from older runners to allow for relative maturity, referred to as weight for age; and the quality of the runners, with horses that have won certain values of races giving weight to less successful entrants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_(album)">Conditions (album)</a></td>
+      <td>Conditions is the debut studio album by Australian rock band The Temper Trap, released in Australia through Liberation Music on 19 June 2009. It was later released in the United Kingdom on 10 August 2009.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Standard_temperature_and_pressure">Standard temperature and pressure</a></td>
+      <td>Standard temperature and pressure (STP) are standard sets of conditions for experimental measurements to be established to allow comparisons to be made between different sets of data. The most used standards are those of the International Union of Pure and Applied Chemistry (IUPAC) and the National Institute of Standards and Technology (NIST), although these are not universally accepted standards.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Causality_conditions">Causality conditions</a></td>
+      <td>In the study of Lorentzian manifold spacetimes there exists a hierarchy of causality conditions which are important in proving mathematical theorems about the global structure of such manifolds. These conditions were collected during the late 1970s.The weaker the causality condition on a spacetime, the more unphysical the spacetime is.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Media_franchise">Media franchise</a></td>
+      <td>A media franchise, also known as a multimedia franchise, is a collection of related media in which several derivative works have been produced from an original creative work of fiction, such as a film, a work of literature, a television program or a video game.\n\n\n== Transmedia franchise ==\n \nA media franchise often consists of cross-marketing across more than one medium.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alisher_Usmanov">Alisher Usmanov</a></td>
+      <td>Alisher Burkhanovich Usmanov (Russian: Алишер Бурханович Усманов; born 9 September 1953) is an Uzbek-born Russian businessman and oligarch. By 2022, Usmanov had an estimated net worth of $19.5 billion and was among the world's 100 wealthiest people.Usmanov made his wealth after the collapse of the Soviet Union, through metal and mining operations, and investments.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2011_military_intervention_in_Libya">2011 military intervention in Libya</a></td>
+      <td>On 19 March 2011, a multi-state NATO-led coalition began a military intervention in Libya, to implement United Nations Security Council Resolution 1973, in response to events during the First Libyan Civil War. With ten votes in favour and five abstentions, the UN Security Council's intent was to have "an immediate ceasefire in Libya, including an end to the current attacks against civilians, which it said might constitute "crimes against humanity" ...</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hardware_random_number_generator">Hardware random number generator</a></td>
+      <td>In computing, a hardware random number generator (HRNG) or true random number generator (TRNG) is a device that generates random numbers from a physical process, rather than by means of an algorithm.  Such devices are often based on microscopic phenomena that generate low-level, statistically random "noise" signals, such as thermal noise, the photoelectric effect, involving a beam splitter, and other quantum phenomena.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tourism_in_Abkhazia">Tourism in Abkhazia</a></td>
+      <td>Tourism in Abkhazia is possible under Georgian law for foreigners entering the occupied territory from Georgia, although Georgia cannot assure the safety inside disputed territory.\nHowever, the Abkazian beaches on the Black Sea continue to be accessible for tourists coming from the Russian side of the Abkhazia–Russia border which is not under Georgian control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medical_license">Medical license</a></td>
+      <td>A medical license is an occupational license that permits a person to legally practice medicine. In most countries, a person must have a medical license bestowed either by a specified government-approved professional association or a government agency before he or she can practice medicine.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/What's_Your_Raashee?">What's Your Raashee?</a></td>
+      <td>What's Your Raashee? (lit. 'What's Your Zodiac Sign?') is a 2009 Indian Hindi-language romantic comedy film written and directed by Ashutosh Gowariker.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>JACK IN THE BOX INC /NEW/      ITEM 1A RISK FACTORS               Risks  Related  to  the  <font color="blue">Food Service Industry</font></td>
+    </tr>
+    <tr>
+      <td>Food service     <font color="blue"><font color="blue">businesses</font> may</font> be <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affected by</font> changes in consumer     tastes, national, regional and <font color="blue">local economic</font> and <font color="blue">political <font color="blue">conditions</font></font>,     <font color="blue">demographic</font>  trends,  and  the <font color="blue">impact on consumer eating habits</font> of new     information  regarding  diet, nutrition and health</td>
+    </tr>
+    <tr>
+      <td>The performance of     individual <font color="blue">restaurants</font> may be <font color="blue"><font color="blue">adversely</font> affected by</font> factors such as traffic     patterns,  <font color="blue">demographic</font>s and the type, number and location of competing     <font color="blue">restaurants</font></td>
+    </tr>
+    <tr>
+      <td>Multi-unit  <font color="blue">food service <font color="blue">businesses</font> such as ours</font> can also be     <font color="blue">materially</font> and <font color="blue"><font color="blue">adversely</font> affected by</font> <font color="blue">widespread negative publicity</font> of any     type, <font color="blue">but particularly</font> regarding <font color="blue">food quality</font>, fat content, illness (such as     epidemics or the prospect of a <font color="blue">pandemic such as</font>                                         10       _________________________________________________________________    [44]Table of <font color="blue">Contents       </font>avian flu), obesity, injury or other <font color="blue">health concerns with respect</font> to certain     foods</td>
+    </tr>
+    <tr>
+      <td>To minimize the risk of food-borne illness, we have implemented a     HACCP system for <font color="blue">managing food safety</font> and quality</td>
+    </tr>
+    <tr>
+      <td>Nevertheless, the risk of     food-borne illness cannot be <font color="blue">completely</font> eliminated</td>
+    </tr>
+    <tr>
+      <td>Any outbreak of such     <font color="blue">illness attributed</font> to our <font color="blue">restaurants</font> or within the <font color="blue">food <font color="blue">service industry</font></font> or     any <font color="blue">widespread negative publicity</font> regarding our brands or the restaurant     industry in <font color="blue">general could</font> have a material adverse effect on our financial     condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dependence </font><font color="blue">on frequent deliveries</font> of fresh produce and groceries     subjects food service <font color="blue">businesses</font>, such as ours, to the risk that shortages     or <font color="blue">interruptions</font> in supply, caused <font color="blue">by adverse weather</font> or other <font color="blue">conditions</font>,     <font color="blue">could <font color="blue">adversely</font> affect</font> the <font color="blue">availability</font>, quality and cost of <font color="blue">ingredients</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, unfavorable trends or <font color="blue"><font color="blue">development</font>s concerning factors such as</font>     inflation, increased cost of food, labor, fuel, utilities, <font color="blue">technology</font>,     insurance and <font color="blue">employee benefits</font> (including increases in <font color="blue">hourly wage</font>, and     workers’ compensation and other insurance premiums), increases in the number     and locations of competing <font color="blue">restaurants</font>, regional weather <font color="blue">conditions</font> and the     <font color="blue">availability</font>  of experienced <font color="blue">management</font> and hourly employees, may also     <font color="blue">adversely</font>  affect  the  food  <font color="blue">service industry</font> in general</td>
+    </tr>
+    <tr>
+      <td>Because our     <font color="blue">restaurants</font> are predominantly company-operated, we may have <font color="blue">greater exposure</font>     to operating <font color="blue">cost issues than chains</font> that are <font color="blue">primarily franchised</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes     </font>in economic <font color="blue">conditions</font> <font color="blue">affecting</font> our customers could reduce traffic in some     or all of our <font color="blue">restaurants</font> or impose practical limits on pricing, either of     which could have a material adverse effect on our <font color="blue">financial condition</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">continued success will depend</font> in part on our     ability to anticipate, identify and respond to changing <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Associated </font>with <font color="blue">Our Development</font></td>
+    </tr>
+    <tr>
+      <td>We intend to <font color="blue">grow primarily</font>     by  developing  <font color="blue">additional</font>  company-owned  <font color="blue">restaurants</font> and <font color="blue">through new</font>     <font color="blue">restaurants</font> to be developed <font color="blue">by <font color="blue">franchisees</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Development </font>involves substantial     risks, including the risk of (i) the <font color="blue">availability</font> of financing for the     Company and to <font color="blue"><font color="blue">franchisees</font> at</font> acceptable rates and terms, (ii) <font color="blue">development</font>     <font color="blue">costs exceeding budgeted</font> or contracted amounts, (iii) delays in <font color="blue">completion</font>     of <font color="blue">construction</font>, (iv) the <font color="blue">inability</font> to identify, or the un<font color="blue">availability</font> of     <font color="blue">suitable sites</font>, both traditional and nontraditional, on acceptable leasing     or <font color="blue">purchase terms</font>, (v) developed properties not achieving desired revenue or     cash flow levels once opened, (vi) competition for suitable <font color="blue">development</font>     sites;  (vii) incurring substantial <font color="blue">unrecoverable costs</font> in the event a     <font color="blue">development</font> project is <font color="blue">abandoned prior</font> to <font color="blue">completion</font>, (viii) the <font color="blue">inability</font>     to obtain all required <font color="blue"><font color="blue">government</font>al permits</font>, including, in <font color="blue">appropriate</font>     cases, liquor licenses; (ix) changes in <font color="blue">government</font>al rules, <font color="blue">regulations</font>, and     <font color="blue">interpretations</font>  (including <font color="blue">interpretations</font> of the <font color="blue"><font color="blue">requirement</font>s</font> of the     American with Dis<font color="blue">abilities</font> Act, (ADA) and (x) general economic and business     <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Although we intend to manage our <font color="blue">development</font> to <font color="blue">reduce such risks</font>,     we <font color="blue">cannot assure</font> you that present or future <font color="blue">development</font> will perform in     <font color="blue">accordance with</font> our <font color="blue">expectations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will complete     the  <font color="blue">development</font>  and <font color="blue">construction</font> of the <font color="blue">facilities</font>, or that any such     <font color="blue">development</font> will be completed in a <font color="blue">timely manner</font> or <font color="blue">within budget</font>, or that     any  <font color="blue">restaurants</font> will generate our expected <font color="blue">returns on investment</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">inability</font> to expand in <font color="blue">accordance with</font> our plans or to manage our growth     could  have a material adverse effect on our results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our  plans to increase our     <font color="blue">franchising activities</font> and to further develop Qdoba and our convenience     store/gas station/restaurant co-brand will require the <font color="blue">implementation</font> of     enhanced operational and financial systems and will require <font color="blue">additional</font>     <font color="blue">management</font>, operational, and <font color="blue">financial resources</font></td>
+    </tr>
+    <tr>
+      <td>For example, we will be     required to recruit franchise sales and <font color="blue">administrative personnel</font>; and to     recruit and <font color="blue">train managers</font> and other personnel for each new company-owned     restaurant, as well as <font color="blue">additional</font> <font color="blue">development</font> and <font color="blue"><font color="blue">accounting</font> personnel</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that we will be able to manage our expanding <font color="blue">operations</font>     <font color="blue"><font color="blue">effective</font>ly</font> to continue to recognize <font color="blue">value from franchising</font> and co-branding</td>
+    </tr>
+    <tr>
+      <td>The  failure  to  implement  such  systems and <font color="blue">add such resources on</font> a     cost-<font color="blue">effective</font> basis could have a material adverse effect on our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Reliance on <font color="blue">Certain Geographic Markets</font></td>
+    </tr>
+    <tr>
+      <td>Because our business is     regional, with approximately 60prca of our <font color="blue">restaurants</font> located in the states of     California and Texas, the economic <font color="blue">conditions</font>, state and local <font color="blue">government</font>     <font color="blue">regulations</font>  and  weather <font color="blue">conditions</font> <font color="blue">affecting</font> those states may have a     material impact upon our results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to Entering New Markets</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that     we will be able to <font color="blue">successfully expand</font> or acquire <font color="blue">critical market presence</font>     for  our  brands  in  new  <font color="blue">geographical</font>  markets,  as we <font color="blue">may encounter</font>     well-established <font color="blue">competitors</font> with <font color="blue">substantially</font> greater <font color="blue">financial resources</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">find attractive locations</font>, acquire <font color="blue">name recognition</font>,     <font color="blue">successfully market</font> our products and <font color="blue">attract new customers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitive     </font><font color="blue">circumstances</font> and <font color="blue">consumer characteristics</font> in new market segments and new     <font color="blue">geographical</font> <font color="blue">markets may</font> differ <font color="blue">substantially</font> from those in the market     segments and <font color="blue">geographical</font> markets in which we have substantial experience</td>
+    </tr>
+    <tr>
+      <td>We  cannot  assure  you that we will be able to profitably operate new     company-operated or franchised <font color="blue">restaurants</font> in new <font color="blue">geographical</font> markets</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management </font><font color="blue">decisions</font> to curtail or <font color="blue">cease investment</font> in <font color="blue">certain locations</font> or     <font color="blue">markets may</font> result in <font color="blue">impairment charges</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">restaurant industry</font> is <font color="blue">highly <font color="blue">competitive</font> with</font>     respect to price, service, location, personnel and the type and quality of     food,  and  there  are  many well-established <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Each of our     <font color="blue">restaurants</font> competes directly and <font color="blue">indirectly</font> with a large number of national     and regional restaurant chains, as well as with locally-owned quick-service     <font color="blue">restaurants</font>, fast-casual <font color="blue">restaurants</font>, sandwich shops and similar types of     <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trend toward convergence</font> in grocery, deli and restaurant     services  may  increase  the number of our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Such increased     <font color="blue">competition could</font> have a material adverse effect on our <font color="blue">financial condition</font>     and  results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> have <font color="blue">substantially</font>     greater financial, marketing, operating and other <font color="blue">resources than</font> we have,     <font color="blue">which may give them</font> a <font color="blue"><font color="blue">competitive</font> advantage</font></td>
+    </tr>
+    <tr>
+      <td>Certain of our <font color="blue">competitors</font> have     introduced  a variety of new products and engaged in substantial price     <font color="blue">discounting</font> in recent years and may continue to do so in the future</td>
+    </tr>
+    <tr>
+      <td>We plan     to take various steps in <font color="blue">connection with</font> our “brand re-invention” strategy,     including introducing new, higher-quality products, discontinuing certain     menu  items,  <font color="blue">testing new service</font> and <font color="blue">training initiatives</font>, and making     <font color="blue">improvements</font> to <font color="blue"><font color="blue">facility</font> image at</font> our <font color="blue">restaurants</font></td>
+    </tr>
+    <tr>
+      <td>However, there can be no     assurance (i) that our <font color="blue">facility</font> <font color="blue">improvements</font> will foster increases in sales     and yield the desired return on investment, (ii) of the success of our new     products, initiatives or our <font color="blue">overall strategies</font> or (iii)                                         11       _________________________________________________________________    [45]Table of <font color="blue">Contents       </font>that <font color="blue">competitive</font> product offerings, pricing and <font color="blue">promotions will</font> not have an     adverse effect upon our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">promotional strategies</font> or other <font color="blue">actions during unfavorable <font color="blue">competitive</font></font>     <font color="blue">conditions</font> may <font color="blue">adversely</font> affect our margins</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to Increased Labor Costs</font></td>
+    </tr>
+    <tr>
+      <td>We have a substantial     number of employees who are <font color="blue">paid wage rates at</font> or slightly above the minimum     wage</td>
+    </tr>
+    <tr>
+      <td>As federal and state <font color="blue">minimum wage</font> rates increase, we may need to     increase not only the wages of our <font color="blue">minimum wage</font> employees but also the wages     paid  to  the <font color="blue">employees at wage rates which</font> are above <font color="blue">minimum wage</font></td>
+    </tr>
+    <tr>
+      <td>If     <font color="blue">competitive</font>  pressures or other <font color="blue">factors prevent us from offsetting</font> the     <font color="blue">increased costs by increases</font> in prices, our <font color="blue"><font color="blue">profitability</font> may decline</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, various proposals that would require employers to <font color="blue">provide health</font>     insurance for all of their employees are being considered from time-to-time     in <font color="blue">Congress </font>and various states</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">offer access</font> to <font color="blue">healthcare benefits</font> to     our <font color="blue">restaurant <font color="blue">crew members</font></font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">crew members</font> do not find the <font color="blue">opportunity</font>     to  obtain this <font color="blue">insurance attractive</font>, we may not see the <font color="blue">reductions</font> in     turnover, training costs and workers’ compensation claims that we expect</td>
+    </tr>
+    <tr>
+      <td>The imposition of any <font color="blue">requirement</font> that we <font color="blue">provide health</font> insurance to all     employees on terms <font color="blue">materially</font> different from our <font color="blue">existing programs would</font>     have a material <font color="blue">adverse impact on</font> the results of <font color="blue">operations</font> and financial     condition of the Company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to Advertising</font></td>
+    </tr>
+    <tr>
+      <td>Some of our <font color="blue">competitors</font> have greater     financial  resources  which enable them to purchase <font color="blue"><font color="blue">significant</font>ly</font> more     <font color="blue">television</font> and radio <font color="blue">advertising</font> than we are able to purchase</td>
+    </tr>
+    <tr>
+      <td>Should our     <font color="blue">competitors</font> increase spending on <font color="blue">advertising</font> and promotion, should the cost     of  <font color="blue">television</font> or radio <font color="blue">advertising</font> increase, or our <font color="blue">advertising</font> funds     decrease  for any reason, including <font color="blue">implementation</font> of <font color="blue">reduced spending</font>     strategies, or should our <font color="blue">advertising</font> and promotion be <font color="blue">less <font color="blue">effective</font> than</font>     our <font color="blue">competitors</font>, there could be a material adverse effect on our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trend toward fragmentation</font> in the     <font color="blue">media favored by</font> our <font color="blue">target consumers may dilute</font> the <font color="blue"><font color="blue">effective</font>ness</font> of our     <font color="blue">advertising</font> dollars</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">income tax provision</font> is sensitive to expected earnings     and,  as  <font color="blue">expectations</font> change, our <font color="blue">income tax provision</font>s may vary from     quarter-to-quarter and year-to-year</td>
+    </tr>
+    <tr>
+      <td>In addition, from time-to-time, we may     take positions for filing our tax returns, which differ from the treatment     for financial reporting purposes</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">ultimate outcome</font> of <font color="blue">such positions</font>     could have an <font color="blue">adverse impact on</font> our <font color="blue"><font color="blue">effective</font> tax rate</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Achieving Increased Franchise Ownership and to     <font color="blue">Franchise Operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">At October </font>1, 2006, approximately 29prca of the Jack in     the Box <font color="blue">restaurants</font> were franchised</td>
+    </tr>
+    <tr>
+      <td>Our plan to achieve 35prca franchise     <font color="blue">ownership by</font> the end of 2008 and to <font color="blue">further increase</font> the percentage of     franchised <font color="blue">restaurants</font> thereafter by approximately 5prca annually and to move     towards a range of <font color="blue">franchise ownership</font> more <font color="blue">closely aligned with</font> that of the     QSR, is subject to risks and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to identify     <font color="blue">franchisee candidates</font> with <font color="blue">appropriate</font> experience and <font color="blue">financial resources</font> or     to <font color="blue">negotiate mutually</font> acceptable <font color="blue"><font color="blue">agreements</font> with them</font></td>
+    </tr>
+    <tr>
+      <td>The goal of 2008 may     not <font color="blue">provide sufficient</font> time for us to achieve the <font color="blue">ownership mix</font> of franchise     to company-operated <font color="blue">restaurants</font> that we desire and we <font color="blue">cannot assure</font> you that     we will be able to continue to expand our <font color="blue">franchising activities</font> thereafter</td>
+    </tr>
+    <tr>
+      <td>Sales of our <font color="blue">franchises</font> and the <font color="blue">realization</font> of <font color="blue">gains from franchising may</font>     <font color="blue">vary from quarter</font> to quarter and may not meet <font color="blue">expectations</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to     sell <font color="blue">franchises</font> and to realize <font color="blue">gains from such sales</font> is uncertain</td>
+    </tr>
+    <tr>
+      <td>The     opening and success of franchised <font color="blue">restaurants</font> depends on various factors,     including the demand for our <font color="blue">franchises</font>, and the selection of <font color="blue">appropriate</font>     <font color="blue">franchisee candidates</font>, the <font color="blue">availability</font> of <font color="blue">suitable sites</font>, the <font color="blue">negotiation</font>     of acceptable lease or <font color="blue">purchase terms</font> for new locations, permitting and     <font color="blue"><font color="blue">regulatory</font> compliance</font>, the ability to meet <font color="blue">construction</font> schedules, the     <font color="blue">availability</font> of financing, and the financial and other <font color="blue">cap<font color="blue">abilities</font></font> of our     <font color="blue">franchisees</font> and <font color="blue">developers</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">developers</font> planning     the opening of franchised <font color="blue">restaurants</font> will have the business <font color="blue">abilities</font> or     <font color="blue">sufficient access</font> to <font color="blue">financial resources</font> necessary to open the <font color="blue">restaurants</font>     required by their <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">franchisees</font> will     <font color="blue">successfully participate</font> in our <font color="blue">strategic initiatives</font> or operate their     <font color="blue">restaurants</font>  in a <font color="blue">manner consistent with</font> our concept and standards</td>
+    </tr>
+    <tr>
+      <td>In     addition, certain federal and state <font color="blue">laws govern</font> our <font color="blue">relationships with</font> our     <font color="blue">franchisees</font></td>
+    </tr>
+    <tr>
+      <td>See “Risks Related to Government Regulations” below</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">restaurant industry</font> is subject to extensive federal, state     and  local  <font color="blue">government</font>al  <font color="blue">regulations</font>, including those relating to the     preparation, labeling, <font color="blue">advertising</font> and sale of food and those relating to     building and zoning <font color="blue"><font color="blue">requirement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We and our <font color="blue">franchisees</font> are also subject to     licensing and regulation by state and local <font color="blue">departments</font> relating to health,     <font color="blue">sanitation</font> and safety standards, and liquor licenses and to <font color="blue">laws govern</font>ing     our <font color="blue">relationships with</font> employees, including <font color="blue">minimum wage</font> <font color="blue"><font color="blue">requirement</font>s</font>,     overtime,  working <font color="blue">conditions</font> and citizenship <font color="blue"><font color="blue">requirement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">inability</font> to obtain or maintain     <font color="blue">such licenses</font> or publicity resulting <font color="blue">from actual</font> or alleged violations of     <font color="blue">such laws could</font> have an adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are     also subject to <font color="blue">federal regulation</font> and certain state laws, which govern the     offer and sale of <font color="blue">franchises</font></td>
+    </tr>
+    <tr>
+      <td>Many state franchise laws impose substantive     <font color="blue"><font color="blue">requirement</font>s</font>   on   franchise  <font color="blue">agreements</font>,  including  <font color="blue">limitations</font>  on     <font color="blue">noncompetition provisions</font> and <font color="blue">on provisions concerning</font> the <font color="blue">termination</font> or     nonrenewal of a franchise</td>
+    </tr>
+    <tr>
+      <td>Some states require that <font color="blue">certain materials</font> be     registered before <font color="blue">franchises</font> can be offered or sold in that state</td>
+    </tr>
+    <tr>
+      <td>The     failure to obtain or retain licenses or approvals to sell <font color="blue">franchises</font> could     <font color="blue">adversely</font>  affect  us and our <font color="blue">franchisees</font></td>
+    </tr>
+    <tr>
+      <td>Changes in, and the cost of     compliance with, <font color="blue">government</font> <font color="blue">regulations</font> could have a material adverse effect     on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to Interest Rates</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>has exposure to     changes  in  <font color="blue">interest rates based on</font> its financing, investing and cash     <font color="blue">management</font> activities</td>
+    </tr>
+    <tr>
+      <td>Changes in interest rates could <font color="blue">materially</font> impact the     Company’s <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to the Failure of Internal Controls</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>    maintains a <font color="blue">documented system</font> of <font color="blue"><font color="blue">internal controls</font> which</font> is reviewed and     <font color="blue">monitored by</font> an <font color="blue">Internal Controls Committee </font>and tested by the Company’s full     time <font color="blue">Internal Audit Department</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Internal Audit Department</font> reports to the     <font color="blue"><font color="blue">Audit Committee</font> of the Board of Directors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>believes it has a     well-designed system to maintain <font color="blue">adequate <font color="blue">internal controls</font> on</font> the business</td>
+    </tr>
+    <tr>
+      <td>However,  there  can  be  no assurance that there won’t be any control     <font color="blue">deficiencies</font>  in the future</td>
+    </tr>
+    <tr>
+      <td>Should we <font color="blue">become aware</font> of any <font color="blue">significant</font>     control <font color="blue">deficiencies</font>, the <font color="blue">Internal Controls Committee </font><font color="blue">would recommend prompt</font>     <font color="blue">remediation</font> and report them to the <font color="blue">Audit Committee</font></td>
+    </tr>
+    <tr>
+      <td>We have devoted                                         12       _________________________________________________________________    [46]Table of <font color="blue">Contents       </font><font color="blue">significant</font> resources to document, test, monitor and improve our internal     controls and <font color="blue">will continue</font> to do so; however, we cannot be certain that     these <font color="blue">measures will ensure</font> that our controls are adequate in the future or     that <font color="blue">adequate controls will</font> be <font color="blue">effective</font> in <font color="blue">preventing errors</font> or fraud</td>
+    </tr>
+    <tr>
+      <td>If     we fail to maintain an <font color="blue">effective</font> system of <font color="blue">internal controls</font>, we may not be     able  to <font color="blue">accurately</font> report our financial results or <font color="blue">prevent fraud</font></td>
+    </tr>
+    <tr>
+      <td>Any     failures in the <font color="blue"><font color="blue">effective</font>ness</font> of our <font color="blue">internal controls</font> could have a material     adverse  effect  on  our operating results or cause us to fail to meet     reporting <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental Risks and Regulations</font></td>
+    </tr>
+    <tr>
+      <td>As is the case with any owner     or operator of <font color="blue">real property</font>, we are subject to a variety of federal, state     and local <font color="blue">government</font>al <font color="blue">regulations</font> relating to the use, storage, discharge,     emission  and  disposal of <font color="blue">hazardous materials</font></td>
+    </tr>
+    <tr>
+      <td>Failure to comply with     <font color="blue">environmental</font> laws could result in the imposition of <font color="blue">severe penalties</font> or     restrictions on <font color="blue">operations</font> by <font color="blue">government</font>al agencies or courts of law, which     <font color="blue">could <font color="blue">adversely</font> affect</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We do not have <font color="blue">environmental</font> <font color="blue">liability</font>     insurance;  nor do we maintain a reserve to <font color="blue">cover such events</font></td>
+    </tr>
+    <tr>
+      <td>We have     engaged and may engage in real estate <font color="blue">development</font> projects and own or lease     <font color="blue">several parcels</font> of <font color="blue">real estate on which</font> our <font color="blue">restaurants</font> are located</td>
+    </tr>
+    <tr>
+      <td>We are     unaware of any <font color="blue">significant</font> hazards on properties we own or have owned, or     operate or have operated, the <font color="blue">remediation</font> of <font color="blue">which would</font> result in material     <font color="blue">liability</font>  for  the  Company</td>
+    </tr>
+    <tr>
+      <td>In  the  event  of the de<font color="blue">termination</font> of     <font color="blue">contamination on such properties</font>, the Company, as owner or operator, could     be  held liable for <font color="blue">severe penalties</font> and costs of <font color="blue">remediation</font></td>
+    </tr>
+    <tr>
+      <td>We also     operate  motor  vehicles  and  <font color="blue">warehouses</font> and <font color="blue">handle various petroleum</font>     substances  and <font color="blue">hazardous substances</font>, and are not aware of any current     material <font color="blue">liability</font> related thereto</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Related to Leverage</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>has received <font color="blue">commitments</font>     for a new dlra625 million credit <font color="blue">facility</font>, which will be comprised of a dlra150     <font color="blue">million revolving</font> credit <font color="blue">facility</font> and a dlra475 million term loan</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>    expects to close the new credit <font color="blue">facility</font> no later than <font color="blue">December </font>19, 2006</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased  </font><font color="blue">leverage could</font> have certain material <font color="blue">adverse effects on</font> the     Company, including, but not limited to the following: (i) our credit rating     may be reduced; (ii) our ability to obtain <font color="blue">additional</font> financing in the     future for <font color="blue">acquisitions</font>, working capital, capital expenditures, and general     corporate or other <font color="blue">purposes could</font> be impaired, or any <font color="blue">such financing may</font> not     be available on terms favorable to us; (iii) a substantial portion of our     <font color="blue">cash flow could</font> be required for <font color="blue">debt service</font> and, as a result, might not be     available  for  our <font color="blue">operations</font> or other purposes; (iv) any substantial     decrease in net operating <font color="blue">cash flows</font> or any substantial increase in expenses     could make it <font color="blue">difficult</font> for us to meet our <font color="blue">debt service</font> <font color="blue"><font color="blue">requirement</font>s</font> or     force  us  to modify our <font color="blue">operations</font> or sell assets; (v) our ability to     withstand <font color="blue">competitive</font> pressures may be decreased; and (vi) our level of     <font color="blue">indebtedness may</font> make us more vulnerable to economic downturns, and reduce     our <font color="blue">flexibility</font> in responding to changing business, <font color="blue">regulatory</font> and economic     <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to repay expected <font color="blue">borrowings under</font> the Credit     Facilities, and to meet our other debt or contractual <font color="blue">obligations</font> (including     compliance with applicable financial covenants) will depend upon our future     performance and our cash flow from <font color="blue">operations</font>, both of which arc subject to     prevailing economic <font color="blue">conditions</font> and financial, business and other known and     <font color="blue">unknown risks</font> and <font color="blue">uncertainties</font>, certain of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Other Risks </font>include:               • Weather <font color="blue">conditions</font> and related <font color="blue">events such as floods</font> or other     natural disasters which may <font color="blue">adversely</font> affect the level of <font color="blue">customer traffic</font>,     damage our <font color="blue">restaurants</font>, or otherwise disrupt <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>•  Changes in <font color="blue">accounting</font> standards policies and practices or     related <font color="blue">interpretations</font> by auditors or <font color="blue">regulatory</font> entities may <font color="blue">negatively</font>     impact our results</td>
+    </tr>
+    <tr>
+      <td>• Changes in <font color="blue">assumptions</font> relating to pension costs may increase     our pension expense and <font color="blue">contributions</font></td>
+    </tr>
+    <tr>
+      <td>• <font color="blue">The Company </font>has an on-going “profit improvement program” under     which it seeks to <font color="blue">improve efficiencies</font> and <font color="blue">lower costs</font> in all aspects of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although the Company </font>has been successful in <font color="blue">improving efficiency</font>     and <font color="blue">reducing costs</font> in the past, there is no assurance that it will be able     to continue to do so in the future</td>
+    </tr>
+    <tr>
+      <td>• The <font color="blue">risks associated with</font> information security and the use of     cashless payments, such as increased investment in <font color="blue">technology</font>, the costs of     compliance  with  privacy, consumer protection and other laws, and the     expenses  associated  with cashless payment, may <font color="blue">negatively</font> impact our     results</td>
+    </tr>
+    <tr>
+      <td>• The practical or <font color="blue">psychological effects</font> of terrorist acts or     <font color="blue">government</font> responses, the on-going conflict in Iraq and war or the risk of     war on consumer behavior may <font color="blue">negatively</font> impact our results</td>
+    </tr>
+    <tr>
+      <td>• <font color="blue">Litigation </font>trends and potential class <font color="blue">actions by consumers</font> and     <font color="blue">shareholders</font>, and the costs and other effects of legal claims <font color="blue">by employees</font>,     <font color="blue">franchisees</font>,  customers,  vendors,  <font color="blue">stockholders</font> and others, including     settlement of those claims may <font color="blue">negatively</font> impact our results</td>
+    </tr>
+  </tbody>
+</table>

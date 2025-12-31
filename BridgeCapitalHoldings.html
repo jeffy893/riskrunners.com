@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: uncertainties", fill: "#f2003c"},
+{source: "2: uncertainties", target: "2: facing us", fill: "#f2003c"},
+{source: "2: uncertainties", target: "3: Additional ", fill: "#967117"},
+{source: "3: Additional ", target: "3: uncertainties", fill: "#967117"},
+{source: "3: uncertainties", target: "3: management", fill: "#967117"},
+{source: "3: management", target: "3: focused on", fill: "#967117"},
+{source: "3: focused on", target: "3: immaterial may also impair", fill: "#967117"},
+{source: "3: immaterial may also impair", target: "3: operations", fill: "#967117"},
+{source: "3: Additional ", target: "5: following risks actually", fill: "#8db600"},
+{source: "5: following risks actually", target: "5: operations could", fill: "#8db600"},
+{source: "5: operations could", target: "5: materially", fill: "#8db600"},
+{source: "5: materially", target: "5: adversely", fill: "#8db600"},
+{source: "5: following risks actually", target: "10: conditions", fill: "#bf94e4"},
+{source: "10: conditions", target: "10: governmental", fill: "#bf94e4"},
+{source: "10: governmental", target: "10: regulatory", fill: "#bf94e4"},
+{source: "10: regulatory", target: "10: Federal Reserve Board", fill: "#bf94e4"},
+{source: "10: conditions", target: "16: Bridge Capital Holdings ", fill: "#b2ffff"},
+{source: "16: Bridge Capital Holdings ", target: "16: financial condition", fill: "#b2ffff"},
+{source: "16: financial condition", target: "16: economic conditions", fill: "#b2ffff"},
+{source: "16: Bridge Capital Holdings ", target: "17: California ", fill: "#123524"},
+{source: "17: California ", target: "17: significant", fill: "#123524"},
+{source: "17: California ", target: "19: company will", fill: "#8b0000"},
+{source: "19: company will", target: "19: conditions", fill: "#8b0000"},
+{source: "19: company will", target: "31: subsidiaries", fill: "#fdd5b1"},
+{source: "31: subsidiaries", target: "35: materially", fill: "#e68fac"},
+{source: "35: materially", target: "35: regulations", fill: "#e68fac"},
+{source: "35: materially", target: "START_HERE", fill: "#e68fac"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_quantification">Uncertainty quantification</a></td>
+      <td>Uncertainty quantification (UQ) is the science of quantitative characterization and reduction of uncertainties in both computational and real world applications. It tries to determine how likely certain outcomes are if some aspects of the system are not exactly known.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse">Adverse</a></td>
+      <td>Adverse or adverse interest, in law, is anything that functions contrary to a party's interest. This word should not be confused with averse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hostile_witness">Hostile witness</a></td>
+      <td>A hostile witness, also known as an adverse witness or an unfavorable witness, is a witness at trial whose  testimony on direct examination is either openly antagonistic or appears to be contrary to the legal position of the party who called the witness. This concept is used in the legal proceedings in the United States, and analogues of it exist in other legal systems in Western countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Diuretic">Diuretic</a></td>
+      <td>Diuresis () is increased urination (polyuria) or, in the related word senses more often intended, the physiologic process that produces such an increase or the administration of medications to encourage that process. It involves extra urine production in the kidneys as part of the body's homeostatic maintenance of fluid balance.In healthy people, the drinking of extra water produces mild diuresis to maintain the body water  balance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_event">Adverse event</a></td>
+      <td>An adverse event (AE) is any untoward medical occurrence in a patient or clinical investigation subject administered a pharmaceutical product and which does not necessarily have a causal relationship with this treatment. An adverse event (AE) can therefore be any unfavourable and unintended sign (including an abnormal laboratory finding), symptom, or disease temporally associated with the use of a medicinal (investigational) product, whether or not related to the medicinal (investigational) product.AEs in patients participating in clinical trials must be reported to the study sponsor and if required could be reported to local ethics committee.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Yoda_conditions">Yoda conditions</a></td>
+      <td>In programming jargon, Yoda conditions (also called Yoda notation) is a programming style where the two parts of an expression are reversed from the typical order in a conditional statement. A Yoda condition places the constant portion of the expression on the left side of the conditional statement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_races">Conditions races</a></td>
+      <td>Conditions races are horse races in which the weights carried by the runners are laid down by the conditions attached to the race. Weights are allocated according to the sex of the runners, with female runners carrying less weight than males; the age of the runners, with younger horses receiving weight from older runners to allow for relative maturity, referred to as weight for age; and the quality of the runners, with horses that have won certain values of races giving weight to less successful entrants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Wolfe_conditions">Wolfe conditions</a></td>
+      <td>In the unconstrained minimization problem, the Wolfe conditions are a set of inequalities for performing inexact line search, especially in quasi-Newton methods, first published by Philip Wolfe in 1969.In these methods the idea is to find\n\n  \n    \n      \n        \n          min\n          \n            x\n          \n        \n        f\n        (\n        \n          x\n        \n        )\n      \n    \n    {\displaystyle \min _{x}f(\mathbf {x} )}\n  for some smooth \n  \n    \n      \n        f\n        :\n        \n          \n            R\n          \n          \n            n\n          \n        \n        →\n        \n          R\n        \n      \n    \n    {\displaystyle f\colon \mathbb {R} ^{n}\to \mathbb {R} }\n  . Each step often involves approximately solving the subproblem\n\n  \n    \n      \n        \n          min\n          \n            α\n          \n        \n        f\n        (\n        \n          \n            x\n          \n          \n            k\n          \n        \n        +\n        α\n        \n          \n            p\n          \n          \n            k\n          \n        \n        )\n      \n    \n    {\displaystyle \min _{\alpha }f(\mathbf {x} _{k}+\alpha \mathbf {p} _{k})}\n  where \n  \n    \n      \n        \n          \n            x\n          \n          \n            k\n          \n        \n      \n    \n    {\displaystyle \mathbf {x} _{k}}\n   is the current best guess, \n  \n    \n      \n        \n          \n            p\n          \n          \n            k\n          \n        \n        ∈\n        \n          \n            R\n          \n          \n            n\n          \n        \n      \n    \n    {\displaystyle \mathbf {p} _{k}\in \mathbb {R} ^{n}}\n   is a search direction, and \n  \n    \n      \n        α\n        ∈\n        \n          R\n        \n      \n    \n    {\displaystyle \alpha \in \mathbb {R} }\n   is the step length.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Conditions_(album)">Conditions (album)</a></td>
+      <td>Conditions is the debut studio album by Australian rock band The Temper Trap, released in Australia through Liberation Music on 19 June 2009. It was later released in the United Kingdom on 10 August 2009.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capture">Regulatory capture</a></td>
+      <td>In politics, regulatory capture (also agency capture and client politics) is a form of corruption of authority that occurs when a political entity, policymaker, or regulator is co-opted to serve the commercial, ideological, or political interests of a minor constituency, such as a particular geographic area, industry, profession, or ideological group.When regulatory capture occurs, a special interest is prioritized over the general interests of the public, leading to a net loss for society. The theory of client politics is related to that of rent-seeking and political failure; client politics "occurs when most or all of the benefits of a program go to some single, reasonably small interest (e.g., industry, profession, or locality) but most or all of the costs will be borne by a large number of people (for example, all taxpayers)".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_state">Regulatory state</a></td>
+      <td>The term regulatory state refers to the expansion in the use of rulemaking, monitoring and enforcement techniques and institutions by the state and to a parallel change in the way its positive or negative functions in society are being carried out. The expansion of the state nowadays is generally via regulation and less via taxing and spending.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sequence">Regulatory sequence</a></td>
+      <td>A regulatory sequence is a segment of a nucleic acid molecule which is capable of increasing or decreasing the expression of specific genes within an organism. Regulation of gene expression is an essential feature of all living organisms and viruses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_T_cell">Regulatory T cell</a></td>
+      <td>The regulatory T cells (Tregs  or Treg cells), formerly known as suppressor T cells, are a subpopulation of T cells that modulate the immune system, maintain tolerance to self-antigens, and prevent autoimmune disease. Treg cells are immunosuppressive and generally suppress or downregulate induction and proliferation of effector T cells.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cis-regulatory_element">Cis-regulatory element</a></td>
+      <td>Cis-regulatory elements (CREs) or Cis-regulatory modules (CRMs) are regions of non-coding DNA which regulate the transcription of neighboring genes. CREs are vital components of genetic regulatory networks, which in turn control morphogenesis, the development of anatomy, and other aspects of embryonic development, studied in evolutionary developmental biology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/California_City,_California">California City, California</a></td>
+      <td>California City is a city located in northern Antelope Valley in Kern County, California, United States. It is 100 miles (160 km) north of the city of Los Angeles, and the population was 14,120 at the 2010 census.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/University_of_California">University of California</a></td>
+      <td>The University of California (UC) is a public land-grant research university system in the U.S. state of California. The system is composed of the campuses at Berkeley, Davis, Irvine, Los Angeles,  Merced, Riverside, San Diego, San Francisco, Santa Barbara, and Santa Cruz, along with numerous research centers and academic abroad centers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Southern_California">Southern California</a></td>
+      <td>Southern California (commonly shortened to SoCal) is a geographic and cultural region that generally comprises the southern portion of the U.S. state of California. It includes the Los Angeles metropolitan area, the second most populous urban agglomeration in the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/California_Saga/California">California Saga/California</a></td>
+      <td>"California Saga/California" is a song by American rock band the Beach Boys from their January 1973 album Holland. It was written by Al Jardine and is the third and final part of the "California Saga" series of songs on Holland.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary">Subsidiary</a></td>
+      <td>A subsidiary, subsidiary company or daughter company is a company owned or controlled by another company, which is called the parent company or holding company. Two or more subsidiaries that belong to the same parent company are called sister companies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emirates_subsidiaries">Emirates subsidiaries</a></td>
+      <td>Emirates Airline has diversified into related industries and sectors, including airport services, event organization, engineering, catering, and tour operator operations. Emirates has four subsidiaries, and its parent company has more than 50.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_alliance">Subsidiary alliance</a></td>
+      <td>A subsidiary alliance, in South Asian history, was a tributary alliance between an Indian state and a European East India Company. The system of subsidiary alliances was pioneered by the French East India Company governor Joseph François Dupleix, who in the late 1740s established treaties with the Nizam of Hyderabad, India, and other Indian princes in the Carnatic.It stated that the Indian rulers who formed a treaty with the British would be provided with protection against any external attacks in place that the rulers were (a) required to keep the British army at the capitals of their states (b)they were either to give either money or some territory to the company for the maintenance of the British troops (c) they were to turn out from their states all non-english europeans whether they were employed in the army or in the civil service and (d)they had to keep a British official called 'resident' at the capital of their respective states who would oversee all the negotiations and talks with the other states which meant that the rulers were to have no direct correspondence or relations with the other states .</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_right">Subsidiary right</a></td>
+      <td>A subsidiary right (also called a subright or sub-lease) is the right to produce or publish a product in different formats based on the original material. Subsidiary rights are common in the publishing and entertainment industries, in which subsidiary rights are granted by the author to an agent, publisher, newspaper, or film studio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Gazprom_subsidiaries">List of Gazprom subsidiaries</a></td>
+      <td>Russian energy company Gazprom has several hundred subsidiaries and affiliated companies owned and controlled directly or indirectly. The subsidiaries and affiliated companies are listed by country.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Ubisoft_subsidiaries">List of Ubisoft subsidiaries</a></td>
+      <td>Ubisoft is a French video game publisher headquartered in Montreuil, founded in March 1986 by the Guillemot brothers. Since its establishment, Ubisoft has become one of the largest video game publishers, and it has the largest in-house development team, with more than 20,000 employees working in over 45 studios as of May 2021.While Ubisoft set up many in-house studios itself, such as Ubisoft Montreal, Ubisoft Toronto, Ubisoft Montpellier and Ubisoft Paris, the company also acquired several studios, such as Massive Entertainment, Red Storm Entertainment, Reflections Interactive and FreeStyleGames.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Queen's_Regulations">Queen's Regulations</a></td>
+      <td>The Queen's Regulations (first published in 1731 and known as the King's Regulations when the monarch is a king) is a collection of orders and regulations in force in the Royal Navy, British Army, Royal Air Force, and Commonwealth Realm Forces (where the same person as on the British throne is also their separate head of state), forming guidance for officers of these armed services in all matters of discipline and personal conduct. Originally, a single set of regulations were published in one volume.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><font color="blue">Bridge Capital</font> Holdings    ITEM 1A  RISK FACTORS                                        RISK FACTORS             Readers and prospective  investors in our securities  should  <font color="blue">carefully</font>  consider the following risk factors as well as the other  information  contained  or <font color="blue"><font color="blue">incorporated</font> by reference</font> in this report</td>
+    </tr>
+    <tr>
+      <td>The  risks  and  <font color="blue">uncertainties</font>  described  below  are not the only ones  <font color="blue">facing us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and <font color="blue">uncertainties</font> that <font color="blue">management</font> is not aware of or  <font color="blue">focused on</font> or that  <font color="blue">management</font>  currently  deems  <font color="blue">immaterial may also impair</font> our  business  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>This report is  qualified  in its  <font color="blue">entirety by</font> these risk  factors</td>
+    </tr>
+    <tr>
+      <td>If any of the <font color="blue">following risks actually</font> occur,  the Companyapstas  financial  condition and results of <font color="blue">operations</font> could be <font color="blue">materially</font> and <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>If this were to happen,  the value of the  Companyapstas  securities  could  decline  <font color="blue"><font color="blue">significant</font>ly</font>, and you <font color="blue">could lose</font> all or part of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>MARKET AND INTEREST RATE RISK      CHANGES IN INTEREST RATES COULD REDUCE INCOME AND CASH FLOW             The  discussion  in  this  report  under   &amp;quote Item  7a  <font color="blue">Quantitative   </font>and  Qualitative  Disclosures About Market Risk &amp;quote  is <font color="blue"><font color="blue">incorporated</font> by reference</font> in this  paragraph</td>
+    </tr>
+    <tr>
+      <td>The  Companyapstas  income and <font color="blue">cash flow depend</font> to a great extent on the  <font color="blue">difference between</font> the <font color="blue">interest earned on loans</font> and <font color="blue">investment</font>  securities,  and  the <font color="blue">interest <font color="blue">paid on deposits</font></font> and other <font color="blue">borrowings</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot control</font> or prevent  changes in the level of interest  rates</td>
+    </tr>
+    <tr>
+      <td>They  fluctuate in response to general  economic  <font color="blue">conditions</font>  and the policies of various  <font color="blue"><font color="blue">government</font>al</font>  and  <font color="blue">regulatory</font>  agencies, in particular,  the <font color="blue">Federal Reserve Board</font></td>
+    </tr>
+    <tr>
+      <td>Changes in monetary policy,  including  changes in interest  rates,  will influence the <font color="blue">origination</font> of loans,  the purchase of  <font color="blue">investment</font>s,  the <font color="blue">generation</font> of deposits and the rates received  on loans and <font color="blue">investment</font> securities and <font color="blue">paid on deposits</font> and other <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>RISKS  RELATED  TO THE  NATURE  AND  GEOGRAPHICAL  LOCATION  OF  BRIDGE  CAPITAL  HOLDINGS &amp;apos  BUSINESS      BRIDGE CAPITAL  HOLDINGS &amp;apos   INVESTS IN LOANS THAT CONTAIN  INHERENT  CREDIT RISKS  THAT MAY CAUSE US TO INCUR LOSSES             The <font color="blue">Company  </font>closely  monitors  the  markets in which it  conducts  its  lending  <font color="blue">operations</font>  and adjusts its strategy to control  exposure to <font color="blue">loans with</font>  higher  credit risk</td>
+    </tr>
+    <tr>
+      <td>Asset reviews are  performed  <font color="blue">using grading</font>  standards and  criteria similar to those employed by bank <font color="blue">regulatory</font>  agencies</td>
+    </tr>
+    <tr>
+      <td>We can provide  no assurance  that the credit  quality of our <font color="blue">loans will</font> not  <font color="blue">deteriorate</font> in the  future and that <font color="blue">such <font color="blue">deterioration will</font></font> not <font color="blue">adversely</font> affect <font color="blue">Bridge Capital</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Bridge Capital</font> Holdings &amp;apos   <font color="blue">financial condition</font> and operating results  will be subject to changes in economic <font color="blue">conditions</font> in California</td>
+    </tr>
+    <tr>
+      <td>In the early to  mid-1990s,  <font color="blue"><font color="blue">California </font> </font>experienced a <font color="blue">significant</font> and prolonged  downturn in its  economy, which <font color="blue">adversely</font> affected financial <font color="blue">institutions</font></td>
+    </tr>
+    <tr>
+      <td>Economic <font color="blue">conditions</font> in  <font color="blue"><font color="blue">California </font> </font>are subject to various  <font color="blue">uncertainties</font>  at this time,  including  the  decline in the <font color="blue">technology</font> sector,  the <font color="blue">California </font>state  <font color="blue">government</font>apstas  <font color="blue">budgetary</font>  <font color="blue">difficulties</font> and continuing fiscal <font color="blue">difficulties</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">company will</font> be subject to  changes in economic  <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>We can <font color="blue">provide no assurance</font> that <font color="blue">conditions</font> in  the  <font color="blue"><font color="blue">California </font> </font>economy  will not  <font color="blue">deteriorate</font>  in the  future  and  that  such  <font color="blue">deterioration will</font> not <font color="blue">adversely</font> effect <font color="blue">Bridge Capital</font> Holdings</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">California </font> </font>is a state  which  is  prone  to  <font color="blue">earthquakes</font>,  brush  fires,  flooding  and  other  natural  <font color="blue">disasters</font></td>
+    </tr>
+    <tr>
+      <td>In addition to <font color="blue">possibly sustaining damage</font> to its own properties,  if  there is a major  earthquake,  flood or other natural  disaster,  <font color="blue">Bridge Capital</font>  Holdings  faces the risk that many of its  borrowers  may  experience  uninsured  <font color="blue">property losses</font>, or <font color="blue">sustained job interruption</font>  and/or loss which may <font color="blue">materially</font>  impair  their  ability  to meet the  terms of their  loan  <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>A major  earthquake,  flood or other <font color="blue">natural disaster</font> in <font color="blue">California </font>could have a material  adverse  effect on  Bridge  Capital  Holdings &amp;apos   business,  financial  condition,  results of <font color="blue">operations</font> and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>SUBSTANTIAL  COMPETITION IN THE CALIFORNIA BANKING MARKET COULD ADVERSELY AFFECT  US             Banking is a <font color="blue">highly competitive</font> business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete actively</font> for loan,  deposit,  and other financial  services business in California</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font>  include a large  number of state and national  banks,  thrift  <font color="blue">institutions</font>  and  credit  unions,  as well as many  financial and  non-financial  firms that offer  services  similar  to those  offered  by us</td>
+    </tr>
+    <tr>
+      <td>Other  <font color="blue">competitors</font>  include  large  financial  <font color="blue">institutions</font> that have substantial capital,  <font color="blue">technology</font> and marketing  resources</td>
+    </tr>
+    <tr>
+      <td>Such large financial <font color="blue">institutions</font> may have <font color="blue">greater access</font> to capital  at a lower  <font color="blue">cost than us</font>,  which may  <font color="blue">adversely</font>  affect  our  ability to compete  <font color="blue">effectively</font></td>
+    </tr>
+    <tr>
+      <td>REGULATORY RISKS      RESTRICTIONS ON DIVIDENDS AND OTHER DISTRIBUTIONS COULD LIMIT AMOUNTS PAYABLE TO  US             As a holding company, a substantial  portion of our cash flow typically  comes from  dividends  our bank and  non-bank  <font color="blue">subsidiaries</font>  pay to us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Various  </font>statutory  provisions  restrict the amount of dividends our <font color="blue">subsidiaries</font> can pay  to us without <font color="blue">regulatory</font> approval</td>
+    </tr>
+    <tr>
+      <td>In addition,  if any subsidiary of ours were  to  liquidate,   that  subsidiaryapstas   <font color="blue">creditors</font>  will  be  entitled  to  receive  <font color="blue">distributions from</font> the assets of that subsidiary to satisfy their claims against  it  before  we, as a holder of an equity  interest  in the  subsidiary,  will be  entitled to receive any of the assets of the subsidiary</td>
+    </tr>
+    <tr>
+      <td>ADVERSE  EFFECTS OF, OR CHANGES  IN,  BANKING OR OTHER LAWS AND  REGULATIONS  OR  GOVERNMENTAL FISCAL OR MONETARY POLICIES COULD ADVERSELY AFFECT US             We  are  subject  to  <font color="blue">significant</font>  federal  and  state  regulation  and  <font color="blue">supervision</font>,  which is primarily for the benefit and protection of our customers  and not for the  benefit  of  investors</td>
+    </tr>
+    <tr>
+      <td>In the  past,  our  business  has been  <font color="blue">materially</font>  affected by these  <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Laws,  <font color="blue">regulations</font> or policies,  including <font color="blue">accounting standards</font> and  <font color="blue"><font color="blue">interpretation</font>s</font>  <font color="blue">currently affecting us</font> and our <font color="blue">subsidiaries</font>,  may change at any  time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory  </font><font color="blue">authorities</font>  may also change  their  <font color="blue">interpretation</font>  of these  statutes and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Therefore,  our business may be <font color="blue">adversely</font> affected by  any  future  changes  in  laws,  <font color="blue">regulations</font>,  policies  or  <font color="blue"><font color="blue">interpretation</font>s</font>  or  <font color="blue">regulatory</font>  approaches to compliance and <font color="blue">enforcement</font>,  including <font color="blue">legislative</font> and  <font color="blue">regulatory</font>  reactions to the  terrorist  <font color="blue">attack on</font> <font color="blue">September </font>11, 2001 and future  acts of  terrorism,  and  major  US  corporate  <font color="blue">bankruptcies</font>  and  reports  of  <font color="blue">accounting irregularities at</font> US <font color="blue">public companies</font></td>
+    </tr>
+    <tr>
+      <td>22      <PAGE>               Additionally,  our business is affected <font color="blue"><font color="blue">significant</font>ly</font> by the fiscal and  monetary  policies  of  the  federal   <font color="blue">government</font>  and  its  agencies</td>
+    </tr>
+    <tr>
+      <td>We  are  <font color="blue">particularly</font>  affected  by the  policies  of the Federal  Reserve  Board,  which  regulates the supply of money and credit in the US Under long-standing  policy  of the Federal  Reserve  Board,  a bank holding  company is expected to act as a  source of  financial  strength  for its  subsidiary  banks</td>
+    </tr>
+    <tr>
+      <td>As a result of that  policy,  we may be  required  to commit  financial  and other  resources  to our  <font color="blue">subsidiary bank</font> in  <font color="blue">circumstances</font>  where we might not otherwise do so</td>
+    </tr>
+    <tr>
+      <td>Among the  instruments of monetary  policy  available to the Federal  Reserve Board are (a)  conducting open market <font color="blue">operations</font> in US  <font color="blue">government</font>  securities,  (b) changing  the <font color="blue">discount rates</font> of <font color="blue">borrowings</font> by depository <font color="blue">institutions</font>, and (c) imposing or  changing  reserve  <font color="blue">requirements</font>  against  certain  <font color="blue">borrowings</font> by banks and their  <font color="blue">affiliates</font></td>
+    </tr>
+    <tr>
+      <td>These  methods  are used in varying  degrees  and  <font color="blue">combinations</font>  to  directly  affect the  <font color="blue">availability</font>  of <font color="blue">bank loans</font> and  deposits,  as well as the  interest  rates  charged  on loans and paid on  deposits</td>
+    </tr>
+    <tr>
+      <td>The  policies  of the  Federal  Reserve Board may have a material  effect on our  business,  results of  <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>SYSTEMS, ACCOUNTING AND INTERNAL CONTROL RISKS      THE ACCURACY OF THE  COMPANY &amp;apos S  JUDGMENTS  AND  ESTIMATES  ABOUT  FINANCIAL  AND  ACCOUNTING MATTERS WILL IMPACT OPERATING RESULTS AND FINANCIAL CONDITION             The discussion  under  &amp;quote Critical  Accounting  Policies and Estimates &amp;quote  in  this report and the  information  referred to in that discussion is <font color="blue">incorporated</font>  by reference in this  paragraph</td>
+    </tr>
+    <tr>
+      <td>The quality and accuracy of  those  estimates  and judgments  will have an <font color="blue">impact on</font> the Companyapstas  operating  results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">THE COMPANY </font>&amp;apos S  INFORMATION  SYSTEMS MAY EXPERIENCE AN  INTERRUPTION OR BREACH IN  SECURITY             The Company <font color="blue">relies heavily on communications</font> and information systems to  conduct its business</td>
+    </tr>
+    <tr>
+      <td>Any failure,  interruption or breach in security of these  systems  could  result in  failures or  <font color="blue">disruptions</font>  in the  Companyapstas  customer  <font color="blue">relationship</font>  <font color="blue">management</font>  and systems</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance  that any such  failures,  <font color="blue">interruptions</font>  or  security  breaches  will not  occur or, if they do  occur, that they will be <font color="blue">adequately</font>  <font color="blue">corrected by</font> the Company</td>
+    </tr>
+    <tr>
+      <td>The occurrence of  any such failures, <font color="blue">interruptions</font> or <font color="blue">security breaches could damage</font> the Companyapstas  reputation,  result in a loss of  customer  business,  subject  the  <font color="blue">Company  </font>to  <font color="blue">additional</font> <font color="blue">regulatory</font> scrutiny, or expose <font color="blue">the Company </font>to <font color="blue">litigation</font> and possible  financial  <font color="blue">liability</font>,  any of <font color="blue">which could</font> have a material  adverse effect on the  Companyapstas <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">THE COMPANY </font>&amp;apos S CONTROLS AND PROCEDURES MAY FAIL OR BE CIRCUMVENTED             Management <font color="blue">regularly reviews</font> and updates the Companyapstas <font color="blue">internal control</font>  <font color="blue">over financial</font>  reporting,  <font color="blue">disclosure</font>  controls and  procedures,  and corporate  governance  policies  and  procedures</td>
+    </tr>
+    <tr>
+      <td>Any system of controls  and  procedures,  <font color="blue">however well designed</font> and operated,  is based in part <font color="blue">on certain assumptions</font> and  can <font color="blue">provide only reasonable</font>, not absolute, assurances that the <font color="blue">objectives</font> of the  system are met</td>
+    </tr>
+    <tr>
+      <td>Any failure or  <font color="blue">circumvention</font>  of the  Companyapstas  controls  and  procedures  or failure  to comply  with  <font color="blue">regulations</font>  related  to  controls  and  procedures  could  have a material  adverse  effect on the  Companyapstas  business,  results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+  </tbody>
+</table>

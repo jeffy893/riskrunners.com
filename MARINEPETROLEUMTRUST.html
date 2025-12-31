@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: various risk factors", fill: "#f2003c"},
+{source: "1: various risk factors", target: "1: specific cautionary statements", fill: "#f2003c"},
+{source: "1: specific cautionary statements", target: "1: described elsewhere", fill: "#f2003c"},
+{source: "1: described elsewhere", target: "1: principal risks associated with", fill: "#f2003c"},
+{source: "1: principal risks associated with", target: "1: investment", fill: "#f2003c"},
+{source: "1: various risk factors", target: "2: prices will reduce net proceeds available", fill: "#b76e79"},
+{source: "2: prices will reduce net proceeds available", target: "2: to a Marine ", fill: "#b76e79"},
+{source: "2: to a Marine ", target: "2: distributions", fill: "#b76e79"},
+{source: "2: distributions", target: "2: unitholders", fill: "#b76e79"},
+{source: "2: prices will reduce net proceeds available", target: "3: quarterly distributions", fill: "#faebd7"},
+{source: "3: quarterly distributions", target: "3: highly dependent upon", fill: "#faebd7"},
+{source: "3: highly dependent upon", target: "3: natural gas", fill: "#faebd7"},
+{source: "3: quarterly distributions", target: "10: Substantially ", fill: "#1c39bb"},
+{source: "10: Substantially ", target: "10: oil natural gas", fill: "#1c39bb"},
+{source: "10: oil natural gas", target: "10: natural gas liquids", fill: "#1c39bb"},
+{source: "10: natural gas liquids", target: "10: Royalty Area ", fill: "#1c39bb"},
+{source: "10: Substantially ", target: "11: Operating ", fill: "#036"},
+{source: "11: Operating ", target: "11: interest owners interests", fill: "#036"},
+{source: "11: interest owners interests", target: "11: adversely affect distributions", fill: "#036"},
+{source: "11: Operating ", target: "18: interest owner", fill: "#009000"},
+{source: "18: interest owner", target: "18: governmental regulation", fill: "#009000"},
+{source: "18: interest owner", target: "19: operations", fill: "#a52a2a"},
+{source: "19: operations", target: "19: future will", fill: "#a52a2a"},
+{source: "19: future will", target: "19: local laws", fill: "#a52a2a"},
+{source: "19: local laws", target: "19: regulations", fill: "#a52a2a"},
+{source: "19: regulations", target: "19: developments", fill: "#a52a2a"},
+{source: "19: developments", target: "19: such as price", fill: "#a52a2a"},
+{source: "19: such as price", target: "19: rate controls", fill: "#a52a2a"},
+{source: "19: rate controls", target: "19: environmental protection regulations", fill: "#a52a2a"},
+{source: "19: operations", target: "23: Royalty Area ", fill: "#120a8f"},
+{source: "23: Royalty Area ", target: "23: independent", fill: "#120a8f"},
+{source: "23: independent", target: "23: interest owners", fill: "#120a8f"},
+{source: "23: Royalty Area ", target: "START_HERE", fill: "#120a8f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_fund">Investment fund</a></td>
+      <td>An investment fund is a way of investing money alongside other investors in order to benefit from the inherent advantages of working as part of a group such as reducing the risks of the investment by a significant percentage. These advantages include an ability to:\n\nhire professional investment managers, who may offer better returns and more adequate risk management;\nbenefit from economies of scale, i.e., lower transaction costs;\nincrease the asset diversification to reduce some unsystematic risk.It remains unclear whether professional active investment managers can reliably enhance risk adjusted returns by an amount that exceeds fees and expenses of investment management.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Linux_distribution">Linux distribution</a></td>
+      <td>A Linux distribution (often abbreviated as distro) is an operating system made from a software collection that includes the Linux kernel and, often, a package management system. Linux users usually obtain their operating system by downloading one of the Linux distributions, which are available for a wide variety of systems ranging from embedded devices (for example, OpenWrt) and personal computers (for example, Linux Mint) to powerful supercomputers (for example, Rocks Cluster Distribution).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pareto_distribution">Pareto distribution</a></td>
+      <td>The Pareto distribution, named after the Italian civil engineer, economist, and sociologist Vilfredo Pareto, (Italian: [paˈreːto] US:  pə-RAY-toh), is a power-law probability distribution that is used in description of social, quality control, scientific, geophysical, actuarial, and many other types of observable phenomena. Originally applied to describing the distribution of wealth in a society, fitting the trend that a large portion of wealth is held by a small fraction of the population.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Linux_distributions">List of Linux distributions</a></td>
+      <td>This page provides general information about notable Linux distributions in the form of a categorized list. Distributions are organized into sections by the major distribution or package management system they are based on.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exponential_distribution">Exponential distribution</a></td>
+      <td>In probability theory and statistics, the exponential distribution is the probability distribution of the time between events in a Poisson point process, i.e., a process in which events occur continuously and independently at a constant average rate. It is a particular case of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Multimodal_distribution">Multimodal distribution</a></td>
+      <td>In statistics, a bimodal distribution is a probability distribution with two different modes, which may also be referred to as a bimodal distribution.  These appear as distinct peaks (local maxima) in the probability density function, as shown in Figures 1 and 2.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trust_law">Trust law</a></td>
+      <td>A trust is a legal relationship in which the holder of a right gives it to another person or entity who must keep and use it solely for another's benefit. In Anglo-American common law, the party who entrusts the right is known as the "settlor", the party to whom the right is entrusted is known as the "trustee", the party for whose benefit the property is entrusted is known as the "beneficiary", and the entrusted property itself is known as the "corpus" or "trust property".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cedar_Fair">Cedar Fair</a></td>
+      <td>Cedar Fair, L.P., formally Cedar Fair Entertainment Company, is a publicly traded master limited partnership headquartered at its Cedar Point amusement park in Sandusky, Ohio. The company owns and operates twelve amusement parks, nine included admission outdoor waterparks, four separate admission outdoor water parks, one indoor water park, and fourteen hotels/lodging in the US and Canada.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Northland_Power">Northland Power</a></td>
+      <td>Northland Power (TSX: NPI) is a power producer founded in 1987, and publicly traded since 1997. Northland develops, builds, owns and operates clean and green power infrastructure assets in Asia, Europe, Latin America, North America and other selected global jurisdictions that produce electricity from clean-burning natural gas and renewable resources such as wind and solar technology.The company owns or has a gross economic interest in 2,681 MW of operating generating capacity and 130 MW of generating capacity under construction, representing the La Lucha solar project.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/A&amp;W_(Canada)">A&amp;W (Canada)</a></td>
+      <td>A&amp;W is a fast food restaurant chain in Canada, franchised by A&amp;W Food Services of Canada, Inc. The chain was originally part of the U.S.-based A&amp;W Restaurants chain, but was sold to Unilever in 1972, and then bought by its management in 1995.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Unit_investment_trust">Unit investment trust</a></td>
+      <td>In U.S. financial law, a unit investment trust (UIT) is an investment product offering a fixed (unmanaged) portfolio of securities having a definite life. Unlike open-end and closed-end investment companies, a UIT has no board of directors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liquefied_natural_gas">Liquefied natural gas</a></td>
+      <td>Liquefied natural gas (LNG) is natural gas (predominantly methane, CH4, with some mixture of ethane, C2H6) that has been cooled down to liquid form for ease and safety of non-pressurized storage or transport. It takes up about 1/600th the volume of natural gas in the gaseous state (at standard conditions for temperature and pressure).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Compressed_natural_gas">Compressed natural gas</a></td>
+      <td>Compressed natural gas (CNG) is a fuel gas made of petrol which is mainly composed of methane (CH4), compressed to less than 1% of the volume it occupies at standard atmospheric pressure. It is stored and distributed in hard containers at a pressure of 20–25 MPa (2,900–3,600 psi), usually in cylindrical or spherical shapes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_vehicle">Natural gas vehicle</a></td>
+      <td>A natural gas vehicle (NGV) is an alternative fuel vehicle that uses compressed natural gas (CNG) or liquefied natural gas (LNG). Natural gas vehicles should not be confused with autogas vehicles powered by liquefied petroleum gas (LPG), mainly propane, a fuel with a fundamentally different composition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_processing">Natural-gas processing</a></td>
+      <td>Natural-gas processing is a range of industrial processes designed to purify raw natural gas by removing impurities, contaminants and higher molecular mass hydrocarbons to produce what is known as pipeline quality dry natural gas. Natural gas has to be processed in order to prepare it for final use and ensure that elimination of contaminants.Natural-gas processing starts underground or at the well-head.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pipeline_transport">Pipeline transport</a></td>
+      <td>Pipeline transport is the long-distance transportation of a liquid or gas through a system of pipes—a pipeline—typically to a market area for consumption. The latest data from 2014 gives a total of slightly less than 2,175,000 miles (3,500,000 km) of pipeline in 120 countries of the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_in_Ukraine">Natural gas in Ukraine</a></td>
+      <td>Ukraine has been estimated to possess natural gas reserves of over 1 trillion cubic meters and in 2018 was ranked 26th among countries with proved reserves of natural gas. Its total gas reserves have been estimated at 5.4 trillion cubic meters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_condensate">Natural-gas condensate</a></td>
+      <td>Natural-gas condensate, also called natural gas liquids, is a low-density mixture of hydrocarbon liquids that are present as gaseous components in the raw natural gas produced from many natural gas fields. Some gas species within the raw natural gas will condense to a liquid state if the temperature is reduced to below the hydrocarbon dew point temperature at a set pressure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_prices">Natural gas prices</a></td>
+      <td>Natural gas prices, as with other commodity prices, are mainly driven by supply and demand fundamentals.  However, natural gas prices may also be linked to the price of crude oil and petroleum products, especially in continental Europe.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Royalty_payment">Royalty payment</a></td>
+      <td>A royalty payment is a payment made by one party to another that owns a particular asset, for the right to ongoing use of that asset. Royalties are typically agreed upon as a percentage of gross or net revenues derived from the use of an asset or a fixed price per unit sold of an item of such, but there are also other modes and metrics of compensation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Protection_Command">Protection Command</a></td>
+      <td>The Protection Command is one of the commands within the Specialist Operations directorate of London's Metropolitan Police Service. The command specialises in protective security and has two branches: Royalty and Specialist Protection (RaSP), providing protection to the royal family and close protection to government officials, and Parliamentary and Diplomatic Protection (PaDP), providing uniformed security to government buildings, officials and diplomats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Royalty,_Texas">Royalty, Texas</a></td>
+      <td>Royalty is an unincorporated community in Ward County, Texas, United States. Before a post office was opened in 1929, it was known as Allentown, after an early landowner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Machu_Picchu">Machu Picchu</a></td>
+      <td>Machu Picchu is a 15th-century Inca citadel located in the Eastern Cordillera of southern Peru on a 2,430-meter (7,970 ft) mountain ridge. It is located in the Machupicchu District within Urubamba Province above the Sacred Valley, which is 80 kilometers (50 mi) northwest of Cusco.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Keg">The Keg</a></td>
+      <td>The Keg is a Canadian-owned chain of steakhouse restaurants and bars located in Canada and the United States. The original "The Keg and Cleaver" restaurant was founded by George Tidball, in 1971, at a location in North Vancouver, British Columbia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alberta_Royalty_Review">Alberta Royalty Review</a></td>
+      <td>The 2007 Alberta Royalty Review was an independent panel, chaired by William M. Hunter, established by the government of Alberta to review the level of resource royalties collected by the provincial government from petroleum and natural gas companies. In their final report entitled "Our Fair Share" released on September 18, 2007 the panel concluded that Albertans, who own their natural resources, were not receiving their "fair share" from energy development.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Osisko_Gold_Royalties">Osisko Gold Royalties</a></td>
+      <td>Osisko Gold Royalties Ltd is a Canadian company that holds royalties in gold, silver and diamond mines, principally in the form of net smelter returns and streams. The company also invests in mineral exploration companies in the form of purchases of shares.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Royalty_fund">Royalty fund</a></td>
+      <td>A royalty fund (also known as royalty funding) is a category of private equity fund that specializes in purchasing consistent revenue streams deriving from the payment of royalties. One growing subset of this category is the healthcare royalty fund, in which a private equity fund manager purchases a royalty stream paid by a pharmaceutical company to a patent holder.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statement_of_changes_in_equity">Statement of changes in equity</a></td>
+      <td>A statement of changes in equity and similarly the statement of changes in owner's equity for a sole trader, statement of changes in partners' equity for a partnership, statement of changes in shareholders' equity for a company or statement of changes in taxpayers' equity for government financial statements is one of the four basic financial statements.\nThe statement explains the changes in a company's share capital, accumulated reserves and retained earnings over the reporting period.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ownership">Ownership</a></td>
+      <td>Ownership is the state or fact of legal possession and control over property, which may be any asset, tangible or intangible. Ownership can involve multiple rights, collectively referred to as title, which may be separated and held by different parties.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_owners_of_English_football_clubs">List of owners of English football clubs</a></td>
+      <td>A list of all owners with a significant interest (a stake above 10%) within English football clubs: including their estimated net worth and sources of wealth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Homeowner_association">Homeowner association</a></td>
+      <td>A homeowner association (or homeowners' association, abbreviated HOA, sometimes referred to as a property owners' association or POA), or a homeowner community, is a private association-like entity often formed either ipso jure in a building with multiple owner-occupancies, or by a real estate developer for the purpose of marketing, managing, and selling homes and lots in a residential subdivision. In the United States, the developer will typically transfer control of the association to the homeowners after selling a predetermined number of lots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interest_rate_risk">Interest rate risk</a></td>
+      <td>Interest rate risk is the risk that arises for bond owners from fluctuating interest rates. How much interest rate risk a bond has depends on how sensitive its price is to interest rate changes in the market.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MARINE PETROLEUM TRUST      ITEM 1A RISK FACTORS                Although <font color="blue">various risk factors</font> and <font color="blue">specific cautionary statements</font>     are <font color="blue">described elsewhere</font> in this annual report on Form 10-K, the following is     a summary of the <font color="blue">principal risks associated with</font> an <font color="blue">investment</font> in units of     Marine</td>
+    </tr>
+    <tr>
+      <td>Oil and <font color="blue">natural gas</font> prices fluctuate due to a number of factors, and lower     <font color="blue">prices will reduce net proceeds available</font> to Marine and <font color="blue">distributions</font> to its     <font color="blue">unitholders</font></td>
+    </tr>
+    <tr>
+      <td>Marine’s quarterly <font color="blue">distributions</font> are <font color="blue">highly dependent upon</font> the     prices realized from the sale of oil and <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant downward</font>     movement in the prices for oil and <font color="blue">natural gas</font> could have a material adverse     effect on our revenues and operating cash flows, which could decrease our     <font color="blue">distributions</font> to <font color="blue">unitholders</font></td>
+    </tr>
+    <tr>
+      <td>Historically, prices have been volatile and     are likely to continue to be volatile in the future due to <font color="blue">factors beyond</font>     our control</td>
+    </tr>
+    <tr>
+      <td>These factors include, but are not limited to:       •   <font color="blue">political conditions worldwide</font>, in <font color="blue">particular political <font color="blue">disruption</font></font>,     war or other <font color="blue">armed conflicts</font> in oil producing regions;         •   <font color="blue">worldwide economic conditions</font>;         •   <font color="blue">weather conditions</font>;         •   the supply and price of <font color="blue">foreign oil</font> and <font color="blue">natural gas</font>;         •   the level of <font color="blue">consumer demand</font>;         •   the price and <font color="blue">availability</font> of <font color="blue">alternative fuels</font>;         •   the proximity to, and <font color="blue">capacity</font> of, <font color="blue">transportation facilities</font>; and         •   the effect of <font color="blue">worldwide energy conservation measures</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, government <font color="blue">regulations</font>, such as regulation of natural     <font color="blue">gas transportation</font> and <font color="blue">price controls</font>, can <font color="blue">affect product prices</font> in the long     term</td>
+    </tr>
+    <tr>
+      <td>Lower <font color="blue">prices may reduce</font> the amount of oil and <font color="blue">natural gas</font> that is     economic  to  produce  and <font color="blue">reduce net profits available</font> to Marine</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">volatility</font>  of <font color="blue">energy prices reduces</font> the <font color="blue">predictability</font> of <font color="blue">future cash</font>     <font color="blue">distributions</font> to <font color="blue">unitholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of the oil, <font color="blue">natural gas</font> and     <font color="blue">natural gas</font> liquids produced from the <font color="blue">Royalty Area </font>is being sold under     short-term or multi-month contracts at market clearing prices or on the spot     market</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Operating </font>risks for the working <font color="blue">interest owner</font>s’ interests in the Royalty     Area can <font color="blue">adversely</font> affect <font color="blue">distributions</font></td>
+    </tr>
+    <tr>
+      <td>The occurrence of drilling, production or <font color="blue">transportation accidents</font>     and other <font color="blue">natural disasters</font> in the <font color="blue">Royalty Area </font>will reduce <font color="blue">distributions</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">occurrences</font> include blowouts, cratering, explosions, environmental and     <font color="blue">hurricane damage</font> that may result in personal injuries, property damage,     damage to <font color="blue">productive formations</font> or equipment and <font color="blue">environmental damages</font></td>
+    </tr>
+    <tr>
+      <td>For     <font color="blue">example there</font> were <font color="blue">two major hurricanes</font> in the <font color="blue">Gulf of Mexico </font>during the     fiscal  year  ended  June 30,  2006</td>
+    </tr>
+    <tr>
+      <td>Other wells were off production for most of the quarter that     ended <font color="blue">December </font>31, 2005 and did not <font color="blue">start recovering until</font> the quarter that     ended June 30, 2006</td>
+    </tr>
+    <tr>
+      <td>Oil and <font color="blue">natural gas</font> production for the first, second,     third and <font color="blue">fourth quarter</font>s of fiscal 2006 were down 45prca, 61prca, 41prca and 7prca from     the oil and <font color="blue">natural gas</font> production realized in the <font color="blue">fourth quarter</font> of fiscal     2005</td>
+    </tr>
+    <tr>
+      <td>The  operators  of the working <font color="blue">interest owner</font> are subject to extensive     <font color="blue">governmental regulation</font></td>
+    </tr>
+    <tr>
+      <td>Oil and gas <font color="blue">operations</font> have been, and in the <font color="blue">future will</font> be,     affected  by  federal,  state and <font color="blue">local laws</font> and <font color="blue">regulations</font> and other     political  <font color="blue"><font color="blue">development</font>s</font>,  <font color="blue">such as price</font> or gathering <font color="blue">rate controls</font> and     environmental protection <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Although we are unable to predict     changes to <font color="blue">existing laws</font> and <font color="blue">regulations</font>, such changes <font color="blue">could significantly</font>     impact our <font color="blue"><font color="blue">royalty interest</font>s</font></td>
+    </tr>
+    <tr>
+      <td>-4-       _________________________________________________________________    [47]Table of Contents       The Trustee, Marine and its <font color="blue">unitholders</font> do not control the operation or     <font color="blue">development</font> of the properties in the <font color="blue">Royalty Area </font>and have little influence     over operation or <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>The Trustee, Marine and its <font color="blue">unitholders</font> have little, if any,     influence  or  control over the operation or future <font color="blue">development</font> of the     <font color="blue">underlying properties</font></td>
+    </tr>
+    <tr>
+      <td>The properties in the <font color="blue">Royalty Area </font>are owned by     <font color="blue">independent</font> working <font color="blue">interest owner</font>s</td>
+    </tr>
+    <tr>
+      <td>The working <font color="blue">interest owner</font>s manage the     <font color="blue">underlying properties</font> and <font color="blue">handle receipt</font> and payment of funds relating to     the <font color="blue">Royalty Area </font>and payments to Marine for its <font color="blue"><font color="blue">royalty interest</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The current working <font color="blue">interest owner</font>s are <font color="blue">under no <font color="blue">obligation</font></font> to     continue operating the properties</td>
+    </tr>
+    <tr>
+      <td>The Trustee, Marine and its <font color="blue">unitholders</font>     do not have the right to replace an operator</td>
+    </tr>
+    <tr>
+      <td>The owner of any properties in the <font color="blue">Royalty Area </font>may abandon any property,     <font color="blue">terminating</font> the related <font color="blue">royalty interest</font> Marine may hold</td>
+    </tr>
+    <tr>
+      <td>The working <font color="blue">interest owner</font>s may at any time transfer all or part     of the properties in the <font color="blue">Royalty Area </font>to another <font color="blue">unrelated third party</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unitholders </font>are not entitled to vote on any transfer, and Marine will not     receive any proceeds of any <font color="blue">such transfer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following </font>any transfer, the     <font color="blue">Royalty Area </font><font color="blue">will continue</font> to be subject to Marine’s <font color="blue">royalty interest</font>, but     the  net  proceeds  from  the <font color="blue">transferred property would</font> be <font color="blue">calculated</font>     <font color="blue">separately</font> and paid by the transferee</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">transferee would</font> be responsible     for all of the <font color="blue">obligation</font>s relating to <font color="blue">calculating</font>, reporting and paying to     Marine its <font color="blue">royalty interest</font> on the transferred portion of the Royalty Area,     and  the  current  owner  of the <font color="blue">Royalty Area </font>would have <font color="blue">no continuing</font>     <font color="blue">obligation</font> to Marine for those properties</td>
+    </tr>
+    <tr>
+      <td>The current working <font color="blue">interest owner</font>s or any <font color="blue">transferee may abandon</font>     any well or property if it <font color="blue">reasonably</font> believes that the well or property can     no longer produce in <font color="blue">commercially economic quantities</font></td>
+    </tr>
+    <tr>
+      <td>This could result in     <font color="blue">termination</font> of Marine’s <font color="blue">royalty interest</font> relating to the <font color="blue">abandoned well</font></td>
+    </tr>
+    <tr>
+      <td>Marine’s  royalty  interest  can  be  sold and the Marine trust can be     terminated</td>
+    </tr>
+    <tr>
+      <td>The  Marine trust may be terminated and the Trustee may sell     Marine’s <font color="blue"><font color="blue">royalty interest</font>s</font> if holders of 80prca of the units of <font color="blue">beneficial</font>     interest  of  Marine approve the sale and vote to terminate the trust</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following </font>any such <font color="blue">termination</font> and <font color="blue">liquidation</font>, the net proceeds of any sale     will be <font color="blue">distributed</font> to the <font color="blue">unitholders</font> and <font color="blue">unitholders</font> will receive no     further  <font color="blue">distributions</font>  from Marine</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such sale may</font> not be on terms     acceptable to all <font color="blue">unitholders</font></td>
+    </tr>
+    <tr>
+      <td>Royalty interests are <font color="blue">depleting assets</font> and, if the working <font color="blue">interest owner</font>s     or other operators of the <font color="blue">Royalty Area </font>do not perform additional <font color="blue">development</font>     projects, the <font color="blue">assets may deplete faster than</font> expected</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">net proceeds payable</font> to Marine are <font color="blue">derived from</font> the sale of     depleting  assets</td>
+    </tr>
+    <tr>
+      <td>Accordingly,  the  portion of the <font color="blue">distributions</font> to     <font color="blue">unitholders</font> attributable to <font color="blue">depletion may</font> be considered a return of capital</td>
+    </tr>
+    <tr>
+      <td>The reduction in <font color="blue">proved reserve quantities</font> is a common measure of depletion</td>
+    </tr>
+    <tr>
+      <td>Future maintenance and <font color="blue">development</font> projects in the <font color="blue">Royalty Area </font>will affect     the quantity of <font color="blue">proved reserves</font></td>
+    </tr>
+    <tr>
+      <td>The timing and size of these projects will     <font color="blue">depend on</font> the <font color="blue"><font color="blue">market price</font>s</font> of oil and <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>If operators of the     Royalty  Area  do not implement <font color="blue">additional maintenance</font> and <font color="blue">development</font>     projects, the <font color="blue">future rate</font> of <font color="blue">production decline</font> of <font color="blue">proved reserves</font> may be     <font color="blue">higher than</font> the <font color="blue">rate currently</font> experienced by Marine</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unitholders </font>have limited <font color="blue">voting rights</font></td>
+    </tr>
+    <tr>
+      <td>Voting rights as a unitholder are more limited than those of     <font color="blue">stockholders</font>  of  most  public  <font color="blue">corporations</font></td>
+    </tr>
+    <tr>
+      <td>For example, there is no     <font color="blue">requirement</font> for annual meetings of <font color="blue">unitholders</font> or for an annual or other     periodic re-election of the Trustee</td>
+    </tr>
+    <tr>
+      <td>Unlike <font color="blue">corporations</font> which are <font color="blue">generally</font>     <font color="blue">governed by boards</font> of <font color="blue">directors elected by</font> their <font color="blue">equity holders</font>, Marine is     <font color="blue">administered by</font> a corporate Trustee in <font color="blue">accordance</font> with <font color="blue">the Indenture </font>and     other <font color="blue">organizational</font> <font color="blue">documents</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Trustee </font>has extremely limited <font color="blue">discretion</font>     in its <font color="blue">administration</font> of Marine</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Terrorism </font>and continued <font color="blue">geopolitical</font> <font color="blue">hostilities</font> could <font color="blue">adversely</font> affect     Marine’s <font color="blue">distributions</font> to its <font color="blue">unitholders</font> or the <font color="blue">market price</font> of its units</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Terrorist </font>attacks and the threat of terrorist attacks, whether     domestic or foreign, as well as the military or other <font color="blue">actions taken</font> in     response, cause <font color="blue">instability</font> in the <font color="blue">global financial</font> and <font color="blue">energy markets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Terrorism </font> and  other  <font color="blue">geopolitical</font> <font color="blue">hostilities</font> could <font color="blue">adversely</font> affect     Marine’s <font color="blue">distributions</font> to its <font color="blue">unitholders</font> or the <font color="blue">market price</font> of its units     in <font color="blue">unpredictable ways</font>, including through the <font color="blue">disruption</font> of <font color="blue">fuel supplies</font> and     markets,  increased  <font color="blue">volatility</font>  in oil and <font color="blue">natural gas</font> prices, or the     <font color="blue">possibility</font> that the <font color="blue">infrastructure on which</font> the operators of the underlying     <font color="blue">properties rely could</font> be a <font color="blue">direct target</font> or an <font color="blue">indirect casualty</font> of an act     of terror</td>
+    </tr>
+    <tr>
+      <td>-5-       _________________________________________________________________    [48]Table of Contents       Important reserve and other information <font color="blue">with respect</font> to the particular     leases subject to Marine’s <font color="blue">royalty interest</font> is <font color="blue">difficult</font> to obtain</td>
+    </tr>
+    <tr>
+      <td>The leasehold working interests that are subject to the rights     held by Marine are owned, in most cases, in whole or in part by Chevron, or     other oil and <font color="blue">natural gas</font> <font color="blue">exploration</font> and production companies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Certain     </font>information as to reserves, <font color="blue">availability</font> of oil and <font color="blue">natural gas</font>, average     production cost (lifting cost) per unit, undeveloped acreage, net wells and     net  acres,  <font color="blue">with respect</font> to the <font color="blue">particular leases</font> subject to Marine’s     interests, lies solely within the knowledge of these concerns</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Engineering     </font>data,  if  any,  regarding  these  <font color="blue">leaseholds</font> would have <font color="blue">been compiled</font>     <font color="blue">principally by</font> or for the working <font color="blue">interest owner</font>s of these <font color="blue">leaseholds</font></td>
+    </tr>
+    <tr>
+      <td>Historically, Marine has not had access to this information and does not     expect to have access to this information in the future</td>
+    </tr>
+  </tbody>
+</table>

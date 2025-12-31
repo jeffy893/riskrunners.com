@@ -1,0 +1,1296 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: dependent on", fill: "#100c08"},
+{source: "1: dependent on", target: "1: relationships with", fill: "#100c08"},
+{source: "1: relationships with", target: "1: distribution partners", fill: "#100c08"},
+{source: "1: distribution partners", target: "1: which would", fill: "#100c08"},
+{source: "1: dependent on", target: "2: relationships with distribution partners", fill: "#0000cd"},
+{source: "2: relationships with distribution partners", target: "2: distribution", fill: "#0000cd"},
+{source: "2: distribution", target: "2: software application providers", fill: "#0000cd"},
+{source: "2: relationships with distribution partners", target: "5: challenges", fill: "#9678b6"},
+{source: "5: challenges", target: "5: distribution", fill: "#9678b6"},
+{source: "5: distribution", target: "5: competitive", fill: "#9678b6"},
+{source: "5: challenges", target: "6: mobile operator", fill: "#339"},
+{source: "6: mobile operator", target: "6: distribution partners", fill: "#339"},
+{source: "6: distribution partners", target: "6: largest distribution partner which", fill: "#339"},
+{source: "6: largest distribution partner which", target: "6: total company revenues", fill: "#339"},
+{source: "6: total company revenues", target: "6: seek financial", fill: "#339"},
+{source: "6: seek financial", target: "6: record labels thereby reducing", fill: "#339"},
+{source: "6: record labels thereby reducing", target: "6: eliminating", fill: "#339"},
+{source: "6: eliminating", target: "6: such content", fill: "#339"},
+{source: "6: mobile operator", target: "10: annual basis", fill: "#004040"},
+{source: "10: annual basis", target: "10: agreements with most", fill: "#004040"},
+{source: "10: agreements with most", target: "10: directory distribution partners come up", fill: "#004040"},
+{source: "10: annual basis", target: "14: distribution", fill: "#c40233"},
+{source: "14: distribution", target: "14: comply with", fill: "#c40233"},
+{source: "14: comply with", target: "14: imposed by", fill: "#c40233"},
+{source: "14: imposed by", target: "14: content provider", fill: "#c40233"},
+{source: "14: content provider", target: "14: content may", fill: "#c40233"},
+{source: "14: content may", target: "14: modify terminate", fill: "#c40233"},
+{source: "14: modify terminate", target: "14: enter into certain distribution", fill: "#c40233"},
+{source: "14: enter into certain distribution", target: "14: relationships may", fill: "#c40233"},
+{source: "14: relationships may", target: "14: agreement", fill: "#c40233"},
+{source: "14: agreement", target: "14: may expose us", fill: "#c40233"},
+{source: "14: may expose us", target: "14: liability", fill: "#c40233"},
+{source: "14: distribution", target: "36: competitors", fill: "#e9967a"},
+{source: "36: competitors", target: "36: competitors with whom", fill: "#e9967a"},
+{source: "36: competitors with whom", target: "36: such competitors", fill: "#e9967a"},
+{source: "36: such competitors", target: "36: agreements", fill: "#e9967a"},
+{source: "36: agreements", target: "36: with us on", fill: "#e9967a"},
+{source: "36: competitors", target: "46: operations", fill: "#00ff7f"},
+{source: "46: operations", target: "46: functional organization structure", fill: "#00ff7f"},
+{source: "46: functional organization structure", target: "46: eliminating", fill: "#00ff7f"},
+{source: "46: eliminating", target: "46: directory", fill: "#00ff7f"},
+{source: "46: directory", target: "46: technology", fill: "#00ff7f"},
+{source: "46: technology", target: "46: applications", fill: "#00ff7f"},
+{source: "46: applications", target: "46: distribution", fill: "#00ff7f"},
+{source: "46: operations", target: "START_HERE", fill: "#00ff7f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Consumer Discretionary</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Advertising</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Amblin_Partners">Amblin Partners</a></td>
+      <td>Storyteller Distribution Co., LLC, doing business as Amblin Partners, LLC., is an American entertainment company that is the successor to the live-action counterpart of DreamWorks and a production company, led by Steven Spielberg, that develops and produces films under the Amblin Entertainment and DreamWorks Pictures banners, as well as television series through Amblin Television. The company's investment partners include Reliance Group's Reliance Entertainment, Hasbro's Entertainment One, Alibaba Group's Alibaba Pictures and NBCUniversal/Comcast's Universal Pictures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Walt_Disney_Studios_Motion_Pictures">Walt Disney Studios Motion Pictures</a></td>
+      <td>Walt Disney Studios Motion Pictures, formerly known as Buena Vista Pictures Distribution, Inc. until 2007, is an American film distribution studio within the Disney Media and Entertainment Distribution division of the Walt Disney Company.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Crunchyroll">Crunchyroll</a></td>
+      <td>Crunchyroll, LLC is an American distributor, publisher, production and licensing company focused on streaming anime, manga, and dorama. Founded in 2006 by a group of University of California, Berkeley, graduates, Crunchyroll's distribution channel and partnership program delivers content to over 100 million registered users worldwide.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Atari_SA">Atari SA</a></td>
+      <td>The Atari ST is a line of personal computers from Atari Corporation and the successor to the Atari 8-bit family. The initial model, the 520ST, saw limited release in April–June 1985 and was widely available in July.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electronic_Arts">Electronic Arts</a></td>
+      <td>Electronic art is a form of art that makes use of electronic media. More broadly, it refers to technology and/or electronic media.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Namco_Bandai_Partners">Namco Bandai Partners</a></td>
+      <td>Namco Bandai Partners S.A.S. (formerly Distribution Partners SAS) was a video game distribution company that was an amalgamation of several former Atari SA (formerly known as Infogrames Entertainment SA) offices located in PAL territories, which were acquired beginning in 2009 by Bandai Namco Holdings.\n\n\n== History ==\nAtari and Namco had long maintained a cross-publishing relationship that can be traced back to the very origins of Namco, and Atari's liquidation of regional assets was a natural opportunity for Namco Bandai to gain a PAL distribution network.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Web_syndication">Web syndication</a></td>
+      <td>Web syndication is a form of syndication in which content is made available from one website to other sites. Most commonly, websites are made available to provide either summaries or full renditions of a website's recently added content.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exponential_distribution">Exponential distribution</a></td>
+      <td>In probability theory and statistics, the exponential distribution is the probability distribution of the time between events in a Poisson point process, i.e., a process in which events occur continuously and independently at a constant average rate. It is a particular case of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Binomial_distribution">Binomial distribution</a></td>
+      <td>In probability theory and statistics, the binomial distribution with parameters n and p is the discrete probability distribution of the number of successes in a sequence of n independent experiments, each asking a yes–no question, and each with its own Boolean-valued outcome: success (with probability p) or failure (with probability q = 1 − p). A single success/failure experiment is also called a Bernoulli trial or Bernoulli experiment, and a sequence of outcomes is called a Bernoulli process; for a single trial, i.e., n = 1, the binomial distribution is a Bernoulli distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a></td>
+      <td>In probability theory and statistics, the beta distribution is a family of continuous probability distributions defined on the interval [0, 1] parameterized by two positive shape parameters, denoted by alpha (α) and beta (β), that appear as exponents of the random variable and control the shape of the distribution. The generalization to multiple variables is called a Dirichlet distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pareto_distribution">Pareto distribution</a></td>
+      <td>The Pareto distribution, named after the Italian civil engineer, economist, and sociologist Vilfredo Pareto, (Italian: [paˈreːto] US:  pə-RAY-toh), is a power-law probability distribution that is used in description of social, quality control, scientific, geophysical, actuarial, and many other types of observable phenomena. Originally applied to describing the distribution of wealth in a society, fitting the trend that a large portion of wealth is held by a small fraction of the population.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competition">Competition</a></td>
+      <td>Competition is a rivalry where two or more parties strive for a common goal which cannot be shared: where one's gain is the other's loss (an example of which is a zero-sum game). Competition can arise between entities such as organisms, individuals, economic and social groups, etc.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Good_Friday_Agreement">Good Friday Agreement</a></td>
+      <td>The Good Friday Agreement (GFA), or Belfast Agreement (Irish: Comhaontú Aoine an Chéasta or Comhaontú Bhéal Feirste; Ulster-Scots: Guid Friday Greeance or Bilfawst Greeance), is a pair of agreements signed on 10 April 1998 that ended most of the violence of the Troubles, a political conflict in Northern Ireland that had ensued since the late 1960s. It was a major development in the Northern Ireland peace process of the 1990s.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenuptial_agreement">Prenuptial agreement</a></td>
+      <td>A prenuptial agreement, antenuptial agreement, or premarital agreement (commonly referred to as a prenup), is a written contract entered into by a couple prior to marriage or a civil union that enables them to select and control many of the legal rights they acquire upon marrying, and what happens when their marriage eventually ends by death or divorce. Couples enter into a written prenuptial agreement to supersede many of the default marital laws that would otherwise apply in the event of divorce, such as the laws that govern the division of property, retirement benefits, savings, and the right to seek alimony (spousal support) with agreed-upon terms that provide certainty and clarify their marital rights.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_liability">Limited liability</a></td>
+      <td>Limited liability is a legal status where a person's financial liability is limited to a fixed sum, most commonly the value of a person's investment in a corporation, company or partnership. If a company that provides limited liability to its investors is sued, then the claimants are generally entitled to collect only against the assets of the company, not the assets of its shareholders or other investors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Liability">The Liability</a></td>
+      <td>The Liability (also known as The Hitman's Apprentice) is a 2013 British black comedy crime-thriller film directed by Craig Viveiros and written by John Wrathall. The film stars Tim Roth, Talulah Riley, Jack O'Connell and Peter Mullan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Legal_liability">Legal liability</a></td>
+      <td>In law, liable means  "responsible or answerable in law; legally obligated". Legal liability concerns both civil law and criminal law and can arise from various areas of law, such as contracts, torts, taxes, or fines given by government agencies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/No_liability">No liability</a></td>
+      <td>A no-liability company in Australia (suffix NL) is a company which, under the Corporations Act 2001 (Cth), must have as its stated objects that it is solely a mining company and that it is not entitled to calls on the unpaid issue price of shares. It is a company which is restricted to mining activities and is the only sort of corporation which is entitled to this form of liability, given the sometimes financially risky business of mining.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_liability_partnership">Limited liability partnership</a></td>
+      <td>A limited liability partnership (LLP) is a partnership in which some or all partners (depending on the jurisdiction) have limited liabilities. It therefore can exhibit elements of partnerships and corporations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vicarious_liability">Vicarious liability</a></td>
+      <td>Vicarious liability is a form of a  strict, secondary liability that arises under the common law doctrine of agency, respondeat superior, the responsibility of the superior for the acts of their subordinate or, in a broader sense, the responsibility of any third party that had the "right, ability or duty to control" the activities of a violator. It can be distinguished from contributory liability, another form of secondary liability, which is rooted in the tort theory of enterprise liability because, unlike contributory infringement, knowledge is not an element of vicarious liability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liability_insurance">Liability insurance</a></td>
+      <td>Liability insurance (also called third-party insurance) is a part of the general insurance system of risk financing to protect the purchaser (the "insured") from the risks of liabilities imposed by lawsuits and similar claims and protects the insured if the purchaser is sued for claims that come within the coverage of the insurance policy.\nOriginally, individual companies that faced a common peril formed a group and created a self-help fund out of which to pay compensation should any member incur loss (in other words, a mutual insurance arrangement).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Product_liability">Product liability</a></td>
+      <td>Product liability is the area of law in which manufacturers, distributors, suppliers, retailers, and others who make products available to the public are held responsible for the injuries those products cause. Although the word "product" has broad connotations, product liability as an area of law is traditionally limited to products in the form of tangible personal property.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_analysis">Competitor analysis</a></td>
+      <td>Competitive analysis in marketing and strategic management is an assessment of the strengths and weaknesses of current and potential competitors. This analysis provides both an offensive and defensive strategic context to identify opportunities and threats.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitor_backlinking">Competitor backlinking</a></td>
+      <td>Competitor backlinking is a search engine optimization strategy that involves analyzing the backlinks of competing websites within a vertical search. The outcome of this activity is designed to increase organic search engine rankings and to gain an understanding of the link building strategies used by business competitors.By analyzing the backlinks to competitor websites, it is possible to gain a benchmark on the number of links and the quality of links that is required for high search engine rankings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Competitors_for_the_Crown_of_Scotland">Competitors for the Crown of Scotland</a></td>
+      <td>When the crown of Scotland became vacant in September 1290 on the death of the seven-year-old child Queen Margaret, 13 claimants to the throne came forward. Those with the most credible claims were John Balliol, Robert Bruce, John Hastings and Floris V, Count of Holland.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_female_fitness_and_figure_competitors">List of female fitness and figure competitors</a></td>
+      <td>This is a list of female fitness and figure competitors.\n\n\n== A ==\nJelena Abbou\n\n\n== B ==\nLauren Beckham\nAlexandra Béres\nSharon Bruneau\n\n\n== C ==\nNatalie Montgomery-Carroll\nJen Cassetty\nKim Chizevsky\nSusie Curry\n\n\n== D ==\nDebbie Dobbins\nNicole Duncan\n\n\n== E ==\nJamie Eason\nAlexis Ellis\n\n\n== F ==\nAmy Fadhli\nJaime Franklin\n\n\n== G ==\nAdela García \nConnie Garner\nElaine Goodlad\nTracey Greenwood\nOksana Grishina\n\n\n== H ==\nMallory Haldeman\nVanda Hădărean\nJen Hendershott\nSoleivi Hernandez\nApril Hunter\n\n\n== I ==\n\n\n== J ==\nTsianina Joelson\n\n\n== K ==\nAdria Montgomery-Klein\nAshley Kaltwasser\n\n\n== L ==\nLauren Lillo\nMary Elizabeth Lado\nTammie Leady\nJennifer Nicole Lee\nAmber Littlejohn\nJulie Lohre\nJenny Lynn\n\n\n== M ==\nTimea Majorová\nLinda Maxwell\nDavana Medina\nJodi Leigh Miller\nChisato Mishima\n\n\n== N ==\nKim Nielsen\n\n\n== O ==\n\n\n== P ==\nVicky Pratt\nElena Panova\nChristine Pomponio-Pate\nCathy Priest\n\n\n== Q ==\n\n\n== R ==\nMaite Richert\nCharlene Rink\nKelly Ryan\n\n\n== S ==\nErin Stern\nCarol Semple-Marzetta\nKrisztina Sereny\nTrish Stratus (Patricia Anne Stratigias)\n\n\n== T ==\nKristi Tauti\nJennifer Thomas\n\n\n== U ==\n\n\n== V ==\nLisa Marie Varon\n\n\n== W ==\nLatisha Wilder\nTorrie Wilson\nLyen Wong\nJenny Worth\nNicole Wilkins\n\n\n== Y ==\n\n\n== Z ==\nMarietta Žigalová\nMalika Zitouni\n\n\n== See also ==\nList of female bodybuilders\n\n\n== References ==\nThere has been a rise in the number of women wanting to compete as fitness models.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Round-robin_tournament">Round-robin tournament</a></td>
+      <td>A round-robin tournament (or all-play-all tournament) is a competition in which each contestant meets every other participant, usually in turn. A round-robin contrasts with an elimination tournament, in which participants are eliminated after a certain number of losses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>INFOSPACE INC      ITEM 1A    Risk Factors                        FACTORS AFFECTING OUR OPERATING RESULTS,                    BUSINESS PROSPECTS AND MARKET PRICE OF STOCK          RISKS RELATED TO OUR BUSINESS          A substantial portion of our revenues is <font color="blue">dependent on</font> our <font color="blue"><font color="blue">relationships</font> with</font>     a small number of <font color="blue"><font color="blue">distribution</font> partners</font> who distribute our products and     services, the loss of <font color="blue">which would</font> have a material adverse effect on our     financial results</td>
+    </tr>
+    <tr>
+      <td>We rely on our <font color="blue"><font color="blue">relationships</font> with</font> <font color="blue"><font color="blue">distribution</font> partners</font>, including mobile     operators, Web portals and <font color="blue">software <font color="blue">application</font> providers</font>, for <font color="blue">distribution</font>     of our products and services</td>
+    </tr>
+    <tr>
+      <td>We generated approximately 46prca of our total     revenues through <font color="blue"><font color="blue">relationships</font> with</font> our top five <font color="blue"><font color="blue">distribution</font> partners</font> for     the  year  ended  <font color="blue">December </font>31,  2005</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that these     <font color="blue">relationships</font> will continue or result in benefits to us that outweigh the     cost of the <font color="blue">relationships</font></td>
+    </tr>
+    <tr>
+      <td>One of our biggest <font color="blue">challenges</font> is providing our     <font color="blue"><font color="blue">distribution</font> partners</font> with relevant products and services at <font color="blue">competitive</font>     prices in <font color="blue">rapidly evolving market</font>s</td>
+    </tr>
+    <tr>
+      <td>In particular, our <font color="blue">mobile operator</font>     <font color="blue"><font color="blue">distribution</font> partners</font>, including our largest <font color="blue">distribution</font> partner which     represented approximately 28prca of our <font color="blue">total company revenues</font> in 2005, may     <font color="blue">seek financial</font> or <font color="blue">competitive</font> advantages by licensing content directly from     our  content  providers,  such  as  record labels, thereby reducing or     <font color="blue">eliminating</font> the need for our products and services related to <font color="blue">such content</font></td>
+    </tr>
+    <tr>
+      <td>In addition, other <font color="blue"><font color="blue">distribution</font> partners</font> may create their own products and     services or also seek to <font color="blue">license products</font> and <font color="blue">services from others</font> that     <font color="blue">compete with</font> or replace the products and services that we provide</td>
+    </tr>
+    <tr>
+      <td>Also,     many of our search <font color="blue"><font color="blue">distribution</font> partners</font> are developing <font color="blue">companies with</font>     limited operating histories and evolving business models that may prove     <font color="blue"><font color="blue">unsuccessful</font> even</font> if our products and services are relevant and our prices     <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>If we are not able to maintain our <font color="blue"><font color="blue">relationships</font> with</font> these     <font color="blue"><font color="blue">distribution</font> partners</font>, our financial results would be <font color="blue"><font color="blue">materially</font> adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">mobile operator</font> <font color="blue">distribution</font> partner <font color="blue">agreement</font>s <font color="blue">generally</font> come up for     renewal on an <font color="blue">annual basis</font>, and our <font color="blue"><font color="blue">agreement</font>s with most</font> of our online     search and <font color="blue">directory</font> <font color="blue"><font color="blue">distribution</font> partners</font> come up for renewal in 2006 and     2007</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">agreement</font>s may</font> be terminated or may not be renewed or <font color="blue">replaced on</font>     favorable terms, <font color="blue">which could</font> adversely impact our financial results</td>
+    </tr>
+    <tr>
+      <td>In     particular, we are experiencing <font color="blue">pricing pressure</font> in our mobile business, and     <font color="blue">competition</font> is increasing for <font color="blue">consumer traffic</font> in the search and <font color="blue">directory</font>     markets</td>
+    </tr>
+    <tr>
+      <td>We anticipate that the cost of our content for our <font color="blue">mobile products</font>     and services and the cost of our <font color="blue">revenue sharing arrangements with</font> our     search <font color="blue"><font color="blue">distribution</font> partners</font> will increase as revenues grow and may increase     on  a <font color="blue">relative basis compared</font> to revenues to the extent that there are     changes to <font color="blue">existing arrangements</font> or we <font color="blue"><font color="blue"><font color="blue">enter into</font> new</font> arrangements on less</font>     favorable terms</td>
+    </tr>
+    <tr>
+      <td>Failure by us or our <font color="blue"><font color="blue">distribution</font> partners</font> to <font color="blue">comply with</font> the <font color="blue">requirements</font>     <font color="blue">imposed by</font> our <font color="blue">content provider</font>s relating to the <font color="blue">distribution</font> of <font color="blue">content may</font>     require us to modify, terminate or not <font color="blue">enter into</font> certain <font color="blue">distribution</font>     <font color="blue">relationships</font>, may cause the <font color="blue">content provider</font> to terminate its <font color="blue">agreement</font>     with us, and <font color="blue">may expose us</font> to <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>If our search <font color="blue"><font color="blue">distribution</font> partners</font> or we fail to meet the <font color="blue">requirements</font> and     <font color="blue"><font color="blue">guidelines</font> promulgated by</font> our major search <font color="blue">content provider</font>s, we may not be     able to continue to <font color="blue">provide content</font> to such <font color="blue"><font color="blue">distribution</font> partners</font>, we may be     liable to <font color="blue">such content</font> providers for <font color="blue">certain damages</font> they may suffer, and     the <font color="blue">content provider</font> may terminate its <font color="blue">agreement</font> with us</td>
+    </tr>
+    <tr>
+      <td>Certain of our     search <font color="blue">content provider</font>s have notified us that we were not in compliance     with respect to our use of their content or the re<font color="blue">distribution</font> of their     content  by  our <font color="blue"><font color="blue">distribution</font> partners</font></td>
+    </tr>
+    <tr>
+      <td>We have been able to cure such     breaches,  however,  there  can  be no assurance that if we breach our     <font color="blue">agreement</font>s in the future, we will be able to cure the breach</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">agreement</font>s     with some of our major <font color="blue">content provider</font>s give <font color="blue">such content</font> providers the     ability to terminate their <font color="blue">agreement</font>s with us immediately in the case of     certain breaches, regardless of <font color="blue">whether such breaches could</font> be cured</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">agreement</font>s with our search <font color="blue">content provider</font>s may be amended     from  time  to  time  by  both  parties or may be subject to <font color="blue">different</font>     interpretation by either party, which may require the rights we grant to our     search <font color="blue"><font color="blue">distribution</font> partners</font> to be modified to <font color="blue">comply with</font> such amendments     or <font color="blue">interpretations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">agreement</font>s                                           11     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>with our search <font color="blue"><font color="blue">distribution</font> partners</font> <font color="blue">generally</font> provide that we may modify     the rights we grant to them to avoid being in <font color="blue">conflict with</font> the <font color="blue">agreement</font>s     with our search <font color="blue">content provider</font>s</td>
+    </tr>
+    <tr>
+      <td>For example, recent changes by some of     our search <font color="blue">content provider</font>s such as Yahoo!</td>
+    </tr>
+    <tr>
+      <td>and Google to their approval     processes and <font color="blue">guidelines</font> with respect to downloadable <font color="blue"><font color="blue">application</font>s</font> through     which content is provided to end users have resulted in some of our search     <font color="blue"><font color="blue">distribution</font> partners</font> changing the manner in which they distribute their     downloadable <font color="blue"><font color="blue">application</font>s</font> to end users to meet the new approval processes     and <font color="blue">guidelines</font></td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue"><font color="blue">distribution</font> partners</font> have not been able to meet the     new <font color="blue">guidelines</font>, and as a result we <font color="blue">no longer provide</font> the <font color="blue">applicable content</font>     or any content, as the case may be, to such <font color="blue"><font color="blue">distribution</font> partners</font> or certain     of their downloadable <font color="blue"><font color="blue">application</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Also, our search <font color="blue">content provider</font>s have     <font color="blue">approval processes with respect</font> to the re<font color="blue">distribution</font> of their <font color="blue">content by</font>     our  <font color="blue">distribution</font>  partners</td>
+    </tr>
+    <tr>
+      <td>Some  of  our <font color="blue"><font color="blue">distribution</font> partners</font> that     <font color="blue">redistribute</font> <font color="blue">such content</font> have not complied with such approval processes,     and we <font color="blue">no longer provide</font> the <font color="blue">applicable content</font> to <font color="blue">such partners</font> or such     partners no longer <font color="blue">redistribute</font> the content</td>
+    </tr>
+    <tr>
+      <td>If our search <font color="blue">content provider</font>s     <font color="blue">impose additional <font color="blue">restrictions</font></font>, some of our <font color="blue"><font color="blue">distribution</font> partners</font> may be     required  to make changes to the manner in which they distribute their     downloadable <font color="blue"><font color="blue">application</font>s</font> or may be required to <font color="blue">cease redistributing</font> the     content</td>
+    </tr>
+    <tr>
+      <td>If  such  <font color="blue">distribution</font>  partners  are unable to meet the new     <font color="blue">restrictions</font>, we may need to terminate our <font color="blue">agreement</font> with such <font color="blue">distribution</font>     partners or <font color="blue">no longer provide</font> the <font color="blue">applicable content</font> to <font color="blue">such partners</font></td>
+    </tr>
+    <tr>
+      <td>The  loss  or  reduction  of content that we can make available to our     <font color="blue"><font color="blue">distribution</font> partners</font>, as well as the <font color="blue">termination</font> of <font color="blue">distribution</font> or content     provider <font color="blue">agreement</font>s, for the reasons stated above, could have a material     adverse effect on our financial results</td>
+    </tr>
+    <tr>
+      <td>A substantial portion of our revenues is <font color="blue">attributable</font> to a small number of     customers, the loss of any one of <font color="blue">which would</font> harm our financial results</td>
+    </tr>
+    <tr>
+      <td>We derive a substantial portion of our <font color="blue">revenues from</font> a small number of     customers</td>
+    </tr>
+    <tr>
+      <td>We  expect  that  this  <font color="blue">concentration will continue</font> in the     <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>and Google <font color="blue">each accounted</font> for more than 10prca of our revenues     in 2005</td>
+    </tr>
+    <tr>
+      <td>Our principal <font color="blue">agreement</font>s with these customers expire in 2006, 2008     and 2009, respectively</td>
+    </tr>
+    <tr>
+      <td>Also, some of these customers are <font color="blue"><font color="blue">competitor</font>s</font> of     each  other,  and  the  way we do business with one of them may not be     acceptable  to  one  or some of their <font color="blue"><font color="blue">competitor</font>s</font> with whom we also do     business, which may result in such <font color="blue"><font color="blue">competitor</font>s</font> not renewing their <font color="blue">agreement</font>s     <font color="blue">with us on</font> favorable terms</td>
+    </tr>
+    <tr>
+      <td>If we lose any of these customers, are unable to     renew  the <font color="blue">contracts on</font> favorable terms, or any of these customers are     unwilling to <font color="blue">pay us amounts</font> that they owe us, or <font color="blue">dispute amounts</font> they owe us     or  have  paid  to  us, our financial results <font color="blue">would <font color="blue">materially</font> suffer</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">under certain</font> of these <font color="blue">agreement</font>s, we are required to generate     a <font color="blue">minimum amount</font> of revenue</td>
+    </tr>
+    <tr>
+      <td>If we do not reach these minimums we may be     required to compensate our partners for the <font color="blue">difference between</font> the guarantee     and  the  shortfall</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">such shortfall</font> is substantial, it could have a     material adverse effect on our financial results</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">strategic direction</font> is evolving, <font color="blue">which could</font> <font color="blue">negatively</font> affect our     future results</td>
+    </tr>
+    <tr>
+      <td>Since inception, our business model has evolved and is likely to continue to     evolve as we refine our <font color="blue">product offerings</font> and <font color="blue">market focus</font></td>
+    </tr>
+    <tr>
+      <td>Since 2003, we     have <font color="blue">focused on</font> our search and <font color="blue">directory</font> and <font color="blue">mobile products</font> and services</td>
+    </tr>
+    <tr>
+      <td>We continue to <font color="blue">evaluate <font color="blue">opportunities</font></font> in a <font color="blue">rapidly evolving market</font></td>
+    </tr>
+    <tr>
+      <td>We plan     to leverage our <font color="blue"><font color="blue">intellectual</font> capital</font> and <font color="blue">core competencies</font> to focus more on     mobile <font color="blue"><font color="blue">application</font>s</font>, products and services</td>
+    </tr>
+    <tr>
+      <td>As part of this plan, in early     2006, we realigned our <font color="blue">operations</font> to a <font color="blue">functional organization structure</font>,     <font color="blue">eliminating</font> the separate business units of Mobile and Search &amp; Directory,     and plan to expand our mobile media offerings, leverage our search and     <font color="blue">directory</font> <font color="blue">technology</font> and <font color="blue"><font color="blue">application</font>s</font> for mobile devices, and expand our     <font color="blue">distribution</font>  channels</td>
+    </tr>
+    <tr>
+      <td>These  changes  to our business may not prove     successful in the short or long term and <font color="blue">may <font color="blue">negatively</font> impact</font> our financial     results</td>
+    </tr>
+    <tr>
+      <td>In addition, we have in the past and may in the future find it advisable to     streamline <font color="blue">operations</font> and <font color="blue">reduce expenses</font>, including, <font color="blue">without limitation</font>,     <font color="blue">such measures as <font color="blue">reductions</font></font> in the workforce, <font color="blue">reductions</font> in <font color="blue">discretionary</font>     spending, <font color="blue">reductions</font> in <font color="blue">capital <font color="blue">expenditures</font> as well as</font> other steps to     <font color="blue">reduce expenses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effecting </font>any such                                           12     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font><font color="blue">restructuring would likely</font> place <font color="blue"><font color="blue">significant</font> strains on <font color="blue">management</font></font> and our     operational, financial, employee and other resources</td>
+    </tr>
+    <tr>
+      <td>In addition, any such     <font color="blue">restructuring could impair</font> our <font color="blue">development</font>, marketing, sales and customer     <font color="blue">support efforts</font> or alter our <font color="blue">product <font color="blue">development</font></font> plans</td>
+    </tr>
+    <tr>
+      <td>We have a history of incurring net losses, we <font color="blue">may incur net losses</font> in the     future, and we may not be able to <font color="blue">sustain <font color="blue">profitability</font> on</font> a quarterly or     <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">incurred net losses on</font> an <font color="blue">annual basis</font> from our <font color="blue">inception through</font>     <font color="blue">December </font>31, 2003</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had an <font color="blue">accumulated deficit</font> of     dlra1dtta0 billion</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may incur net losses</font> in the future including from the     <font color="blue">impairment</font> of goodwill or other <font color="blue">intangible assets</font>, losses from <font color="blue"><font color="blue">acquisition</font>s</font>,     <font color="blue">restructuring charges</font> or <font color="blue">stock option expensing</font></td>
+    </tr>
+    <tr>
+      <td>Also, we expect to increase     our  operating  <font color="blue">expenditures</font> to <font color="blue">fund certain initiatives</font> including new     products and services and new <font color="blue">distribution</font> channels, such as a <font color="blue">mobile direct</font>     to consumer business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must therefore generate revenues sufficient</font> to     offset these expenses in order for us to be profitable</td>
+    </tr>
+    <tr>
+      <td>While we achieved     <font color="blue">profitability</font> in each of our <font color="blue">last ten fiscal quarters</font> and on an <font color="blue">annual basis</font>     for the <font color="blue">fiscal years</font> ended <font color="blue">December </font>31, 2005 and 2004, we may not be able to     <font color="blue">sustain <font color="blue">profitability</font> on</font> a quarterly or <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>Our financial results are likely to continue to fluctuate, <font color="blue">which could</font> cause     our stock price to be volatile or decline</td>
+    </tr>
+    <tr>
+      <td>Our financial results have varied on a <font color="blue">quarterly basis</font> and are likely to     fluctuate in the future</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">fluctuations</font> could</font> cause our stock price to     be volatile or decline</td>
+    </tr>
+    <tr>
+      <td>Several <font color="blue">factors could</font> cause our quarterly results to     <font color="blue">fluctuate <font color="blue">materially</font></font>, including:           •   the loss, <font color="blue">termination</font> or reduction in scope of key <font color="blue">distribution</font> or     content <font color="blue">relationships</font>;           •   <font color="blue">variable demand</font> for our products and services, including seasonal     <font color="blue">fluctuations</font>, rapidly evolving <font color="blue">technologies</font> and markets and consumer     <font color="blue">preferences</font>;           •   the <font color="blue"><font color="blue">impact on</font> revenues</font> or <font color="blue">profitability</font> of changes in pricing for our     products and services;           •   <font color="blue">increased costs</font> related to <font color="blue"><font color="blue">investment</font>s</font> for <font color="blue">new initiatives</font>, including     <font color="blue">new products</font> and services and new <font color="blue">distribution</font> channels, such as a mobile     direct to <font color="blue">consumer channel</font>;           •   the results from shifts in the mix of products and services we     provide;           •   the effects of <font color="blue"><font color="blue"><font color="blue">acquisition</font>s</font> by us</font>, our customers or our <font color="blue">distribution</font>     partners;           •   increases in the costs or <font color="blue">availability</font> of content for or <font color="blue">distribution</font>     of our products;           •   the adoption of new laws, rules or <font color="blue">regulations</font>, or <font color="blue">new court rulings</font>,     regarding <font color="blue"><font color="blue">intellectual</font> property</font> that <font color="blue">may <font color="blue">adversely affect</font></font> our ability to     continue to acquire content and distribute our products and services, or the     ability of our <font color="blue">content provider</font>s or <font color="blue"><font color="blue">distribution</font> partners</font> to continue to     <font color="blue">provide us with</font> their content or distribute our products and services;           •   <font color="blue">impairment</font> in the value of long-lived assets or the value of acquired     assets, including goodwill, core <font color="blue">technology</font> and acquired contracts and     <font color="blue">relationships</font>;           •   the effect of changes in <font color="blue">accounting</font> principles or in our <font color="blue">accounting</font>     treatment of revenue or expense matters;           •   <font color="blue"><font color="blue">litigation</font> expense</font>;           •   the adoption of new <font color="blue">regulations</font> or <font color="blue">accounting</font> standards, including the     new <font color="blue">accounting</font> standard that requires us to expense the <font color="blue">fair value</font> of our     <font color="blue"><font color="blue">employee <font color="blue">stock options</font></font> beginning</font> in 2006; and           •   the <font color="blue">foreign currency effects from transactions denominated</font> in     currencies other than the US dollar</td>
+    </tr>
+    <tr>
+      <td>For these reasons, among others, you should not rely on period-to-period     <font color="blue">comparisons</font> of our financial results to forecast our <font color="blue">future performance</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore,  our  <font color="blue">fluctuating</font>  operating  results  may fall below the     <font color="blue">expectations</font> of <font color="blue">securities analysts</font> or investors, <font color="blue">which could</font> cause the     <font color="blue">trading price</font> of our stock to decline</td>
+    </tr>
+    <tr>
+      <td>13     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font>We operate in new and <font color="blue">rapidly evolving market</font>s, and our business model     continues  to  evolve, which makes it <font color="blue">difficult</font> to evaluate our future     prospects</td>
+    </tr>
+    <tr>
+      <td>Our potential for future <font color="blue">profitability</font> must be considered in the light of     the risks, uncertainties, and <font color="blue">difficult</font>ies encountered by companies that are     in new and <font color="blue">rapidly evolving market</font>s and continuing to <font color="blue">innovate with new</font> and     <font color="blue">unproven <font color="blue">technologies</font></font> or services, as well as undergoing <font color="blue">significant</font> change</td>
+    </tr>
+    <tr>
+      <td>Our search, <font color="blue">directory</font> and <font color="blue">mobile <font color="blue">businesses</font></font> are in young <font color="blue">industries</font> that     have  undergone  rapid and dramatic changes in their short history</td>
+    </tr>
+    <tr>
+      <td>In     addition to the other risks we describe in this section, some of these risks     relate to our <font color="blue">potential inability</font> to:           •   retain and expand our existing <font color="blue">mobile operator</font> arrangements or expand     into new <font color="blue">distribution</font> channels;           •   attract and retain <font color="blue"><font color="blue">distribution</font> partners</font> for our search and <font color="blue">directory</font>     products;           •   attract and retain <font color="blue">content partners</font>;           •   manage our growth, control <font color="blue">expenditures</font> and <font color="blue">align costs with revenues</font>;     and           •   respond quickly and <font color="blue">appropriately</font> to <font color="blue">competitive</font> <font color="blue">development</font>s,     including:           •   <font color="blue">rapid technological</font> change;           •   <font color="blue">alternatives</font> to access the Internet or mobile devices;           •   changes in customer <font color="blue">requirements</font>;           •   <font color="blue">new products</font> introduced into our markets by our <font color="blue"><font color="blue">competitor</font>s</font>; and           •   <font color="blue">regulatory</font> changes <font color="blue">affecting</font> the <font color="blue">industries</font> we operate in or the     markets we serve both in the <font color="blue">United States </font>and foreign countries</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue"><font color="blue">effectively</font> address</font> the risks we face, we may not sustain     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We  depend  <font color="blue">on <font color="blue">third parties</font></font> for content, and the loss of access to or     increased  cost  of  this <font color="blue">content could</font> cause us to reduce our product     offerings to customers and <font color="blue">could <font color="blue">negatively</font> impact</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>We currently create only a <font color="blue">relatively</font> small portion of our content</td>
+    </tr>
+    <tr>
+      <td>In most     cases,  we acquire rights to content from numerous third-party content     providers, and our <font color="blue">future success</font> is <font color="blue">highly dependent upon</font> our ability to     maintain <font color="blue"><font color="blue">relationships</font> with</font> these <font color="blue">content provider</font>s and <font color="blue"><font color="blue">enter into</font> new</font>     <font color="blue"><font color="blue">relationships</font> with</font> other <font color="blue">content provider</font>s</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">typically license content under arrangements</font> that require us to pay usage     or fixed <font color="blue">monthly fees</font> for the use of the content or require us to pay under     a revenue-sharing arrangement</td>
+    </tr>
+    <tr>
+      <td>Further, our <font color="blue">musical composition</font> and other     <font color="blue">media licenses</font> for the creation of <font color="blue"><font color="blue">mobile content</font> consisting</font> of ringtones     <font color="blue">generally</font> require <font color="blue">royalty payments on</font> a “most favored nation” basis, which     requires us to pay the <font color="blue">highest royalty paid</font> to any licensor to all such     <font color="blue">licensors</font></td>
+    </tr>
+    <tr>
+      <td>In the future, some of our <font color="blue">content provider</font>s may not give us     access  to  important  content  or may increase the royalties, fees or     <font color="blue">percentages</font>  that they charge us for their content, <font color="blue">which could</font> have a     negative <font color="blue">impact on</font> our net earnings</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">enter into</font> or maintain     satisfactory arrangements with <font color="blue">content provider</font>s, our ability to provide a     variety of products and services to our <font color="blue">customers could</font> be severely limited,     <font color="blue">thus harming</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>Additionally, our <font color="blue">content license</font> and     <font color="blue">royalty fees will increase</font> to the extent that our revenues related to such     products and services increase and <font color="blue">may increase as</font> a percent of <font color="blue">revenues as</font>     a  result of price <font color="blue">competition</font> and <font color="blue">carrier demand</font> for our products and     services and the mix of our <font color="blue">product sales</font></td>
+    </tr>
+    <tr>
+      <td>Our financial and operating results will suffer if we are <font color="blue"><font color="blue">unsuccessful</font> at</font>     <font color="blue">integrating</font> acquired <font color="blue">technologies</font> and <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We have acquired a number of <font color="blue">technologies</font> and <font color="blue">businesses</font> in the past and may     engage in <font color="blue">further <font color="blue"><font color="blue">acquisition</font>s</font></font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font><font color="blue">may involve use</font>     of cash, <font color="blue">potentially</font> dilutive issuances of stock, the <font color="blue">potential incurrence</font>     of debt and <font color="blue">contingent liabilities</font> or <font color="blue"><font color="blue">amortization</font> expenses</font> related to     <font color="blue">certain <font color="blue">intangible assets</font></font></td>
+    </tr>
+    <tr>
+      <td>14     ______________________________________________________________________    [39]Table of <font color="blue">Contents       </font>In  the past, our financial results have suffered <font color="blue"><font color="blue">significant</font>ly</font> due to     <font color="blue">impairment</font> charges of goodwill and other <font color="blue">intangible assets</font> related to prior     <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font> also  involve  <font color="blue">numerous risks <font color="blue">which could</font></font>     <font color="blue">materially</font> and <font color="blue">adversely affect</font> our results of <font color="blue">operations</font> or stock price,     including:           •   <font color="blue">difficult</font>ies in assimilating the <font color="blue">operations</font>, products, <font color="blue">technology</font>,     information systems and personnel of acquired companies which result in     unanticipated costs, delays or <font color="blue">allocation</font> of resources;           •   <font color="blue">difficult</font>ies in acquiring <font color="blue">foreign companies</font>, including risks related     to <font color="blue">integrating</font> <font color="blue">operations</font> across <font color="blue">different</font> cultures and languages, currency     risks and the particular economic, political and <font color="blue">regulatory</font> risks associated     <font color="blue">with specific countries</font>;           •   the dilutive effect <font color="blue">on earnings per</font> share as a result of incurring     operating losses and the <font color="blue">amortization</font> of acquired <font color="blue">intangible assets</font> for the     acquired business;           •   diverting <font color="blue">management</font>’s attention from other business concerns;           •   impairing <font color="blue"><font color="blue">relationships</font> with</font> our customers or those of the acquired     companies, or breaching a <font color="blue">significant</font> or material <font color="blue">contract due</font> to the     <font color="blue">consummation</font> of the <font color="blue">acquisition</font>;           •   impairing <font color="blue"><font color="blue">relationships</font> with</font> our employees or those of the acquired     companies;           •   failing to achieve the anticipated benefits of the <font color="blue"><font color="blue">acquisition</font>s</font> in a     <font color="blue">timely manner</font>; and           •   <font color="blue">adverse outcome</font> of <font color="blue"><font color="blue">litigation</font> matters</font> assumed in or arising out of the     <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The success of the <font color="blue">operations</font> of companies that we have acquired will often     <font color="blue">depend on</font> the <font color="blue">continued efforts</font> of the <font color="blue">management</font> and <font color="blue">key employees</font> of those     acquired companies</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we have <font color="blue">typically attempted</font> to retain key     employees and members of existing <font color="blue">management</font> of acquired <font color="blue">companies under</font> the     <font color="blue">overall supervision</font> of our senior <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We have, however, not always     been  successful in these <font color="blue">attempts at retention</font></td>
+    </tr>
+    <tr>
+      <td>Failure to retain key     employees of an acquired <font color="blue">company may</font> make it more <font color="blue">difficult</font> to integrate or     manage the business of the acquired company, may reduce the anticipated     benefits  of  the  <font color="blue">acquisition</font> by increasing costs, causing delays, or     otherwise and <font color="blue">may expose us</font> to additional <font color="blue">competition</font> from companies these     <font color="blue">employees may join</font> or form</td>
+    </tr>
+    <tr>
+      <td>Our stock price has been and is likely to continue to be <font color="blue">highly volatile</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of our <font color="blue">common stock</font> has been <font color="blue">highly volatile</font></td>
+    </tr>
+    <tr>
+      <td>Since we     <font color="blue">began trading on</font> <font color="blue">December </font>15, 1998, our stock price has ranged from dlra3dtta70 to     dlra1cmam385dtta00 (as adjusted for <font color="blue">stock splits</font>)</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On February </font>17, 2006, the closing     price of our <font color="blue">common stock</font> was dlra23dtta41</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">stock price could decline</font> or be     subject to <font color="blue">wide <font color="blue">fluctuations</font></font> in response to <font color="blue">factors such as</font> the other risks     discussed in this section and the following, among others:           •   actual or anticipated <font color="blue">variations</font> in quarterly and annual results of     <font color="blue">operations</font>;           •   <font color="blue">announcements</font> of <font color="blue">significant</font> <font color="blue"><font color="blue">acquisition</font>s</font>, dispositions, changes in     material contracts or other business <font color="blue"><font color="blue">development</font>s by us</font>, our customers,     <font color="blue"><font color="blue">distribution</font> partners</font> or <font color="blue"><font color="blue">competitor</font>s</font>;           •   <font color="blue">conditions</font> or trends in the search, <font color="blue">directory</font> or <font color="blue">mobile products</font> and     services markets;           •   <font color="blue">announcements</font> of technological innovations, <font color="blue">new products</font> or services,     or <font color="blue">new customer</font> or partner <font color="blue">relationships</font> by us or our <font color="blue"><font color="blue">competitor</font>s</font>;           •   changes in financial estimates or <font color="blue">recommendations by securities</font>     analysts;           •   <font color="blue"><font color="blue">disclosure</font>s</font> of any material <font color="blue">weaknesses</font> in <font color="blue">internal control over</font>     financial reporting;           •   the adoption of new <font color="blue">regulations</font> or <font color="blue">accounting</font> standards, including the     new <font color="blue">accounting</font> standard that requires us to expense the <font color="blue">fair value</font> of our     <font color="blue"><font color="blue">employee <font color="blue">stock options</font></font> beginning</font> in 2006; and           •   <font color="blue">announcements</font> or publicity relating to <font color="blue">litigation</font> and similar matters</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">stock market</font> in general, and the <font color="blue">Nasdaq National Market </font>and     the market <font color="blue">for Internet </font>and <font color="blue">technology</font> company securities in particular,     have experienced extreme price and volume <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These                                           </font>15     ______________________________________________________________________    [40]Table of <font color="blue">Contents       </font>broad  market and <font color="blue">industry factors</font> and general economic <font color="blue">conditions</font> may     <font color="blue">materially</font> and <font color="blue">adversely affect</font> our stock price</td>
+    </tr>
+    <tr>
+      <td>Our stock has been subject     to such price and volume <font color="blue">fluctuations</font> in the <font color="blue">recent past</font></td>
+    </tr>
+    <tr>
+      <td>Often, class     action <font color="blue">litigation</font> has <font color="blue">been instituted against companies</font> after periods of     <font color="blue">volatility</font> in the <font color="blue">overall market</font> and the price of such companies’ stock</td>
+    </tr>
+    <tr>
+      <td>If     such  <font color="blue">litigation</font>  were to be instituted <font color="blue">against us</font>, even if we were to     prevail, it could result in substantial cost and diversion of <font color="blue">management</font>’s     attention and resources</td>
+    </tr>
+    <tr>
+      <td>Our search and <font color="blue">directory</font> products and services <font color="blue">may expose us</font> to claims     relating to how the content was obtained or <font color="blue">distributed</font></td>
+    </tr>
+    <tr>
+      <td>Our search and <font color="blue">directory</font> services link users, either directly through our     Web sites or <font color="blue">indirectly through</font> the Web properties of our <font color="blue">distribution</font>     partners,  to  <font color="blue">third party</font> Web pages and content in response to search     queries</td>
+    </tr>
+    <tr>
+      <td>These services could expose us to legal <font color="blue">liability</font> from claims     relating to such third-party content and sites, the manner in which these     services are <font color="blue">distributed</font> by us or our <font color="blue"><font color="blue">distribution</font> partners</font>, or how the     content  <font color="blue">provided by</font> our third-party <font color="blue">content provider</font>s was obtained or     <font color="blue">provided by</font> our <font color="blue">content provider</font>s</td>
+    </tr>
+    <tr>
+      <td>Such claims could include the following:     <font color="blue">infringement</font> of copyright, trademark, trade secret or other <font color="blue">proprietary</font>     rights; violation of privacy and <font color="blue">publicity rights</font>; unfair <font color="blue">competition</font>;     <font color="blue">defamation</font>;  <font color="blue">providing false</font> or misleading information; <font color="blue">obscenity</font>; and     <font color="blue">illegal gambling</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regardless </font>of the <font color="blue">legal merits</font> of any such claims, they     could result in costly <font color="blue">litigation</font>, be time consuming to defend and divert     <font color="blue">management</font>’s attention and resources</td>
+    </tr>
+    <tr>
+      <td>If there were a de<font color="blue">termination</font> that we     had  violated  third-party  rights  or  <font color="blue">applicable law</font>, we <font color="blue">could incur</font>     substantial monetary <font color="blue">liability</font>, be required to <font color="blue">enter into</font> costly royalty or     <font color="blue">licensing arrangements</font> (if available), or be required to change our business     practices</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Implementing </font>measures to reduce our exposure to such claims could     require us to expend substantial resources and limit the <font color="blue">attractiveness</font> of     our products and services to our customers</td>
+    </tr>
+    <tr>
+      <td>Recently,  there have been legal actions brought or <font color="blue">threatened against</font>     <font color="blue">distributors</font>  of  downloadable  <font color="blue"><font color="blue">application</font>s</font>  deemed to be “adware” or     “spyware</td>
+    </tr>
+    <tr>
+      <td>” Additionally, <font color="blue">certain bills</font> are pending and some laws have been     passed in certain <font color="blue">jurisdictions</font> setting forth <font color="blue">requirements</font> that must be met     before a <font color="blue">downloadable <font color="blue">application</font></font> is downloaded to an end user’s computer</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">partner with</font> some <font color="blue"><font color="blue">distribution</font> partners</font> that <font color="blue">provide adware</font> to their     users if the <font color="blue">partners adhere</font> to our strict <font color="blue">guidelines</font> requiring them, among     other things, to disclose to the user what the adware does and to obtain the     consent of the user before the <font color="blue">application</font> is downloaded</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">adware must</font>     also  be easy to uninstall</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also review</font> the <font color="blue">application</font> the partner     proposes to use before we distribute our results to them</td>
+    </tr>
+    <tr>
+      <td>We also have the     right to audit our partners, and if we find that they are not following our     <font color="blue">guidelines</font>, we can terminate our <font color="blue">agreement</font> with them or <font color="blue">cease providing</font>     content to that <font color="blue">downloadable <font color="blue">application</font></font></td>
+    </tr>
+    <tr>
+      <td>Some partners have not been able     to meet the new <font color="blue">guidelines</font> <font color="blue">imposed by</font> us or some of our <font color="blue">content provider</font>s,     and we <font color="blue">no longer provide</font> the <font color="blue">applicable content</font> or any content, as the case     may be, to <font color="blue">such partners</font> or certain of their downloadable <font color="blue"><font color="blue">application</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We     work <font color="blue">closely with</font> some of our major <font color="blue">content provider</font>s to try to identify     potential <font color="blue"><font color="blue">distribution</font> partners</font> that do not meet our <font color="blue">guidelines</font> or are in     breach of our <font color="blue">distribution</font> <font color="blue">agreement</font>s and we work with our <font color="blue">distribution</font>     partners to ensure they deliver <font color="blue">quality traffic</font></td>
+    </tr>
+    <tr>
+      <td>However, there can be no     assurance that the measures we implement to reduce our exposure to claims     that  certain  ways  in which the content is <font color="blue">distributed</font> violate legal     <font color="blue">requirements</font> will be successful</td>
+    </tr>
+    <tr>
+      <td>Our efforts to increase our presence in <font color="blue">markets outside</font> the <font color="blue"><font color="blue">United States </font>    </font>may be <font color="blue">unsuccessful</font> and could result in losses</td>
+    </tr>
+    <tr>
+      <td>We  plan  to  expand  our mobile and <font color="blue">search offerings internationally</font>,     <font color="blue">particularly</font>  in  Europe</td>
+    </tr>
+    <tr>
+      <td>We have limited experience in marketing and     operating our products and services in <font color="blue">international markets</font>, and we may not     be able to <font color="blue">successfully</font> execute our business model in these markets</td>
+    </tr>
+    <tr>
+      <td>Our     success  in  these  markets  will be <font color="blue">directly linked</font> to the success of     <font color="blue"><font color="blue">relationships</font> with</font> our <font color="blue">distribution</font> and <font color="blue">content partners</font> and other third     parties</td>
+    </tr>
+    <tr>
+      <td>As  the  international  markets  in which we operate continue to grow,     <font color="blue">competition</font> in these markets will intensify</td>
+    </tr>
+    <tr>
+      <td>Local <font color="blue">companies may</font> have a     substantial <font color="blue">competitive</font> advantage because of their greater understanding                                           16     ______________________________________________________________________    [41]Table of <font color="blue">Contents       </font>of and focus on the <font color="blue">local markets</font></td>
+    </tr>
+    <tr>
+      <td>Some of our domestic <font color="blue"><font color="blue">competitor</font>s</font> who have     <font color="blue">substantially</font> greater resources than we do may be able to more quickly and     <font color="blue">comprehensively</font> develop and grow in the <font color="blue">international markets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">International     </font><font color="blue">expansion may also</font> require <font color="blue">significant</font> financial <font color="blue">investment</font> including, among     other things, the expense of developing <font color="blue">localized products</font>, the costs of     acquiring <font color="blue">foreign companies</font> and the <font color="blue">integration</font> of such <font color="blue">companies with</font> our     <font color="blue">operations</font>, expenditure of resources in developing <font color="blue">distribution</font> and content     <font color="blue">relationships</font> and the <font color="blue">increased costs</font> of supporting remote <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Although our <font color="blue">revenues from</font> our European offerings have increased in absolute     dollars, they have remained <font color="blue">relatively</font> the same as a percentage of our     <font color="blue">overall revenues</font></td>
+    </tr>
+    <tr>
+      <td>Other risks of doing business in <font color="blue">international markets</font> include the increased     risks  and  burdens  of  complying with <font color="blue">different</font> legal and <font color="blue">regulatory</font>     standards,  <font color="blue">difficult</font>ies  in managing and staffing foreign <font color="blue">operations</font>,     <font color="blue">limitations</font>  on  the <font color="blue">repatriation</font> of funds and <font color="blue">fluctuations</font> of foreign     exchange  rates,  varying  levels  of Internet <font color="blue">technology</font> adoption and     <font color="blue">infrastructure</font>,  and  ability  to  enforce  our  contracts  in foreign     <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our success in <font color="blue">international expansion could</font> be     limited <font color="blue">by barriers</font> to international expansion such as tariffs, adverse tax     <font color="blue">consequences</font>, and <font color="blue">technology</font> export controls</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot manage</font> these     <font color="blue">risks <font color="blue">effectively</font></font>, the costs of doing business in some <font color="blue">international markets</font>     may be <font color="blue">prohibitive</font> or our <font color="blue">costs may increase disproportionately</font> to our     revenues</td>
+    </tr>
+    <tr>
+      <td>We  have  implemented anti-takeover provisions that could make it more     <font color="blue">difficult</font> to acquire us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">certificate</font> of incorporation, bylaws and <font color="blue">Delaware </font><font color="blue">law contain provisions</font>     that could make it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire us without     the consent of our board of <font color="blue">directors</font>, even if the <font color="blue">transaction would</font> be     <font color="blue">beneficial</font> to our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions </font>of our charter <font color="blue">documents</font> which     could have an anti-takeover effect include:           •   the classification of our board of <font color="blue">directors</font> into three groups so that     <font color="blue">directors</font> serve staggered three-year terms, which may make it <font color="blue">difficult</font> for     a potential acquirer to gain control of our board of <font color="blue">directors</font>;           •   the ability to authorize the issuance of shares of <font color="blue">undesignated</font>     <font color="blue">preferred stock</font> without a vote of <font color="blue">stockholders</font>;           •   a <font color="blue">prohibition</font> on stockholder action by written consent; and           •   <font color="blue">limitations</font> on <font color="blue">stockholders</font>’ ability to call special stockholder     meetings</td>
+    </tr>
+    <tr>
+      <td>On July 19, 2002, our board of <font color="blue">directors</font> adopted a <font color="blue">stockholder rights</font> plan,     pursuant to which we declared and paid a dividend of one right for each     share of <font color="blue">common stock</font> held by <font color="blue">stockholders</font> of record as of August 9, 2002</td>
+    </tr>
+    <tr>
+      <td>Unless <font color="blue">redeemed by us prior</font> to the time the rights are exercised, upon the     occurrence of <font color="blue">certain events</font>, the <font color="blue">rights will entitle</font> the holders to receive     shares  of  our <font color="blue">preferred stock</font>, or shares of an acquiring entity</td>
+    </tr>
+    <tr>
+      <td>The     issuance  of  the  <font color="blue">rights would</font> make the <font color="blue">acquisition</font> of <font color="blue">InfoSpace </font>more     expensive to the acquirer and <font color="blue">could delay</font> or <font color="blue">discourage <font color="blue">third parties</font> from</font>     acquiring <font color="blue">InfoSpace </font>without the approval of our board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Our  systems  could  fail  or become unavailable, <font color="blue">which could</font> harm our     reputation, result in a loss of current and <font color="blue">potential customers</font> and cause us     to breach <font color="blue">agreement</font>s with our partners</td>
+    </tr>
+    <tr>
+      <td>Our  success  depends,  in  part,  on the performance, re<font color="blue">liability</font> and     <font color="blue">availability</font> of our services</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">data centers</font> in Seattle and Bellevue,     Washington; Los Angeles, California; Waltham, Massachusetts; Papendrecht,     The  Netherlands; and Hamburg, Germany</td>
+    </tr>
+    <tr>
+      <td>Although we have completed our     disaster  and <font color="blue">redundancy</font> planning for certain of our business critical     systems so that some are now <font color="blue">redundant across two physical locations</font>, we     have not yet completed our <font color="blue">disaster recovery</font> and <font color="blue">redundancy</font> planning for     others</td>
+    </tr>
+    <tr>
+      <td>Our systems and <font color="blue">operations</font> could be damaged or <font color="blue">interrupted by fire</font>,     flood, power loss, tele<font color="blue">communication</font>s failure, Internet breakdown, break-in,     earthquake or similar events</td>
+    </tr>
+    <tr>
+      <td>We would face <font color="blue">significant</font> damage as a result     of these events, and our business <font color="blue">interruption insurance may</font> not be adequate     to <font color="blue">compensate us</font> for all the losses that may occur</td>
+    </tr>
+    <tr>
+      <td>In addition, our systems     use  <font color="blue">sophisticated software</font> that <font color="blue">may contain bugs</font> that <font color="blue">could interrupt</font>     service</td>
+    </tr>
+    <tr>
+      <td>For these reasons, we may be unable to develop or <font color="blue">successfully</font>     manage the <font color="blue">infrastructure</font> necessary to <font color="blue">meet current</font> or <font color="blue">future demands</font> for     re<font color="blue">liability</font> and <font color="blue">scalability</font> of our systems</td>
+    </tr>
+    <tr>
+      <td>17     ______________________________________________________________________    [42]Table of <font color="blue">Contents       </font>If  the  volume  of  traffic  to  our  products and services increases     <font color="blue">substantially</font>, we must respond in a <font color="blue">timely fashion by expanding</font> our systems,     <font color="blue">which may entail upgrading</font> our <font color="blue">technology</font> and network <font color="blue">infrastructure</font></td>
+    </tr>
+    <tr>
+      <td>Due to     the number of our customers and the products and services that we offer, we     could experience <font color="blue">periodic <font color="blue">capacity</font> constraints which may</font> cause temporary     unanticipated system disruptions, slower response times and <font color="blue">lower levels</font> of     customer  service</td>
+    </tr>
+    <tr>
+      <td>Our  business  could be harmed if we are unable to     <font color="blue">accurately</font> project the rate or timing of increases, if any, in the use of     our products and <font color="blue">application</font> services or expand and upgrade our systems and     <font color="blue">infrastructure</font> to <font color="blue">accommodate</font> these increases in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, we have entered into service level <font color="blue"><font color="blue">agreement</font>s with most</font> of our     <font color="blue">mobile operator</font> customers and certain other customers</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">agreement</font>s     <font color="blue">generally</font> call for <font color="blue">specific system up times</font> and 24/7 support and include     penalties  for  non-performance</td>
+    </tr>
+    <tr>
+      <td>We  may  be  unable to fulfill these     commitments, <font color="blue">which could</font> subject us to <font color="blue">penalties under</font> those <font color="blue">agreement</font>s,     harm our reputation and result in the loss of customers and <font color="blue">distribution</font>     partners</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">security measures</font> we have implemented to secure information we collect     and store may be breached, <font color="blue">which could</font> cause us to breach <font color="blue">agreement</font>s with     our partners and expose us to potential investigation and <font color="blue">penalties by</font>     <font color="blue">authorities</font> and potential claims <font color="blue">by <font color="blue">persons whose</font></font> information was disclosed</td>
+    </tr>
+    <tr>
+      <td>We  take  reasonable  steps  to  protect  the  security, integrity and     <font color="blue">confidentiality</font> of the information we collect and <font color="blue">store but there</font> is no     guarantee that <font color="blue">inadvertent</font> or <font color="blue"><font color="blue">unauthorized <font color="blue">disclosure</font></font> will</font> not occur or that     <font color="blue"><font color="blue">third parties</font> will</font> not <font color="blue">gain unauthorized access despite</font> our efforts</td>
+    </tr>
+    <tr>
+      <td>If such     <font color="blue">unauthorized <font color="blue">disclosure</font></font> or access does occur, we may be required to notify     <font color="blue">persons whose</font> information was disclosed or <font color="blue">accessed under existing</font> and     <font color="blue">proposed laws</font></td>
+    </tr>
+    <tr>
+      <td>We also may be subject to claims of breach of contract for     such <font color="blue">disclosure</font>, investigation and <font color="blue">penalties by</font> <font color="blue">regulatory</font> <font color="blue">authorities</font> and     potential claims <font color="blue">by <font color="blue">persons whose</font></font> information was disclosed</td>
+    </tr>
+    <tr>
+      <td>We may be subject to <font color="blue">liability</font> for our use or <font color="blue">distribution</font> of information     that we gather or receive <font color="blue">from <font color="blue">third parties</font></font></td>
+    </tr>
+    <tr>
+      <td>We obtain content and commerce information <font color="blue">from <font color="blue">third parties</font></font></td>
+    </tr>
+    <tr>
+      <td>This could subject us to legal <font color="blue">liability</font> for <font color="blue">such things as</font>     <font color="blue">defamation</font>, negligence, <font color="blue"><font color="blue">intellectual</font> property</font> <font color="blue">infringement</font>, violation of     privacy or <font color="blue">publicity rights</font> and product or service <font color="blue">liability</font>, among others</td>
+    </tr>
+    <tr>
+      <td>Laws or <font color="blue">regulations</font> of certain <font color="blue">jurisdictions</font> may also deem some content     illegal, which <font color="blue">may expose us</font> to legal <font color="blue">liability</font> as well</td>
+    </tr>
+    <tr>
+      <td>We also gather     personal information <font color="blue">from users</font> in order to <font color="blue">provide personalized services</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Gathering </font>and processing this personal information may subject us to legal     <font color="blue">liability</font> for, among other things, negligence, <font color="blue">defamation</font>, invasion of     privacy or product or service <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>We are also subject to laws and     <font color="blue">regulations</font>, both in the <font color="blue">United States </font>and abroad, regarding the <font color="blue">collection</font>     and use of end user information</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">comply with</font> these laws and     <font color="blue">regulations</font>, we may be exposed to legal <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>Many of the <font color="blue">agreement</font>s by which we obtain content do not <font color="blue">contain indemnity</font>     provisions in favor of us</td>
+    </tr>
+    <tr>
+      <td>Even if a <font color="blue">given contract</font> does <font color="blue">contain indemnity</font>     provisions, these <font color="blue">provisions may</font> not cover a particular claim or type of     claim or the <font color="blue">party giving</font> the <font color="blue">indemnity may</font> not have the <font color="blue">financial resources</font>     to cover the claim</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">insurance coverage may</font> be inadequate to <font color="blue">cover fully</font>     the amounts or types of claims that might be made <font color="blue">against us</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">liability</font>     that we incur as a result of content we receive <font color="blue">from <font color="blue">third parties</font></font> could     harm our financial results</td>
+    </tr>
+    <tr>
+      <td>If others claim that our products infringe their <font color="blue"><font color="blue">intellectual</font> property</font>     rights,  we  may  be forced to seek expensive licenses, reengineer our     products,  engage  in  expensive and time-consuming <font color="blue">litigation</font> or stop     marketing and licensing our products</td>
+    </tr>
+    <tr>
+      <td>We attempt to avoid infringing known <font color="blue">proprietary</font> rights of <font color="blue">third parties</font> in     our <font color="blue">product <font color="blue">development</font></font> efforts</td>
+    </tr>
+    <tr>
+      <td>However, we do not <font color="blue">regularly conduct patent</font>     searches to determine whether the <font color="blue">technology</font> used in our <font color="blue">products infringes</font>     patents held by <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td>Patent searches <font color="blue">generally</font> return only a     fraction of the <font color="blue">issued patents</font> that may be deemed relevant to a particular     product or service</td>
+    </tr>
+    <tr>
+      <td>It is <font color="blue">therefore nearly impossible</font> to determine, with any     level of certainty, whether a <font color="blue">particular product</font> or <font color="blue">service may</font> be construed     <font color="blue">as infringing</font> a US or foreign patent</td>
+    </tr>
+    <tr>
+      <td>Because patent <font color="blue"><font color="blue">application</font>s</font> in the     United  States  are not publicly disclosed until the patent is issued,     <font color="blue"><font color="blue">application</font>s</font>                                           18     ______________________________________________________________________    [43]Table of <font color="blue">Contents       </font>may  have  been filed by <font color="blue">third parties</font> that relate to our products</td>
+    </tr>
+    <tr>
+      <td>In     addition, other companies, as well as research and <font color="blue">academic institutions</font>,     have <font color="blue">conducted research</font> for many years in the search and <font color="blue">directory</font> and     mobile and wireless <font color="blue">technology</font> fields, and this <font color="blue">research could lead</font> to the     filing of further patent <font color="blue"><font color="blue">application</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In addition to patent claims, <font color="blue">third parties</font> may make claims <font color="blue">against us</font>     alleging <font color="blue">infringement</font> of copyrights, trademark rights, trade secret rights     or other <font color="blue">proprietary</font> rights, or alleging unfair <font color="blue">competition</font> or violations of     privacy or <font color="blue">publicity rights</font></td>
+    </tr>
+    <tr>
+      <td>In some cases, the ownership or scope of an     entity’s or person’s rights is unclear and may also change over time</td>
+    </tr>
+    <tr>
+      <td>If we were to discover that our products violated or <font color="blue"><font color="blue">potentially</font> violated</font>     third-party <font color="blue">proprietary</font> rights, we might be required to obtain licenses that     are  costly  or <font color="blue">contain terms unfavorable</font> to us, or expend substantial     resources to reengineer those products so that they would not <font color="blue">violate such</font>     <font color="blue">third party</font> rights</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">reengineering effort may</font> not be successful, and we     cannot be certain that any <font color="blue">such licenses would</font> be <font color="blue">available on commercially</font>     <font color="blue">reasonable terms</font></td>
+    </tr>
+    <tr>
+      <td>Any third-party <font color="blue">infringement</font> claims <font color="blue">against us</font> could     result  in  costly  <font color="blue">litigation</font> and be time consuming to defend, divert     <font color="blue">management</font>’s attention and resources, cause product and <font color="blue">service delays</font> or     require us to <font color="blue">enter into</font> royalty and licensing <font color="blue">agreement</font>s</td>
+    </tr>
+    <tr>
+      <td>If we fail to detect <font color="blue"><font color="blue">invalid click</font> activity</font>, we <font color="blue">could lose</font> the confidence of     <font color="blue"><font color="blue">advertiser</font>s</font> and of our <font color="blue">content provider</font>s, <font color="blue">which would</font> cause our business to     suffer</td>
+    </tr>
+    <tr>
+      <td>Most of our <font color="blue">revenues from</font> our search and <font color="blue">directory</font> business are based on the     number of paid “clicks” on <font color="blue">commercial search</font> results served on our own Web     sites or our <font color="blue"><font color="blue">distribution</font> partners</font>’ Web properties</td>
+    </tr>
+    <tr>
+      <td>Generally, each time a     user  clicks  on a <font color="blue">commercial search</font> result, the <font color="blue">content provider</font> that     provided the <font color="blue">commercial search</font> result receives a fee from the <font color="blue">advertiser</font> who     paid for <font color="blue">such commercial click</font> and the <font color="blue">content provider</font> pays us a portion of     that fee</td>
+    </tr>
+    <tr>
+      <td>If the click originated from one of our <font color="blue"><font color="blue">distribution</font> partners</font>’ Web     properties, we share a portion of the fee we receive <font color="blue">with such partner</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font><font color="blue">model exposes us</font> to the risk of <font color="blue"><font color="blue">invalid click</font> activity</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">invalid click</font>     activity occurs, for example, when a person or <font color="blue">automated click generation</font>     <font color="blue">program clicks on</font> a <font color="blue">commercial search</font> result to <font color="blue">generate fees</font> for the Web     <font color="blue">property displaying</font> the <font color="blue">commercial search</font> result <font color="blue">rather than</font> to view the Web     <font color="blue">page underlying</font> the <font color="blue">commercial search</font> result or when a <font color="blue">competitor</font> of the     <font color="blue">advertiser</font>  clicks  on  the <font color="blue">advertiser</font>’s search result to increase the     <font color="blue"><font color="blue">advertising</font> expense</font> of the <font color="blue">advertiser</font></td>
+    </tr>
+    <tr>
+      <td>When such <font color="blue"><font color="blue">invalid click</font> activity</font> is     detected, <font color="blue">content provider</font>s may refund the <font color="blue">fee paid by</font> the <font color="blue">advertiser</font> for     such <font color="blue">invalid click</font>s</td>
+    </tr>
+    <tr>
+      <td>When such <font color="blue"><font color="blue">invalid click</font> activity</font> is detected as coming     from one of our <font color="blue"><font color="blue">distribution</font> partners</font>’ Web properties or our own Web sites,     our <font color="blue">content provider</font>s may refund the fees paid by the <font color="blue"><font color="blue">advertiser</font>s</font> for such     invalid  clicks,  which in turn reduces the amount of fees the content     <font color="blue">provider pays us</font></td>
+    </tr>
+    <tr>
+      <td>If we or our <font color="blue">content provider</font>s are unable to <font color="blue">effectively</font>     detect and stop <font color="blue"><font color="blue">invalid click</font> activity</font>, <font color="blue"><font color="blue">advertiser</font>s</font> may see a reduced return     on their <font color="blue"><font color="blue">advertising</font> <font color="blue">investment</font> with</font> the <font color="blue">content provider</font> because such     <font color="blue">invalid click</font>s will not lead to <font color="blue">potential revenue</font> for such <font color="blue"><font color="blue">advertiser</font>s</font>,     <font color="blue">which could</font> lead such <font color="blue"><font color="blue">advertiser</font>s</font> to reduce or terminate their <font color="blue">investment</font> in     such  ads</td>
+    </tr>
+    <tr>
+      <td>This could lead to a loss of <font color="blue"><font color="blue">advertiser</font>s</font> and revenue to our     <font color="blue">content provider</font>s and <font color="blue">consequently</font> to <font color="blue">fewer fees paid</font> to us</td>
+    </tr>
+    <tr>
+      <td>Additionally,     if  we  are  unable to detect and stop <font color="blue"><font color="blue">invalid click</font> activity</font> that may     originate from our own Web sites or the Web properties of our <font color="blue">distribution</font>     partners, our <font color="blue">content provider</font>s may impose <font color="blue">restrictions</font> on our ability to     provide their <font color="blue">commercial search</font> results on our own Web sites or to our     current and future <font color="blue"><font color="blue">distribution</font> partners</font>, <font color="blue">which could</font> have a <font color="blue">materially</font>     negative  <font color="blue">impact on</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>Although we and our content     providers have in place <font color="blue">certain systems</font> to <font color="blue">assist with</font> the detection of     invalid  clicks,  these  <font color="blue">systems may</font> not detect all such <font color="blue">invalid click</font>     activity</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely heavily on</font> our <font color="blue">technology</font>, but we may be unable to <font color="blue">adequately</font> or     cost-<font color="blue">effectively</font> protect or enforce our <font color="blue"><font color="blue">intellectual</font> property</font> rights, thus     weakening our <font color="blue">competitive</font> position and <font color="blue"><font color="blue">negatively</font> impacting</font> our financial     results</td>
+    </tr>
+    <tr>
+      <td>To  protect  our  rights  in our products and <font color="blue">technology</font>, we rely on a     <font color="blue">combination</font> of copyright and trademark laws, patents, trade secrets, and     <font color="blue">confidentiality</font> <font color="blue">agreement</font>s with employees and <font color="blue">third parties</font> and protective     <font color="blue">contractual provisions</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also rely on</font> the <font color="blue">law pertaining</font> to <font color="blue">trademarks</font> and     <font color="blue">domain names</font> to protect the value of our <font color="blue">corporate brands</font> and reputation</td>
+    </tr>
+    <tr>
+      <td>Despite our efforts to protect our <font color="blue">proprietary</font> rights, unauthorized parties                                           19     ______________________________________________________________________    [44]Table of <font color="blue">Contents       </font><font color="blue">may copy aspects</font> of our products or services or obtain and use information     that we regard as <font color="blue">proprietary</font>, or infringe our <font color="blue">trademarks</font></td>
+    </tr>
+    <tr>
+      <td>In addition, it     is possible that <font color="blue">others could independently</font> develop <font color="blue">substantially</font> equivalent     <font color="blue"><font color="blue">intellectual</font> property</font></td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">effectively</font> protect our <font color="blue">intellectual</font>     property, we <font color="blue">could lose</font> our <font color="blue">competitive</font> position</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effectively </font>policing the <font color="blue">unauthorized use</font> of our products and <font color="blue">trademarks</font> is     time-consuming and costly, and there can be no assurance that the steps     <font color="blue">taken by us will prevent misappropriation</font> of our <font color="blue">technology</font> or <font color="blue">trademarks</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">intellectual</font> property</font> may be subject to <font color="blue">even greater risk</font> in foreign     <font color="blue">jurisdictions</font>, as protection is not sought or obtained in <font color="blue">every country</font> in     which our services are available</td>
+    </tr>
+    <tr>
+      <td>Also, the laws of many countries do not     protect <font color="blue">proprietary</font> rights to the <font color="blue">same extent as</font> the laws of the United     States</td>
+    </tr>
+    <tr>
+      <td>If we cannot <font color="blue">adequately</font> protect our <font color="blue"><font color="blue">intellectual</font> property</font>, our     <font color="blue">competitive</font> position in <font color="blue">markets abroad may suffer</font></td>
+    </tr>
+    <tr>
+      <td>If  we  are  unable to retain our <font color="blue">key employees</font>, we may not be able to     <font color="blue">successfully</font> manage our business</td>
+    </tr>
+    <tr>
+      <td>Our business and <font color="blue">operations</font> are <font color="blue">substantially</font> <font color="blue">dependent on</font> the performance     of our <font color="blue">executive officers</font> and <font color="blue">key employees</font>, who are <font color="blue">employed on</font> an at-will     basis</td>
+    </tr>
+    <tr>
+      <td>If we lose the services of one or more of our <font color="blue">executive officers</font> or     <font color="blue">key employees</font> and are unable to recruit and retain a suitable successor(s),     we  may not be able to <font color="blue">successfully</font> manage our business or achieve our     business <font color="blue">objectives</font></td>
+    </tr>
+    <tr>
+      <td>Unless we are able to hire, retain and <font color="blue">motivate <font color="blue">highly qualified employees</font></font>,     we will be unable to execute our business strategy</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success</font> depends on our ability to identify, attract, hire, retain     and motivate highly skilled technical, managerial, sales and marketing, and     <font color="blue">corporate <font color="blue">development</font> personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our services and the <font color="blue">industries</font> to which we     provide our services are <font color="blue">relatively</font> new</td>
+    </tr>
+    <tr>
+      <td>Qualified <font color="blue">personnel with</font> experience     relevant to our business are scarce and <font color="blue">competition</font> to <font color="blue">recruit them</font> is     intense</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">successfully</font> hire and retain a sufficient number of     <font color="blue">highly qualified employees</font>, we may have <font color="blue">difficult</font>ies in supporting our     customers or expanding our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font><font color="blue">realignments</font> of resources,     <font color="blue">reductions</font> in workforce or other <font color="blue">future operational decisions could</font> create     an unstable work <font color="blue">environment</font> and may have a negative effect on our ability     to retain and <font color="blue">motivate employees</font></td>
+    </tr>
+    <tr>
+      <td>In light of <font color="blue">current market</font> and <font color="blue">regulatory</font> <font color="blue">conditions</font>, the value of stock     <font color="blue">options granted</font> to employees may cease to <font color="blue">provide sufficient incentive</font> to     our employees</td>
+    </tr>
+    <tr>
+      <td>Like many <font color="blue">technology</font> companies, we <font color="blue">use <font color="blue">stock options</font></font> to recruit <font color="blue">technology</font>     <font color="blue">professionals</font> and <font color="blue">senior level employees</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">stock options</font>, which typically     vest over a four-year period, are one of the means by which we motivate     long-term employee performance</td>
+    </tr>
+    <tr>
+      <td>Recent changes in <font color="blue">accounting</font> treatment of     options requiring us to expense the <font color="blue">fair value</font> of our <font color="blue">employee <font color="blue">stock options</font></font>     beginning in 2006 may make it <font color="blue">difficult</font> or <font color="blue">overly expensive</font> for us to issue     <font color="blue">stock options</font> to our employees in the future</td>
+    </tr>
+    <tr>
+      <td>We also face a <font color="blue">significant</font>     challenge in retaining our employees if the value of these <font color="blue">stock options</font> is     either not substantial enough or so substantial that the <font color="blue">employees leave</font>     after their <font color="blue">stock options</font> have vested</td>
+    </tr>
+    <tr>
+      <td>If our stock price does not increase     <font color="blue"><font color="blue">significant</font>ly</font> above the prices of our options, or <font color="blue">option programs become</font>     impracticable, we may need to <font color="blue">issue new options</font> or other <font color="blue">equity incentives</font>     or  increase  other  forms  of <font color="blue">compensation</font> to motivate and retain our     employees</td>
+    </tr>
+    <tr>
+      <td>We may undertake or <font color="blue">seek stockholder approval</font> to undertake     programs to retain our employees, which may be viewed <font color="blue">as dilutive</font> to our     <font color="blue">stockholders</font> or may increase our <font color="blue">compensation</font> costs</td>
+    </tr>
+    <tr>
+      <td>Additionally, there can     be no assurance that any <font color="blue">such programs</font> we undertake will be successful in     motivating and retaining our employees</td>
+    </tr>
+    <tr>
+      <td>RISKS RELATED TO THE INDUSTRIES IN WHICH WE OPERATE          Intense <font color="blue">competition</font> in the mobile, search, and <font color="blue">directory</font> markets could     prevent us from increasing <font color="blue">distribution</font> of our services in those markets or     cause us to <font color="blue">lose market</font> share</td>
+    </tr>
+    <tr>
+      <td>Our current business model depends on <font color="blue">distribution</font> of our products and     <font color="blue">services into</font> the wireless and search and <font color="blue">directory</font> markets, which are     extremely <font color="blue">competitive</font> and rapidly changing</td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue"><font color="blue">competitor</font>s</font> have     <font color="blue">substantially</font> greater financial, technical and marketing resources, larger     customer bases, longer operating histories, more developed <font color="blue">infrastructure</font>s,     greater name <font color="blue">recognition</font> or more established <font color="blue">relationships</font> in the                                           20     ______________________________________________________________________    [45]Table of <font color="blue">Contents       </font><font color="blue">industry than</font> we have</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">competitor</font>s</font> may be able to adopt more <font color="blue">aggressive</font>     <font color="blue">pricing policies</font>, develop and expand their <font color="blue">service offerings</font> more rapidly,     adapt to new or emerging <font color="blue">technologies</font> and changes in customer <font color="blue">requirements</font>     more quickly, take advantage of <font color="blue"><font color="blue">acquisition</font>s</font> and other <font color="blue">opportunities</font> more     readily, achieve <font color="blue">greater economies</font> of scale, and <font color="blue">devote greater resources</font> to     the marketing and sale of their <font color="blue">services than</font> we can</td>
+    </tr>
+    <tr>
+      <td>Because of these     <font color="blue">competitive</font> factors and due to our <font color="blue">relatively</font> small size and financial     resources, we may be unable to compete <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>Some of the companies we <font color="blue">compete with</font> are <font color="blue">currently customers</font> of ours, the     loss  of  which  could  harm  our business</td>
+    </tr>
+    <tr>
+      <td>Many of our customers have     established <font color="blue"><font color="blue">relationships</font> with</font> some of our <font color="blue"><font color="blue">competitor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue"><font color="blue">competitor</font>s</font>     develop products and services that <font color="blue">compete with</font> ours, we <font color="blue">could lose</font> market     share and our <font color="blue">revenues could decrease</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, our financial results     could be <font color="blue">adversely affect</font>ed as well if our <font color="blue"><font color="blue">distribution</font> partners</font> create     their own products and services that compete or replace the products and     services we provide</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consolidation </font>in the <font color="blue">industries</font> in which we operate could lead to increased     <font color="blue">competition</font> and loss of customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Internet </font>industry (including the search and <font color="blue">directory</font> segments) and the     <font color="blue">wireless industry</font> have experienced substantial <font color="blue">consolidation</font></td>
+    </tr>
+    <tr>
+      <td>We expect this     <font color="blue">consolidation</font> to continue</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">acquisition</font>s</font> could <font color="blue">adversely affect</font> our     business  and results of <font color="blue">operations</font> in a number of ways, including the     following:           •   our <font color="blue"><font color="blue">distribution</font> partners</font> could acquire or be acquired by one of our     <font color="blue"><font color="blue">competitor</font>s</font> and terminate their <font color="blue">relationship with us</font>;           •   our <font color="blue"><font color="blue">distribution</font> partners</font> could merge with each other, <font color="blue">which could</font>     reduce our ability to negotiate favorable terms;           •   <font color="blue"><font color="blue">competitor</font>s</font> could improve their <font color="blue">competitive</font> positions through     strategic <font color="blue"><font color="blue">acquisition</font>s</font>; and           •   <font color="blue">companies from whom</font> we acquire <font color="blue">content could</font> acquire or be acquired by     one of our <font color="blue"><font color="blue">competitor</font>s</font> and <font color="blue">stop licensing content</font> to us, or <font color="blue">gain additional</font>     <font color="blue">negotiating leverage</font> in their <font color="blue"><font color="blue">relationships</font> with</font> us</td>
+    </tr>
+    <tr>
+      <td>Security <font color="blue">breaches may pose risks</font> to the <font color="blue">uninterrupted operation</font> of our     systems</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">networks may</font> be vulnerable to <font color="blue">unauthorized access by hackers</font> or others,     <font color="blue">computer viruses</font> and other <font color="blue">disruptive problems</font></td>
+    </tr>
+    <tr>
+      <td>Someone who is able to     <font color="blue">circumvent</font>  security  measures  could  <font color="blue">misappropriate</font>  our <font color="blue">proprietary</font>     information or cause <font color="blue">interruptions</font> in our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Subscribers </font>to some of     our services are required to provide information in order to utilize the     service that may be considered to be <font color="blue">personally</font> <font color="blue">identifiable</font> or private     information</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unauthorized </font>access to, and abuse of, this information could     subject us to a risk of loss or <font color="blue">litigation</font> and <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>We may need to expend <font color="blue">significant</font> capital or other <font color="blue">resources protecting</font>     against the threat of <font color="blue">security breaches</font> or <font color="blue"><font color="blue">alleviating</font> problems</font> caused by     breaches</td>
+    </tr>
+    <tr>
+      <td>Although we intend to continue to implement and improve our     <font color="blue">security measures</font>, persons may be able to <font color="blue">circumvent</font> the measures that we     implement in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Eliminating </font><font color="blue">computer viruses</font> and <font color="blue">alleviating</font> other     <font color="blue">security problems may</font> require <font color="blue">interruptions</font>, delays or cessation of service     to <font color="blue">users accessing</font> our services, any of <font color="blue">which could</font> harm our business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Governmental  </font>regulation and the <font color="blue">application</font> of <font color="blue">existing laws may slow</font>     business growth, increase our costs of doing business and create potential     <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>The growth and <font color="blue">development</font> of the Internet and wireless <font color="blue">communication</font> have     led to new laws and <font color="blue">regulations</font>, as well as the <font color="blue">application</font> of existing laws     to wireless <font color="blue">communication</font>s <font color="blue">and the Internet</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Application </font>of these laws can     be unclear</td>
+    </tr>
+    <tr>
+      <td>The costs of complying or failure to <font color="blue">comply with</font> these laws and     <font color="blue">regulations</font> could limit our ability to operate in our markets, expose us to     compliance  costs  and  substantial <font color="blue">liability</font> and result in costly and     time-consuming <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>21     ______________________________________________________________________    [46]Table of <font color="blue">Contents       </font>Several  federal or state <font color="blue">laws could impact</font> our business</td>
+    </tr>
+    <tr>
+      <td>Federal laws     include  those designed to restrict the online <font color="blue">distribution</font> of certain     materials deemed harmful to children and <font color="blue">impose additional <font color="blue">restrictions</font></font> or     <font color="blue">obligations</font> for <font color="blue">online services</font> when <font color="blue">dealing with minors</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">legislation</font>     may impose <font color="blue">significant</font> additional costs on our business or subject us to     <font color="blue">additional liabilities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">application</font> to <font color="blue">advertising</font> in our <font color="blue">industries</font> of     <font color="blue">existing laws regulating</font> or requiring licenses for certain <font color="blue">businesses</font> can be     unclear</td>
+    </tr>
+    <tr>
+      <td>Such regulated <font color="blue">businesses</font> may include, for example, gambling;     <font color="blue">distribution</font> of pharmaceuticals, alcohol, tobacco or firearms; or insurance,     <font color="blue">securities brokerage</font> and <font color="blue">legal services</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">certain bills</font> are     pending and some laws have been passed in certain <font color="blue">jurisdictions</font> setting     forth <font color="blue">requirements</font> that must be met before a <font color="blue">downloadable <font color="blue">application</font></font> is     downloaded to an end user’s computer</td>
+    </tr>
+    <tr>
+      <td>We post our <font color="blue">privacy policies</font> and <font color="blue">practices concerning</font> the use and <font color="blue">disclosure</font>     of user data</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">failure by us</font> to <font color="blue">comply with</font> our posted <font color="blue">privacy policies</font>,     Federal Trade Commission (the “FTC”) <font color="blue">requirements</font> or other privacy-related     laws and <font color="blue">regulations</font> could result in <font color="blue">proceedings by</font> the FTC or others which     could  <font color="blue">potentially</font>  have an adverse effect on our business, results of     <font color="blue">operations</font> and financial condition</td>
+    </tr>
+    <tr>
+      <td>In this regard, there are a large number     of <font color="blue">legislative</font> proposals before the <font color="blue">United States </font>Congress and various state     <font color="blue">legislative</font> bodies regarding privacy issues related to our business</td>
+    </tr>
+    <tr>
+      <td>It is     not possible to <font color="blue">predict whether</font> or when such <font color="blue">legislation</font> may be adopted, and     <font color="blue">certain proposals</font>, if adopted, could <font color="blue">materially</font> and <font color="blue">adversely affect</font> our     business through a decrease in <font color="blue">user registrations</font> and revenues</td>
+    </tr>
+    <tr>
+      <td>This could     be  caused  by,  among  other <font color="blue">possible provisions</font>, the required use of     <font color="blue">disclaimers</font> or other <font color="blue">requirements</font> before users can utilize our services</td>
+    </tr>
+    <tr>
+      <td>The FTC has recommended to <font color="blue">search engine providers</font> that paid-ranking search     results be delineated from non-paid results</td>
+    </tr>
+    <tr>
+      <td>To the extent that the FTC may     in the future issue specific <font color="blue">requirements</font> regarding the nature of such     delineation, <font color="blue">which would</font> require <font color="blue"><font color="blue">modification</font>s</font> to the <font color="blue">presentation</font> of search     results,  <font color="blue">revenue from</font> the <font color="blue">affected search engines could</font> be <font color="blue">negatively</font>     impacted</td>
+    </tr>
+    <tr>
+      <td>Due to the nature of the Internet, it is possible that the <font color="blue">governments</font> of     states  and  foreign  countries  might  attempt  to  regulate <font color="blue">Internet     </font><font color="blue">transmissions</font> or <font color="blue">institute proceedings</font> for violations of their laws</td>
+    </tr>
+    <tr>
+      <td>Any such <font color="blue">development</font>s (or <font color="blue">development</font>s     <font color="blue">stemming from enactment</font> or <font color="blue">modification</font> of other laws) could increase the     costs of <font color="blue">regulatory</font> compliance for us or force us to change our business     practices</td>
+    </tr>
+    <tr>
+      <td>We rely on the <font color="blue">infrastructure</font> of the Internet and of <font color="blue">wireless networks</font>, over     which  we have no control and the failure of <font color="blue">which could</font> <font color="blue">substantially</font>     undermine our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font>, in large part, on other companies maintaining the     Internet system <font color="blue">infrastructure</font> and <font color="blue">mobile operator</font>s who distribute our     <font color="blue">mobile content</font> and services to maintain their <font color="blue">proprietary</font> <font color="blue">wireless networks</font></td>
+    </tr>
+    <tr>
+      <td>In particular, with respect to the Internet, we rely on other companies to     maintain a <font color="blue">reliable network backbone</font> that provides adequate speed, data     <font color="blue">capacity</font> and security and to develop products that <font color="blue">enable reliable</font> <font color="blue">Internet     </font>access and services</td>
+    </tr>
+    <tr>
+      <td>With respect to <font color="blue">wireless networks</font>, we <font color="blue">depend on</font> mobile     operators to maintain their <font color="blue">wireless networks</font> so as to <font color="blue">provide adequate</font>     speed, data <font color="blue">capacity</font> and security and that <font color="blue">enable reliable</font> mobile access to     our products and services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As the Internet </font>and usage of mobile services continues to experience growth     in the number of users, frequency of use and amount of <font color="blue">data transmitted</font>, the     Internet system <font color="blue">infrastructure</font> and the <font color="blue">wireless networks</font> of <font color="blue">mobile operator</font>s     may be unable to support the <font color="blue">demands placed on them</font>, <font color="blue">and the Internet</font>’s and     <font color="blue">mobile operator</font>s’ networks performance or re<font color="blue">liability</font> may suffer as a result     of  this  continued growth</td>
+    </tr>
+    <tr>
+      <td>Some of the companies that we rely upon to     maintain network <font color="blue">infrastructure</font> may lack sufficient capital to support their     long-term <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The failure of the internet <font color="blue">infrastructure</font> or wireless     networks  would  <font color="blue">substantially</font> undermine our <font color="blue">operations</font> and may have a     material adverse effect on our financial results</td>
+    </tr>
+  </tbody>
+</table>

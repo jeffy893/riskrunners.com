@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "4: extended decline", fill: "#1e90ff"},
+{source: "4: extended decline", target: "4: natural gas prices may", fill: "#1e90ff"},
+{source: "4: natural gas prices may", target: "4: adversely affect", fill: "#1e90ff"},
+{source: "4: adversely affect", target: "4: financial condition cash flow liquidity", fill: "#1e90ff"},
+{source: "4: financial condition cash flow liquidity", target: "4: operations", fill: "#1e90ff"},
+{source: "4: operations", target: "4: capital expenditure", fill: "#1e90ff"},
+{source: "4: capital expenditure", target: "4: obligations", fill: "#1e90ff"},
+{source: "4: obligations", target: "4: commitments", fill: "#1e90ff"},
+{source: "4: extended decline", target: "5: heavily dependent upon", fill: "#d8bfd8"},
+{source: "5: heavily dependent upon", target: "5: natural gas", fill: "#d8bfd8"},
+{source: "5: heavily dependent upon", target: "12: unavailability", fill: "#6f00ff"},
+{source: "12: unavailability", target: "12: drilling rigs equipment supplies", fill: "#6f00ff"},
+{source: "12: drilling rigs equipment supplies", target: "12: qualified personnel", fill: "#6f00ff"},
+{source: "12: qualified personnel", target: "12: oilfield services could adversely affect", fill: "#6f00ff"},
+{source: "12: oilfield services could adversely affect", target: "12: exploration", fill: "#6f00ff"},
+{source: "12: exploration", target: "12: development", fill: "#6f00ff"},
+{source: "12: development", target: "12: timely basis", fill: "#6f00ff"},
+{source: "12: unavailability", target: "18: been attributable", fill: "#ff5349"},
+{source: "18: been attributable", target: "18: acquisitions", fill: "#ff5349"},
+{source: "18: been attributable", target: "126: governmental laws", fill: "#ffbcd9"},
+{source: "126: governmental laws", target: "126: regulations", fill: "#ffbcd9"},
+{source: "126: regulations", target: "126: adversely affect", fill: "#ffbcd9"},
+{source: "126: adversely affect", target: "126: cost manner", fill: "#ffbcd9"},
+{source: "126: cost manner", target: "126: feasibility", fill: "#ffbcd9"},
+{source: "126: governmental laws", target: "START_HERE", fill: "#ffbcd9"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_prices">Natural gas prices</a></td>
+      <td>Natural gas prices, as with other commodity prices, are mainly driven by supply and demand fundamentals.  However, natural gas prices may also be linked to the price of crude oil and petroleum products, especially in continental Europe.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liquefied_natural_gas">Liquefied natural gas</a></td>
+      <td>Liquefied natural gas (LNG) is natural gas (predominantly methane, CH4, with some mixture of ethane, C2H6) that has been cooled down to liquid form for ease and safety of non-pressurized storage or transport. It takes up about 1/600th the volume of natural gas in the gaseous state (at standard conditions for temperature and pressure).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas">Natural gas</a></td>
+      <td>Natural law (Latin: ius naturale, lex naturalis) is a system of law based on a close observation of human nature, and based on values intrinsic to human nature that can be deduced and applied independently of positive law (the express enacted laws of a state or society). According to natural law theory, all people have inherent rights, conferred not by act of legislation but by "God, nature, or reason." Natural law theory can also refer to "theories of ethics, theories of politics, theories of civil law, and theories of religious morality."In the Western tradition it was anticipated by the Pre-Socratics, for example in their search for principles that governed the cosmos and human beings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Compressed_natural_gas">Compressed natural gas</a></td>
+      <td>Compressed natural gas (CNG) is a fuel gas made of petrol which is mainly composed of methane (CH4), compressed to less than 1% of the volume it occupies at standard atmospheric pressure. It is stored and distributed in hard containers at a pressure of 20–25 MPa (2,900–3,600 psi), usually in cylindrical or spherical shapes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_vehicle">Natural gas vehicle</a></td>
+      <td>A natural gas vehicle (NGV) is an alternative fuel vehicle that uses compressed natural gas (CNG) or liquefied natural gas (LNG). Natural gas vehicles should not be confused with autogas vehicles powered by liquefied petroleum gas (LPG), mainly propane, a fuel with a fundamentally different composition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural_gas_in_Ukraine">Natural gas in Ukraine</a></td>
+      <td>Ukraine has been estimated to possess natural gas reserves of over 1 trillion cubic meters and in 2018 was ranked 26th among countries with proved reserves of natural gas. Its total gas reserves have been estimated at 5.4 trillion cubic meters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_countries_by_natural_gas_production">List of countries by natural gas production</a></td>
+      <td>This is a list of countries by natural gas production  based on statistics from The World Factbook, and OECD members natural gas production by International Energy Agency (down) \n\n\n== Countries by natural gas production ==\nThe data in the following table comes from The World Factbook.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pipeline_transport">Pipeline transport</a></td>
+      <td>Pipeline transport is the long-distance transportation of a liquid or gas through a system of pipes—a pipeline—typically to a market area for consumption. The latest data from 2014 gives a total of slightly less than 2,175,000 miles (3,500,000 km) of pipeline in 120 countries of the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_processing">Natural-gas processing</a></td>
+      <td>Natural-gas processing is a range of industrial processes designed to purify raw natural gas by removing impurities, contaminants and higher molecular mass hydrocarbons to produce what is known as pipeline quality dry natural gas. Natural gas has to be processed in order to prepare it for final use and ensure that elimination of contaminants.Natural-gas processing starts underground or at the well-head.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Natural-gas_condensate">Natural-gas condensate</a></td>
+      <td>Natural-gas condensate, also called natural gas liquids, is a low-density mixture of hydrocarbon liquids that are present as gaseous components in the raw natural gas produced from many natural gas fields. Some gas species within the raw natural gas will condense to a liquid state if the temperature is reduced to below the hydrocarbon dew point temperature at a set pressure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exploration">Exploration</a></td>
+      <td>Exploration is the act of searching for the purpose of discovery of information or resources, especially in the context of geography or space, rather than research and development that is usually not centred on earth sciences or astronomy. Exploration occurs in all non-sessile animal species, including humans.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SpaceX">SpaceX</a></td>
+      <td>Space is the boundless three-dimensional extent in which objects and events have relative position and direction. In classical physics, physical space is often conceived in three linear dimensions, although modern physicists usually consider it, with time, to be part of a boundless four-dimensional continuum known as spacetime.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hydrocarbon_exploration">Hydrocarbon exploration</a></td>
+      <td>Hydrocarbon exploration (or oil and gas exploration) is the search by petroleum geologists and geophysicists for deposits of hydrocarbons, particularly petroleum and natural gas, in the Earth using petroleum geology.\n\n\n== Exploration methods ==\nVisible surface features such as oil seeps, natural gas seeps, pockmarks (underwater craters caused by escaping gas) provide basic evidence of hydrocarbon generation (be it shallow or deep in the Earth).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exploration_of_the_Moon">Exploration of the Moon</a></td>
+      <td>The physical exploration of the Moon began when Luna 2, a space probe launched by the Soviet Union, made an impact on the surface of the Moon on September 14, 1959. Prior to that the only available means of exploration had been observation from Earth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Data_exploration">Data exploration</a></td>
+      <td>Data exploration is an approach similar to initial data analysis, whereby a data analyst uses visual exploration to understand what is in a dataset and the characteristics of the data, rather than through traditional data management systems. These characteristics can include size or amount of data, completeness of the data, correctness of the data, possible relationships amongst data elements or files/tables in the data.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Urban_exploration">Urban exploration</a></td>
+      <td>Urban exploration (often shortened as UE, urbex and sometimes known as roof-and-tunnel hacking) is the exploration of manmade structures, usually abandoned ruins or hidden components of the manmade environment. Photography and historical interest/documentation are heavily featured in the hobby and it sometimes involves trespassing onto private property.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Age_of_Discovery">Age of Discovery</a></td>
+      <td>The Age of Discovery (or the Age of Exploration), as known as the early modern period, was a period largely overlapping with the Age of Sail, approximately from the 15th century to the 17th century in European history, in which seafaring Europeans explored regions across the globe.\nThe extensive overseas exploration, with the Portuguese and the Spanish at the forefront, later joined by the Dutch, the English and the French, emerged as a powerful factor in European culture, most notably the European encounter and colonization of the Americas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exploration_of_Mars">Exploration of Mars</a></td>
+      <td>The planet Mars has been explored remotely by spacecraft. Probes sent from Earth, beginning in the late 20th century, have yielded a large increase in knowledge about the Martian system, focused primarily on understanding its geology and habitability potential.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>COMSTOCK RESOURCES INC      ITEM 1A   RISK FACTORS       You <font color="blue">should carefully</font> consider the <font color="blue">following risk factors as well as</font> the     other information contained or <font color="blue">incorporated by reference</font> in this report, as     these are important factors, among others, that could cause our actual     results  to  <font color="blue">differ from</font> our expected or historical results</td>
+    </tr>
+    <tr>
+      <td>It is not     possible to predict or identify all <font color="blue">such factors</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, you should     not  consider  any  such list to be a complete statement of all of our     <font color="blue">potential risks</font> or <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>A  substantial  or  <font color="blue">extended decline</font> in oil and <font color="blue"><font color="blue">natural gas</font> prices may</font>     <font color="blue">adversely affect</font> our business, <font color="blue">financial condition</font>, <font color="blue">cash flow</font>, liquidity or     results  of <font color="blue">operations</font> and our ability to meet our <font color="blue">capital expenditure</font>     <font color="blue">obligations</font>  and  financial  <font color="blue">commitments</font> and to implement our business     strategy</td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">heavily <font color="blue">dependent upon</font></font> the prices of, and demand for, oil     and <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>Historically, the prices for oil and <font color="blue">natural gas</font> have been     volatile and are likely to remain volatile in the future</td>
+    </tr>
+    <tr>
+      <td>The prices we     receive  for  our oil and <font color="blue">natural gas</font> production and the level of such     <font color="blue">production will</font> be subject to <font color="blue">wide fluctuations</font> and <font color="blue"><font color="blue">depend on</font> numerous</font>     <font color="blue">factors beyond</font> our control, including the following:         •  the domestic and <font color="blue">foreign supply</font> of oil and <font color="blue">natural gas</font>;         •  <font color="blue">weather <font color="blue">conditions</font></font>;         •  the price and quantity of imports of crude oil and <font color="blue">natural gas</font>;         •  <font color="blue">political <font color="blue">conditions</font></font> and events in other oil-producing and natural     gas-producing countries, including embargoes, continued hostilities in the     <font color="blue">Middle East </font>and other <font color="blue">sustained military campaigns</font>, and acts of terrorism or     sabotage;         •  the actions of the Organization of Petroleum Exporting Countries, or     OPEC;         •  domestic government regulation, legislation and policies;         •  the level of <font color="blue">global oil</font> and <font color="blue">natural gas</font> inventories;         •  technological advances affecting energy consumption;         •  the price and <font color="blue">availability</font> of <font color="blue">alternative fuels</font>; and         •  <font color="blue">overall economic <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>Any continued and <font color="blue">extended decline</font> in the price of crude oil or <font color="blue">natural gas</font>     will <font color="blue">adversely affect</font>:         •  our revenues, <font color="blue">profitability</font> and <font color="blue">cash flow</font> from <font color="blue">operations</font>;         •  the value of our proved oil and <font color="blue">natural gas</font> reserves;         •  the <font color="blue">economic viability</font> of certain of our <font color="blue">drilling prospects</font>;         •  our <font color="blue">borrowing <font color="blue">capacity</font></font>; and         •  our ability to obtain <font color="blue"><font color="blue">additional</font> capital</font></td>
+    </tr>
+    <tr>
+      <td>In the future we may enter into <font color="blue">additional</font>     hedging <font color="blue">arrangements</font> in order to reduce our exposure to price risks</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Such     </font><font color="blue">arrangements</font> would limit our ability to <font color="blue">benefit from increases</font> in oil and     <font color="blue">natural gas</font> prices</td>
+    </tr>
+    <tr>
+      <td>23       _________________________________________________________________    [77]Table of <font color="blue">Contents       </font>The un<font color="blue">availability</font> or high cost of drilling rigs, equipment, supplies or     <font color="blue">qualified personnel</font> and oilfield services could <font color="blue">adversely affect</font> our ability     to execute our <font color="blue">exploration</font> and <font color="blue">development</font> plans on a <font color="blue">timely basis</font> and     within our budget</td>
+    </tr>
+    <tr>
+      <td>Costs and delivery times of rigs, equipment and supplies are     <font color="blue">substantially</font> greater than they were several years ago</td>
+    </tr>
+    <tr>
+      <td>In addition, demand     for, and <font color="blue">wage rates</font> of, <font color="blue">qualified drilling rig crews rise with increases</font> in     the number of <font color="blue">active rigs</font> in service</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Shortages </font>of drilling rigs, equipment     or supplies or <font color="blue">qualified personnel</font> in the areas in which we operate could     delay or restrict our <font color="blue">exploration</font> and <font color="blue">development</font> <font color="blue">operations</font>, which in turn     could <font color="blue">adversely affect</font> our <font color="blue">financial condition</font> and results of <font color="blue">operations</font>     because of our <font color="blue">concentration</font> in those areas</td>
+    </tr>
+    <tr>
+      <td>We plan to <font color="blue">pursue <font color="blue"><font color="blue">acquisition</font>s</font> as</font> part of our <font color="blue">growth strategy</font> and there are     risks in <font color="blue">connection with <font color="blue"><font color="blue">acquisition</font>s</font></font></td>
+    </tr>
+    <tr>
+      <td>Our  growth has <font color="blue">been <font color="blue">attributable</font></font> in part to <font color="blue"><font color="blue">acquisition</font>s</font> of producing     properties and companies</td>
+    </tr>
+    <tr>
+      <td>We expect to continue to evaluate and, where     <font color="blue">appropriate</font>,  pursue  <font color="blue">acquisition</font>  <font color="blue">opportunities</font>  on terms we consider     favorable</td>
+    </tr>
+    <tr>
+      <td>However,  we  cannot  assure you that suitable <font color="blue">acquisition</font>     <font color="blue">candidates will</font> be identified in the future, or that we will be able to     finance  such <font color="blue"><font color="blue">acquisition</font>s</font> on favorable terms</td>
+    </tr>
+    <tr>
+      <td>In addition, we compete     against other companies for <font color="blue"><font color="blue">acquisition</font>s</font>, and we <font color="blue">cannot assure</font> you that we     <font color="blue">will <font color="blue">successfully</font></font> acquire any material <font color="blue">property interests</font></td>
+    </tr>
+    <tr>
+      <td>Further, we     cannot  assure  you  that future <font color="blue"><font color="blue">acquisition</font>s</font> by us will be integrated     <font color="blue"><font color="blue">successfully</font> into</font> our <font color="blue">operations</font> or <font color="blue">will increase</font> our profits</td>
+    </tr>
+    <tr>
+      <td>The successful <font color="blue">acquisition</font> of producing properties requires an <font color="blue">assessment</font> of     numerous <font color="blue">factors beyond</font> our control, including, <font color="blue">without <font color="blue">limitation</font></font>:         •  <font color="blue">recoverable reserves</font>;         •  <font color="blue">exploration</font> potential;         •  future oil and <font color="blue">natural gas</font> prices;         •  operating costs; and         •  <font color="blue">potential <font color="blue"><font color="blue">environment</font>al</font></font> and other <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with such</font> an <font color="blue">assessment</font>, we perform a review of the subject     properties  that  we  believe to be <font color="blue"><font color="blue">generally</font> consistent with industry</font>     practices</td>
+    </tr>
+    <tr>
+      <td>The  resulting  <font color="blue">assessment</font>s are inexact and their accuracy     uncertain,  and such a <font color="blue">review may</font> not reveal all existing or potential     problems, nor will it <font color="blue">necessarily permit us</font> to <font color="blue">become sufficiently familiar</font>     with  the  properties  to  <font color="blue">fully assess</font> their merits and <font color="blue">deficiencies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Inspections </font>may not always be performed <font color="blue">on every well</font>, and structural and     <font color="blue"><font color="blue">environment</font>al</font>  problems  are  not  <font color="blue">necessarily observable even</font> when an     inspection is made</td>
+    </tr>
+    <tr>
+      <td>Additionally,  <font color="blue">significant</font>  <font color="blue"><font color="blue">acquisition</font>s</font>  can change the nature of our     <font color="blue">operations</font>  and  business <font color="blue">depending upon</font> the character of the acquired     properties, which may be <font color="blue">substantially</font> different in operating and geologic     <font color="blue">characteristics</font> or <font color="blue">geographic location than</font> our <font color="blue">existing properties</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">While     </font>our  current <font color="blue">operations</font> are focused in the East Texas/North Louisiana,     Southeast Texas, South Texas, Mississippi, the Mid-Continent and other     regions, as well as the <font color="blue">Gulf of Mexico </font>through our 48prca ownership interest in     Bois d’Arc Energy we may pursue <font color="blue"><font color="blue">acquisition</font>s</font> or <font color="blue">properties located</font> in other     <font color="blue">geographic areas</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future production</font> and <font color="blue">revenues <font color="blue">depend on</font></font> our ability to replace our     reserves</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future production</font> and <font color="blue">revenues depend upon</font> our ability to find, develop     or acquire <font color="blue">additional</font> oil and <font color="blue">natural gas</font> reserves that are <font color="blue">economically</font>     recoverable</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">proved reserves will <font color="blue">generally</font> decline as reserves</font> are     depleted, except to the extent that we conduct successful <font color="blue">exploration</font> or     <font color="blue">development</font> <font color="blue">activities</font> or acquire <font color="blue">properties containing proved reserves</font>, or     both</td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">increase reserves</font> and production, we <font color="blue">must continue</font> our <font color="blue">acquisition</font>     and <font color="blue">drilling <font color="blue">activities</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you, however, that our <font color="blue">acquisition</font>     and <font color="blue">drilling <font color="blue">activities</font></font> will result in <font color="blue">significant</font> <font color="blue">additional</font> reserves or     that  we will have continuing success drilling productive wells at low     finding                                         24       _________________________________________________________________    [78]Table of <font color="blue">Contents       </font>and <font color="blue">development</font> costs</td>
+    </tr>
+    <tr>
+      <td>Furthermore, while our <font color="blue">revenues may increase</font> if     <font color="blue">prevailing oil</font> and <font color="blue">natural gas</font> prices increase <font color="blue">significant</font>ly, our finding     costs for <font color="blue">additional</font> reserves could also increase</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Prospects  </font>that we decide to drill may not yield oil or <font color="blue">natural gas</font> in     <font color="blue"><font color="blue">commercially</font> viable quantities</font> or <font color="blue">quantities sufficient</font> to meet our targeted     rate of return</td>
+    </tr>
+    <tr>
+      <td>A prospect is a property in which we own an interest or have operating     rights and has what our <font color="blue">geoscientists</font> believe, <font color="blue">based on available seismic</font>     and geological information, to be an <font color="blue">indication</font> of <font color="blue">potential oil</font> or natural     gas</td>
+    </tr>
+    <tr>
+      <td>Our prospects are in <font color="blue">various stages</font> of evaluation, ranging from a     prospect  that  is ready to be drilled to a prospect that will require     substantial <font color="blue">additional</font> evaluation and <font color="blue">interpretation</font></td>
+    </tr>
+    <tr>
+      <td>There is no way to     predict in advance of drilling and <font color="blue">testing whether</font> any <font color="blue">particular prospect</font>     <font color="blue">will yield oil</font> or <font color="blue">natural gas</font> in <font color="blue">sufficient quantities</font> to <font color="blue">recover drilling</font>     or <font color="blue">completion costs</font> or to be <font color="blue">economically</font> viable</td>
+    </tr>
+    <tr>
+      <td>The use of <font color="blue">seismic data</font>     and other <font color="blue">technologies</font> and the study of producing fields in the same area     will not <font color="blue">enable us</font> to know <font color="blue">conclusively prior</font> to <font color="blue">drilling whether oil</font> or     <font color="blue">natural gas</font> will be present or, if present, whether oil or <font color="blue">natural gas</font> will     be present in <font color="blue">commercial quantities</font></td>
+    </tr>
+    <tr>
+      <td>The analysis that we perform using data     from other wells, more fully explored prospects and/or producing <font color="blue">fields may</font>     not be useful in predicting the <font color="blue">characteristics</font> and <font color="blue">potential reserves</font>     <font color="blue">associated with</font> our <font color="blue">drilling prospects</font></td>
+    </tr>
+    <tr>
+      <td>If we drill <font color="blue">additional</font> <font color="blue">unsuccessful</font>     wells, our <font color="blue">drilling success rate may decline</font> and we may not achieve our     <font color="blue">targeted rate</font> of return</td>
+    </tr>
+    <tr>
+      <td>Our debt service <font color="blue">requirements</font> could <font color="blue">adversely affect</font> our <font color="blue">operations</font> and     limit our growth</td>
+    </tr>
+    <tr>
+      <td>We had dlra243dtta0 million in debt as of <font color="blue">December </font>31, 2005, and our ratio of     total debt to <font color="blue">total <font color="blue">capitalization</font></font> was approximately 29prca</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">outstanding debt</font> will</font> have <font color="blue">important consequences</font>, including, without     <font color="blue">limitation</font>:         •  a portion of our <font color="blue">cash flow</font> from <font color="blue">operations</font> will be required to make     <font color="blue">debt service payments</font>;         •  our ability to borrow <font color="blue">additional</font> amounts for working capital, capital     <font color="blue">expenditures</font> (including <font color="blue"><font color="blue">acquisition</font>s</font>) or other <font color="blue">purposes will</font> be limited; and         •  our <font color="blue">debt could limit</font> our ability to capitalize on <font color="blue">significant</font> business     <font color="blue">opportunities</font>, our <font color="blue">flexibility</font> in planning for or reacting to changes in     <font color="blue">market <font color="blue">conditions</font></font> and our ability to <font color="blue">withstand <font color="blue">competitive</font> pressures</font> and     <font color="blue">economic downturns</font></td>
+    </tr>
+    <tr>
+      <td>In addition, future <font color="blue">acquisition</font> or <font color="blue">development</font> <font color="blue"><font color="blue">activities</font> may</font> require us to     alter our <font color="blue">capitalization</font> <font color="blue">significant</font>ly</td>
+    </tr>
+    <tr>
+      <td>These changes in <font color="blue"><font color="blue">capitalization</font> may</font>     <font color="blue">significant</font>ly increase our debt</td>
+    </tr>
+    <tr>
+      <td>Moreover, our ability to meet our debt     service <font color="blue">obligations</font> and to reduce our <font color="blue">total debt will</font> be <font color="blue">dependent upon</font> our     future performance, which will be subject to <font color="blue">general economic <font color="blue">conditions</font></font> and     financial, business and other <font color="blue">factors affecting</font> our <font color="blue">operations</font>, many of     which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">generate sufficient cash</font>     flow from <font color="blue">operations</font> in the future to service our <font color="blue">indebtedness</font> and to meet     other <font color="blue">commitments</font>, we will be required to <font color="blue">adopt one</font> or more <font color="blue">alternatives</font>,     <font color="blue">such as refinancing</font> or <font color="blue">restructuring</font> our <font color="blue">indebtedness</font>, selling material     assets or seeking to raise <font color="blue">additional</font> debt or <font color="blue">equity capital</font></td>
+    </tr>
+    <tr>
+      <td>We cannot     assure you that any of these <font color="blue">actions could</font> be <font color="blue">effected on</font> a <font color="blue">timely basis</font> or     on satisfactory terms or that these actions would <font color="blue">enable us</font> to continue to     satisfy our <font color="blue">capital <font color="blue">requirements</font></font></td>
+    </tr>
+    <tr>
+      <td>Our bank credit <font color="blue"><font color="blue">facility</font> contains</font> a number of <font color="blue">significant</font> covenants</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">covenants will limit</font> our ability to, among other things:         •  borrow <font color="blue">additional</font> money;         •  merge, consolidate or dispose of assets;         •  make <font color="blue">certain types</font> of <font color="blue"><font color="blue">investment</font>s</font>;         •  <font color="blue">enter into <font color="blue">transactions</font> with</font> our <font color="blue">affiliates</font>; and         •  <font color="blue">pay dividends</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to <font color="blue">comply with</font> any of these <font color="blue">covenants would</font> cause a default     under our bank credit <font color="blue">facility</font> and the <font color="blue">indenture governing</font> our 67/8prca senior     notes due 2012</td>
+    </tr>
+    <tr>
+      <td>A default, if not waived, could result in <font color="blue">acceleration</font> of     our <font color="blue">indebtedness</font>, in which case the <font color="blue">debt would become immediately due</font> and     payable</td>
+    </tr>
+    <tr>
+      <td>If this occurs, we may not be able                                         25       _________________________________________________________________    [79]Table of <font color="blue">Contents       </font>to repay our debt or borrow sufficient funds to refinance it</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Complying  </font>with  these  <font color="blue">covenants may</font> cause us to take actions that we     <font color="blue">otherwise would</font> not take or not take actions that we <font color="blue">otherwise would</font> take</td>
+    </tr>
+    <tr>
+      <td>Our  business involves many <font color="blue">uncertainties</font> and operating risks that can     <font color="blue">prevent us from</font> realizing profits and can cause substantial losses</td>
+    </tr>
+    <tr>
+      <td>Our  future  success will <font color="blue">depend on</font> the success of our <font color="blue">exploration</font> and     <font color="blue">development</font> <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Exploration </font><font color="blue"><font color="blue">activities</font> involve numerous risks</font>,     including  the risk that no <font color="blue">commercially</font> productive <font color="blue">natural gas</font> or oil     reserves  will  be  discovered</td>
+    </tr>
+    <tr>
+      <td>In  addition, these <font color="blue"><font color="blue">activities</font> may</font> be     <font color="blue">unsuccessful</font> for many reasons, including weather, cost overruns, equipment     shortages and <font color="blue">mechanical <font color="blue"><font color="blue">difficult</font>ies</font></font></td>
+    </tr>
+    <tr>
+      <td>Moreover, the successful drilling of     a <font color="blue">natural gas</font> or oil well does not ensure we will realize a profit on our     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>A variety of factors, both geological and market-related, can     cause  a well to <font color="blue">become uneconomical</font> or <font color="blue">only marginally economical</font></td>
+    </tr>
+    <tr>
+      <td>In     addition to their costs, <font color="blue">unsuccessful</font> wells can hurt our efforts to replace     production and reserves</td>
+    </tr>
+    <tr>
+      <td>Our business involves a variety of operating risks, including:         •  unusual or <font color="blue">unexpected geological formations</font>;         •  fires;         •  <font color="blue">explosions</font>;         •  blow-outs and <font color="blue">surface cratering</font>;         •  <font color="blue">uncontrollable flows</font> of <font color="blue">natural gas</font>, oil and <font color="blue">formation water</font>;         •  natural disasters, such as hurricanes, tropical storms and other     adverse <font color="blue">weather <font color="blue">conditions</font></font>;         •  pipe, cement or <font color="blue">pipeline failures</font>;         •  <font color="blue">casing collapses</font>;         •  <font color="blue">mechanical <font color="blue"><font color="blue">difficult</font>ies</font></font>, such as lost or <font color="blue">stuck oil field drilling</font> and     <font color="blue">service tools</font>;         •  <font color="blue">abnormally pressured formations</font>; and         •  <font color="blue"><font color="blue">environment</font>al</font> hazards, such as <font color="blue">natural gas</font> leaks, oil spills, pipeline     ruptures and discharges of toxic gases</td>
+    </tr>
+    <tr>
+      <td>If we experience any of these problems, well bores, gathering systems and     <font color="blue"><font color="blue">processing <font color="blue">facilities</font></font> could</font> be affected, <font color="blue">which could</font> <font color="blue">adversely affect</font> our     ability to conduct <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">could also incur</font> substantial losses as a result of:         •  injury or loss of life;         •  <font color="blue">severe damage</font> to and <font color="blue">destruction</font> of property, natural resources and     equipment;         •  pollution and other <font color="blue"><font color="blue">environment</font>al</font> damage;         •  clean-up responsibilities;         •  <font color="blue"><font color="blue">regulatory</font> investigation</font> and penalties;         •  suspension of our <font color="blue">operations</font>; and         •  repairs to resume <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We operate in a <font color="blue"><font color="blue">highly <font color="blue">competitive</font></font> industry</font>, and our failure to remain     <font color="blue"><font color="blue">competitive</font> with</font> our <font color="blue">competitors</font>, many of which have <font color="blue">greater resources than</font>     we do, could <font color="blue">adversely affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The oil and <font color="blue">natural gas</font> industry is <font color="blue">highly <font color="blue">competitive</font></font> in the search for and     <font color="blue">development</font>  and  <font color="blue">acquisition</font>  of  reserves</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">competitors</font> for the     <font color="blue">acquisition</font>, <font color="blue">development</font> and <font color="blue">exploration</font> of oil and <font color="blue">natural gas</font> properties     and capital to <font color="blue">finance such <font color="blue">activities</font></font>, include companies that have greater     financial and <font color="blue"><font color="blue">personnel resources</font> than</font> we do</td>
+    </tr>
+    <tr>
+      <td>26       _________________________________________________________________    [80]Table of <font color="blue">Contents       </font>These <font color="blue">resources could allow</font> those <font color="blue">competitors</font> to price their products and     services more <font color="blue">aggressively than</font> we can, <font color="blue"><font color="blue">which could</font> hurt</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, our ability to acquire <font color="blue">additional</font> properties and to discover     reserves in the <font color="blue">future will</font> be <font color="blue">dependent upon</font> our ability to evaluate and     select <font color="blue">suitable properties</font> and to close <font color="blue">transactions</font> in a <font color="blue">highly <font color="blue">competitive</font></font>     <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font> may use superior <font color="blue">technology</font> that we may be unable to afford     or <font color="blue">which would</font> require costly <font color="blue">investment</font> by us in order to compete</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">competitors</font> use or develop new <font color="blue">technologies</font>, we may be <font color="blue">placed at</font> a     <font color="blue">competitive</font>  <font color="blue">disadvantage</font>,  and  <font color="blue">competitive</font> pressures may force us to     implement  new  <font color="blue">technologies</font>  at  a substantial cost</td>
+    </tr>
+    <tr>
+      <td>In addition, our     <font color="blue">competitors</font> may have greater financial, technical and <font color="blue">personnel resources</font>     that <font color="blue">allow them</font> to <font color="blue">enjoy technological advances</font> and may in the <font color="blue">future allow</font>     them to implement new <font color="blue">technologies</font> before we can</td>
+    </tr>
+    <tr>
+      <td>We cannot be certain that     we will be able to implement <font color="blue">technologies</font> on a <font color="blue">timely basis</font> or at a cost     that is acceptable to us</td>
+    </tr>
+    <tr>
+      <td>One or more of the <font color="blue">technologies</font> that we currently     use or that we may implement in the <font color="blue">future may become obsolete</font></td>
+    </tr>
+    <tr>
+      <td>All of these     factors may inhibit our ability to acquire <font color="blue">additional</font> prospects and compete     <font color="blue">successfully</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantial </font><font color="blue">exploration</font> and <font color="blue">development</font> <font color="blue">activities</font> could require <font color="blue">significant</font>     outside capital, <font color="blue">which could</font> dilute the value of our <font color="blue">common shares</font> and     restrict our <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Also, we may not be able to obtain needed capital     or <font color="blue">financing on</font> satisfactory terms, <font color="blue">which could</font> lead to a <font color="blue">limitation</font> of our     future business <font color="blue">opportunities</font> and a decline in our oil and <font color="blue">natural gas</font>     reserves</td>
+    </tr>
+    <tr>
+      <td>We expect to expend substantial capital in the <font color="blue">acquisition</font> of, <font color="blue">exploration</font>     for and <font color="blue">development</font> of oil and <font color="blue">natural gas</font> reserves</td>
+    </tr>
+    <tr>
+      <td>In order to finance     these  <font color="blue">activities</font>, we may need to alter or increase our <font color="blue">capitalization</font>     <font color="blue">substantially</font> through the issuance of debt or <font color="blue">equity securities</font>, the sale of     non-strategic assets or other means</td>
+    </tr>
+    <tr>
+      <td>The issuance of <font color="blue">additional</font> equity     <font color="blue">securities could</font> have a dilutive effect on the value of our <font color="blue">common shares</font></td>
+    </tr>
+    <tr>
+      <td>The issuance of <font color="blue">additional</font> debt would require that a portion of our cash     flow  from <font color="blue">operations</font> be used for the payment of <font color="blue">interest on</font> our debt,     <font color="blue">thereby reducing</font> our ability to use our <font color="blue">cash flow</font> to fund working capital,     capital  <font color="blue">expenditures</font>,  <font color="blue"><font color="blue">acquisition</font>s</font>,  dividends and <font color="blue">general corporate</font>     <font color="blue">requirements</font>, <font color="blue">which could</font> place us at a <font color="blue">competitive</font> <font color="blue">disadvantage</font> relative to     other <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, if our <font color="blue">revenues decrease as</font> a result of     lower oil or <font color="blue">natural gas</font> prices, operating <font color="blue"><font color="blue">difficult</font>ies</font> or declines in     reserves,  our ability to obtain the <font color="blue">capital necessary</font> to undertake or     complete future <font color="blue">exploration</font> and <font color="blue">development</font> programs and to pursue other     <font color="blue">opportunities</font> may be limited, <font color="blue">which could</font> result in a <font color="blue">curtailment</font> of our     <font color="blue">operations</font> relating to <font color="blue">exploration</font> and <font color="blue">development</font> of our prospects, which     in turn could result in a decline in our oil and <font color="blue">natural gas</font> reserves</td>
+    </tr>
+    <tr>
+      <td>If oil and <font color="blue">natural gas</font> prices decrease, we may be required to write-down the     carrying  values and/or the estimates of <font color="blue">total reserves</font> of our oil and     <font color="blue">natural gas</font> properties, <font color="blue">which would</font> constitute a non-cash charge to earnings     and <font color="blue">adversely affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Accounting </font><font color="blue">rules applicable</font> to us require that we <font color="blue">review periodically</font> the     carrying  value  of  our  oil  and <font color="blue">natural gas</font> properties for possible     <font color="blue">impairment</font></td>
+    </tr>
+    <tr>
+      <td>Based <font color="blue">on specific market factors</font> and <font color="blue">circumstances at</font> the time     of  prospective  <font color="blue">impairment</font>  reviews  and the <font color="blue">continuing evaluation</font> of     <font color="blue">development</font> plans, production data, economics and other factors, we may be     required  to  write down the carrying value of our oil and <font color="blue">natural gas</font>     properties</td>
+    </tr>
+    <tr>
+      <td>A write-down constitutes a non-cash charge to earnings</td>
+    </tr>
+    <tr>
+      <td>We may     incur non-cash charges in the future, <font color="blue">which could</font> have a material adverse     effect on our results of <font color="blue">operations</font> in the <font color="blue">period taken</font></td>
+    </tr>
+    <tr>
+      <td>We may also reduce     our estimates of the reserves that may be <font color="blue">economically</font> recovered, which     could have the effect of reducing the <font color="blue">total value</font> of our reserves</td>
+    </tr>
+    <tr>
+      <td>Such a     reduction in carrying value could impact our <font color="blue">borrowing ability</font> and may     result in <font color="blue">accelerating</font> the repayment date of any <font color="blue">outstanding debt</font></td>
+    </tr>
+    <tr>
+      <td>Our reserve estimates <font color="blue">depend on</font> many <font color="blue">assumptions</font> that may turn out to be     <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>Any material <font color="blue">inaccuracies</font> in our reserve estimates or underlying     <font color="blue">assumptions</font> will materially affect the quantities and <font color="blue">present value</font> of our     reserves</td>
+    </tr>
+    <tr>
+      <td>Reserve <font color="blue">engineering</font> is a <font color="blue">subjective process</font> of estimating the <font color="blue">recovery from</font>     <font color="blue">underground accumulations</font> of oil and <font color="blue">natural gas</font> that cannot be precisely     measured</td>
+    </tr>
+    <tr>
+      <td>The accuracy of any reserve estimate <font color="blue">depends on</font> the quality of     available  data,  production  history  and  <font color="blue">engineering</font> and geological     <font color="blue">interpretation</font> and judgment</td>
+    </tr>
+    <tr>
+      <td>Because all reserve                                         27       _________________________________________________________________    [81]Table of <font color="blue">Contents       </font>estimates are to some <font color="blue">degree imprecise</font>, the quantities of oil and natural     gas that are ultimately recovered, production and operating costs, the     amount and timing of future <font color="blue">development</font> <font color="blue">expenditures</font> and future oil and     <font color="blue"><font color="blue">natural gas</font> prices may</font> all <font color="blue">differ materially from</font> those assumed in these     estimates</td>
+    </tr>
+    <tr>
+      <td>The information regarding <font color="blue">present value</font> of the <font color="blue">future net cash</font>     flows  <font color="blue">attributable</font> to our proved oil and <font color="blue">natural gas</font> reserves is only     estimated and should not be <font color="blue">construed as</font> the <font color="blue">current market value</font> of the oil     and  natural  gas  reserves <font color="blue">attributable</font> to our properties</td>
+    </tr>
+    <tr>
+      <td>Thus, such     information includes revisions of <font color="blue">certain reserve</font> estimates <font color="blue">attributable</font> to     <font color="blue">proved properties</font> included in the preceding year’s estimates</td>
+    </tr>
+    <tr>
+      <td>Such revisions     reflect  <font color="blue">additional</font> information from subsequent <font color="blue">activities</font>, production     history of the <font color="blue">properties involved</font> and any <font color="blue">adjustments</font> in the projected     <font color="blue">economic life</font> of <font color="blue">such properties</font> resulting from changes in <font color="blue">product prices</font></td>
+    </tr>
+    <tr>
+      <td>Any  future  downward  revisions  could <font color="blue">adversely affect</font> our financial     condition, our <font color="blue">borrowing ability</font>, our <font color="blue">future prospects</font> and the value of our     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, 41prca of our <font color="blue">total proved reserves</font> are undeveloped     and 10prca are developed non-producing</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">reserves may</font> not ultimately be     developed or produced</td>
+    </tr>
+    <tr>
+      <td>Furthermore, not all of our undeveloped or developed     non-producing <font color="blue">reserves may</font> be ultimately produced at the time periods we     have planned, at the costs we have budgeted, or at all</td>
+    </tr>
+    <tr>
+      <td>As a result, we may     not find <font color="blue"><font color="blue">commercially</font> viable quantities</font> of oil and <font color="blue">natural gas</font>, which in     turn may result in a material adverse effect on our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If  we  are  <font color="blue">unsuccessful</font> at marketing our oil and gas at <font color="blue">commercially</font>     acceptable prices, our <font color="blue">profitability</font> will decline</td>
+    </tr>
+    <tr>
+      <td>Our ability to <font color="blue">market oil</font> and gas at <font color="blue">commercially</font> acceptable <font color="blue">prices depends</font>     on, among other factors, the following:         •  the <font color="blue">availability</font> and <font color="blue">capacity</font> of gathering systems and pipelines;         •  federal and state regulation of production and <font color="blue">transportation</font>;         •  changes in supply and demand; and         •  <font color="blue">general economic <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>Our inability to respond <font color="blue">appropriate</font>ly to changes in these <font color="blue">factors could</font>     <font color="blue">negatively</font> effect our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Market <font color="blue">conditions</font> or <font color="blue">operational impediments may hinder</font> our access to oil     and <font color="blue">natural gas</font> markets or delay our production</td>
+    </tr>
+    <tr>
+      <td>Market <font color="blue">conditions</font> or the un<font color="blue">availability</font> of satisfactory oil and <font color="blue">natural gas</font>     <font color="blue">transportation</font> <font color="blue">arrangements</font> may hinder our access to oil and <font color="blue">natural gas</font>     markets or delay our production</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> of a <font color="blue">ready market</font> for our     oil and <font color="blue">natural gas</font> production <font color="blue">depends on</font> a number of factors, including the     demand for and supply of oil and <font color="blue">natural gas</font> and the proximity of reserves     to pipelines and <font color="blue">terminal <font color="blue">facilities</font></font></td>
+    </tr>
+    <tr>
+      <td>Our ability to market our production     depends in a substantial part on the <font color="blue">availability</font> and <font color="blue">capacity</font> of gathering     systems,  pipelines and <font color="blue">processing <font color="blue">facilities</font></font>, in some cases owned and     operated <font color="blue">by third parties</font></td>
+    </tr>
+    <tr>
+      <td>Our failure to obtain <font color="blue">such services on</font> acceptable     <font color="blue">terms could materially harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>We may be required to shut in     wells for a lack of a market or because of the <font color="blue">inadequacy</font> or un<font color="blue">availability</font>     of pipelines or gathering system <font color="blue">capacity</font></td>
+    </tr>
+    <tr>
+      <td>If that were to occur, then we     would be unable to realize <font color="blue">revenue from</font> those wells until <font color="blue">arrangements</font> were     made to deliver our production to market</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> our <font color="blue">key personnel</font> and the loss of any of these <font color="blue">individuals</font>     could have a material adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We believe that the success of our business strategy and our ability to     operate profitably <font color="blue">depend on</font> the <font color="blue">continued employment</font> of M Jay Allison, our     President and Chief Executive Officer, and a limited number of other senior     <font color="blue">management personnel</font></td>
+    </tr>
+    <tr>
+      <td>Allison or any of those     other <font color="blue">individuals</font> could have a material adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>28       _________________________________________________________________    [82]Table of <font color="blue">Contents       </font>Our <font color="blue">insurance coverage may</font> not be sufficient or may not be available to     cover some <font color="blue">liabilities</font> or losses that we may incur</td>
+    </tr>
+    <tr>
+      <td>If we suffer a <font color="blue">significant</font> accident or other loss, our insurance coverage     will be net of our <font color="blue">deductibles</font> and may not be sufficient to pay the full     <font color="blue">current market value</font> or <font color="blue">current replacement value</font> of our lost <font color="blue">investment</font>,     which  could result in a material <font color="blue">adverse impact on</font> our <font color="blue">operations</font> and     financial  condition</td>
+    </tr>
+    <tr>
+      <td>Our  insurance  does not <font color="blue">protect us against</font> all     <font color="blue">operational risks</font></td>
+    </tr>
+    <tr>
+      <td>We do not carry business <font color="blue">interruption insurance</font></td>
+    </tr>
+    <tr>
+      <td>For some     risks, we may not obtain insurance if we believe the cost of available     insurance is <font color="blue">excessive relative</font> to the <font color="blue">risks presented</font></td>
+    </tr>
+    <tr>
+      <td>Because <font color="blue">third party</font>     drilling contractors are used to drill our wells, we may not realize the     full benefit of workers’ compensation laws in <font color="blue">dealing with</font> their employees</td>
+    </tr>
+    <tr>
+      <td>In  addition, some risks, including pollution and <font color="blue"><font color="blue">environment</font>al</font> risks,     <font color="blue">generally</font> are not <font color="blue">fully insurable</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to extensive <font color="blue">governmental laws</font> and <font color="blue">regulations</font> that may     <font color="blue">adversely affect</font> the cost, manner or <font color="blue">feasibility</font> of doing business</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> and <font color="blue">facilities</font> are subject to extensive federal, state and     local  laws  and  <font color="blue">regulations</font> relating to the <font color="blue">exploration</font> for, and the     <font color="blue">development</font>, production and <font color="blue">transportation</font> of, oil and <font color="blue">natural gas</font>, and     operating safety</td>
+    </tr>
+    <tr>
+      <td>Future laws or <font color="blue">regulations</font>, any adverse changes in the     <font color="blue">interpretation</font> of existing laws and <font color="blue">regulations</font> or our failure to comply     with  existing  legal  <font color="blue">requirements</font>  may harm our business, results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We may be required to make large and     unanticipated <font color="blue">capital expenditure</font>s to <font color="blue">comply with</font> <font color="blue">governmental laws</font> and     <font color="blue">regulations</font>, such as:         •  <font color="blue">lease permit <font color="blue">restrictions</font></font>;         •  <font color="blue">drilling bonds</font> and other financial responsibility <font color="blue">requirements</font>, such as     plug and <font color="blue">abandonment bonds</font>;         •  spacing of wells;         •  <font color="blue">unitization</font> and pooling of properties;         •  <font color="blue">safety precautions</font>;         •  <font color="blue">regulatory</font> <font color="blue">requirements</font>; and         •  taxation</td>
+    </tr>
+    <tr>
+      <td>Under these laws and <font color="blue">regulations</font>, we could be liable for:         •  <font color="blue">personal injuries</font>;         •  property and <font color="blue">natural resource damages</font>;         •  <font color="blue">well reclamation costs</font>; and         •  governmental sanctions, such as fines and penalties</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> could be <font color="blue">significant</font>ly delayed or curtailed and our cost of     <font color="blue">operations</font>  could  <font color="blue">significant</font>ly  increase  as  a result of <font color="blue">regulatory</font>     <font color="blue">requirements</font> or <font color="blue">restrictions</font></td>
+    </tr>
+    <tr>
+      <td>We are unable to predict the <font color="blue">ultimate cost</font> of     <font color="blue">compliance with</font> these <font color="blue">requirements</font> or their effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">operations</font>  may  incur  substantial  <font color="blue">liabilities</font>  to  <font color="blue">comply with</font>     <font color="blue"><font color="blue">environment</font>al</font> laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Our oil and <font color="blue">natural gas</font> <font color="blue">operations</font> are subject to <font color="blue">stringent federal</font>, state     and  <font color="blue">local laws</font> and <font color="blue">regulations</font> relating to the release or disposal of     <font color="blue">materials into</font> the <font color="blue">environment</font> and otherwise relating to <font color="blue"><font color="blue">environment</font>al</font>     protection</td>
+    </tr>
+    <tr>
+      <td>These laws and <font color="blue">regulations</font>:         •  require the <font color="blue">acquisition</font> of a permit before <font color="blue">drilling commences</font>;         •  restrict the types, quantities and <font color="blue">concentration</font> of substances that can     be <font color="blue">released into</font> the <font color="blue">environment</font> in <font color="blue">connection with drilling</font> and production     <font color="blue">activities</font>;                                         29       _________________________________________________________________    [83]Table of <font color="blue">Contents       </font>    •  limit or prohibit <font color="blue">drilling <font color="blue">activities</font></font> on certain lands lying within     wilderness, wetlands and other <font color="blue">protected areas</font>; and          •   impose substantial <font color="blue">liabilities</font> for pollution resulting from our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> these laws and <font color="blue">regulations</font> may result in:         •  the <font color="blue">assessment</font> of <font color="blue">administrative</font>, civil and criminal penalties;         •  the incurrence of <font color="blue">investigatory</font> or remedial <font color="blue">obligations</font>; and         •  the imposition of injunctive relief</td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue"><font color="blue">environment</font>al</font> laws and <font color="blue">regulations</font> occur <font color="blue">frequently</font>, and any     changes that result in more stringent or costly waste handling, storage,     transport,  disposal  or cleanup <font color="blue">requirements</font> could require us to make     <font color="blue">significant</font> <font color="blue">expenditures</font> to reach and maintain compliance and <font color="blue">may otherwise</font>     have a material adverse effect on our industry in general and on our own     results of <font color="blue">operations</font>, <font color="blue">competitive</font> position or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under     </font>these <font color="blue"><font color="blue">environment</font>al</font> laws and <font color="blue">regulations</font>, we could be held <font color="blue">strictly liable</font>     for the removal or <font color="blue">remediation</font> of <font color="blue">previously released materials</font> or property     <font color="blue">contamination</font> regardless of whether we were responsible for the release or     <font color="blue">contamination</font> or if our <font color="blue">operations</font> met previous standards in the <font color="blue">industry at</font>     the time they were performed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions </font>of our articles of incorporation, bylaws <font color="blue">and Nevada </font>law will make     it more <font color="blue">difficult</font> to effect a change in control of us, <font color="blue">which could</font> adversely     affect the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Nevada <font color="blue">corporate law</font> and our articles of incorporation and <font color="blue">bylaws contain</font>     provisions that could delay, defer or prevent a change in control of us</td>
+    </tr>
+    <tr>
+      <td>These provisions include:         •  allowing for <font color="blue">authorized but unissued shares</font> of common and preferred     stock;         •  a <font color="blue">classified board</font> of <font color="blue">directors</font>;          •   requiring <font color="blue">special stockholder meetings</font> to be <font color="blue">called only by</font> our     chairman of the board, our <font color="blue">chief executive officer</font>, a majority of the board     or the holders of at least 10prca of our <font color="blue">outstanding stock entitled</font> to vote at     a <font color="blue">special meeting</font>;         •  requiring removal of <font color="blue">directors</font> by a <font color="blue">supermajority stockholder vote</font>;         •  <font color="blue">prohibiting cumulative voting</font> in the election of <font color="blue">directors</font>; and          •  Nevada control share laws that <font color="blue">may limit voting rights</font> in shares     <font color="blue">representing</font> a <font color="blue">controlling interest</font> in us</td>
+    </tr>
+    <tr>
+      <td>We  have  in  place a stockholders’ rights plan</td>
+    </tr>
+    <tr>
+      <td>The provisions of the     stockholders’ rights plan and the above <font color="blue">provisions could</font> make an <font color="blue">acquisition</font>     of  us  by  means of a <font color="blue">tender offer</font> or <font color="blue">proxy contest</font> or removal of our     incumbent <font color="blue">directors</font> more <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>As a result, these <font color="blue">provisions could</font> make     it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire us, even if doing so would     benefit our stockholders, which may limit the price that investors are     willing to pay in the future for shares of our <font color="blue">common stock</font></td>
+    </tr>
+  </tbody>
+</table>

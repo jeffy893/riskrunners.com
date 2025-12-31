@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "7: revenues from", fill: "#5d8aa8"},
+{source: "7: revenues from", target: "7: disposables", fill: "#5d8aa8"},
+{source: "7: disposables", target: "7: product research development", fill: "#5d8aa8"},
+{source: "7: product research development", target: "7: development", fill: "#5d8aa8"},
+{source: "7: development", target: "7: commercialization", fill: "#5d8aa8"},
+{source: "7: commercialization", target: "7: will continue", fill: "#5d8aa8"},
+{source: "7: will continue", target: "7: significant", fill: "#5d8aa8"},
+{source: "7: significant", target: "7: losses unless", fill: "#5d8aa8"},
+{source: "7: losses unless", target: "7: new products", fill: "#5d8aa8"},
+{source: "7: new products", target: "7: been clinically tested approved", fill: "#5d8aa8"},
+{source: "7: been clinically tested approved", target: "7: successfully", fill: "#5d8aa8"},
+{source: "7: revenues from", target: "16: approximately", fill: "#fbaed2"},
+{source: "16: approximately", target: "16: equivalents", fill: "#fbaed2"},
+{source: "16: equivalents", target: "16: investments", fill: "#fbaed2"},
+{source: "16: investments", target: "16: operations", fill: "#fbaed2"},
+{source: "16: approximately", target: "33: Accordingly ", fill: "#a9203e"},
+{source: "33: Accordingly ", target: "33: dependent upon", fill: "#a9203e"},
+{source: "33: dependent upon", target: "33: contract manufacturers", fill: "#a9203e"},
+{source: "33: contract manufacturers", target: "33: comply with", fill: "#a9203e"},
+{source: "33: comply with", target: "33: requirements", fill: "#a9203e"},
+{source: "33: Accordingly ", target: "34: regulatory", fill: "#801818"},
+{source: "34: regulatory", target: "48: entered into", fill: "#318ce7"},
+{source: "48: entered into", target: "48: exclusive license agreement with", fill: "#318ce7"},
+{source: "48: exclusive license agreement with", target: "48: technology", fill: "#318ce7"},
+{source: "48: entered into", target: "115: paid cash dividends", fill: "#1c352d"},
+{source: "115: paid cash dividends", target: "115: paying cash", fill: "#1c352d"},
+{source: "115: paying cash", target: "115: foreseeable future", fill: "#1c352d"},
+{source: "115: paid cash dividends", target: "116: Therefore ", fill: "#e18e96"},
+{source: "116: Therefore ", target: "116: stockholders cannot", fill: "#e18e96"},
+{source: "116: stockholders cannot", target: "116: liquidity with respect", fill: "#e18e96"},
+{source: "116: liquidity with respect", target: "116: Common Stock ", fill: "#e18e96"},
+{source: "116: Common Stock ", target: "116: except by selling such shares", fill: "#e18e96"},
+{source: "116: Therefore ", target: "START_HERE", fill: "#e18e96"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Health Care Supplies</td>
+    </tr>
+    <tr>
+      <td>Health Care</td>
+    </tr>
+    <tr>
+      <td>Health Care Equipment and Services</td>
+    </tr>
+    <tr>
+      <td>Managed Health Care</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Clinical_trial">Clinical trial</a></td>
+      <td>Clinical trials are experiments or observations done in clinical research. Such prospective biomedical or behavioral research studies on human participants are designed to answer specific questions about biomedical or behavioral interventions, including new treatments (such as novel vaccines, drugs, dietary choices, dietary supplements, and medical devices) and known interventions that warrant further study and comparison.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Phases_of_clinical_research">Phases of clinical research</a></td>
+      <td>The phases of clinical research are the stages in which scientists conduct experiments with a health intervention to obtain sufficient evidence for a process considered effective as a medical treatment. For drug development, the clinical phases start with testing for safety in a few human subjects, then expand to many study participants (potentially tens of thousands) to determine if the treatment is effective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Successful_(song)">Successful (song)</a></td>
+      <td>"Successful" is a song by Canadian rapper Drake and R&amp;B singer Trey Songz . The song features guest appearances from Drake's mentor and labelmate Lil Wayne.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Secrets_of_a_Successful_Marriage">Secrets of a Successful Marriage</a></td>
+      <td>"Secrets of a Successful Marriage" is the twenty-second and final episode of the fifth season of the American animated television series The Simpsons. It originally aired on the Fox network in the United States on May 19, 1994.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Successful_Pyrate">The Successful Pyrate</a></td>
+      <td>The Successful Pyrate is a play by Charles Johnson, first performed 1712, published 1713, dealing with the life of the pirate Henry Avery. It opened at the Theatre Royal, Drury Lane on 7 November 1712 and ran for five evenings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/A_Successful_Man">A Successful Man</a></td>
+      <td>A Successful Man (Spanish: Un hombre de éxito) is a 1986 Cuban drama film directed by Humberto Solás. It was screened in the Un Certain Regard section at the 1987 Cannes Film Festival and it was entered into the 15th Moscow International Film Festival.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_most_successful_German_U-boats">List of most successful German U-boats</a></td>
+      <td>List of successful U-boats contains lists of the most successful German U-boats in the two World Wars based on total tonnage.\n\n\n== World War I ==\nThis list contains the 5 most successful German U-boats during the First World War based on total tonnage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/A_Successful_Calamity">A Successful Calamity</a></td>
+      <td>A Successful Calamity is a 1932 American pre-Code comedy film directed by John G. Adolfi and starring George Arliss and Mary Astor. Based on the 1917 play A Successful Calamity by Clare Kummer, the film is about an elderly millionaire who must deal with his selfish young second wife and a pair of spoiled grown children.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_analysis">Requirements analysis</a></td>
+      <td>In systems engineering and software engineering, requirements analysis focuses on the tasks that determine the needs or conditions to meet the new or altered product or project, taking account of the possibly conflicting requirements of the various stakeholders, analyzing, documenting, validating and managing software or system requirements.Requirements analysis is critical to the success or failure of a systems or software project. The requirements should be documented, actionable, measurable, testable, traceable, related to identified business needs or opportunities, and defined to a level of detail sufficient for system design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Visa_requirements_for_United_States_citizens">Visa requirements for United States citizens</a></td>
+      <td>As of 25 February 2022, Holders of a United States passport could travel to 186 countries and territories without a travel visa, or with a visa on arrival. The United States passport currently ranks 6th in terms of travel freedom (tied with the passports of Czech Republic, Greece, Malta, Norway, and the UK) according to the Henley Passport Index.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Requirements_elicitation">Requirements elicitation</a></td>
+      <td>In requirements engineering, requirements elicitation is the practice of researching and discovering the requirements of a system from users, customers, and other stakeholders. The practice is also sometimes referred to as "requirement gathering".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Age_of_candidacy">Age of candidacy</a></td>
+      <td>Age of candidacy is the minimum age at which a person can legally hold certain elected government offices. In many cases, it also determines the age at which a person may be eligible to stand for an election or be granted ballot access.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Market_requirements_document">Market requirements document</a></td>
+      <td>A market requirements document (MRD) in project management and systems engineering, is a document that expresses the customer's wants and needs for the product or service.\nIt is typically written as a part of product marketing or product management.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Business_requirements">Business requirements</a></td>
+      <td>Business requirements, also known as stakeholder requirements specifications (StRS), describe the characteristics of a proposed system from the viewpoint of the system's end user like a CONOPS. Products, systems, software, and processes are ways of how to deliver, satisfy, or meet business requirements.  Consequently, business requirements are often discussed in the context of developing or procuring software or other systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_agency">Regulatory agency</a></td>
+      <td>A regulatory agency (regulatory body, regulator) or independent agency (independent regulatory agency) is a government authority that is responsible for exercising autonomous dominion over some area of human activity in a licensing and regulating capacity.\nThese are customarily set up to strengthen safety and standards, and/or to protect consumers in markets where there is a lack of effective competition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_affairs">Regulatory affairs</a></td>
+      <td>Regulatory affairs (RA), also called government affairs, is a profession within regulated industries, such as pharmaceuticals, medical devices, cosmetics, agrochemicals (plant protection products and fertilizers), energy, banking, telecom etc.  Regulatory affairs also has a very specific meaning within the healthcare industries (pharmaceuticals, medical devices, biologics and functional foods).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capitalism">Regulatory capitalism</a></td>
+      <td>Regulatory capitalism suggests that the operation maintenance and development of the international political economy increasingly depends on administrative rules outside the legislatures and the courts. In other words, it tells us that capitalism is a regulatory institution – one that is being constituted, shaped, constrained and expanded as a historically woven patchwork of regulatory institutions, strategies, and functions.Although this patchwork varies widely across regions, nations, regimes, sectors, issues, and arenas, the general trend despite and beyond the process of liberalization is that of growth rather than decline of the role regulation in shaping policy and politics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capture">Regulatory capture</a></td>
+      <td>In politics, regulatory capture (also agency capture and client politics) is a form of corruption of authority that occurs when a political entity, policymaker, or regulator is co-opted to serve the commercial, ideological, or political interests of a minor constituency, such as a particular geographic area, industry, profession, or ideological group.When regulatory capture occurs, a special interest is prioritized over the general interests of the public, leading to a net loss for society. The theory of client politics is related to that of rent-seeking and political failure; client politics "occurs when most or all of the benefits of a program go to some single, reasonably small interest (e.g., industry, profession, or locality) but most or all of the costs will be borne by a large number of people (for example, all taxpayers)".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_T_cell">Regulatory T cell</a></td>
+      <td>The regulatory T cells (Tregs  or Treg cells), formerly known as suppressor T cells, are a subpopulation of T cells that modulate the immune system, maintain tolerance to self-antigens, and prevent autoimmune disease. Treg cells are immunosuppressive and generally suppress or downregulate induction and proliferation of effector T cells.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cis-regulatory_element">Cis-regulatory element</a></td>
+      <td>Cis-regulatory elements (CREs) or Cis-regulatory modules (CRMs) are regions of non-coding DNA which regulate the transcription of neighboring genes. CREs are vital components of genetic regulatory networks, which in turn control morphogenesis, the development of anatomy, and other aspects of embryonic development, studied in evolutionary developmental biology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Educational_technology">Educational technology</a></td>
+      <td>Educational technology (commonly abbreviated as edutech, or edtech) is the combined use of computer hardware, software, and educational theory and practice to facilitate learning. When referred to with its abbreviation, edtech, it is often referring to the industry of companies that create educational technology.In addition to practical educational experience, educational technology is based on theoretical knowledge from various disciplines such as communication, education, psychology, sociology, artificial intelligence, and computer science.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_technology">Financial technology</a></td>
+      <td>Financial technology (abbreviated fintech or FinTech) is the technology and innovation that aims to compete with traditional financial methods in the delivery of financial services. It is an emerging industry that uses technology to improve activities in finance.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology_company">Technology company</a></td>
+      <td>A technology company (or tech company) is an electronics-based technological company, including, for example, business relating to digital electronics, software, and internet-related services, such as e-commerce services.\n\n\n== Details ==\nAccording to Fortune, as of 2020, the ten largest technology companies by revenue are: Apple Inc., Samsung, Foxconn, Alphabet Inc., Microsoft, Huawei, Dell Technologies, Hitachi, IBM, and Sony.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology_management">Technology management</a></td>
+      <td>Technology management is a set of management disciplines that allows organizations to manage their technological fundamentals to create customer advantage. Typical concepts used in technology management are:\n\nTechnology strategy (a logic or role of technology in organization),\nTechnology forecasting (identification of possible relevant technologies for the organization, possibly through technology scouting),\nTechnology roadmap (mapping technologies to business and market needs), and\nTechnology project portfolio (a set of projects under development) and technology portfolio (a set of technologies in use).The role of the technology management function in an organization is to understand the value of certain technology for the organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Language_technology">Language technology</a></td>
+      <td>Language technology, often called human language technology (HLT), studies methods of how computer programs or electronic devices can analyze, produce, modify or respond to human texts and speech. Working with language technology often requires broad knowledge not only about linguistics but also about computer science.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Space_technology">Space technology</a></td>
+      <td>Space technology is technology for use in outer space, in travel (astronautics) or other activities beyond Earth's atmosphere, for purposes such as spaceflight, space exploration, and Earth observation. Space technology includes space vehicles such as spacecraft, satellites, space stations and orbital launch vehicles; deep-space communication; in-space propulsion; and a wide variety of other technologies including support infrastructure equipment, and procedures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Class_B_share">Class B share</a></td>
+      <td>In finance, a Class B share or Class C share is a designation for a share class of a common or preferred stock that typically has strengthened voting rights or other benefits compared to a Class A share that may have been created. The equity structure, or how many types of shares are offered, is determined by the corporate charter.B share can also refer to various terms relating to stock classes:\n\nB share (mainland China), a class of stock on the Shanghai and Shenzhen stock exchanges\nB share (NYSE), a class of stock on the New York Stock ExchangeMost of the time, Class B shares may have lower repayment priorities in the event a company declares bankruptcy.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CELSION CORP      ITEM 1A RISK FACTORS        The following is a summary of the <font color="blue">risk factors</font> that we believe are most     relevant to our business</td>
+    </tr>
+    <tr>
+      <td>These are factors that, individually or in the     aggregate, we think could cause our actual results to <font color="blue">differ <font color="blue">significant</font>ly</font>     from anticipated or historical results</td>
+    </tr>
+    <tr>
+      <td>You should understand that it is not     possible to predict or identify all <font color="blue">such factors</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, you should     not consider the following to be a complete discussion of all potential     risks  or <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>We undertake <font color="blue">no obligation</font> to <font color="blue">publicly update</font>     forward-looking statements, whether as a result of new information, future     events, or otherwise</td>
+    </tr>
+    <tr>
+      <td>You are advised, however, to consult any further     <font color="blue">disclosure</font> we make on related subjects in our reports on forms 10-Q and 8-K     <font color="blue">filed with</font> the SEC       WE HAVE A HISTORY OF SIGNIFICANT LOSSES AND EXPECT TO CONTINUE SUCH LOSSES     FOR THE FORESEEABLE FUTURE        Since Celsion’s inception in 1982, our expenses have <font color="blue"><font color="blue">substantially</font> exceeded</font>     our revenues, resulting in <font color="blue">continuing losses</font> and an <font color="blue">accumulated deficit</font> of     dlra82cmam903cmam000 at <font color="blue">December </font>31, 2005, including losses of dlra8cmam685cmam000 for the 12     <font color="blue">months then</font> ended</td>
+    </tr>
+    <tr>
+      <td>Because we presently have only limited <font color="blue">revenues from</font>     sales of our Prolieve system and related <font color="blue">disposables</font> and we are committed to     continuing our product research, <font color="blue">development</font> and <font color="blue">commercialization</font> programs,     we <font color="blue">will continue</font> to experience <font color="blue">significant</font> operating <font color="blue">losses unless</font> and until     we complete the <font color="blue">commercialization</font> of Prolieve, as well as the <font color="blue">development</font> of     other <font color="blue">new products</font> and these products have been clinically tested, approved     by the FDA and <font color="blue">successfully</font> marketed</td>
+    </tr>
+    <tr>
+      <td>WE DO NOT EXPECT TO GENERATE SIGNIFICANT REVENUE FOR THE FORESEEABLE FUTURE          Since 1995 we have devoted our resources to developing a <font color="blue">new <font color="blue">generation</font></font> of     products, but have not been able to market these <font color="blue">products until</font> we completed     <font color="blue">clinical testing</font> and obtained all <font color="blue"><font color="blue"><font color="blue">necessary</font> <font color="blue">government</font>al approval</font>s</font></td>
+    </tr>
+    <tr>
+      <td>On     <font color="blue">February </font>19, 2004, we received a PMA from the FDA for the first of our new     <font color="blue">generation</font> of thermotherapy products—our Prolieve Thermodilatation system     for the treatment of BPH—and, since that time, our <font color="blue">distributor</font>                                           10     ______________________________________________________________________    [77]Table of <font color="blue">Contents       </font><font color="blue"><font color="blue">Boston Scientific</font> </font>has <font color="blue">begun commercial introduction</font> of the Prolieve system</td>
+    </tr>
+    <tr>
+      <td>However, we can <font color="blue">give no assurance as</font> to how much <font color="blue">revenue will</font> be generated     by Prolieve sales or when sales of Prolieve <font color="blue">systems may</font> occur</td>
+    </tr>
+    <tr>
+      <td>In addition,     at  the present time our other products are still in <font color="blue">various stages</font> of     <font color="blue">development</font> and testing and cannot be <font color="blue">marketed until</font> we have completed     <font color="blue">clinical testing</font> and obtained <font color="blue"><font color="blue">necessary</font> <font color="blue">government</font>al approval</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly,     our <font color="blue">revenue sources</font> are, and <font color="blue">will remain extremely</font> limited until and unless     our Prolieve system is marketed <font color="blue">successfully</font> and/or until our other new     products  are  clinically tested, approved by the FDA and <font color="blue">successfully</font>     marketed</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that any or all of our <font color="blue">products will</font> be     <font color="blue">successfully</font>  tested, approved by the FDA or marketed, <font color="blue">successfully</font> or     otherwise, at any time in the <font color="blue">foreseeable future</font> or at all</td>
+    </tr>
+    <tr>
+      <td>IF WE ARE NOT ABLE TO OBTAIN NECESSARY FUNDING, WE WILL NOT BE ABLE TO     COMPLETE THE DEVELOPMENT, TESTING AND COMMERCIALIZATION OF OUR TREATMENT     SYSTEMS        We  will  need substantial <font color="blue"><font color="blue">additional</font> funding</font> in order to complete the     <font color="blue">development</font>, testing and <font color="blue">commercialization</font> of our <font color="blue">liver cancer</font> and recurrent     chest wall breast <font color="blue">cancer treatment</font> systems, as well as other <font color="blue">potential new</font>     products</td>
+    </tr>
+    <tr>
+      <td>We expended <font color="blue">approximately</font> dlra13cmam500cmam000 in the 12-month period ended     <font color="blue">December </font>31,  2005</td>
+    </tr>
+    <tr>
+      <td>As  of  that  date,  we  had available a total of     <font color="blue">approximately</font>  dlra8cmam300cmam000  in  cash,  cash  <font color="blue">equivalents</font> and short term     <font color="blue"><font color="blue">investment</font>s</font> to fund our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We have made a <font color="blue">significant</font> <font color="blue">commitment</font> to     our heat-activated liposome research and <font color="blue">development</font> projects and it is our     <font color="blue">intention at least</font> to maintain, or increase the pace and scope of these     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">commitment</font> to these new projects could require <font color="blue">additional</font>     external funding, at least until we are able to <font color="blue">generate sufficient cash</font>     <font color="blue">flow from sale</font> of one or more of our products to support our continued     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We do not have any <font color="blue">committed sources</font> of financing and cannot     offer any assurances that <font color="blue"><font color="blue">additional</font> funding</font> will be available in a timely     manner, on acceptable terms or at all</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">adequate funding</font> is not available, we may be required to delay, scale     back or <font color="blue">eliminate certain aspects</font> of our <font color="blue">operations</font> or attempt to obtain     funds through unfavorable <font color="blue">arrangements</font> with partners or others that may     force us to <font color="blue">relinquish rights</font> to certain of our <font color="blue">technologies</font>, products or     <font color="blue">potential markets</font> or that <font color="blue">could impose onerous financial</font> or other terms</td>
+    </tr>
+    <tr>
+      <td>Furthermore, if we <font color="blue">cannot fund</font> our ongoing <font color="blue">development</font> and other operating     <font color="blue">requirements</font>, particularly those <font color="blue">associated with</font> our <font color="blue">obligations</font> to conduct     <font color="blue"><font color="blue">clinical trials</font> under</font> our <font color="blue">licensing <font color="blue">agreements</font></font>, we will be in breach of     these <font color="blue">licensing <font color="blue">agreements</font></font> and <font color="blue">could therefore lose</font> our <font color="blue">license rights</font>,     <font color="blue">which could</font> have material <font color="blue">adverse effects on</font> our business</td>
+    </tr>
+    <tr>
+      <td>WE  HAVE NO INTERNAL SALES OR MARKETING CAPABILITY AND MUST ENTER INTO     ALLIANCES WITH OTHERS POSSESSING SUCH CAPABILITIES TO COMMERCIALIZE OUR     PRODUCTS SUCCESSFULLY        Currently our only source of revenues is from the sale of Prolieve control     units and <font color="blue">disposables</font> to <font color="blue"><font color="blue">Boston Scientific</font> </font>which, in turn, <font color="blue">distributes</font> these     products  to  the  market</td>
+    </tr>
+    <tr>
+      <td>Consequently, we are <font color="blue"><font color="blue">dependent</font> upon</font> Boston     Scientific for the <font color="blue">successful introduction</font> and marketing of our Prolieve     system</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that <font color="blue"><font color="blue">Boston Scientific</font> </font><font color="blue">will establish</font>     <font color="blue">adequate sales</font> and <font color="blue"><font color="blue">distribution</font> <font color="blue">capabilities</font></font> or be successful in gaining     <font color="blue">market <font color="blue">acceptance</font></font> for our Prolieve system</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Disruption </font>of our <font color="blue">relationship</font>     with <font color="blue">Boston Scientific</font>, or <font color="blue">Boston Scientific</font>’s sales of Prolieve products,     would reduce our revenues and, if <font color="blue">such reduction</font> were material, it would     have a material adverse effect on our business and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We  intend to market our other products, if and when <font color="blue">such products</font> are     approved for <font color="blue">commercialization</font> by the FDA, <font color="blue">either directly</font> or through other     <font color="blue">strategic alliances</font> and <font color="blue"><font color="blue">distribution</font> <font color="blue">arrangements</font> with <font color="blue">third parties</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">There     </font>can be no assurance that we will be able to <font color="blue">enter into</font> third-party marketing     or <font color="blue"><font color="blue">distribution</font> <font color="blue">arrangements</font> on advantageous terms</font> or at all</td>
+    </tr>
+    <tr>
+      <td>To the extent     that  we  do <font color="blue">enter into</font> such <font color="blue">arrangements</font>, we will be <font color="blue">dependent</font> on our     marketing and <font color="blue">distribution</font> partners</td>
+    </tr>
+    <tr>
+      <td>In entering into third-party marketing     or <font color="blue">distribution</font> <font color="blue">arrangements</font>, we expect to incur <font color="blue">significant</font> <font color="blue">additional</font>     expense</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that, to the extent that we <font color="blue">sell products</font>     directly or we <font color="blue">enter into</font> any <font color="blue">commercialization</font> <font color="blue">arrangements</font> with third     parties, such <font color="blue">third parties</font> <font color="blue">will establish</font> <font color="blue">adequate sales</font> and <font color="blue">distribution</font>     <font color="blue">capabilities</font> or be successful in gaining <font color="blue">market <font color="blue">acceptance</font></font> for our products     and services</td>
+    </tr>
+    <tr>
+      <td>11     ______________________________________________________________________    [78]Table of <font color="blue">Contents       </font>WE DEPEND ON THIRD-PARTY SUPPLIERS TO MANUFACTURE OUR PRODUCTS AND MAY NOT     BE ABLE TO OBTAIN THESE PRODUCTS ON FAVORABLE TERMS OR AT ALL        We <font color="blue">currently contract</font> for the <font color="blue">manufacture</font> of both our Prolieve <font color="blue">control units</font>     and  <font color="blue">disposables</font> from single or limited <font color="blue">source suppliers</font></td>
+    </tr>
+    <tr>
+      <td>The FDA must     approve  the  vendors  that  <font color="blue">supply us with</font> Prolieve <font color="blue">control units</font> and     <font color="blue">disposables</font>, and both our suppliers and the suppliers of our <font color="blue">suppliers must</font>     comply  with  FDA  <font color="blue">regulations</font> including good <font color="blue"><font color="blue">manufacturing</font> practices</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we are <font color="blue"><font color="blue">dependent</font> upon</font> our contract <font color="blue">manufacture</font>rs to <font color="blue">comply with</font>     FDA <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>In the event a supplier should lose its <font color="blue">regulatory</font> status as an approved     source, or otherwise would cease to supply us, we would attempt to locate an     alternate  source</td>
+    </tr>
+    <tr>
+      <td>However, we may not be able to obtain the required     products or <font color="blue">components</font> in a timely manner, at commercially reasonable prices     or  at  all</td>
+    </tr>
+    <tr>
+      <td>To the extent that <font color="blue">alternative</font> sources of supply are not     available on a timely basis and at reasonable cost, the loss of any of our     <font color="blue">suppliers could</font> have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>The loss of     any of these <font color="blue">suppliers would</font> require that we obtain a <font color="blue">replacement supplier</font>,     <font color="blue">which would</font> result in delays and <font color="blue">additional</font> expense in being able to meet     our supply <font color="blue">commitment</font>s to <font color="blue">Boston Scientific</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our suppliers are     in turn <font color="blue"><font color="blue">dependent</font> upon</font> single or limited-<font color="blue">source suppliers</font> for critical     <font color="blue">components</font> of our products</td>
+    </tr>
+    <tr>
+      <td>Although we believe that <font color="blue">alternative</font> sources of     <font color="blue">supply ultimately would</font> be <font color="blue">available both</font> to us and to our suppliers if the     need arose, the need to identify and qualify such <font color="blue">alternative</font> suppliers     pursuant to FDA <font color="blue">requirements</font> would entail <font color="blue">significant</font> time and expense</td>
+    </tr>
+    <tr>
+      <td>We rely, and expect to     continue to rely, on third-party CROs to conduct all of our <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">contracted with</font> Theradex to conduct our Phase I <font color="blue">liver cancer</font> trial     and with INC Research, Inc</td>
+    </tr>
+    <tr>
+      <td>to conduct our Prolieve post-market study</td>
+    </tr>
+    <tr>
+      <td>Because we do not conduct our own <font color="blue">clinical trials</font>, we <font color="blue">must rely on</font> the     efforts of others and <font color="blue">cannot always control</font> or <font color="blue">predict accurately</font> the timing     of such trials, the costs <font color="blue">associated with</font> such trials or the procedures that     are followed for such trials</td>
+    </tr>
+    <tr>
+      <td>We do not anticipate <font color="blue">significant</font>ly increasing     our personnel in the <font color="blue">foreseeable future</font> and therefore, expect to continue to     <font color="blue">rely on <font color="blue">third parties</font></font> to conduct all of our future <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>If these     <font color="blue">third parties</font> do not <font color="blue">successfully</font> carry out their <font color="blue">contractual duties</font> or     <font color="blue">obligations</font> or meet expected <font color="blue">deadlines</font>, if they do not carry out the trials     in <font color="blue">accordance with budgeted amounts</font>, if the quality or accuracy of the     clinical data they obtain is <font color="blue">compromised due</font> to their failure to adhere to     our <font color="blue">clinical protocols</font> or for other reasons, or if they fail to maintain     compliance  with  applicable <font color="blue">government</font> <font color="blue">regulations</font> and standards, our     clinical  trials  may be extended, delayed or terminated or may become     <font color="blue">prohibitively</font>  expensive,  and we may not be able to obtain <font color="blue">regulatory</font>     approval for or <font color="blue">successfully</font> <font color="blue">commercialize</font> our <font color="blue">product <font color="blue">candidates</font></font></td>
+    </tr>
+    <tr>
+      <td>OUR BUSINESS DEPENDS ON LICENSE AGREEMENTS WITH THIRD PARTIES TO PERMIT US     TO USE PATENTED TECHNOLOGIES THE LOSS OF ANY OF OUR RIGHTS UNDER THESE     AGREEMENTS COULD IMPAIR OUR ABILITY TO DEVELOP AND MARKET OUR PRODUCTS        Our <font color="blue">success will depend</font>, in substantial part, on our ability to maintain our     rights  under  license  <font color="blue">agreements</font>  <font color="blue">granting us rights</font> to use patented     <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">entered into</font> an <font color="blue">exclusive license agreement with</font> MMTC,     a  privately owned developer of medical devices, for microwave balloon     catheter <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We have also <font color="blue">entered into</font> license <font color="blue">agreements</font> with Duke     University, under which we have <font color="blue">exclusive rights</font> to <font color="blue"><font color="blue">commercialize</font> medical</font>     <font color="blue">treatment products</font> and <font color="blue">procedures based on</font> Duke’s thermo-sensitive liposome     <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>The MMTC and, Duke University license <font color="blue">agreements</font> each contain     license  fee,  royalty and/or research support provisions, testing and     <font color="blue">regulatory</font> milestones, and other performance <font color="blue">requirements</font> that we must meet     by certain <font color="blue">deadlines</font></td>
+    </tr>
+    <tr>
+      <td>If we were to breach these or other provisions of the     license  and research <font color="blue">agreements</font>, we <font color="blue">could lose</font> our ability to use the     subject <font color="blue">technology</font>, as well as <font color="blue">compensation</font> for our efforts in developing or     exploiting the <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>Any such loss of rights and access to <font color="blue">technology</font>     could have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>12     ______________________________________________________________________    [79]Table of <font color="blue">Contents       </font>Further, we <font color="blue">cannot guarantee</font> that any patent or other <font color="blue">technology</font> rights     licensed to <font color="blue">us by others will</font> not be challenged or circumvented <font color="blue">successfully</font>     by  third  parties,  or  that the <font color="blue">rights granted will provide adequate</font>     protection</td>
+    </tr>
+    <tr>
+      <td>We are aware of <font color="blue">published <font color="blue">patent <font color="blue">applications</font></font></font> and <font color="blue">issued patents</font>     belonging to others, and it is not <font color="blue">clear whether</font> any of these patents or     <font color="blue">applications</font>, or other <font color="blue">patent <font color="blue">applications</font></font> of which we may not have any     knowledge,  will  require us to alter any of our <font color="blue">potential products</font> or     processes,  pay  <font color="blue">licensing fees</font> to others or cease certain <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Litigation, <font color="blue">which could</font> result in substantial costs, may also be <font color="blue">necessary</font>     to enforce any <font color="blue">patents issued</font> to or <font color="blue">licensed by us</font> or to determine the scope     and validity of others’ claimed <font color="blue">proprietary rights</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also rely on trade</font>     secrets and <font color="blue">confidential</font> information that we seek to protect, in part, by     <font color="blue">confidential</font>ity <font color="blue">agreements</font> with our corporate partners, collaborators,     employees and <font color="blue">consultants</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that these <font color="blue">agreements</font> will     not be breached, that, even if not breached, that they are adequate to     protect our <font color="blue">trade secrets</font>, that we will have <font color="blue">adequate remedies</font> for any     breach or that our <font color="blue">trade secrets</font> will not <font color="blue">otherwise become known</font> to, or will     not be discovered in<font color="blue">dependent</font>ly by, <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>OUR BUSINESS IS SUBJECT TO NUMEROUS AND EVOLVING STATE, FEDERAL AND FOREIGN     REGULATIONS AND WE MAY NOT BE ABLE TO SECURE THE GOVERNMENT APPROVALS NEEDED     TO DEVELOP AND MARKET OUR PRODUCTS        Our research and <font color="blue">development</font> <font color="blue">activities</font>, pre-clinical tests and clinical     trials, and ultimately the <font color="blue">manufacturing</font>, marketing and labeling of our     products, all are subject to extensive <font color="blue">regulation by</font> the FDA and foreign     <font color="blue">regulatory</font> agencies</td>
+    </tr>
+    <tr>
+      <td>Pre-<font color="blue">clinical testing</font> and clinical trial <font color="blue">requirements</font>     and the <font color="blue">regulatory</font> approval process typically take years and require the     <font color="blue">expenditure</font> of substantial resources</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font><font color="blue"><font color="blue">government</font> regulation may</font>     be  established that <font color="blue">could prevent</font> or delay <font color="blue">regulatory</font> approval of our     <font color="blue">product <font color="blue">candidates</font></font></td>
+    </tr>
+    <tr>
+      <td>Delays or <font color="blue">rejections</font> in obtaining <font color="blue">regulatory</font> approvals     would <font color="blue">adversely</font> affect our ability to <font color="blue">commercialize</font> any <font color="blue">product <font color="blue">candidates</font></font>     and our ability to generate product revenues or royalties</td>
+    </tr>
+    <tr>
+      <td>The FDA and foreign <font color="blue">regulatory</font> agencies require that the safety and efficacy     of <font color="blue">product <font color="blue">candidates</font></font> be supported through adequate and well-controlled     <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>If the results of pivotal <font color="blue">clinical trials</font> do not establish     the safety and efficacy of our <font color="blue">product <font color="blue">candidates</font></font> to the <font color="blue">satisfaction</font> of the     FDA and other foreign <font color="blue">regulatory</font> agencies, we will not receive the approvals     <font color="blue">necessary</font> to market such <font color="blue">product <font color="blue">candidates</font></font></td>
+    </tr>
+    <tr>
+      <td>Even if <font color="blue">regulatory</font> approval of a <font color="blue">product candidate</font> is granted, the approval     may include <font color="blue">significant</font> limitations on the <font color="blue">indicated uses</font> for which the     <font color="blue">product may</font> be marketed</td>
+    </tr>
+    <tr>
+      <td>In addition, we are subject to <font color="blue">inspections</font> and     <font color="blue">regulations</font> by the FDA Medical <font color="blue">devices must also continue</font> to <font color="blue">comply with</font>     the  FDA’s  Quality  System  Regulation,  or QSR Compliance with such     <font color="blue">regulations</font> requires <font color="blue">significant</font> <font color="blue">expenditure</font>s of time and effort to ensure     full <font color="blue">technical compliance</font></td>
+    </tr>
+    <tr>
+      <td>The FDA stringently applies <font color="blue">regulatory</font> standards     for <font color="blue">manufacturing</font></td>
+    </tr>
+    <tr>
+      <td>We  are  subject  to  the  <font color="blue">periodic inspection</font> of our <font color="blue">clinical trials</font>,     facilities, procedures and <font color="blue">operations</font> and/or the testing of our <font color="blue">products by</font>     the FDA to determine whether our systems and processes are in compliance     with FDA <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Following </font>such <font color="blue">inspections</font>, the FDA may issue notices     on  Form 483 and <font color="blue">warning letters</font> that could cause us to <font color="blue">modify certain</font>     <font color="blue">activities</font> identified during the inspection</td>
+    </tr>
+    <tr>
+      <td>A Form 483 notice is <font color="blue">generally</font>     issued at the <font color="blue">conclusion</font> of an FDA inspection and <font color="blue">lists conditions</font> the FDA     <font color="blue">inspectors</font> believe may violate FDA <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>FDA <font color="blue">guidelines specify</font> that     a  warning  letter  is  issued  only  for  violations  of  “<font color="blue">regulatory</font>     significance” for which the failure to <font color="blue">adequately</font> and promptly achieve     <font color="blue">correction may</font> be expected to result in an <font color="blue">enforcement action</font></td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> FDA and other <font color="blue">government</font>al <font color="blue">regulations</font> can result in     fines, unanticipated compliance <font color="blue">expenditure</font>s, recall or seizure of products,     total or <font color="blue">partial suspension</font> of production and/or <font color="blue">distribution</font>, suspension of     the FDA’s review of product <font color="blue">applications</font>, <font color="blue">enforcement action</font>s, <font color="blue">injunctions</font>     and <font color="blue">criminal prosecution</font></td>
+    </tr>
+    <tr>
+      <td>Under <font color="blue">certain circumstances</font>, the FDA also has the     authority to <font color="blue">revoke previously granted product approvals</font></td>
+    </tr>
+    <tr>
+      <td>Although we have     internal compliance programs, if these programs do not meet <font color="blue">regulatory</font>     <font color="blue">agency standards</font> or if our compliance is deemed deficient in any <font color="blue">significant</font>     way, it could have a material adverse effect on the Company</td>
+    </tr>
+    <tr>
+      <td>We are also subject to record keeping and reporting <font color="blue">regulations</font>, including     FDA’s <font color="blue">mandatory</font> Medical Device Reporting, or MDR, regulation</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Labeling </font>and     promotional <font color="blue">activities</font> are regulated by the FDA and, in <font color="blue">certain instances</font>,     by the <font color="blue">Federal Trade Commission</font></td>
+    </tr>
+    <tr>
+      <td>13     ______________________________________________________________________    [80]Table of <font color="blue">Contents       </font>Many states in which we do or in the <font color="blue">future may</font> do business or in which our     products  may  be  sold  impose  licensing,  labeling or <font color="blue">certification</font>     <font color="blue">requirements</font> that are in addition to those <font color="blue">imposed by</font> the FDA There can be     no  assurance  that  one or more states will not impose <font color="blue">regulations</font> or     <font color="blue">requirements</font> that have a material adverse effect on our ability to sell our     products</td>
+    </tr>
+    <tr>
+      <td>In many of the <font color="blue">foreign countries</font> in which we may do business or in which our     products  may  be  sold,  we will be subject to <font color="blue">regulation by</font> national     <font color="blue"><font color="blue">government</font>s</font>  and  <font color="blue">supranational</font>  <font color="blue">agencies as well as by local agencies</font>     affecting, among other things, product standards, packaging <font color="blue">requirements</font>,     labeling <font color="blue">requirements</font>, import restrictions, tariff <font color="blue">regulations</font>, duties and     tax <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that one or more countries or     <font color="blue">agencies will</font> not impose <font color="blue">regulations</font> or <font color="blue">requirements</font> that could have a     material adverse effect on our ability to sell our products</td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> applicable <font color="blue">regulatory</font> <font color="blue">requirements</font>, can result in,     among other things, <font color="blue">warning letters</font>, fines, <font color="blue">injunctions</font> and other equitable     remedies, civil penalties, recall or seizure of products, total or partial     suspension of production, refusal of the <font color="blue">government</font> to <font color="blue">grant approvals</font>,     pre-market clearance or pre-market approval, withdrawal of approvals and     <font color="blue">criminal prosecution</font> of the Company and its employees, all of <font color="blue">which would</font>     have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>LEGISLATIVE AND REGULATORY CHANGES AFFECTING THE HEALTH CARE INDUSTRY COULD     ADVERSELY AFFECT OUR BUSINESS        There have been a number of federal and state <font color="blue">proposals during</font> the last few     years to subject the pricing of <font color="blue">health care</font> goods and services to <font color="blue">government</font>     control and to make other changes to the <font color="blue">United States </font><font color="blue">health care</font> system</td>
+    </tr>
+    <tr>
+      <td>It is <font color="blue">uncertain which legislative proposals</font>, if any, will be adopted (or     when) or what <font color="blue">actions federal</font>, state, or <font color="blue">private payors</font> for <font color="blue">health care</font>     treatment  and <font color="blue">services may</font> take in response to any <font color="blue">health care</font> reform     proposals or <font color="blue">legislation</font></td>
+    </tr>
+    <tr>
+      <td>We cannot predict the effect <font color="blue">health care</font> reforms     may have on our business and we can <font color="blue">offer no assurance</font>s that any of these     <font color="blue">reforms will</font> not have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>THE SUCCESS OF OUR PRODUCTS MAY BE HARMED IF THE GOVERNMENT, PRIVATE HEALTH     INSURERS AND OTHER THIRD-PARTY PAYORS DO NOT PROVIDE SUFFICIENT COVERAGE OR     REIMBURSEMENT        Our ability to <font color="blue">commercialize</font> our new <font color="blue">cancer treatment</font> systems <font color="blue">successfully</font>     will depend in part on the extent to <font color="blue">which <font color="blue">reimbursement</font></font> for the costs of     <font color="blue">such products</font> and related <font color="blue"><font color="blue">treatments</font> will</font> be available from <font color="blue">government</font>     health  <font color="blue">administration</font>  authorities, private <font color="blue">health insurers</font> and other     third-party payors</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">reimbursement</font> status</font> of <font color="blue">newly approved medical</font>     products is subject to <font color="blue">significant</font> uncertainty</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot guarantee</font> that     adequate  third-party  insurance  <font color="blue">coverage will</font> be available for us to     establish  and  maintain  <font color="blue">price levels sufficient</font> for us to realize an     <font color="blue">appropriate</font>  return  on  our  <font color="blue">investment</font>  in developing <font color="blue">new therapies</font></td>
+    </tr>
+    <tr>
+      <td>Government,  private  <font color="blue">health insurers</font> and other third-party payors are     <font color="blue">increasingly</font>  attempting to contain <font color="blue">health care</font> costs by limiting both     coverage  and  the level of <font color="blue">reimbursement</font> for <font color="blue">new therapeutic products</font>     approved  for  <font color="blue">marketing by</font> the FDA Accordingly, even if coverage and     <font color="blue">reimbursement</font>  are <font color="blue">provided by</font> <font color="blue">government</font>, private <font color="blue">health insurers</font> and     third-party payors for uses of our products, <font color="blue">market <font color="blue">acceptance</font></font> of these     <font color="blue">products would</font> be <font color="blue">adversely</font> affected if the <font color="blue">reimbursement</font> available proves     to be unprofitable for <font color="blue">health care</font> providers</td>
+    </tr>
+    <tr>
+      <td>14     ______________________________________________________________________    [81]Table of <font color="blue">Contents       </font>OUR PRODUCTS MAY NOT ACHIEVE SUFFICIENT ACCEPTANCE BY THE MEDICAL COMMUNITY     TO SUSTAIN OUR BUSINESS        Although we have received a PMA from the FDA for our Prolieve system for the     treatment of BPH, we can <font color="blue">offer no assurance</font> that the Prolieve <font color="blue">system will</font> be     <font color="blue">accepted by</font> the <font color="blue"><font color="blue">medical community</font> widely</font> or at all</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">cancer treatment</font>     <font color="blue">development</font> projects using <font color="blue">ThermoDox </font>plus RFA or microwave heating, are     currently in the <font color="blue">early stages</font> of Phase I <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>Any or all of     these projects may prove not to be <font color="blue">effective</font> in practice</td>
+    </tr>
+    <tr>
+      <td>If testing and     <font color="blue">clinical practice</font> do not confirm the safety and efficacy of our systems or,     even  if <font color="blue">further testing</font> and practice produce positive results but the     <font color="blue">medical community</font> does not view these new forms of treatment as <font color="blue">effective</font>     and  desirable,  our efforts to market our <font color="blue">new products</font> may fail, with     material <font color="blue">adverse consequences</font> to our business</td>
+    </tr>
+    <tr>
+      <td>TECHNOLOGIES FOR THE TREATMENT OF CANCER ARE SUBJECT TO RAPID CHANGE AND THE     DEVELOPMENT  OF  TREATMENT STRATEGIES THAT ARE MORE EFFECTIVE THAN OUR     TECHNOLOGIES COULD RENDER OUR TECHNOLOGIES OBSOLETE        Various methods for <font color="blue">treating cancer currently</font> are, and in the <font color="blue">future may</font> be     expected to be, the subject of extensive research and <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Many     </font><font color="blue">possible <font color="blue">treatments</font></font> that are being researched, if <font color="blue">successfully</font> developed,     may  not  require,  or  <font color="blue">may supplant</font>, the use of our <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>The     successful  <font color="blue">development</font>  and  <font color="blue">acceptance</font>  of  any one or more of these     <font color="blue">alternative</font> forms of <font color="blue">treatment could</font> render our <font color="blue">technology</font> obsolete as a     <font color="blue">cancer treatment</font> method</td>
+    </tr>
+    <tr>
+      <td>WE MAY NOT BE ABLE TO HIRE OR RETAIN KEY OFFICERS OR EMPLOYEES THAT WE NEED     TO IMPLEMENT OUR BUSINESS STRATEGY AND DEVELOP OUR PRODUCTS AND BUSINESS        Our success depends <font color="blue">significant</font>ly on the <font color="blue">continued contributions</font> of our     executive officers, scientific and <font color="blue">technical personnel</font> and <font color="blue">consultants</font>, and     on our ability to attract <font color="blue">additional</font> personnel as we seek to implement our     business  strategy and develop our products and <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>During our     operating history, we have assigned many <font color="blue">essential responsibilities</font> to a     <font color="blue">relatively</font> small number of <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>However, as our business and the     <font color="blue">demands on</font> our <font color="blue">key employees expand</font>, we have been, and <font color="blue">will continue</font> to be,     required to recruit <font color="blue">additional</font> qualified employees</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">competition</font> for such     <font color="blue">qualified personnel</font> is intense, and the loss of services of <font color="blue">certain key</font>     personnel or our <font color="blue">inability</font> to attract <font color="blue">additional</font> personnel to <font color="blue">fill critical</font>     positions could <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>Further, we do not carry “key     man” insurance on any of our personnel</td>
+    </tr>
+    <tr>
+      <td>Therefore, loss of the services of     <font color="blue">key personnel would</font> not be <font color="blue">ameliorated by</font> the receipt of the <font color="blue">proceeds from</font>     <font color="blue">such insurance</font></td>
+    </tr>
+    <tr>
+      <td>OUR SUCCESS WILL DEPEND IN PART ON OUR ABILITY TO GROW AND DIVERSIFY, WHICH     IN TURN WILL REQUIRE THAT WE MANAGE AND CONTROL OUR GROWTH EFFECTIVELY        Our business strategy contemplates growth and <font color="blue">diversification</font></td>
+    </tr>
+    <tr>
+      <td>Our ability     to manage growth <font color="blue">effective</font>ly will require that we continue to <font color="blue">expend funds</font>     to improve our operational, financial and <font color="blue"><font color="blue">management</font> controls</font>, reporting     systems and procedures</td>
+    </tr>
+    <tr>
+      <td>In addition, we must <font color="blue">effective</font>ly expand, train and     manage our employees</td>
+    </tr>
+    <tr>
+      <td>We will be unable to manage our <font color="blue">businesses</font> <font color="blue">effective</font>ly     if we are unable to alleviate the strain on resources caused by growth in a     timely and <font color="blue">successful manner</font></td>
+    </tr>
+    <tr>
+      <td>WE FACE INTENSE COMPETITION AND THE FAILURE TO COMPETE EFFECTIVELY COULD     ADVERSELY AFFECT OUR ABILITY TO DEVELOP AND MARKET OUR PRODUCTS        There are many companies and other institutions engaged in research and     <font color="blue">development</font> of various <font color="blue">technologies</font>, both for <font color="blue">prostate disease</font> and cancer     <font color="blue">treatment products</font> that <font color="blue">seek treatment outcomes</font> similar to those that we are     pursuing</td>
+    </tr>
+    <tr>
+      <td>We believe that the level of <font color="blue">interest by others</font> in <font color="blue">investigating</font>     the  potential  of  possible  <font color="blue">competitive</font>  <font color="blue">treatments</font>  and <font color="blue">alternative</font>     <font color="blue">technologies</font> <font color="blue">will continue</font> and may increase</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Potential </font><font color="blue">competitors</font> engaged     in all areas of prostate and <font color="blue">cancer treatment</font> research in the <font color="blue">United States </font>    and other countries include, among others, major pharmaceutical, specialized     <font color="blue">technology</font> companies, and <font color="blue">universities</font> and other <font color="blue">research institutions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Most     </font>of our <font color="blue">competitors</font> and potential <font color="blue">competitors</font> have <font color="blue">substantially</font> greater     financial, technical, human and other                                           15     ______________________________________________________________________    [82]Table of <font color="blue">Contents       </font>resources, and may also have far greater experience, than do we, both in     pre-clinical  testing and human <font color="blue">clinical trials</font> of <font color="blue">new products</font> and in     obtaining FDA and other <font color="blue">regulatory</font> approvals</td>
+    </tr>
+    <tr>
+      <td>One or more of these companies     or institutions could succeed in developing products or other <font color="blue">technologies</font>     that are more <font color="blue">effective</font> than the products and <font color="blue">technologies</font> that we have been     or  are  developing, or <font color="blue">which would</font> render our <font color="blue">technology</font> and products     obsolete and non-<font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, if we are permitted to commence     <font color="blue">commercial sales</font> of any of our products, we will also be competing, with     respect to <font color="blue">manufacturing</font> efficiency and marketing, with companies having     <font color="blue">substantially</font> greater resources and experience in these areas</td>
+    </tr>
+    <tr>
+      <td>WE MAY BE SUBJECT TO SIGNIFICANT PRODUCT LIABILITY CLAIMS AND LITIGATION        Our business <font color="blue">exposes us</font> to <font color="blue">potential product <font color="blue">liability</font> risks inherent</font> in the     testing, <font color="blue">manufacturing</font> and marketing of <font color="blue">human therapeutic products</font></td>
+    </tr>
+    <tr>
+      <td>We     presently  have  <font color="blue">product <font color="blue">liability</font> insurance</font> limited to dlra5cmam000cmam000 per     incident and dlra5cmam000cmam000 annually</td>
+    </tr>
+    <tr>
+      <td>If we were to be subject to a claim in     excess of this coverage or to a claim not <font color="blue">covered by</font> our insurance and the     claim succeeded, we would be required to pay the claim with our own limited     resources, <font color="blue">which could</font> have a material adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>In     addition,  <font color="blue">liability</font>  or  alleged <font color="blue">liability</font> could harm the business by     diverting the attention and resources of our <font color="blue">management</font> and by damaging our     reputation</td>
+    </tr>
+    <tr>
+      <td>WE HAVE NOT PAID DIVIDENDS IN THE PAST AND DO NOT INTEND TO DO SO FOR THE     FORESEEABLE FUTURE        We  have  never  <font color="blue">paid cash dividends</font> and do not anticipate <font color="blue">paying cash</font>     dividends in the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, our <font color="blue"><font color="blue">stockholders</font> cannot</font>     achieve any degree of <font color="blue">liquidity <font color="blue">with respect</font></font> to their shares of <font color="blue"><font color="blue">Common Stock </font>    </font><font color="blue">except by selling such shares</font></td>
+    </tr>
+    <tr>
+      <td>THE  EXERCISE  OF OUR OUTSTANDING OPTIONS AND WARRANTS COULD RESULT IN     SIGNIFICANT DILUTION OF OWNERSHIP INTERESTS IN OUR COMMON STOCK OR OTHER     CONVERTIBLE SECURITIES        The following information reflects the 15:1 reverse stock split effected     <font color="blue">February </font>27, 2006</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had outstanding and <font color="blue">exercisable warrants</font> and     options  to  purchase a total of 1cmam643cmam552 shares of our Common Stock,     including 3cmam740 shares issuable upon exercise of <font color="blue">preferred stock warrants</font>     and the <font color="blue">subsequent conversion</font> of the <font color="blue">preferred shares</font> to Common Stock, at     exercise prices ranging from dlra3dtta75 to dlra75dtta00 per share (and a weighted     <font color="blue">average exercise price</font> of <font color="blue">approximately</font> dlra11dtta10 per share)</td>
+    </tr>
+    <tr>
+      <td>In addition, we     had outstanding but unexercisable and <font color="blue">unvested options</font> to purchase a total     of 611cmam768 shares of our <font color="blue">Common Stock </font>at exercise prices ranging from dlra4dtta05     to dlra22dtta50 per share</td>
+    </tr>
+    <tr>
+      <td>Some of the prices are below the <font color="blue">current <font color="blue">market price</font></font>     of our Common Stock, which has <font color="blue">ranged from</font> a low of dlra3dtta90 to a high of dlra4dtta80     over the 20 trading days ending <font color="blue">December </font>31, 2005 and from a low of dlra3dtta75 to     a high of dlra4dtta29 over the 20 trading days ending March 15, 2006</td>
+    </tr>
+    <tr>
+      <td>If holders     choose to <font color="blue">exercise such warrants</font> and <font color="blue">options at prices</font> below the prevailing     <font color="blue">market price</font> for the Common Stock, the resulting purchase of a substantial     number  of  shares  of  our Common would have a dilutive effect on our     <font color="blue">stockholders</font> and could <font color="blue">adversely</font> affect the <font color="blue">market price</font> of our issued and     outstanding <font color="blue">Common Stock </font>and convertible securities</td>
+    </tr>
+    <tr>
+      <td>In addition, holders of     these options and warrants who have the right to require <font color="blue">registration</font> of the     <font color="blue">Common Stock </font>under <font color="blue">certain circumstances</font> and who elect to require such     <font color="blue">registration</font>, or who exercise their options or warrants and <font color="blue">then satisfy</font> the     one-year holding period and other <font color="blue">requirements</font> of Rule 144 of the Securities     Act,  will be able to sell in the <font color="blue">public market shares</font> of <font color="blue"><font color="blue">Common Stock </font>    </font><font color="blue">purchased upon such exercise</font></td>
+    </tr>
+    <tr>
+      <td>16     ______________________________________________________________________    [83]Table of <font color="blue">Contents       </font>IF THE PRICE OF OUR SHARES REMAINS LOW, WE MAY BE DELISTED BY THE AMERICAN     STOCK EXCHANGE AND BECOME SUBJECT TO SPECIAL RULES APPLICABLE TO LOW PRICED     STOCKS        Our <font color="blue">Common Stock </font><font color="blue">currently trades on</font> The American Stock Exchange (the Amex)</td>
+    </tr>
+    <tr>
+      <td>The Amex, as a matter of policy, will consider the suspension of trading in,     or <font color="blue">removal from listing</font> of, any stock when, in the opinion of the Amex,     (i) the <font color="blue">financial condition</font> and/or operating results of an issuer appear to     be unsatisfactory; (ii) it appears that the extent of public <font color="blue">distribution</font> or     the <font color="blue">aggregate market value</font> of the stock has become so <font color="blue">reduced as</font> to make     <font color="blue">further dealings on</font> the Amex inadvisable; (iii) the issuer has sold or     <font color="blue">otherwise disposed</font> of its principal operating assets; or (iv) the issuer has     sustained  losses  which are so substantial in relation to its overall     <font color="blue">operations</font> or its existing <font color="blue">financial condition</font> has become so impaired that     it appears questionable, in the opinion of the Amex, whether the <font color="blue">issuer will</font>     be able to continue <font color="blue">operations</font> and/or meet its <font color="blue">obligations</font> as they mature</td>
+    </tr>
+    <tr>
+      <td>For example, the Amex will consider <font color="blue">suspending dealings</font> in or delisting the     stock  of an issuer if the issuer has <font color="blue">sustained losses from continuing</font>     <font color="blue">operations</font> and/or net losses in its <font color="blue">five most recent fiscal years</font></td>
+    </tr>
+    <tr>
+      <td>Upon a delisting from the Amex, the <font color="blue">Common Stock </font>would become subject to the     <font color="blue"><font color="blue">penny stock</font> rules</font> of the SEC, which <font color="blue">generally</font> are applicable to equity     <font color="blue">securities with</font> a price of less than dlra5dtta00 per share (other <font color="blue">than securities</font>     <font color="blue">registered on certain national securities exchanges</font> or quoted on the <font color="blue">Nasdaq     </font>system, provided that <font color="blue">current price</font> and volume information <font color="blue">with respect</font> to     <font color="blue"><font color="blue">transaction</font>s</font> in <font color="blue">such securities</font> is <font color="blue">provided by</font> the exchange or system)</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue"><font color="blue">penny stock</font> rules</font> require a broker-dealer, prior to a <font color="blue">transaction</font> in a penny     stock not <font color="blue">otherwise exempt from</font> the rules, to deliver a <font color="blue">standardized risk</font>     <font color="blue">disclosure</font> document prepared by the SEC that provides information about     <font color="blue"><font color="blue">penny stock</font>s</font> and the nature and level of risks in the <font color="blue"><font color="blue">penny stock</font> market</font></td>
+    </tr>
+    <tr>
+      <td>The broker-dealer also must provide the <font color="blue">customer with bid</font> and <font color="blue">ask quotations</font>     for  the  penny  stock,  the <font color="blue">compensation</font> of the broker-dealer and its     <font color="blue">salesperson</font> in the <font color="blue">transaction</font> and <font color="blue">monthly account statements showing</font> the     market  value  of  <font color="blue">each <font color="blue">penny stock</font></font> held in the customer’s account</td>
+    </tr>
+    <tr>
+      <td>In     addition, the <font color="blue"><font color="blue">penny stock</font> rules</font> require that, prior to a <font color="blue">transaction</font> in a     <font color="blue">penny stock</font> that is not <font color="blue">otherwise exempt from</font> such rules; the broker-dealer     must make a <font color="blue">special written determination</font> that the <font color="blue">penny stock</font> is a suitable     <font color="blue">investment</font> for the purchaser and receive the purchaser’s written agreement     to the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">disclosure</font> <font color="blue">requirements</font> would likely to have a     material adverse effect on price and the level of <font color="blue">trading activity</font> in the     <font color="blue">secondary market</font> for a stock that becomes subject to the <font color="blue"><font color="blue">penny stock</font> rules</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">Common Stock </font>were to become subject to the <font color="blue"><font color="blue">penny stock</font> rules</font> it is     likely  that  the price of the <font color="blue">Common Stock </font><font color="blue">would decline</font> and that our     <font color="blue">stockholders</font> would be likely to find it more <font color="blue">difficult</font> to sell their shares</td>
+    </tr>
+    <tr>
+      <td>OUR STOCK PRICE HAS BEEN, AND COULD BE, VOLATILE        Market prices for our <font color="blue">Common Stock </font>and the securities of other medical, high     <font color="blue">technology</font> companies have <font color="blue">been volatile</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Common Stock </font>has had a high     price  of  dlra0dtta62 and a low price of dlra0dtta25 in the 52-week period ending     <font color="blue">December </font>31,  2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Factors  </font>such  as  <font color="blue">announcements</font> of <font color="blue">technological</font>     innovations  or  new  <font color="blue">products by</font> us or by our <font color="blue">competitors</font>, <font color="blue">government</font>     <font color="blue">regulatory</font> action, litigation, patent or <font color="blue">proprietary rights</font> <font color="blue">development</font>s and     market conditions for medical and high <font color="blue">technology</font> stocks in general can have     a <font color="blue">significant</font> impact on the market for our <font color="blue"><font color="blue">Common Stock </font>    </font>  OUR STOCK HISTORICALLY HAS BEEN THINLY TRADED THEREFORE, STOCKHOLDERS MAY     NOT BE ABLE TO SELL THEIR SHARES FREELY        While  our  Common  Stock is listed on the Amex, the volume of trading     <font color="blue">historically</font>  has  been  <font color="blue">relatively</font> light</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">trading volume</font> has     increased recently, there can be no assurance that this <font color="blue">increased trading</font>     volume,  our  <font color="blue">historically</font> light <font color="blue">trading volume</font>, or any <font color="blue">trading volume</font>     <font color="blue">whatsoever will</font> be sustained in the future</td>
+    </tr>
+    <tr>
+      <td>Therefore, there can be no     assurance that our <font color="blue">stockholders</font> will be able to sell their shares of our     <font color="blue">Common Stock </font>at the time or at the price that they desire, or at all</td>
+    </tr>
+    <tr>
+      <td>ANTI-TAKEOVER PROVISIONS IN OUR CHARTER DOCUMENTS AND DELAWARE LAW COULD     PREVENT OR DELAY A CHANGE IN CONTROL        Our Certificate of Incorporation and Bylaws may discourage, delay or prevent     a  merger  or <font color="blue">acquisition</font> that a <font color="blue">stockholder may</font> consider favorable by     <font color="blue">authorizing</font> the issuance of “blank check” preferred stock</td>
+    </tr>
+    <tr>
+      <td>This preferred                                           17     ______________________________________________________________________    [84]Table of <font color="blue">Contents       </font>stock  may  be  issued  by the Board of Directors, <font color="blue">on such terms as</font> it     determines, <font color="blue">without further stockholder approval</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, the Board may     issue such preferred stock on terms unfavorable to a <font color="blue">potential bidder</font> in the     event that is opposes a merger or <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our classified     <font color="blue">Board of Directors </font>may discourage such <font color="blue"><font color="blue">transaction</font>s</font> by increasing the amount     of time <font color="blue">necessary</font> to obtain <font color="blue">majority representation on</font> the Board</td>
+    </tr>
+    <tr>
+      <td>We also     have implemented a <font color="blue">stockholder rights</font> plan and <font color="blue">distributed rights</font> to our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>When these <font color="blue">rights become exercisable</font>, these <font color="blue">rights entitle</font>     their holders to <font color="blue">purchase one</font> share of our Series C Junior Participating     Preferred Stock at a price of dlra4dtta46 per one ten-thousandth of a share of     <font color="blue">Series C Preferred Stock</font></td>
+    </tr>
+    <tr>
+      <td>If any person or group acquires more than 15prca of     our Common Stock, the holders of rights (other than the person or group     crossing the 15prca threshold) will be able to purchase, in exchange for the     dlra4dtta46 exercise price, dlra8dtta92 of our <font color="blue">Common Stock </font>or the stock of any company     into which we are merged</td>
+    </tr>
+    <tr>
+      <td>Because these rights may <font color="blue">substantially</font> dilute     <font color="blue">stock ownership by</font> a person or group seeking to take us over without the     approval of our Board of Directors, our rights plan could make it more     <font color="blue">difficult</font> for a person or group to take us over (or acquire <font color="blue">significant</font>     <font color="blue">ownership interest</font> in us) without negotiating with our Board regarding such     a <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>Certain other provisions of our <font color="blue">Bylaws and of Delaware </font>law     may  also discourage, delay or prevent a <font color="blue">third party from</font> acquiring or     merging with us, even if <font color="blue">such action</font> were <font color="blue">beneficial</font> to some, or even a     majority, of our <font color="blue">stockholders</font></td>
+    </tr>
+  </tbody>
+</table>

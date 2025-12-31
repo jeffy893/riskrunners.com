@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "5: management", fill: "#76ff7a"},
+{source: "5: management", target: "5: existing client", fill: "#76ff7a"},
+{source: "5: existing client", target: "5: could affect", fill: "#76ff7a"},
+{source: "5: could affect", target: "5: clients demand", fill: "#76ff7a"},
+{source: "5: management", target: "9: backlog at", fill: "#f64a8a"},
+{source: "9: backlog at", target: "9: December ", fill: "#f64a8a"},
+{source: "9: backlog at", target: "37: revenues cash flow", fill: "#addfad"},
+{source: "37: revenues cash flow", target: "37: vary from quarter", fill: "#addfad"},
+{source: "37: vary from quarter", target: "37: fluctuations", fill: "#addfad"},
+{source: "37: fluctuations", target: "37: revenues earned", fill: "#addfad"},
+{source: "37: revenues earned", target: "37: contracts with", fill: "#addfad"},
+{source: "37: contracts with", target: "37: commencement completion", fill: "#addfad"},
+{source: "37: commencement completion", target: "37: termination", fill: "#addfad"},
+{source: "37: termination", target: "37: contracts during", fill: "#addfad"},
+{source: "37: contracts during", target: "37: particular quarter", fill: "#addfad"},
+{source: "37: particular quarter", target: "37: variable purchasing patterns under government", fill: "#addfad"},
+{source: "37: variable purchasing patterns under government", target: "37: government", fill: "#addfad"},
+{source: "37: government", target: "37: budgetary measures", fill: "#addfad"},
+{source: "37: budgetary measures", target: "37: adversely affect", fill: "#addfad"},
+{source: "37: adversely affect", target: "37: commercial contracts", fill: "#addfad"},
+{source: "37: revenues cash flow", target: "62: government", fill: "#a4f4f9"},
+{source: "62: government", target: "62: contain provisions andor", fill: "#a4f4f9"},
+{source: "62: contain provisions andor", target: "62: regulations", fill: "#a4f4f9"},
+{source: "62: regulations", target: "62: government rights", fill: "#a4f4f9"},
+{source: "62: government rights", target: "62: typically found", fill: "#a4f4f9"},
+{source: "62: typically found", target: "62: adjust contract costs", fill: "#a4f4f9"},
+{source: "62: adjust contract costs", target: "62: debar us from", fill: "#a4f4f9"},
+{source: "62: debar us from", target: "62: Information Act ", fill: "#a4f4f9"},
+{source: "62: government", target: "63: federal government", fill: "#779ecb"},
+{source: "63: federal government", target: "63: contracts with us", fill: "#779ecb"},
+{source: "63: contracts with us", target: "63: such terminations could adversely affect", fill: "#779ecb"},
+{source: "63: federal government", target: "START_HERE", fill: "#779ecb"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Veto</td>
+    </tr>
+    <tr>
+      <td>Ask for protection</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Management">Management</a></td>
+      <td>Management (or managing) is the administration of an organization, whether it is a business, a non-profit organization, or a government body. It is the art and science of managing resources of the business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sport_management">Sport management</a></td>
+      <td>Sport management is the field of business dealing with sports and recreation. Sports management involves any combination of skills that correspond with planning, organizing, directing, controlling, budgeting, leading, or evaluating of any organization or business within the sports field.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_management">Network management</a></td>
+      <td>Network management is the process of administering and managing computer networks. Services provided by this discipline include fault analysis, performance management, provisioning of networks and maintaining quality of service.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Risk_management">Risk management</a></td>
+      <td>Risk management is the identification, evaluation, and prioritization of risks (defined in ISO 31000 as the effect of uncertainty on objectives) followed by coordinated and economical application of resources to minimize, monitor, and control the probability or impact of unfortunate events or to maximize the realization of opportunities.\nRisks can come from various sources including uncertainty in international markets, threats from project failures (at any phase in design, development, production, or sustaining of life-cycles), legal liabilities, credit risk, accidents, natural causes and disasters, deliberate attack from an adversary, or events of uncertain or unpredictable root-cause.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Test_management">Test management</a></td>
+      <td>Test management most commonly refers to the activity of managing a testing process. A test management tool is software used to manage tests (automated or manual) that have been previously specified by a test procedure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December">December</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_17">December 17</a></td>
+      <td>December 17 is the 351st day of the year (352nd in leap years) in the Gregorian calendar;  14 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n497 BC – The first Saturnalia festival was celebrated in ancient Rome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_10">December 10</a></td>
+      <td>December 10 is the 344th day of the year (345th in leap years) in the Gregorian calendar;  21 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n1317 – The "Nyköping Banquet": King Birger of Sweden treacherously seizes his two brothers Valdemar, Duke of Finland and Eric, Duke of Södermanland, who were subsequently starved to death in the dungeon of Nyköping Castle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1">December 1</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2016_in_aviation">2016 in aviation</a></td>
+      <td>This is a list of aviation-related events from 2016.\n\n\n== Events ==\n\n\n=== January ===\nThe Government of Italy permitted United States unmanned aerial vehicles (UAVs or drones) to fly strike missions from Naval Air Station Sigonella in Sicily where the US has operated unarmed surveillance UAVs since 2001 against Islamic State targets in Libya, but only if they are "defensive," protecting U.S. forces or rescuers retrieving downed pilots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_12">December 12</a></td>
+      <td>December 12 is the 346th day of the year (347th in leap years) in the Gregorian calendar;  19 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n627 – Battle of Nineveh: A Byzantine army under Emperor Heraclius defeats Emperor Khosrau II's Persian forces, commanded by General Rhahzadh.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contract">Contract</a></td>
+      <td>A contract is a legally enforceable agreement that creates, defines, and governs mutual rights and obligations among its parties. A contract typically involves the transfer of goods, services, money, or a promise to transfer any of those at a future date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Social_contract">Social contract</a></td>
+      <td>In moral and political philosophy, the social contract is a theory or model that originated during the Age of Enlightenment and usually concerns the legitimacy of the authority of the state over the individual. Social contract arguments typically are that individuals have consented, either explicitly or tacitly, to surrender some of their freedoms and submit to the authority (of the ruler, or to the decision of a majority) in exchange for protection of their remaining rights or maintenance of the social order.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Indian_termination_policy">Indian termination policy</a></td>
+      <td>Indian termination is a phrase describing United States policies relating to Native Americans from the mid-1940s to the mid-1960s. It was shaped by a series of laws and practices with the intent of assimilating Native Americans into mainstream American society.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Network_termination">Network termination</a></td>
+      <td>A network termination (NT) (also NTE for network termination equipment) is a device that connects the customer's data or telephone equipment to a carrier's line that comes into a building or an office. The NT device provides a connection for terminal equipment (TE) and terminal adapter (TA) equipment to the local loop.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Late_termination_of_pregnancy">Late termination of pregnancy</a></td>
+      <td>Late termination of pregnancy (also referred to as late-term abortion) describes the termination of pregnancy by induced abortion during a late stage of gestation. "Late", in this context, is not precisely defined, and different medical publications use varying gestational age thresholds.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electrical_termination">Electrical termination</a></td>
+      <td>In electronics, electrical termination is the practice of ending a transmission line with a device that matches the characteristic impedance of the line. Termination prevents signals from reflecting off the end of the transmission line.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government">Government</a></td>
+      <td>A government is the system or group of people governing an organized community, generally a state.\nIn the case of its broad associative definition, government normally consists of legislature, executive, and judiciary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Australian_Government">Australian Government</a></td>
+      <td>The Australian Government, also known as the Commonwealth Government, is the national government of Australia, a federal parliamentary constitutional monarchy. Like other Westminster-style systems of government, the Australian Government is made up of three branches: the executive (the prime minister, the ministers, and government departments), the legislative (the Parliament of Australia), and the judicial.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_government_of_the_United_States">Federal government of the United States</a></td>
+      <td>The federal government of the United States (U.S. federal government or U.S. government) is the national government of the United States, a federal republic in North America, composed of 50 states, a city within a federal district (the city of Washington in the District of Columbia, where the entire federal government is based), five major self-governing territories and several island possessions. The federal government is composed of three distinct branches: legislative, executive, and judicial, whose powers are vested by the U.S. Constitution in the Congress, the president and the federal courts, respectively.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Executive_(government)">Executive (government)</a></td>
+      <td>The executive (short for executive branch or executive power) is the part of government that enforces law, and has responsibility for the governance of a state.\nIn political systems based on the principle of separation of powers, authority is distributed among several branches (executive, legislative, judicial)—an attempt to prevent the concentration of power in the hands of a single group of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_agency">Government agency</a></td>
+      <td>A government or state agency, sometimes an appointed commission, is a permanent or semi-permanent organization in the machinery of government that is responsible for the oversight and administration of specific functions, such as an administration. There is a notable variety of agency types.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Minister_(government)">Minister (government)</a></td>
+      <td>A minister is a politician who heads a ministry, making and implementing decisions on policies in conjunction with the other ministers. In some jurisdictions the head of government is also a minister and is designated the ‘prime minister’, ‘premier’, ‘chief minister’, ‘chancellor’ or other title.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_procurement_in_the_United_States">Government procurement in the United States</a></td>
+      <td>The processes of government procurement in the United States enable federal, state and local government bodies in the country to acquire goods, services (including construction), and interests in real property.In fiscal year 2019, the US Federal Government spent $597bn on contracts. The market for state, local, and education (SLED) contracts is thought to be worth $1.5 trillion.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_Government_of_Somalia">Federal Government of Somalia</a></td>
+      <td>The Government of Somalia (GS) (Somali: Dowladda Soomaaliya, Arabic: حكومة الصومال الاتحادية) is the internationally recognised government of Somalia, and the first attempt to create a central government in Somalia since the collapse of the Somali Democratic Republic. It replaced the Transitional Federal Government (TFG) of Somalia on 20 August 2012 with the adoption of the Constitution of Somalia.It officially comprises the executive branch of government, with the parliament serving as the legislative branch.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_of_Pakistan">Government of Pakistan</a></td>
+      <td>The Government of Pakistan (Urdu: حکومتِ پاکستان, romanized: hakúmat-e pákistán) abbreviated as GoP, is a federal government established by the Constitution of Pakistan as a constituted governing authority of the four provinces, two autonomous territories, and one federal territory of a parliamentary democratic republic, constitutionally called the Islamic Republic of Pakistan.Effecting the Westminster system for governing the state, the government is mainly composed of the executive, legislative, and judicial branches, in which all powers are vested by the Constitution in the Parliament, the Prime Minister and the Supreme Court. The powers and duties of these branches are further defined by acts and amendments of the Parliament, including the creation of executive institutions, departments and courts inferior to the Supreme Court.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>OPINION RESEARCH CORP      Item 1A Risk Factors        Readers of this report should be aware that the following important factors,     among others, in some cases have affected, and in the <font color="blue">future <font color="blue">could affect</font></font>,     our actual operating results and could cause our <font color="blue">actual consolidated</font> results     for  2006  and beyond to <font color="blue">differ materially from</font> those expressed in any     forward-looking statements made by, or on behalf of us</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Business        General  economic and industry-specific <font color="blue">factors beyond</font> our <font color="blue">control may</font>     <font color="blue"><font color="blue">adversely</font> affect</font> our business by causing demand for our services to decline</td>
+    </tr>
+    <tr>
+      <td>A number of <font color="blue">factors beyond</font> our <font color="blue">control could decrease</font> the demand of our     <font color="blue"><font color="blue">existing client</font>s</font> for our services and impair our ability to <font color="blue">attract new</font>     clients</td>
+    </tr>
+    <tr>
+      <td>These include marketing budgets, general economic conditions,     business consolidations, <font color="blue">government</font> spending, and other industry-specific     trends</td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue">management</font> or ownership of an <font color="blue">existing client</font> are also     factors that <font color="blue">could affect</font> the client’s demand for our services</td>
+    </tr>
+    <tr>
+      <td>As a result,     we may provide <font color="blue">different</font> levels of services to our clients from year to     year,  and  these  <font color="blue">differences</font> can cause a decline in or contribute to     <font color="blue">fluctuations</font> in our operating results</td>
+    </tr>
+    <tr>
+      <td>- 8 -     ______________________________________________________________________    [33]Table of <font color="blue">Contents       </font>Our business <font color="blue">could suffer</font> if we were to lose the business of SAMHSA, USAID     or one or more of our other large clients</td>
+    </tr>
+    <tr>
+      <td><font color="blue">SAMHSA and USAID </font>are our <font color="blue">largest clients</font></td>
+    </tr>
+    <tr>
+      <td>SAMHSA represented 20dtta7prca of our     revenues and 19dtta2prca of our <font color="blue">backlog at</font> <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>USAID, our second     largest client, represented 15dtta3prca of our revenues and 29dtta5prca of our backlog     at <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>Services we provided to various US federal and state     <font color="blue"><font color="blue">government</font>al departments</font> and agencies, including SAMHSA and USAID, generated     approximately 64dtta9prca of our revenues in 2005</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">clients <font color="blue">generally</font> may</font>     terminate the services we provide to them at any time</td>
+    </tr>
+    <tr>
+      <td>If we lose one or     more of our large clients, such as SAMHSA or USAID , or if one or more of     our large clients reduces its business with us, our revenues could decline</td>
+    </tr>
+    <tr>
+      <td>We have incurred losses in <font color="blue">recent years</font> and may not be profitable in the     future</td>
+    </tr>
+    <tr>
+      <td>These losses may <font color="blue"><font color="blue">adversely</font> affect</font> our business and the <font color="blue">market price</font>     of our stock</td>
+    </tr>
+    <tr>
+      <td>We     may not be able to attain or <font color="blue">increase profitability</font> in the future on a     quarterly  or <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>Any future losses may <font color="blue"><font color="blue">adversely</font> affect</font> our     business and the <font color="blue">market price</font> of our stock</td>
+    </tr>
+    <tr>
+      <td>The level of our debt, interest thereon, payment obligations and covenants     in our loan agreements could <font color="blue"><font color="blue">adversely</font> affect</font> our results and business by     limiting our operational and <font color="blue">financial <font color="blue">flexibility</font></font></td>
+    </tr>
+    <tr>
+      <td>Interest <font color="blue">expense <font color="blue">represents</font></font> a <font color="blue">significant</font> portion of our operating expenses     and an increase in <font color="blue">interest rates will</font> result in a decrease in operating     results</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">generate sufficient cash from</font> our <font color="blue">operations</font> to make scheduled     <font color="blue">debt payments</font> our operational and <font color="blue">financial <font color="blue">flexibility</font></font> will be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>Our present credit <font color="blue">agreements contain customary financial</font> and operating     covenants</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">covenants limit</font> or prohibit, among other things, our     ability to incur <font color="blue">additional</font> debt, prepay specified types of <font color="blue">indebtedness</font>,     <font color="blue">pay dividends</font>, make investments, sell assets, or engage in mergers and     <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These  covenants could <font color="blue"><font color="blue">adversely</font> affect</font> our business by     limiting our operational and <font color="blue">financial <font color="blue">flexibility</font></font></td>
+    </tr>
+    <tr>
+      <td>We may enter into <font color="blue"><font color="blue">acquisition</font>s</font> that may be <font color="blue">difficult</font> to integrate, disrupt     our business, <font color="blue">dilute stockholder value</font> or divert <font color="blue">management</font> attention</td>
+    </tr>
+    <tr>
+      <td>We have evaluated, and expect to continue to evaluate, a <font color="blue">wide array</font> of     possible <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that any <font color="blue">acquisition</font> we make in     the <font color="blue">future will provide us with</font> the benefits we anticipated in <font color="blue">entering into</font>     the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font>are <font color="blue">typically accompanied by</font> a number of     risks, including:           •   <font color="blue">difficult</font>ies in <font color="blue">integrating</font> the <font color="blue">operations</font> and personnel of the     acquired companies;           •   maintenance of acceptable standards, controls, procedures and     policies;           •   <font color="blue">potential disruption</font> of ongoing business and <font color="blue">distraction</font> of     <font color="blue">management</font>;           •   <font color="blue">impairment</font> of <font color="blue">relationships with employees</font> and <font color="blue">customers as</font> a result     of any <font color="blue">integration</font> of new <font color="blue">management</font> and other personnel;           •   <font color="blue">inability</font> to maintain <font color="blue">relationships with customers</font> of the acquired     business;           •   <font color="blue">difficult</font>ies in <font color="blue">incorporating</font> acquired <font color="blue">technology</font> and <font color="blue">rights into</font> our     services;           •   <font color="blue">unexpected expenses</font> resulting from the <font color="blue">acquisition</font>;           •   <font color="blue">potential unknown <font color="blue">liabilities</font> associated with</font> acquired <font color="blue">businesses</font>; and           •   <font color="blue"><font color="blue">unanticipated</font> expenses</font> related to acquired <font color="blue">technology</font> and its     <font color="blue">integration</font> into our existing <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>- 9 -     ______________________________________________________________________    [34]Table of <font color="blue">Contents       </font>In  addition,  <font color="blue"><font color="blue">acquisition</font>s</font>  may  result  in  the  incurrence of debt,     <font color="blue">restructuring charges</font> and large one-time write-offs, such as write-offs for     acquired in-process research and <font color="blue">development costs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font>may also     result  in  goodwill  and  other <font color="blue"><font color="blue">intangible asset</font>s</font> that are subject to     <font color="blue">impairment</font>  tests,  which  could  result in future <font color="blue">impairment</font> charges</td>
+    </tr>
+    <tr>
+      <td>Furthermore, if we finance <font color="blue"><font color="blue">acquisition</font>s</font> by issuing convertible debt or     <font color="blue">equity securities</font>, the holdings of our <font color="blue">existing <font color="blue">stockholders</font> may</font> be diluted     and <font color="blue">earnings per</font> share may decline</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations  </font>in  our quarterly and annual operating results may cause     <font color="blue">unanticipated</font> <font color="blue">decreases</font> in available cash and may cause the value of our     stock to decline</td>
+    </tr>
+    <tr>
+      <td>A number of factors, many of which are outside our control, may cause or     contribute to <font color="blue">significant</font> <font color="blue">fluctuations</font> in our quarterly and <font color="blue">annual revenue</font>     and operating results</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">fluctuations</font> may make financial planning and     <font color="blue">forecasting</font> more <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>In addition, these <font color="blue">fluctuations</font> may result in     <font color="blue">unanticipated</font> <font color="blue">decreases</font> in our available cash, which could negatively impact     our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">fluctuations</font> also could increase the <font color="blue">volatility</font> of our     stock price</td>
+    </tr>
+    <tr>
+      <td>A number of factors cause our revenues, cash flow and operating results to     <font color="blue">vary from quarter</font> to quarter, including:           •   <font color="blue">fluctuations</font> in <font color="blue">revenues earned</font> and expenses incurred on fixed-price     contracts and <font color="blue">contracts with</font> a performance-based fee structure;           •   commencement, completion or <font color="blue">termination</font> of <font color="blue">contracts during</font> any     <font color="blue">particular quarter</font>;           •   <font color="blue">variable purchasing patterns under <font color="blue">government</font></font> and commercial     contracts; and           •   changes in policy or <font color="blue">budgetary measures</font> that <font color="blue"><font color="blue">adversely</font> affect</font>     <font color="blue">government</font> and <font color="blue">commercial contracts</font> in general</td>
+    </tr>
+    <tr>
+      <td>Changes in the number of <font color="blue">contracts commenced</font>, completed or <font color="blue">terminated during</font>     any <font color="blue">quarter may</font> cause <font color="blue">significant</font> variations in our revenues and, because a     <font color="blue">relatively</font> large amount of our expenses are fixed, in our operating results</td>
+    </tr>
+    <tr>
+      <td>In addition, payments due to us from <font color="blue">government</font> agencies may be <font color="blue">delayed due</font>     to  <font color="blue">billing cycles</font> or as a result of <font color="blue">delayed approvals</font> of <font color="blue">government</font>al     budgets by legislative, executive or other <font color="blue">government</font>al bodies</td>
+    </tr>
+    <tr>
+      <td>Our  operating  results may suffer if there are <font color="blue">additional</font> <font color="blue">significant</font>     goodwill write-offs</td>
+    </tr>
+    <tr>
+      <td>Goodwill related to <font color="blue"><font color="blue">acquisition</font>s</font> <font color="blue">represents</font> a substantial portion of our     <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, the net     <font color="blue">goodwill amount on</font> our consolidated balance sheet represented 29dtta2prca of our     <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>Goodwill is an <font color="blue">intangible asset</font> and <font color="blue">represents</font> the excess of     the <font color="blue">purchase price</font> that we paid for acquired <font color="blue">businesses</font> over the estimated     <font color="blue">fair market value</font> of the net assets of those <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>If the fair value     of  the  goodwill, determined in <font color="blue">accordance</font> with applicable <font color="blue">accounting</font>     standards, falls below the recorded value shown on the balance sheet, we     will be required to write off the excess goodwill</td>
+    </tr>
+    <tr>
+      <td>Any future write-off     would be <font color="blue">treated as</font> an expense and, although non-cash in nature, would     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results <font color="blue">by reducing net income</font></td>
+    </tr>
+    <tr>
+      <td>In the third quarter of 2005, we wrote off impaired goodwill of dlra5dtta5 million     in  our  former  <font color="blue">teleservices</font> business</td>
+    </tr>
+    <tr>
+      <td>This charge is included in our     financial results for discontinued <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If we lose key <font color="blue">management</font> or are unable to attract and retain the personnel     required for our business, our operating results <font color="blue">could suffer</font></td>
+    </tr>
+    <tr>
+      <td>We are a service business, and as such we are <font color="blue">dependent upon</font> the efforts and     skills of our <font color="blue">senior <font color="blue">executives</font></font> and other <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>The cumulative     effect of <font color="blue">losing several</font> of these <font color="blue">individuals could hurt</font> our business</td>
+    </tr>
+    <tr>
+      <td>We do     not currently maintain key person <font color="blue">life insurance policies on</font> any of our     <font color="blue">executives</font>  other  than  John  F  Short, our <font color="blue">Chief Executive Officer</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for senior <font color="blue">management</font> is intense, and in the future we may not     be successful in retaining <font color="blue">key personnel</font> or in attracting and retaining     other personnel that we may require</td>
+    </tr>
+    <tr>
+      <td>- 10 -     ______________________________________________________________________    [35]Table of <font color="blue">Contents       </font>Our  clients’  spending  <font color="blue">priorities may</font> change in a <font color="blue">manner which could</font>     <font color="blue">negatively affect</font> our revenues</td>
+    </tr>
+    <tr>
+      <td>A majority of our revenues result <font color="blue">from services</font> we provide <font color="blue">to the US </font>    federal <font color="blue">government</font>; therefore, our business <font color="blue">depends upon continued</font> US     federal  <font color="blue">government</font>  <font color="blue">expenditures</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> decline in <font color="blue">government</font>     <font color="blue">expenditures</font>, or a shift of <font color="blue">expenditures</font> away from programs for which we     <font color="blue">provide services</font>, could <font color="blue"><font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>In addition, it has     been  our  experience that our <font color="blue"><font color="blue">commercial clients</font> <font color="blue">generally</font></font> view their     <font color="blue">expenditures</font> for our <font color="blue">services as discretionary</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">commercial clients</font>’     budgets for <font color="blue">discretionary spending on programs</font> for which we <font color="blue">provide services</font>     decrease or if their priorities for spending shift in a manner that results     in a <font color="blue">significant</font> decline in research <font color="blue">expenditures</font>, our business could be     <font color="blue"><font color="blue">adversely</font> affect</font>ed by the loss of revenues</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">contracts with</font> the US federal <font color="blue">government</font> grant the <font color="blue">government</font> rights     that  are  typically  not found in <font color="blue">commercial contracts</font> and that could     <font color="blue"><font color="blue">adversely</font> affect</font> our revenues and income</td>
+    </tr>
+    <tr>
+      <td>We presently have approximately 150 active contracts and <font color="blue">task orders with</font>     the US federal <font color="blue">government</font> which represented approximately 58dtta7prca of our     revenues for the year ended <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">inherent risks</font> in     <font color="blue">contracting with</font> the US federal <font color="blue">government</font> which could have an adverse     effect on our business</td>
+    </tr>
+    <tr>
+      <td>All <font color="blue">contracts with</font> the US federal <font color="blue">government</font>     contain provisions, and/or are subject to laws and <font color="blue">regulations</font>, that give     the <font color="blue">government</font> rights and remedies not <font color="blue">typically found</font> in our commercial     contracts, including rights that allow the <font color="blue">government</font> to:           •   claim rights in and ownership of products and systems that we produce;           •   <font color="blue">adjust contract costs</font> and fees on the basis of audits completed by its     agencies;           •   suspend or <font color="blue">debar us from</font> doing business with the US federal     <font color="blue">government</font>; and           •   release information obtained from us in response to a Freedom of     <font color="blue"><font color="blue">Information Act</font> </font>request</td>
+    </tr>
+    <tr>
+      <td>The US federal <font color="blue">government</font> has the right to terminate its <font color="blue">contracts with</font> us     at any time and such <font color="blue">termination</font>s could <font color="blue"><font color="blue">adversely</font> affect</font> our revenues and     income</td>
+    </tr>
+    <tr>
+      <td>The US federal <font color="blue">government</font> has the right to terminate its <font color="blue">contracts with</font> us     at any time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the US </font>federal <font color="blue">government</font> terminates a contract, we may     <font color="blue">recover only</font> our incurred or committed costs, settlement expenses and profit     on work completed before the <font color="blue">termination</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">government</font> terminates a     contract for default, we may not recover even those amounts, and instead may     be  liable  for  excess  costs incurred by the <font color="blue">government</font> in procuring     undelivered items and services from another source</td>
+    </tr>
+    <tr>
+      <td>Additionally, most of     our <font color="blue">backlog could</font> be <font color="blue">reduced by</font> any <font color="blue">modification</font> or <font color="blue">termination</font> of contracts     that we have with the US federal <font color="blue">government</font> or, in cases where we are a     sub<font color="blue">contractor</font>, contracts that our prime <font color="blue"><font color="blue">contractor</font>s</font> have with the US     federal <font color="blue">government</font></td>
+    </tr>
+    <tr>
+      <td>As  a  <font color="blue">contractor</font>  to  the  US federal <font color="blue">government</font>, we are subject to     <font color="blue">restrictions</font> and <font color="blue">compliance requirements</font> that <font color="blue">could divert</font> the attention of     our <font color="blue">management</font>, drain our resources and/or result in <font color="blue">additional</font> costs, fines     or other penalties</td>
+    </tr>
+    <tr>
+      <td>As a <font color="blue">contractor</font> <font color="blue">to the US </font>federal <font color="blue">government</font>, we are subject to various     laws and <font color="blue">regulations</font> that are more <font color="blue">restrictive than</font> those applicable to     non-<font color="blue">government</font> <font color="blue"><font color="blue">contractor</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We are required to obtain and maintain material     <font color="blue">government</font>al authorizations and approvals to conduct our business as it is     <font color="blue">currently conducted</font></td>
+    </tr>
+    <tr>
+      <td>New or more stringent laws or <font color="blue">government</font>al <font color="blue">regulations</font>     <font color="blue">concerning</font> <font color="blue">government</font> contracts could hurt our business by limiting our     <font color="blue">flexibility</font> and by <font color="blue">potentially</font> causing us to incur <font color="blue">additional</font> expenses</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also must <font color="blue">comply with</font></font> and are <font color="blue">affected by laws</font> and <font color="blue">regulations</font> relating     to the formation, <font color="blue">administration</font> and performance of US federal <font color="blue">government</font>     contracts</td>
+    </tr>
+    <tr>
+      <td>These laws and <font color="blue">regulations</font> affect how we do business with our     US  federal <font color="blue">government</font> clients and may result in <font color="blue">added costs</font> for our     business</td>
+    </tr>
+    <tr>
+      <td>For  example,  we  are  required to <font color="blue">comply with</font> the Federal     Acquisition Regulations and all <font color="blue">supplements</font>, which <font color="blue">comprehensively</font> regulate     the formation, <font color="blue">administration</font> and performance of US federal <font color="blue">government</font>     contracts, and the Truth in Negotiations Act, which requires <font color="blue">certification</font>     and  <font color="blue">disclosure</font>  of  cost and <font color="blue">pricing data</font> in <font color="blue">connection with contract</font>     <font color="blue">negotiations</font></td>
+    </tr>
+    <tr>
+      <td>If a <font color="blue">government</font> review or <font color="blue">investigation</font> uncovers improper or     illegal <font color="blue">activities</font>, we may be subject to civil and criminal penalties and     <font color="blue">administrative</font> sanctions, including:           •   <font color="blue">termination</font> of contracts;                                         - 11 -     ______________________________________________________________________    [36]Table of <font color="blue">Contents       </font>  •   <font color="blue">forfeiture</font> of profits;           •   suspension of payments;           •   fines; and           •   suspension or <font color="blue">debarment from</font> doing business with US federal     <font color="blue">government</font> agencies</td>
+    </tr>
+    <tr>
+      <td>Any  of  the sanctions could <font color="blue"><font color="blue">adversely</font> affect</font> our business, prospects,     financial condition, or operating results</td>
+    </tr>
+    <tr>
+      <td>We may not receive the full <font color="blue">amount authorized under contracts</font> that we have     <font color="blue">entered into</font> and our <font color="blue">backlog may</font> be lower than we have projected, both of     <font color="blue">which could reduce</font> our <font color="blue">future revenues</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">define backlog as</font> the total contract value of our <font color="blue">engagements</font> that our     <font color="blue">management</font> believes to be firm, less previously recognized revenues</td>
+    </tr>
+    <tr>
+      <td>Our     backlog includes <font color="blue">twelve months</font> of <font color="blue">commercial contracts</font>, the funded and     <font color="blue">unfunded amounts</font> of our <font color="blue">government</font> contracts, and options to renew or extend     <font color="blue">government</font> contracts that we expect our clients to exercise</td>
+    </tr>
+    <tr>
+      <td>However, the     maximum contract value specified under each contract that we enter into is     not <font color="blue">necessarily</font> <font color="blue">indicative</font> of the revenues that we will realize under that     contract</td>
+    </tr>
+    <tr>
+      <td>Because we may not receive the full amount we expect under a     contract, our estimates of our <font color="blue">backlog may</font> not prove to be accurate since     the <font color="blue">actual recognition</font> of <font color="blue">revenues on programs</font> included in <font color="blue">backlog may</font> never     occur or may change</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Estimates </font>of <font color="blue">future revenues</font> included in backlog are     not <font color="blue">necessarily</font> precise and the receipt and timing of any of the revenues     are subject to <font color="blue">contingencies</font>, many of which are beyond our control</td>
+    </tr>
+    <tr>
+      <td>For a     discussion   of  these  <font color="blue">contingencies</font>,  see  “Special  Note  Regarding     Forward-Looking Statements” in this <font color="blue">Annual Report </font>on Form 10-K       Our <font color="blue"><font color="blue">competitor</font>s could challenge <font color="blue">successfully</font></font> the award of a <font color="blue">government</font>     contract to us, causing us to lose the contract, <font color="blue">which could reduce</font> our     <font color="blue">future revenues</font></td>
+    </tr>
+    <tr>
+      <td>A unique feature of US federal <font color="blue">government</font> contracting allows a <font color="blue">contractor</font>     that loses a prime <font color="blue">contract award</font> to protest the <font color="blue">contract award</font> to its     <font color="blue">competitor</font> and obtain an <font color="blue">independent review</font> of the agency’s decision-making     process</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">contractor</font> may also protest the terms of a <font color="blue">bid solicitation</font> if it     believes those terms to be unfair or <font color="blue">anti<font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td>If one or more of our     <font color="blue">competitor</font>s  <font color="blue">challenges</font>  a  <font color="blue">contract award</font>ed to us, the <font color="blue">government</font> may     ultimately determine that it is <font color="blue">necessary</font> for the contract to undergo a new     round of <font color="blue">evaluation</font> and <font color="blue">competition</font>, and our <font color="blue">contract with</font> the <font color="blue">government</font>     may be terminated</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">successful challenge by</font> a <font color="blue">competitor</font> could cause us to     lose a contract that <font color="blue">might otherwise</font> be awarded to us and reduce our future     revenues</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">government</font> contracts are subject to audits and <font color="blue">cost <font color="blue">adjustment</font>s by</font> the     US federal <font color="blue">government</font>, which could hurt our operating results</td>
+    </tr>
+    <tr>
+      <td>The US federal <font color="blue">government</font> audits and reviews our <font color="blue">performance on contracts</font>,     pricing practices, cost structure, and <font color="blue">compliance with applicable laws</font>,     <font color="blue">regulations</font> and standards</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Responding </font>to <font color="blue">government</font>al audits, inquiries or     <font color="blue">investigation</font>s may involve <font color="blue">significant</font> expense and divert the attention of     our <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>An audit of our work, including an audit of work performed     by companies we have acquired or may acquire, could result in a substantial     <font color="blue">adjustment</font> to our revenues because any costs determined by the <font color="blue">government</font> to     be <font color="blue">improperly allocated</font> to a <font color="blue">specific contract will</font> not be reimbursed, and     revenues we have already recognized may need to be refunded</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If a US     </font>federal <font color="blue">government</font> audit results in <font color="blue"><font color="blue">allegation</font>s</font> of improper or illegal     <font color="blue">activities</font> by us or our employees and if we are unable to <font color="blue">successfully</font>     <font color="blue">defend against</font> those <font color="blue"><font color="blue">allegation</font>s</font>, we may be subject to civil and criminal     penalties and <font color="blue">administrative</font> sanctions, including <font color="blue">termination</font> of contracts,     <font color="blue">forfeiture</font> of profits, suspension of payments, fines and suspension, and /     or <font color="blue">debarment from</font> doing business with US federal <font color="blue">government</font> agencies</td>
+    </tr>
+    <tr>
+      <td>In     addition, we <font color="blue">could suffer</font> serious harm to our reputation if <font color="blue"><font color="blue">allegation</font>s</font> of     <font color="blue">impropriety</font>  were made <font color="blue">against us regardless</font> of the merits of any such     <font color="blue">allegation</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the US federal <font color="blue">government</font> may conduct non-audit     <font color="blue">reviews on</font> a majority of our <font color="blue">government</font> contracts, which in turn could lead     to full <font color="blue">audit reviews by</font> the <font color="blue">government</font></td>
+    </tr>
+    <tr>
+      <td>- 12 -     ______________________________________________________________________    [37]Table of <font color="blue">Contents       </font>We may not <font color="blue">accurately</font> estimate the expenses, time and resources <font color="blue">necessary</font> to     satisfy our contractual obligations, which could hurt our operating results</td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">enter into three types</font> of <font color="blue">contracts with</font> our clients: fixed-price,     cost-<font color="blue">reimbursement</font> and time-and-materials</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31,     2005, we derived approximately 43dtta1prca of our <font color="blue">consolidated revenues from</font>     fixed-price   contracts,  48dtta2prca  of  our  consolidated  revenues  from     cost-<font color="blue">reimbursement</font> contracts and 8dtta8prca of our <font color="blue">consolidated revenues from</font>     time-and-materials  contracts</td>
+    </tr>
+    <tr>
+      <td>Compared to cost-<font color="blue">reimbursement</font>     contracts,   fixed-price   contracts  <font color="blue">generally</font>  offer  higher  margin     <font color="blue">opportunities</font>, but involve greater <font color="blue">financial risk</font> because we bear the impact     of cost overruns</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">profits could</font> be <font color="blue"><font color="blue">adversely</font> affect</font>ed if our <font color="blue">costs under</font>     any of these contracts exceed the <font color="blue">assumptions</font> we used in bidding for or     <font color="blue">negotiating</font>  the  contract</td>
+    </tr>
+    <tr>
+      <td>Under cost-<font color="blue">reimbursement</font> contracts, we are     reimbursed  for  <font color="blue">allowable costs</font> and paid a fee, which may be fixed or     performance-based</td>
+    </tr>
+    <tr>
+      <td>To  the  extent  that the actual costs incurred in     performing a cost-<font color="blue">reimbursement</font> contract are within the contract ceiling and     <font color="blue">allowable under</font> the terms of the contract and applicable <font color="blue">regulations</font>, we are     entitled to <font color="blue">reimbursement</font> of our costs, plus a profit</td>
+    </tr>
+    <tr>
+      <td>However, if our costs     exceed the ceiling or are not <font color="blue">allowable under</font> the terms of the contract or,     in the case of <font color="blue">government</font> contracts, by applicable <font color="blue">regulations</font>, our income     may be <font color="blue"><font color="blue">adversely</font> affect</font>ed because we may not be able to recover those costs</td>
+    </tr>
+    <tr>
+      <td>Under  time-and-materials  contracts,  we  are reimbursed for labor at     <font color="blue">negotiated hourly billing rates</font> and for expenses</td>
+    </tr>
+    <tr>
+      <td>We assume <font color="blue">financial risk</font>     on time-and-materials contracts because we assume the risk of performing     those <font color="blue">contracts at negotiated hourly rates</font></td>
+    </tr>
+    <tr>
+      <td>If our employees engage in <font color="blue">misconduct</font> or other improper <font color="blue">activities</font>, we could     be subject to <font color="blue">various penalties</font> and <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>We are exposed to the risk that employee fraud or other <font color="blue">misconduct</font> could     occur and would expose us, as well as the individual employee, to various     penalties and <font color="blue">liabilities</font>, including those under the Federal False Claims     Act</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Misconduct </font><font color="blue">by employees could</font> include <font color="blue">intentional</font> or un<font color="blue">intentional</font>     failures to <font color="blue">comply with</font> US federal <font color="blue">government</font> procurement <font color="blue">regulations</font> or     failure to disclose <font color="blue">unauthorized</font> or unsuccessful <font color="blue">activities</font> to us</td>
+    </tr>
+    <tr>
+      <td>It is not     <font color="blue">always possible</font> to deter employee <font color="blue">misconduct</font>, and the <font color="blue">precautions</font> we take to     prevent and detect this activity — including our policies and procedures —     may not be <font color="blue">effective</font> in <font color="blue">controlling unknown</font> or <font color="blue">unmanaged risks</font> or losses</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">competitor</font>s  could obtain, and use to our detriment, <font color="blue">confidential</font>     information  about  us obtained through a <font color="blue">request under</font> the Freedom of     <font color="blue">Information Act</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitor</font>s may be able to obtain <font color="blue">confidential</font> information <font color="blue">about us</font>,     such as our cost or <font color="blue">pricing policies</font>, in a <font color="blue">request under</font> the Freedom of     <font color="blue">Information Act</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">competitor</font> could use this information as the basis for     a  successful  challenge to the award of a contract to us or to gain a     <font color="blue">competitive</font> business advantage that it might use to our detriment in future     <font color="blue">bid solicitation</font>s</td>
+    </tr>
+    <tr>
+      <td>Our international <font color="blue">operations</font> subject us to social, political and economic     risks of doing business in <font color="blue">foreign countries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>12dtta9prca of our revenues for the year ended <font color="blue">December </font>31, 2005     were <font color="blue">generated from contracts</font> performed outside of the US, and a portion     of those revenues was <font color="blue">denominated</font> in currencies other than the US dollar</td>
+    </tr>
+    <tr>
+      <td>We are exposed to <font color="blue">foreign currency risk</font> to the extent that the results of     our foreign <font color="blue">operations</font> may decline in <font color="blue">value as measured</font> in US dollars</td>
+    </tr>
+    <tr>
+      <td>It     has  not been our practice to <font color="blue">enter into foreign exchange contracts</font> to     protect against adverse foreign currency <font color="blue">fluctuations</font>, and we <font color="blue">cannot predict</font>     whether  future exchange rate <font color="blue">fluctuations</font> will <font color="blue">significant</font>ly harm our     <font color="blue">operations</font> or financial results</td>
+    </tr>
+    <tr>
+      <td>In addition to adverse <font color="blue">fluctuations</font> in     <font color="blue">foreign currency exchange rates</font>, we are exposed to <font color="blue">further risks inherent</font> in     doing business abroad, including <font color="blue">limitations on asset transfers</font>, changes in     foreign <font color="blue">regulations</font> and <font color="blue">political turmoil</font>, all of which could <font color="blue">adversely</font>     affect our operating results</td>
+    </tr>
+    <tr>
+      <td>Several of our purported <font color="blue">stockholders</font> have filed a lawsuit against us, which     could result in <font color="blue">significant</font> legal costs and divert <font color="blue">management</font> attention from     the operation of our business</td>
+    </tr>
+    <tr>
+      <td>On  <font color="blue">December </font>2,  2004,  several  of our purported <font color="blue">stockholders</font> filed a     <font color="blue">derivative complaint against us</font> and our <font color="blue">directors</font> in the <font color="blue">Chancery Court </font>of     <font color="blue">the State of Delaware </font>alleging, among other things, that our <font color="blue">directors</font>     breached their <font color="blue">fiduciary duties</font> of good faith and loyalty to us and our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>We could incur <font color="blue">significant</font> costs defending the     lawsuit, and                                         - 13 -     ______________________________________________________________________    [38]Table of <font color="blue">Contents       </font><font color="blue">management</font>  attention  could be <font color="blue">diverted from</font> other important business     concerns</td>
+    </tr>
+    <tr>
+      <td>An adverse de<font color="blue">termination</font> in the <font color="blue">lawsuit may harm</font> our business</td>
+    </tr>
+  </tbody>
+</table>

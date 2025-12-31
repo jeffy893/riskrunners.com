@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: carefully", fill: "#fffaf0"},
+{source: "2: carefully", target: "2: following risks", fill: "#fffaf0"},
+{source: "2: following risks", target: "2: common stock", fill: "#fffaf0"},
+{source: "2: carefully", target: "4: Additional ", fill: "#d40000"},
+{source: "4: Additional ", target: "4: uncertainties", fill: "#d40000"},
+{source: "4: uncertainties", target: "4: management", fill: "#d40000"},
+{source: "4: management", target: "4: focused on", fill: "#d40000"},
+{source: "4: focused on", target: "4: management currently", fill: "#d40000"},
+{source: "4: management currently", target: "4: operations", fill: "#d40000"},
+{source: "4: Additional ", target: "7: risks with respect", fill: "#23297a"},
+{source: "7: risks with respect", target: "7: repaid risks", fill: "#23297a"},
+{source: "7: repaid risks", target: "7: industry conditions risks inherent", fill: "#23297a"},
+{source: "7: industry conditions risks inherent", target: "7: dealing with", fill: "#23297a"},
+{source: "7: dealing with", target: "7: from uncertainties as", fill: "#23297a"},
+{source: "7: from uncertainties as", target: "7: future value", fill: "#23297a"},
+{source: "7: risks with respect", target: "11: financial condition would", fill: "#c19a6b"},
+{source: "11: financial condition would", target: "11: adversely affected", fill: "#c19a6b"},
+{source: "11: adversely affected", target: "11: loan losses", fill: "#c19a6b"},
+{source: "11: loan losses", target: "11: absorb actual", fill: "#c19a6b"},
+{source: "11: financial condition would", target: "17: Maintaining ", fill: "#a52a2a"},
+{source: "17: Maintaining ", target: "17: significant", fill: "#a52a2a"},
+{source: "17: significant", target: "17: unanticipated", fill: "#a52a2a"},
+{source: "17: unanticipated", target: "17: which would materially affect", fill: "#a52a2a"},
+{source: "17: which would materially affect", target: "17: operations", fill: "#a52a2a"},
+{source: "17: Maintaining ", target: "20: regulatory agencies may", fill: "#edc9af"},
+{source: "20: regulatory agencies may", target: "20: loan losses", fill: "#edc9af"},
+{source: "20: loan losses", target: "20: further loan", fill: "#edc9af"},
+{source: "20: further loan", target: "20: judgments which may", fill: "#edc9af"},
+{source: "20: judgments which may", target: "20: different from ours", fill: "#edc9af"},
+{source: "20: regulatory agencies may", target: "21: loan losses", fill: "#8b8589"},
+{source: "21: loan losses", target: "21: regulatory", fill: "#8b8589"},
+{source: "21: regulatory", target: "21: agencies could", fill: "#8b8589"},
+{source: "21: agencies could", target: "21: operations", fill: "#8b8589"},
+{source: "21: loan losses", target: "26: mismatches between", fill: "#a4f4f9"},
+{source: "26: mismatches between", target: "26: dollar amount", fill: "#a4f4f9"},
+{source: "26: dollar amount", target: "26: maturing assets", fill: "#a4f4f9"},
+{source: "26: maturing assets", target: "26: liabilities", fill: "#a4f4f9"},
+{source: "26: liabilities", target: "26: from mismatches", fill: "#a4f4f9"},
+{source: "26: from mismatches", target: "26: Contents ", fill: "#a4f4f9"},
+{source: "26: Contents ", target: "26: rate at which", fill: "#a4f4f9"},
+{source: "26: rate at which", target: "26: liabilities reprice", fill: "#a4f4f9"},
+{source: "26: mismatches between", target: "53: banking customers", fill: "#fad6a5"},
+{source: "53: banking customers", target: "53: lose market", fill: "#fad6a5"},
+{source: "53: lose market", target: "53: growth rate", fill: "#fad6a5"},
+{source: "53: growth rate", target: "53: financial condition", fill: "#fad6a5"},
+{source: "53: financial condition", target: "53: operations", fill: "#fad6a5"},
+{source: "53: banking customers", target: "START_HERE", fill: "#fad6a5"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Commercial Services</td>
+    </tr>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Treasury_stock">Treasury stock</a></td>
+      <td>A treasury stock or reacquired stock is stock which is bought back by the issuing company, reducing the amount of outstanding stock on the open market ("open market" including insiders' holdings). \nStock repurchases are used as a tax efficient method to put cash into shareholders' hands, rather than paying dividends, in jurisdictions that treat capital gains more favorably.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Convertible_bond">Convertible bond</a></td>
+      <td>In finance, a convertible bond or  convertible note or convertible debt (or a convertible debenture if it has a maturity of greater than 10 years) is a type of bond that the holder can convert into a specified number of shares of common stock in the issuing company or cash of equal value.  It is a hybrid security with debt- and equity-like features.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage_loan">Mortgage loan</a></td>
+      <td>A mortgage loan or simply mortgage (), in civil law jurisdicions known also as a hypothec loan, is a loan used either by purchasers of real property to raise funds to buy real estate, or by existing property owners to raise funds for any purpose while putting a lien on the property being mortgaged. The loan is "secured" on the borrower's property through a process known as mortgage origination.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Allowance_for_Loan_and_Lease_Losses">Allowance for Loan and Lease Losses</a></td>
+      <td>In banking, the Allowance for Loan and Lease Losses (ALLL), formerly known as the reserve for bad debts, is a calculated reserve that financial institutions establish in relation to the estimated credit risk within the institution's assets. This credit risk represents the charge-offs that will most likely be realized against an institution's operating income as of the financial statement end date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Current_Expected_Credit_Losses">Current Expected Credit Losses</a></td>
+      <td>Current Expected Credit Losses (CECL) is a credit loss accounting standard (model) that was issued by the Financial Accounting Standards Board (FASB) on June 16, 2016. CECL replaces the current Allowance for Loan and Lease Losses (ALLL) accounting standard.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Student_loan">Student loan</a></td>
+      <td>A student loan is a type of loan designed to help students pay for post-secondary education and the associated fees, such as tuition, books and supplies, and living expenses. It may differ from other types of loans in the fact that the interest rate may be substantially lower and the repayment schedule may be deferred while the student is still in school.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Participation_loan">Participation loan</a></td>
+      <td>Participation loans are loans made by multiple lenders to a single borrower.  \nSeveral banks, for example, might chip in to fund one extremely large loan, with one of the banks taking the role of the "lead bank".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PIK_loan">PIK loan</a></td>
+      <td>A PIK, or payment in kind, is a type of high-risk loan or bond that allows borrowers to pay interest with additional debt, rather than cash. That makes it an expensive, high-risk financing instrument since the size of the debt may increase quickly, leaving lenders with big losses if the borrower is unable to pay back the loan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_agency">Regulatory agency</a></td>
+      <td>A regulatory agency (regulatory body, regulator) or independent agency (independent regulatory agency) is a government authority that is responsible for exercising autonomous dominion over some area of human activity in a licensing and regulating capacity.\nThese are customarily set up to strengthen safety and standards, and/or to protect consumers in markets where there is a lack of effective competition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capture">Regulatory capture</a></td>
+      <td>In politics, regulatory capture (also agency capture and client politics) is a form of corruption of authority that occurs when a political entity, policymaker, or regulator is co-opted to serve the commercial, ideological, or political interests of a minor constituency, such as a particular geographic area, industry, profession, or ideological group.When regulatory capture occurs, a special interest is prioritized over the general interests of the public, leading to a net loss for society. The theory of client politics is related to that of rent-seeking and political failure; client politics "occurs when most or all of the benefits of a program go to some single, reasonably small interest (e.g., industry, profession, or locality) but most or all of the costs will be borne by a large number of people (for example, all taxpayers)".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sequence">Regulatory sequence</a></td>
+      <td>A regulatory sequence is a segment of a nucleic acid molecule which is capable of increasing or decreasing the expression of specific genes within an organism. Regulation of gene expression is an essential feature of all living organisms and viruses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sign">Regulatory sign</a></td>
+      <td>A regulatory sign is used to indicate or reinforce traffic laws, regulations or requirements which apply either at all times or at specified times or places upon a street or highway, the disregard of which may constitute a violation, or a sign in general that regulates public behavior in places open to the public.  The FHWA defines regulatory sign as "a sign that gives notice to road users of traffic laws or regulations".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_focus_theory">Regulatory focus theory</a></td>
+      <td>Regulatory focus theory (RFT) is a theory of goal pursuit: 444  formulated by Columbia University psychology professor and researcher E. Tory Higgins regarding people's perceptions in the decision making process. RFT examines the relationship between the motivation of a person and the way in which they go about achieving their goal.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gene_regulatory_network">Gene regulatory network</a></td>
+      <td>A gene (or genetic) regulatory network (GRN) is a collection of molecular regulators that interact with each other and with other substances in the cell to govern the gene expression levels of mRNA and proteins which, in turn, determine the function of the cell. GRN also play a central role in morphogenesis, the creation of body structures, which in turn is central to evolutionary developmental biology (evo-devo).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>TEXAS CAPITAL BANCSHARES INC/TX      ITEM 1A   RISK FACTORS       An  <font color="blue">investment</font>  in our <font color="blue"><font color="blue">common stock</font> involves certain risks</font></td>
+    </tr>
+    <tr>
+      <td>You should     consider <font color="blue">carefully</font> the <font color="blue">following risks</font> and other information in this report,     including our financial information and related notes, before investing in     our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The risks and <font color="blue"><font color="blue">uncertainties</font> described</font> below are not the     <font color="blue">only ones facing us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and <font color="blue">uncertainties</font> that <font color="blue">management</font> is     not aware of or <font color="blue">focused on</font> or that <font color="blue">management</font> currently deems immaterial     mayalso impair our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>This report is qualified in its     <font color="blue">entirety by</font> these <font color="blue">risk factors</font></td>
+    </tr>
+    <tr>
+      <td>Risk Factors Associated With Our Business       We <font color="blue">must <font color="blue">effectively</font> manage</font> our credit risk</td>
+    </tr>
+    <tr>
+      <td>There are risks inherent in     making any loan, including <font color="blue">risks with respect</font> to the period of time over     which the loan may be repaid, risks resulting from changes in economic and     industry <font color="blue">conditions</font>, risks inherent in <font color="blue">dealing with</font> individual borrowers and     risks resulting from <font color="blue">uncertainties</font> as to the <font color="blue">future value</font> of collateral</td>
+    </tr>
+    <tr>
+      <td>The     risk of non-payment of loans is inherent in <font color="blue">commercial banking</font></td>
+    </tr>
+    <tr>
+      <td>Although we     attempt  to  minimize  our  credit  risk  by  <font color="blue">carefully</font> monitoring the     <font color="blue">concentration</font> of our <font color="blue">loans within specific industries</font> and <font color="blue">through prudent</font>     <font color="blue">loan <font color="blue">application</font> approval procedures</font> in all <font color="blue">categories</font> of our lending, we     <font color="blue">cannot assure</font> you that <font color="blue">such monitoring</font> and <font color="blue">approval procedures will reduce</font>     these <font color="blue">lending risks</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that our credit <font color="blue">administration</font>     personnel,  policies  and  <font color="blue">procedures will adequately adapt</font> to any new     <font color="blue">geographic markets</font></td>
+    </tr>
+    <tr>
+      <td>Our results of operation and <font color="blue"><font color="blue">financial condition</font> would</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font>     if  our  allowance  for <font color="blue">loan losses</font> is not sufficient to <font color="blue">absorb actual</font>     losses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Experience </font>in the <font color="blue"><font color="blue">banking industry</font> indicates</font> that a portion of our     loans in all <font color="blue">categories</font> of our lending business <font color="blue">will become delinquent</font>, and     some  may  only be <font color="blue">partially repaid</font> or may never be repaid at all</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">methodology</font> for <font color="blue">establishing</font> the adequacy of the allowance for <font color="blue">loan losses</font>     depends  on  subjective  <font color="blue">application</font>  of  <font color="blue">risk grades as indicators</font> of     borrowers’ ability to repay</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Deterioration </font>in <font color="blue">general economic</font> <font color="blue">conditions</font>     and unforeseen risks <font color="blue">affecting</font> <font color="blue">customers may</font> have an adverse effect on     borrowers’ <font color="blue">capacity</font> to honor their <font color="blue">obligations</font> before risk grades could     reflect those changing <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>A decrease in the ratio of the     allowance for <font color="blue">loan losses</font> to <font color="blue">total loans may increase</font> the risk that the     <font color="blue">allowance would become</font> inadequate if borrowers experience economic and other     <font color="blue">conditions</font> adverse to their <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Maintaining </font>the adequacy of our     allowance  for  loan  losses  may require that we make <font color="blue">significant</font> and     <font color="blue">unanticipated</font> increases in our provisions for <font color="blue">loan losses</font> in the future,     <font color="blue">which would materially affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Recognizing </font>that     many of our <font color="blue">loans individually represent</font> a <font color="blue">significant</font> percentage of our     <font color="blue">total allowance</font> for <font color="blue">loan losses</font>, which may have <font color="blue">decreased as</font> a percent of     total loans, adverse collection experience in a <font color="blue">relatively</font> small number of     <font color="blue">loans could</font> require an increase in our allowance</td>
+    </tr>
+    <tr>
+      <td>Federal regulators, as an     integral part of their respective supervisory functions, periodically review     our allowance for <font color="blue">loan losses</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">regulatory</font> agencies may</font> require us to     increase  our  provision  for <font color="blue">loan losses</font> or to recognize <font color="blue">further loan</font>     charge-offs based upon their judgments, which may be <font color="blue">different from ours</font></td>
+    </tr>
+    <tr>
+      <td>Any increase in the allowance for <font color="blue">loan losses</font> required by these <font color="blue">regulatory</font>     <font color="blue">agencies could</font> have a negative effect on our results of <font color="blue">operations</font> and     financial  condition</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional descriptions</font> of risks in the loan     portfolio, the <font color="blue">methodology</font> for determining, and information related to, the     adequacy  of the reserve for <font color="blue">loan losses</font>, see the Summary of Loan Loss     <font color="blue">Experience </font>section in Management’s Discussion and Analysis of <font color="blue">Financial </font>    Condition and Results of Operations</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are <font color="blue">significant</font>ly <font color="blue">affected by</font> <font color="blue">interest rate</font> levels</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">profitability</font> is <font color="blue">dependent</font> to a large extent on our <font color="blue">net interest income</font>,     which is the <font color="blue">difference between interest income</font> we earn as a result of     <font color="blue">interest paid</font> to us on loans and <font color="blue"><font color="blue">investment</font>s</font> and interest we pay to third     <font color="blue">parties such as</font> our <font color="blue">depositors</font> and those from whom we <font color="blue">borrow funds</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Like     </font><font color="blue">most financial <font color="blue">institutions</font></font>, we are <font color="blue">affected by</font> changes in <font color="blue">general interest</font>     rate levels, which are currently at <font color="blue">relatively</font> low levels, and by other     <font color="blue">economic factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Interest rate risk can result from     <font color="blue">mismatches between</font> the <font color="blue">dollar amount</font> of repricing or <font color="blue">maturing assets</font> and     <font color="blue">liabilities</font> and <font color="blue">from mismatches</font> in the                                         10       _________________________________________________________________    [56]Table of <font color="blue">Contents       </font>timing and <font color="blue">rate at which</font> our assets and <font color="blue">liabilities</font> reprice</td>
+    </tr>
+    <tr>
+      <td>Although we     have <font color="blue">implemented strategies which</font> we believe reduce the <font color="blue">potential effects</font> of     changes in <font color="blue"><font color="blue"><font color="blue">interest rate</font>s</font> on</font> our results of <font color="blue">operations</font>, these <font color="blue">strategies may</font>     not  always  be successful</td>
+    </tr>
+    <tr>
+      <td>In addition, any substantial and prolonged     increase in <font color="blue">market <font color="blue"><font color="blue">interest rate</font>s</font> could reduce</font> our customers’ desire to     borrow  <font color="blue">money from us</font> or <font color="blue"><font color="blue">adversely</font> affect</font> their ability to repay their     <font color="blue">outstanding loans by increasing</font> their credit <font color="blue">costs since most</font> of our loans     have <font color="blue">adjustable <font color="blue"><font color="blue">interest rate</font>s</font></font> that <font color="blue">reset periodically</font></td>
+    </tr>
+    <tr>
+      <td>Any of these events     could <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our business faces unpredictable economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>General economic     <font color="blue">conditions</font> impact the <font color="blue">banking industry</font></td>
+    </tr>
+    <tr>
+      <td>The credit quality of our loan     portfolio necessarily reflects, among other things, the <font color="blue">general economic</font>     <font color="blue">conditions</font> in the areas in which we conduct our business</td>
+    </tr>
+    <tr>
+      <td>Our continued     financial <font color="blue">success depends</font> somewhat on factors beyond our control, including:         •  national and local economic <font color="blue">conditions</font>;         •  the supply and demand for <font color="blue">investable funds</font>;         •  <font color="blue"><font color="blue">interest rate</font>s</font>; and         •  federal, state and local laws <font color="blue">affecting</font> these matters</td>
+    </tr>
+    <tr>
+      <td>Any substantial <font color="blue">deterioration</font> in any of the foregoing <font color="blue">conditions</font> could have     a  material  adverse  effect on our results of operation and financial     condition, which would likely <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">market price</font> of our     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Further, with the exception of our <font color="blue">BankDirect </font>customers, which     comprised 8prca of our <font color="blue">total deposits as</font> of <font color="blue">December </font>2005, our bank’s customer     base  is  <font color="blue">primarily commercial</font> in nature, and our bank does not have a     <font color="blue">significant</font> branch network or <font color="blue">retail deposit base</font></td>
+    </tr>
+    <tr>
+      <td>In periods of economic     downturn, business and <font color="blue">commercial deposits may tend</font> to be more <font color="blue">volatile than</font>     <font color="blue">traditional retail consumer deposits</font> and, therefore, during these periods     our  financial  condition and results of <font color="blue">operations</font> could be <font color="blue">adversely</font>     affected to a <font color="blue">greater degree than</font> our <font color="blue">competitors</font> that have a <font color="blue">larger retail</font>     <font color="blue">customer base</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent</font> upon key personnel</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font> to a <font color="blue">significant</font>     <font color="blue">extent upon</font> the performance of <font color="blue">certain <font color="blue">key employees</font></font>, the loss of whom could     have  an adverse effect on our business</td>
+    </tr>
+    <tr>
+      <td>Although we have <font color="blue">entered into</font>     <font color="blue">employment agreements with certain employees</font>, we <font color="blue">cannot assure</font> you that we     will be successful in retaining <font color="blue">key employees</font></td>
+    </tr>
+    <tr>
+      <td>Our business is <font color="blue">concentrated</font> in Texas and a downturn in the economy of <font color="blue">Texas     </font>may <font color="blue"><font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>As a result, our <font color="blue">financial condition</font> and results of     <font color="blue">operations</font> may be <font color="blue">affected by</font> changes <font color="blue">in the Texas </font>economy</td>
+    </tr>
+    <tr>
+      <td>A prolonged     period of <font color="blue">economic recession</font> or other adverse economic <font color="blue">conditions</font> in <font color="blue">Texas     </font>may  result  in  an increase in non-payment of loans and a decrease in     <font color="blue">collateral value</font></td>
+    </tr>
+    <tr>
+      <td>Our business strategy includes <font color="blue">significant</font> growth plans and, if we fail to     manage our <font color="blue">growth <font color="blue">effectively</font> as</font> we pursue our <font color="blue">expansion strategy</font>, it could     <font color="blue">negatively affect</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We intend to develop our business by     pursuing a <font color="blue">significant</font> growth strategy</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">prospects must</font> be considered in     light of the risks, expenses and <font color="blue"><font color="blue">difficult</font>ies frequently encountered by</font>     companies in <font color="blue">significant</font> growth stages of <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>In order to execute     our <font color="blue">growth strategy <font color="blue">successfully</font></font>, we must, among other things:         •  identify and <font color="blue">expand into suitable markets</font> and lines of business;         •  build our <font color="blue">customer base</font>;         •  maintain credit quality;         •  attract sufficient deposits to fund our anticipated <font color="blue">loan growth</font>;         •  attract and retain qualified bank <font color="blue">management</font> in each of our targeted     markets;         •  identify and <font color="blue">pursue suitable opportunities</font> for <font color="blue">opening new banking</font>     locations; and         •  maintain adequate <font color="blue">regulatory</font> capital</td>
+    </tr>
+    <tr>
+      <td>11       _________________________________________________________________    [57]Table of <font color="blue">Contents       </font>  Failure to manage our growth <font color="blue">effectively</font> could have a material adverse     effect on our business, future prospects, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font>, and could <font color="blue"><font color="blue">adversely</font> affect</font> our ability to <font color="blue">successfully</font> implement     our business strategy</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> many <font color="blue">larger financial <font color="blue">institutions</font> which</font> have <font color="blue">substantially</font>     <font color="blue">greater financial resources than</font> we have</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font><font color="blue">among financial</font>     <font color="blue">institutions</font> in Texas is intense</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> other financial and bank     holding companies, state and national commercial banks, savings and loan     <font color="blue">associations</font>,  consumer  finance  companies, credit unions, securities     brokerages, insurance companies, mortgage banking companies, money market     <font color="blue">mutual funds</font>, asset-based non-bank lenders and other financial <font color="blue">institutions</font></td>
+    </tr>
+    <tr>
+      <td>Many of these <font color="blue">competitors</font> have <font color="blue">substantially</font> greater financial resources,     lending limits and larger branch networks than we do, and are able to offer     a broader range of products and services than we can</td>
+    </tr>
+    <tr>
+      <td>Failure to compete     <font color="blue">effectively</font> for deposit, loan and other <font color="blue">banking customers</font> in our markets     could cause us to <font color="blue">lose market</font> share, slow our <font color="blue">growth rate</font> and may have an     adverse effect on our <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">risks involved</font> in <font color="blue">commercial lending may</font> be material</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">generally</font>     invest a <font color="blue">greater proportion</font> of our assets in <font color="blue"><font color="blue">commercial loans</font> than</font> other     banking <font color="blue">institutions</font> of our size, and our business plan calls for continued     efforts to increase our <font color="blue">assets invested</font> in these loans</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Commercial </font>loans     <font color="blue">generally</font> involve a <font color="blue">higher degree</font> of credit risk than some other types of     loans due, in part, to their <font color="blue">larger average size</font>, the <font color="blue">dependency on</font> the cash     flow  of the borrowers’ <font color="blue">businesses</font> to <font color="blue">service debt</font>, the sale of assets     securing the loans, and <font color="blue">disposition</font> of <font color="blue">collateral which may</font> not be readily     marketable</td>
+    </tr>
+    <tr>
+      <td>Losses <font color="blue">incurred on</font> a <font color="blue">relatively</font> small number of <font color="blue">commercial loans</font>     could have a <font color="blue">materially <font color="blue">adverse impact on</font></font> our results of <font color="blue">operations</font> and     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Real <font color="blue">estate lending</font> in our core Texas <font color="blue">markets involves risks</font> related to a     decline in value of commercial and <font color="blue">residential <font color="blue">real estate</font></font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">real estate</font>     <font color="blue">lending <font color="blue">activities</font></font>, and the exposure to <font color="blue">fluctuations</font> in <font color="blue">real estate</font> values,     are <font color="blue">significant</font> and expected to increase</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market value</font> of <font color="blue">real estate</font>     can fluctuate <font color="blue">significant</font>lyin a <font color="blue">relatively</font> short period of time as a result     of market <font color="blue">conditions</font> in the <font color="blue">geographic area</font> in which the <font color="blue">real estate</font> is     located</td>
+    </tr>
+    <tr>
+      <td>If the value of the <font color="blue">real estate</font> serving as collateral for our loan     portfolio  were  to <font color="blue">decline materially</font>, a <font color="blue">significant</font> part of our loan     portfolio  could become under-collateralized and we may not be able to     realize  the  amount  of  security  that we anticipated at the time of     <font color="blue">originating</font> the loan</td>
+    </tr>
+    <tr>
+      <td>Our future <font color="blue">profitability</font> depends, to a <font color="blue">significant</font> extent, upon revenue we     receive from our <font color="blue">middle market</font> business customers and their ability to meet     their  loan <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>We expect that our future <font color="blue">profitability</font> will     depend, to a <font color="blue">significant</font> extent, upon revenue we receive from <font color="blue">middle market</font>     business customers, and their ability to continue to <font color="blue">meet existing loan</font>     <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>As a result, adverse economic <font color="blue">conditions</font> or other factors     <font color="blue">adversely</font> <font color="blue">affecting</font> this market segment may have a <font color="blue">greater adverse</font> effect on     us  than  on other financial <font color="blue">institutions</font> that have a more diversified     <font color="blue">customer base</font></td>
+    </tr>
+    <tr>
+      <td>System failure or breaches of our <font color="blue">network security could</font> subject us to     increased operating <font color="blue">costs as well as <font color="blue">litigation</font></font> and other <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">computer systems</font> and <font color="blue">network infrastructure</font> we use could be vulnerable to     unforeseen  problems</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> are <font color="blue">dependent</font> upon our ability to     protect  our  computer equipment against damage from fire, power loss,     <font color="blue">tele<font color="blue">communications</font> failure</font> or a similar <font color="blue">catastrophic event</font></td>
+    </tr>
+    <tr>
+      <td>Any damage or     failure that causes an <font color="blue">interruption</font> in our <font color="blue">operations</font> could have an adverse     effect  on  our customers</td>
+    </tr>
+    <tr>
+      <td>In addition, we must be able to protect the     <font color="blue">computer systems</font> and <font color="blue">network infrastructure</font> utilized by us against physical     damage, security breaches and <font color="blue">service disruption</font> caused by the Internet or     other users</td>
+    </tr>
+    <tr>
+      <td>Such computer break-ins and other <font color="blue">disruptions would jeopardize</font>     the security of information stored in and <font color="blue">transmitted through</font> our computer     systems  and  network  infrastructure, which may result in <font color="blue">significant</font>     <font color="blue">liability</font> to us and <font color="blue">deter potential customers</font></td>
+    </tr>
+    <tr>
+      <td>Although we, with the help of     third-party  service  providers,  will  continue to implement security     <font color="blue">technology</font> and <font color="blue">establish operational procedures</font> to <font color="blue">prevent such damage</font>,     there can be no assurance that these <font color="blue">security measures will</font> be successful</td>
+    </tr>
+    <tr>
+      <td>We are subject to extensive <font color="blue"><font color="blue">government</font> regulation</font> and <font color="blue">supervision</font></td>
+    </tr>
+    <tr>
+      <td>We are     subject to extensive federal and state regulation and <font color="blue">supervision</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Banking     </font><font color="blue">regulations</font> are <font color="blue">primarily intended</font> to protect <font color="blue">depositors</font>’ funds, federal     <font color="blue"><font color="blue">deposit insurance fund</font>s</font> and the <font color="blue">banking system as</font> a whole, not <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">regulations</font>  affect  our  lending practices, capital structure,     <font color="blue">investment</font>  practices, dividend policy and growth, among other things</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Congress </font>and federal <font color="blue">regulatory</font> agencies <font color="blue">continually</font> review banking laws,     <font color="blue">regulations</font>  and  policies  for possible changes</td>
+    </tr>
+    <tr>
+      <td>Changes to statutes,     <font color="blue">regulations</font> or <font color="blue">regulatory</font> policies, including changes in <font color="blue">interpretation</font> or     <font color="blue">implementation</font> of statutes, <font color="blue">regulations</font> or policies, could affect us in     substantial and unpredictable ways</td>
+    </tr>
+    <tr>
+      <td>Such changes could subject                                         12       _________________________________________________________________    [58]Table of <font color="blue">Contents       </font>us to additional costs, limit the types of <font color="blue">financial services</font> and products     we may offer and/or increase the ability of non-banks to <font color="blue">offer competing</font>     <font color="blue">financial services</font> and products, among other things</td>
+    </tr>
+    <tr>
+      <td>Failure to comply with     laws,  <font color="blue">regulations</font> or policies could result in sanctions by <font color="blue">regulatory</font>     agencies, civil money penalties and/or reputation damage, <font color="blue">which could</font> have a     material adverse effect on our business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>While we have policies and <font color="blue">procedures designed</font> to prevent any     such violations, there can be no assurance that <font color="blue">such violations will</font> not     occur</td>
+    </tr>
+    <tr>
+      <td>Furthermore, the Sarbanes-Oxley Act of 2002, and the related rules and     <font color="blue">regulations</font> promulgated by the SEC and NASDAQ that are applicable to us,     have increased the scope, complexity and cost of <font color="blue">corporate governance</font>,     reporting and <font color="blue">disclosure practices</font></td>
+    </tr>
+    <tr>
+      <td>Severe  weather, <font color="blue">natural <font color="blue">disasters</font></font>, acts of war or terrorism and other     external <font color="blue">events could</font> <font color="blue">significant</font>ly impact our business</td>
+    </tr>
+    <tr>
+      <td>Severe weather,     <font color="blue">natural <font color="blue">disasters</font></font>, acts of war or terrorism and other <font color="blue">adverse external</font>     <font color="blue">events could</font> have a <font color="blue">significant</font> impact on our ability to conduct business</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">events could</font> affect the stability of our deposit base, impair the     ability  of  borrowers to repay outstanding loans, impair the value of     <font color="blue">collateral securing loans</font>, cause <font color="blue">significant</font> property damage, result in loss     of revenue and/or cause us to <font color="blue">incur additional expenses</font></td>
+    </tr>
+    <tr>
+      <td>For example, during     2005, hurricanes <font color="blue">Katrina and Rita </font>made landfall and <font color="blue">subsequently</font> caused     extensive flooding and <font color="blue">destruction along</font> the <font color="blue">coastal areas</font> of the Gulf of     Mexico, including <font color="blue">communities</font> where we conduct business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Operations </font>in     several  of our markets were disrupted by both the <font color="blue">evacuation</font> of large     portions of the <font color="blue">population as well as damage</font> and or lack of access to our     banking and <font color="blue">operation facilities</font></td>
+    </tr>
+    <tr>
+      <td>While the impact of these hurricanes did     not <font color="blue">significant</font>ly affect us, other severe weather or <font color="blue">natural <font color="blue">disasters</font></font>, acts     of  war or terrorism or other <font color="blue">adverse external</font> events may occur in the     future</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">management</font> has <font color="blue">established disaster recovery policies</font> and     procedures, the occurrence of any <font color="blue">such event could</font> have a material adverse     effect on our business, which, in turn, could have a material adverse effect     on the our <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our success in attracting and retaining <font color="blue">consumer deposits <font color="blue">depends on</font></font> our     ability  to offercompetitive rates and services</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>2005,     approximately 8prca of our <font color="blue">total deposits came from retail consumer customers</font>     through BankDirect, our Internet banking division</td>
+    </tr>
+    <tr>
+      <td>The market for Internet     banking is <font color="blue">extremely competitive</font> and <font color="blue">allows retail consumer customers</font> to     <font color="blue">access financial products</font> and compare <font color="blue"><font color="blue">interest rate</font>s</font> from numerous financial     <font color="blue">institutions</font> located across the US As a result, Internet <font color="blue">retail consumers</font>     are more sensitive to <font color="blue">interest rate</font> levels than <font color="blue">retail consumers</font> who bank at     a branch office</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success</font> in retaining and <font color="blue">attracting retail</font>     <font color="blue">consumer customers depends</font>, in part, on our ability to <font color="blue">offer competitive</font>     rates and services</td>
+    </tr>
+    <tr>
+      <td>We  could  be  <font color="blue">adversely</font>  <font color="blue">affected by</font> changes in the regulation of the     Internet</td>
+    </tr>
+    <tr>
+      <td>Our ability to conduct, and the cost of conducting, business may     also  be  <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> by a number of <font color="blue">legislative</font> and <font color="blue">regulatory</font>     <font color="blue">proposals concerning</font> the Internet, which are <font color="blue">currently under consideration</font>     by  federal,  state, local and <font color="blue">foreign <font color="blue">government</font>al organizations</font></td>
+    </tr>
+    <tr>
+      <td>The     adoption of new laws or the <font color="blue">application</font> of <font color="blue">existing laws could decrease</font> the     growth in the use of the Internet, <font color="blue">which could</font> in turn decrease the demand     for our services, increase our cost of doing business or otherwise have an     adverse  effect  on  our  business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, <font color="blue"><font color="blue">government</font> restrictions on</font> Internet <font color="blue">content could</font>     slow the growth of Internet use and <font color="blue">decrease acceptance</font> of the Internet as a     <font color="blue">communications</font> and <font color="blue">commercial medium</font> and thereby have an adverse effect on     our <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">management</font> maintains <font color="blue">significant</font> control over us</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">current executive</font>     officers and <font color="blue"><font color="blue">directors</font> <font color="blue">beneficial</font>ly</font> own approximately 13prca of the outstanding     shares of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, our <font color="blue">current executive</font> officers and     <font color="blue">directors</font> are able to influence, to a <font color="blue">significant</font> extent, the outcome of all     matters required to be submitted to our <font color="blue">stockholders</font> for approval (including     <font color="blue">decisions</font> relating to the election of <font color="blue">directors</font>), the <font color="blue">determination</font> of     day-to-day corporate and <font color="blue">management</font> policies and other <font color="blue">significant</font> corporate     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>There are substantial <font color="blue">regulatory</font> limitations on changes of control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">With     </font>certain limited exceptions, federal <font color="blue">regulations</font> prohibit a person or company     or a group of persons deemed to be “acting in concert” from, directly or     <font color="blue">indirectly</font>, acquiring more than 10prca (5prca if the acquirer is a bank holding     company)  of any class of our <font color="blue">voting stock</font> or obtaining the ability to     control  in  any manner the election of a majority of our <font color="blue">directors</font> or     <font color="blue">otherwise direct</font> the <font color="blue">management</font> or policies of our <font color="blue">company without prior</font>     notice or <font color="blue">application</font> to and the approval of the <font color="blue">Federal                                         </font>13       _________________________________________________________________    [59]Table of <font color="blue">Contents       </font>Reserve</td>
+    </tr>
+    <tr>
+      <td>Accordingly, <font color="blue">prospective investors</font> need to be aware of and comply     with these <font color="blue">requirements</font>, if applicable, in <font color="blue">connection with</font> any purchase of     shares of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Anti-takeover provisions of our <font color="blue">certificate</font> of <font color="blue">in<font color="blue">corporation</font></font>, bylaws and     <font color="blue">Delaware </font>law may make it more <font color="blue">difficult</font> for you to receive a change in     <font color="blue">control premium</font></td>
+    </tr>
+    <tr>
+      <td>Certain provisions of our <font color="blue">certificate</font> of <font color="blue">in<font color="blue">corporation</font></font> and     bylaws could make a merger, tender offer or <font color="blue">proxy contest</font> more <font color="blue">difficult</font>,     even if <font color="blue">such events</font> were perceived by many of our <font color="blue">stockholders</font> as <font color="blue">beneficial</font>     to their interests</td>
+    </tr>
+    <tr>
+      <td>These provisions include advance notice for <font color="blue">nominations</font>     of <font color="blue">directors</font> and <font color="blue">stockholders</font>’ proposals, and authorize the issuance of     “blank check” <font color="blue">preferred stock</font> with such designations, rights and <font color="blue">preferences</font>     as may be determined from time to time by our board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although     </font>we have <font color="blue">no present intention</font> to issue any shares of our <font color="blue">preferred stock</font>,     there can be no assurance that we will not do so in the future</td>
+    </tr>
+    <tr>
+      <td>In addition,     as a <font color="blue">Delaware </font><font color="blue">corporation</font>, we are subject to Section 203 of the <font color="blue">Delaware </font>    General  Corporation  Law  which,  in  general, prevents an interested     stockholder,  defined  <font color="blue">generally</font>  as  a person owning 15prca or more of a     <font color="blue">corporation</font>’s  outstanding  voting  stock, from engaging in a business     <font color="blue"><font color="blue">combination</font> with</font> our company for <font color="blue">three years following</font> the date that person     became an interested stockholder unless certain specified <font color="blue">conditions</font> are     satisfied</td>
+    </tr>
+    <tr>
+      <td>We  are  subject  to  claims  and  <font color="blue">litigation</font>  pertaining to <font color="blue">fiduciary</font>     <font color="blue">responsibility</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, customers make claims and take legal     <font color="blue">action pertaining</font> to our performance of our <font color="blue">fiduciary</font> responsibilities</td>
+    </tr>
+    <tr>
+      <td>Whether customer claims and <font color="blue">legal action</font> related to our performance of its     <font color="blue">fiduciary</font> responsibilities are founded or unfounded, if such claims and     <font color="blue">legal action</font>s are not resolved in a manner favorable to us they may result     in  <font color="blue">significant</font> financial <font color="blue">liability</font> and/or <font color="blue"><font color="blue">adversely</font> affect</font> the market     <font color="blue">perception</font> of us and our products and services as well as impact customer     demand  for  those  products  and services</td>
+    </tr>
+    <tr>
+      <td>Any financial <font color="blue">liability</font> or     <font color="blue">reputation damage could</font> have a material adverse effect on our business,     which,  in turn, could have a material adverse effect on our financial     condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  controls  and <font color="blue">procedures may fail</font> or be <font color="blue">circumvented</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management     </font><font color="blue">regularly reviews</font> and updates our internal controls, disclosure controls and     procedures, and <font color="blue">corporate governance</font> policies and procedures</td>
+    </tr>
+    <tr>
+      <td>Any system of     controls, however well designed and operated, is based in part on certain     <font color="blue">assumptions</font> and can <font color="blue">provide only reasonable</font>, not absolute, assurances that     the <font color="blue">objectives</font> of the system are met</td>
+    </tr>
+    <tr>
+      <td>Any failure or <font color="blue">circumvention</font> of our     controls and procedures or failure to comply with <font color="blue">regulations</font> related to     controls  and  procedures  could have a material adverse effect on our     business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Stock <font color="blue">price volatility may</font> make it more     <font color="blue">difficult</font> for you to resell your <font color="blue">common stock</font> when you want and at prices     you <font color="blue">find attractive</font></td>
+    </tr>
+    <tr>
+      <td>Our stock price can fluctuate <font color="blue">significant</font>ly in response     to a variety of factors including, among other things:         •  Actual or anticipated <font color="blue">variations</font> in quarterly results of <font color="blue">operations</font>;         •  <font color="blue">Recommendations </font><font color="blue">by securities analysts</font>;         •  <font color="blue">Operating </font>and stock price performance of other companies that investors     deem comparable to us;         •  News reports relating to trends, concerns and other issues in the     <font color="blue">financial services</font> industry;         •  <font color="blue">Perceptions </font>in the marketplace regarding us and/or our <font color="blue">competitors</font>;         •  New <font color="blue">technology</font> used, or services offered, by <font color="blue">competitors</font>;          •   <font color="blue">Significant  </font><font color="blue">acquisitions</font>  or  business <font color="blue">combination</font>s, strategic     partnerships, joint ventures or <font color="blue">capital commitments by</font> or <font color="blue">involving us</font> or     our <font color="blue">competitors</font>;         •  Failure to integrate <font color="blue">acquisitions</font> or realize anticipated benefits from     <font color="blue">acquisitions</font>;         •  Changes in <font color="blue"><font color="blue">government</font> regulation</font>s; and          •   <font color="blue">Geopolitical </font><font color="blue">conditions</font> such as acts or threats of terrorism or     <font color="blue">military conflicts</font></td>
+    </tr>
+    <tr>
+      <td>14       _________________________________________________________________    [60]Table of <font color="blue">Contents       </font>  General market <font color="blue">fluctuations</font>, industry factors and <font color="blue">general economic</font> and     political <font color="blue">conditions</font> and events, such as economic slowdowns or <font color="blue">recessions</font>,     <font color="blue">interest rate</font> changes or credit loss trends, could also cause our stock     price to <font color="blue">decrease regardless</font> of operating results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading volume</font> in our <font color="blue">common stock</font> is less than that of other larger     <font color="blue">financial services</font> companies</td>
+    </tr>
+    <tr>
+      <td>Although our <font color="blue">common stock</font> is listed for     trading on the NASDAQ, the <font color="blue">trading volume</font> in its <font color="blue">common stock</font> is less than     that of other larger <font color="blue">financial services</font> companies</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">public trading market</font>     having the desired <font color="blue">characteristics</font> of depth, liquidity and <font color="blue">orderliness</font>     <font color="blue">depends on</font> the presence in the marketplace of <font color="blue">willing buyers</font> and sellers of     our <font color="blue">common stock</font> at any given time</td>
+    </tr>
+    <tr>
+      <td>This presence <font color="blue">depends on</font> the individual     <font color="blue">decisions</font> of investors and <font color="blue">general economic</font> and market <font color="blue">conditions</font> over which     we have no control</td>
+    </tr>
+    <tr>
+      <td>Given the lower <font color="blue">trading volume</font> of our <font color="blue">common stock</font>,     <font color="blue">significant</font> sales of our <font color="blue">common stock</font>, or the <font color="blue">expectation</font> of these sales,     could cause the our stock price to fall</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">investment</font> in our <font color="blue">common stock</font> is not an <font color="blue">insured deposit</font></td>
+    </tr>
+    <tr>
+      <td>Our common     stock is not a <font color="blue">bank deposit</font> and, therefore, is not <font color="blue">insured against loss by</font>     the FDIC, any other <font color="blue">deposit insurance fund</font> or by any other public or private     entity</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investment </font>in our <font color="blue">common stock</font> is <font color="blue">inherently</font> risky for the reasons     described in this “Risk Factors” section and elsewhere in this report and is     subject to the <font color="blue">same market forces</font> that affect the price of <font color="blue">common stock</font> in     any company</td>
+    </tr>
+    <tr>
+      <td>As a result, if you acquire our <font color="blue">common stock</font>, you may lose some     or all of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">certificate</font> of <font color="blue">in<font color="blue">corporation</font></font> and <font color="blue">bylaws as well as certain</font> <font color="blue">Delaware </font>and     banking  laws  may  have  an  anti-takeover effect</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Provisions </font>of our     <font color="blue">certificate</font>  of  <font color="blue">in<font color="blue">corporation</font></font> and bylaws, as well as <font color="blue">Delaware </font>General     Corporation Law, and federal banking laws, including <font color="blue">regulatory</font> approval     <font color="blue">requirements</font>, could make it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire us,     even if doing so would be perceived to be <font color="blue">beneficial</font> to our <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">combination</font> of these <font color="blue">provisions <font color="blue">effectively</font> inhibits</font> a non-negotiated     merger or other business <font color="blue">combination</font>, which, in turn, could <font color="blue"><font color="blue">adversely</font> affect</font>     the <font color="blue">market price</font> of tour <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Risks Associated With Our Industry       We compete in an industry that <font color="blue">continually</font> experiences <font color="blue">technological</font> change,     and we may have <font color="blue">fewer resources than</font> many of our <font color="blue">competitors</font> to continue to     invest in <font color="blue">technological</font> <font color="blue">improvements</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">financial services</font> industry is     undergoing rapid <font color="blue">technological</font> changes, <font color="blue">with frequent introductions</font> of new     <font color="blue">technology</font>-driven products and <font color="blue">services which</font> our <font color="blue">customers may</font> require</td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> have <font color="blue">substantially</font> greater resources to invest in     <font color="blue">technological</font> <font color="blue">improvements</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">effectively</font> implement new     <font color="blue">technology</font>-driven products and services or be successful in marketing these     products and services to our customers</td>
+    </tr>
+    <tr>
+      <td>The earnings of <font color="blue">financial services</font> companies are <font color="blue">significant</font>ly <font color="blue">affected by</font>     general business and economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> and <font color="blue">profitability</font>     are <font color="blue">impacted by general</font> business and economic <font color="blue">conditions</font> in the United     States  and  abroad</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">conditions</font> include short-term and long-term     <font color="blue"><font color="blue">interest rate</font>s</font>, inflation, moneysupply, political issues, <font color="blue">legislative</font> and     <font color="blue">regulatory</font> changes, <font color="blue">fluctuations</font> in both debt and <font color="blue">equity capital markets</font>,     <font color="blue">broad trends</font> in industry and finance and the strength of the US economy     and the <font color="blue">local economies</font> in which the we operate, all of which are beyond our     control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Deterioration </font>in economic <font color="blue">conditions</font> could result in an increase in     <font color="blue">loan delinquencies</font> and non-performing assets, decreases in <font color="blue">loan collateral</font>     values and a decrease in demand for our products and services, among other     things, any of <font color="blue">which could</font> have a material <font color="blue">adverse impact on</font> our results of     operation and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font><font color="blue">services companies depend on</font> the accuracy and <font color="blue">completeness</font> of     information <font color="blue">about customers</font> and <font color="blue">counterparties</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">deciding whether</font> to     extend credit or <font color="blue">enter into</font> other <font color="blue">transactions</font>, we <font color="blue">may rely on</font> information     furnished  by  or on behalf of customers and <font color="blue">counterparties</font>, including     financial statements, credit reports and other financial information</td>
+    </tr>
+    <tr>
+      <td>We may     <font color="blue">also rely on representations</font> of those customers, <font color="blue">counterparties</font> or other     third  parties,  such  as in<font color="blue">dependent</font> auditors, as to the accuracy and     <font color="blue">completeness</font> of that information</td>
+    </tr>
+    <tr>
+      <td>Reliance <font color="blue">on inaccurate</font> or misleading     financial statements, credit reports or other financial information could     have a material <font color="blue">adverse impact on</font> our business and, in turn, our results of     operation and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Consumers </font> </font>may  decide  not  to  use banks to complete their financial     <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technology </font>and other changes are <font color="blue">allowing parties</font> to complete     financial  <font color="blue">transactions</font>  that <font color="blue">historically</font> have <font color="blue">involved banks through</font>     <font color="blue">alternative methods</font></td>
+    </tr>
+    <tr>
+      <td>For example, consumers can now maintain funds that     would have <font color="blue">historically</font> been held as <font color="blue">bank deposit</font>s in <font color="blue">brokerage accounts</font> or     <font color="blue">mutual funds</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Consumers </font>can also complete <font color="blue">transactions</font> such as paying                                         15       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font>bills and/or transferring funds directly without the assistance of banks</td>
+    </tr>
+    <tr>
+      <td>The process of <font color="blue">eliminating banks as intermediaries could</font> result in the loss     of fee income, as well as the loss of <font color="blue">customer deposits</font> and the related     <font color="blue">income generated from</font> those deposits</td>
+    </tr>
+    <tr>
+      <td>The loss of these <font color="blue">revenue streams</font> and     the <font color="blue">lower cost deposits as</font> a source of <font color="blue">funds could</font> have a material adverse     effect on our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+  </tbody>
+</table>

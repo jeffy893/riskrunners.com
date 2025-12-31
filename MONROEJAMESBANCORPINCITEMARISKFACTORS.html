@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: investment", fill: "#b53389"},
+{source: "1: investment", target: "1: common stock involves various risks", fill: "#b53389"},
+{source: "1: investment", target: "4: factors may", fill: "#efcc00"},
+{source: "4: factors may", target: "4: future earnings", fill: "#efcc00"},
+{source: "4: future earnings", target: "4: financial condition", fill: "#efcc00"},
+{source: "4: factors may", target: "10: asset size", fill: "#32127a"},
+{source: "10: asset size", target: "10: difficult", fill: "#32127a"},
+{source: "10: difficult", target: "10: high rates", fill: "#32127a"},
+{source: "10: asset size", target: "12: Declines ", fill: "#039"},
+{source: "12: Declines ", target: "12: nonperforming assets", fill: "#039"},
+{source: "12: nonperforming assets", target: "12: adverse impact on", fill: "#039"},
+{source: "12: adverse impact on", target: "12: common stock", fill: "#039"},
+{source: "12: Declines ", target: "14: capital base grows through", fill: "#66424d"},
+{source: "14: capital base grows through", target: "14: legal lending limit", fill: "#66424d"},
+{source: "14: capital base grows through", target: "16: relatively low levels", fill: "#b2beb5"},
+{source: "16: relatively low levels", target: "16: nonperforming loans", fill: "#b2beb5"},
+{source: "16: relatively low levels", target: "18: certain as", fill: "#0093af"},
+{source: "18: certain as", target: "18: out ability", fill: "#0093af"},
+{source: "18: out ability", target: "18: liquidity sources", fill: "#0093af"},
+{source: "18: liquidity sources", target: "18: fund additional loans at interest rates", fill: "#0093af"},
+{source: "18: fund additional loans at interest rates", target: "18: net interest margin", fill: "#0093af"},
+{source: "18: certain as", target: "19: Increases ", fill: "#ffdab9"},
+{source: "19: Increases ", target: "19: nonperforming", fill: "#ffdab9"},
+{source: "19: Increases ", target: "22: Accordingly ", fill: "#e52b50"},
+{source: "22: Accordingly ", target: "22: shareholders may find", fill: "#e52b50"},
+{source: "22: shareholders may find", target: "22: difficult", fill: "#e52b50"},
+{source: "22: difficult", target: "22: significant", fill: "#e52b50"},
+{source: "22: significant", target: "22: prevailing market price", fill: "#e52b50"},
+{source: "22: Accordingly ", target: "39: repayments", fill: "#b87333"},
+{source: "39: repayments", target: "39: loans often depends on", fill: "#b87333"},
+{source: "39: loans often depends on", target: "39: successful operation", fill: "#b87333"},
+{source: "39: successful operation", target: "39: development", fill: "#b87333"},
+{source: "39: development", target: "39: adversely affected by adverse", fill: "#b87333"},
+{source: "39: adversely affected by adverse", target: "39: conditions", fill: "#b87333"},
+{source: "39: conditions", target: "39: real estate market", fill: "#b87333"},
+{source: "39: repayments", target: "45: nonperforming loans", fill: "#fbceb1"},
+{source: "45: nonperforming loans", target: "45: earnings from", fill: "#fbceb1"},
+{source: "45: earnings from", target: "45: loan losses", fill: "#fbceb1"},
+{source: "45: loan losses", target: "45: loan chargeoffs which could", fill: "#fbceb1"},
+{source: "45: loan chargeoffs which could", target: "45: adverse impact on", fill: "#fbceb1"},
+{source: "45: adverse impact on", target: "45: operations", fill: "#fbceb1"},
+{source: "45: operations", target: "45: financial condition", fill: "#fbceb1"},
+{source: "45: nonperforming loans", target: "START_HERE", fill: "#fbceb1"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Commercial Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Healing_Is_Difficult">Healing Is Difficult</a></td>
+      <td>Healing Is Difficult is the second studio album by Australian singer and songwriter Sia. It was released in the United Kingdom on 9 July 2001 and in the United States on 28 May 2002.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_Loves">Difficult Loves</a></td>
+      <td>Difficult Loves (Italian: Gli amori difficili) is a 1970 short story collection by Italo Calvino. It concerns love and the difficulty of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second-language_acquisition">Second-language acquisition</a></td>
+      <td>Second-language acquisition (SLA), sometimes called second-language learning — otherwise referred to as L2 (language 2) acquisition, is the process by which people learn a second language. Second-language acquisition is also the scientific discipline devoted to studying that process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_to_Cure">Difficult to Cure</a></td>
+      <td>Difficult to Cure is the fifth studio album by the British hard rock band Rainbow, released in 1981. The album marked the further commercialization of the band's sound, with Ritchie Blackmore once describing at the time his appreciation of the band Foreigner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Globe_Sessions">The Globe Sessions</a></td>
+      <td>The Globe Sessions is the third studio album by American singer-songwriter Sheryl Crow, released on September 21, 1998, in the United Kingdom and September 29, 1998, in the United States, then re-released in 1999. It was nominated for Album of the Year, Best Rock Album and Best Engineered Non-Classical Album at the 1999 Grammys, winning the latter two awards.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-performing_loan">Non-performing loan</a></td>
+      <td>A non-performing loan (NPL) is a  bank loan that is subject to late repayment or is unlikely to be repaid by the borrower in full. Non-performing loans represent a major challenge for the banking sector, as it reduces the profitability of banks, and is often presented as preventing banks from lending more to businesses and consumers, which in turn slows down economic growth (although this theory is disputed).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PricewaterhouseCoopers">PricewaterhouseCoopers</a></td>
+      <td>PricewaterhouseCoopers is a multinational professional services network of firms, operating as partnerships under the PwC brand. PwC ranks as the second-largest professional services network in the world and is considered one of the Big Four accounting firms, along with Deloitte, EY and KPMG.PwC firms operate in 157 countries, 742 locations, with 284,000 people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Economy_of_Thailand">Economy of Thailand</a></td>
+      <td>The economy of Thailand is dependent on exports, which accounted in 2019 for about sixty per cent of the country's gross domestic product (GDP). Thailand itself is a newly industrialized country, with a GDP of 16.316 trillion baht (US$505 billion) in 2018, the 8th largest economy of Asia, according to the World Bank.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Troubled_Asset_Relief_Program">Troubled Asset Relief Program</a></td>
+      <td>The Troubled Asset Relief Program (TARP) is a program of the United States government to purchase toxic assets and equity from financial institutions to strengthen its financial sector that was passed by Congress and signed into law by President George Bush. It was a component of the government's measures in 2009 to address the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Disparate_impact">Disparate impact</a></td>
+      <td>Disparate impact in United States labor law refers to practices in employment, housing, and other areas that adversely affect one group of people of a protected characteristic more than another, even though rules applied by employers or landlords are formally neutral. Although the protected classes vary by statute, most federal civil rights laws protect based on race, color, religion, national origin, and sex as protected traits, and some laws include disability status and other traits as well.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Treasury_stock">Treasury stock</a></td>
+      <td>A treasury stock or reacquired stock is stock which is bought back by the issuing company, reducing the amount of outstanding stock on the open market ("open market" including insiders' holdings). \nStock repurchases are used as a tax efficient method to put cash into shareholders' hands, rather than paying dividends, in jurisdictions that treat capital gains more favorably.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage_loan">Mortgage loan</a></td>
+      <td>A mortgage loan or simply mortgage (), in civil law jurisdicions known also as a hypothec loan, is a loan used either by purchasers of real property to raise funds to buy real estate, or by existing property owners to raise funds for any purpose while putting a lien on the property being mortgaged. The loan is "secured" on the borrower's property through a process known as mortgage origination.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Synovus">Synovus</a></td>
+      <td>The Synovus Financial Corporation, formerly the Columbus Bank and Trust Company, is a financial services company with approximately $45 billion in assets based in Columbus, Georgia. Synovus provides commercial and retail banking, investment, and mortgage services through 249 branches and 335 ATMs in Georgia, Alabama, South Carolina, Florida, and Tennessee.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loan">Loan</a></td>
+      <td>A man is an adult male human. Prior to adulthood, a male human is referred to as a boy (a male child or adolescent).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Economy_of_Indonesia">Economy of Indonesia</a></td>
+      <td>The economy of Indonesia is the largest in Southeast Asia and is one of the emerging market economies. As a middle income country &amp; member of the G20, Indonesia is classified as a newly industrialized country.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Economy_of_China">Economy of China</a></td>
+      <td>The People's Republic of China has a developing market-oriented economy that incorporates economic planning through industrial policies and strategic five-year plans. The economy consists of state-owned enterprises (SOEs) and mixed-ownership enterprises, as well as a large domestic private sector and openness to foreign businesses in a system officially described as a socialist market economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chief_executive_officer">Chief executive officer</a></td>
+      <td>A chief executive officer (CEO), chief administrator officer (CAO), central executive officer (CEO), or just chief executive (CE), is one of a number of corporate executives charged with the management of an organization –  especially an independent legal entity such as a company or nonprofit institution. CEOs find roles in a range of organizations, including public and private corporations, non-profit organizations and even some government organizations (notably state-owned enterprises).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Others">Significant Others</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Student_loan">Student loan</a></td>
+      <td>A student loan is a type of loan designed to help students pay for post-secondary education and the associated fees, such as tuition, books and supplies, and living expenses. It may differ from other types of loans in the fact that the interest rate may be substantially lower and the repayment schedule may be deferred while the student is still in school.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Allowance_for_Loan_and_Lease_Losses">Allowance for Loan and Lease Losses</a></td>
+      <td>In banking, the Allowance for Loan and Lease Losses (ALLL), formerly known as the reserve for bad debts, is a calculated reserve that financial institutions establish in relation to the estimated credit risk within the institution's assets. This credit risk represents the charge-offs that will most likely be realized against an institution's operating income as of the financial statement end date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Expected_loss">Expected loss</a></td>
+      <td>Expected loss is the sum of the values of all possible losses, each multiplied by the probability of that loss occurring. \nIn bank lending (homes, autos, credit cards, commercial lending, etc.) the expected loss on a loan varies over time for a number of reasons.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PIK_loan">PIK loan</a></td>
+      <td>A PIK, or payment in kind, is a type of high-risk loan or bond that allows borrowers to pay interest with additional debt, rather than cash. That makes it an expensive, high-risk financing instrument since the size of the debt may increase quickly, leaving lenders with big losses if the borrower is unable to pay back the loan.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MONROE JAMES BANCORP INC    ITEM 1A  RISK FACTORS             An <font color="blue">investment</font> in our <font color="blue"><font color="blue">common stock</font> involves various risks</font></td>
+    </tr>
+    <tr>
+      <td>The following  is a summary of <font color="blue">certain risks</font> identified <font color="blue">by us as affecting</font> our business</td>
+    </tr>
+    <tr>
+      <td>You  <font color="blue">should carefully</font> consider the <font color="blue">risk factors listed</font> below, as well as other  <font color="blue">cautionary statements</font> made in this <font color="blue">Annual Report</font>, and risks and <font color="blue">uncertainties</font>  which we may identify in our other reports and <font color="blue">documents</font> filed with the  <font color="blue">Securities and Exchange Commission </font>or other <font color="blue">public announcements</font></td>
+    </tr>
+    <tr>
+      <td>These risk  <font color="blue">factors may</font> cause our <font color="blue">future earnings</font> to be lower or our <font color="blue">financial condition</font> to  be less favorable than we expect</td>
+    </tr>
+    <tr>
+      <td>In addition, other risks of which we are not  aware, which relate to the banking and <font color="blue">financial services industries</font> in general,  or which we do not believe are material, may cause earnings to be lower, or hurt  our future <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>You should read this section <font color="blue">together with</font> the  other information in this <font color="blue">Annual Report</font></td>
+    </tr>
+    <tr>
+      <td>OUR LEVEL OF ASSETS AND EARNINGS MAY NOT CONTINUE TO GROW AS RAPIDLY AS  THEY HAVE IN THE PAST FEW YEARS             Since opening for business in 1998, our <font color="blue">asset level</font> has increased  rapidly, including an 17dtta6prca increase in 2005</td>
+    </tr>
+    <tr>
+      <td>Since 1999, the first full year  for which we achieved <font color="blue">profitability</font>, our earnings have increased at least 15prca  annually</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we <font color="blue">will continue</font> to achieve comparable  results in <font color="blue">future years</font></td>
+    </tr>
+    <tr>
+      <td>As our <font color="blue">asset size</font> and earnings increase, it may become  more <font color="blue">difficult</font> to achieve <font color="blue">high rates</font> of increase in assets and earnings</td>
+    </tr>
+    <tr>
+      <td>Additionally, it may become more <font color="blue">difficult</font> to achieve <font color="blue">continued improvements</font> in  our <font color="blue">expense levels</font> and <font color="blue">efficiency ratio</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Declines </font>in the rate of growth of  income or assets, and increases in operating expenses or <font color="blue"><font color="blue">nonperforming</font> assets</font>  may have an <font color="blue">adverse impact on</font> the value of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>WE MAY NOT BE ABLE TO SUCCESSFULLY MANAGE CONTINUED GROWTH             We expect that we <font color="blue">will seek further growth</font> in the level of our assets  and deposits and the number of our branches</td>
+    </tr>
+    <tr>
+      <td>As our capital base grows, through  earnings or otherwise, so does our <font color="blue">legal lending limit</font></td>
+    </tr>
+    <tr>
+      <td>We cannot be <font color="blue">certain as</font>  to our ability to <font color="blue">manage increased levels</font> of assets and <font color="blue">liabilities</font>, or to  <font color="blue">successfully</font> make and <font color="blue">supervise higher balance loans</font></td>
+    </tr>
+    <tr>
+      <td>10  <PAGE>    Further, we may not be able to maintain the <font color="blue"><font color="blue">relatively</font> low levels</font> of  <font color="blue"><font color="blue">nonperforming</font> loans</font> that we have experienced</td>
+    </tr>
+    <tr>
+      <td>We may be required to make  <font color="blue">additional</font> <font color="blue">investment</font>s in equipment and personnel to manage higher <font color="blue">asset level</font>s  and loan balances, which may <font color="blue">adversely</font> impact earnings, shareholder returns and  our <font color="blue">efficiency ratio</font></td>
+    </tr>
+    <tr>
+      <td>We cannot be <font color="blue">certain as</font> to <font color="blue">out ability</font> to obtain deposits  or other <font color="blue">liquidity sources</font> to <font color="blue">fund <font color="blue">additional</font> loans at <font color="blue">interest rates</font></font> that will  permit an increase in our <font color="blue">net interest margin</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in operating expenses  or <font color="blue"><font color="blue">nonperforming</font> assets</font> may have an <font color="blue">adverse impact on</font> the value of our common  stock</td>
+    </tr>
+    <tr>
+      <td>To the extent growth involves <font color="blue">establishment</font> of <font color="blue">additional</font> branch  <font color="blue">facilities</font>, it can act to reduce or impede the growth of earning until the time,  if ever, that the new branch <font color="blue">facilities</font> achieve <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>TRADING IN OUR COMMON STOCK HAS BEEN SPORADIC AND VOLUME HAS BEEN  LIGHT AS A RESULT, SHAREHOLDERS MAY NOT BE ABLE TO QUICKLY AND EASILY SELL  THEIR COMMON STOCK             Although our <font color="blue">common stock</font> is listed for <font color="blue">trading on</font> the Nasdaq Capital  Market, and a number of <font color="blue">brokers offer</font> to make a market in the <font color="blue">common stock</font> on a  regular basis, trading volume to date has been limited, <font color="blue">averaging only</font>  approximately 3cmam016 shares per day over the <font color="blue">twelve months</font> ended <font color="blue">February </font>28,  2006, and there can be no assurance that a more active and <font color="blue">liquid market</font> for the  <font color="blue">common stock</font> will develop, or if developed that it can be maintained</td>
+    </tr>
+    <tr>
+      <td>Accordingly, <font color="blue"><font color="blue">shareholders</font> may find</font> it <font color="blue">difficult</font> to sell a <font color="blue">significant</font> number of  shares at the <font color="blue">prevailing market price</font></td>
+    </tr>
+    <tr>
+      <td>WE HAVE NO CURRENT PLANS TO PAY CASH DIVIDENDS             <font color="blue">James Monroe Bank</font> is our <font color="blue">principal revenue</font> producing operation</td>
+    </tr>
+    <tr>
+      <td>As a  result, the ability to <font color="blue">pay cash dividends</font> to <font color="blue">shareholders</font> largely depends on  receiving dividends from <font color="blue">James Monroe Bank</font></td>
+    </tr>
+    <tr>
+      <td>The amount of dividends that a bank  may pay is limited by state and <font color="blue">federal laws</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Even if we have  earnings in an <font color="blue">amount sufficient</font> to <font color="blue">pay cash dividends</font>, our <font color="blue">Board of Directors  </font><font color="blue">currently intends</font> to retain earnings for the purpose of <font color="blue">financing growth</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">OUR DIRECTORS AND EXECUTIVE OFFICERS OWN </font>19dtta5prca OF THE OUTSTANDING  SHARES OF COMMON STOCK COMMON AS A RESULT OF THEIR COMBINED OWNERSHIP, THEY  COULD MAKE IT MORE DIFFICULT TO OBTAIN APPROVAL FOR SOME MATTERS SUBMITTED TO  SHAREHOLDER VOTE, INCLUDING MERGERS AND ACQUISITIONS THE RESULTS OF THE VOTE  MAY BE CONTRARY TO THE DESIRES OR INTERESTS OF THE PUBLIC SHAREHOLDERS             Our <font color="blue">directors</font> and <font color="blue">executive officers</font> and their <font color="blue">affiliates</font> own  approximately 19dtta5prca of the outstanding <font color="blue">common stock</font>, and are deemed to  <font color="blue">beneficially</font> own approximately 26dtta0prca of the <font color="blue">common stock</font>, including options to  <font color="blue">purchase shares</font> of <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>By <font color="blue">voting against</font> a <font color="blue">proposal submitted</font> to  <font color="blue">shareholders</font>, the <font color="blue">directors</font> and officers, as a group, may be able to make  approval more <font color="blue">difficult</font> for proposals requiring the vote of <font color="blue">shareholders</font>, such  as some mergers, share exchanges, asset sales, and <font color="blue">amendments</font> to the Articles of  <font color="blue">Incorporation</font></td>
+    </tr>
+    <tr>
+      <td>THE LOSS OF THE SERVICES OF ANY KEY EMPLOYEES COULD ADVERSELY AFFECT  INVESTOR RETURNS             Our business is <font color="blue">service oriented</font>, and our <font color="blue">success depends</font> to a large  <font color="blue">extent upon</font> the services of John R Maxwell, our President and Chief Executive  Officer, and other <font color="blue">senior officers</font></td>
+    </tr>
+    <tr>
+      <td>Maxwell or  other <font color="blue">senior officers</font> could <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>Although we have dlra1  million in <font color="blue">key man insurance on</font> Mr</td>
+    </tr>
+    <tr>
+      <td>Maxwell, the proceeds of this policy are not  intended to fully compensate us for the loss of Mr</td>
+    </tr>
+    <tr>
+      <td>A SUBSTANTIAL PORTION OF OUR LOANS ARE REAL ESTATE RELATED LOANS IN THE  NORTHERN VIRGINIA/WASHINGTON DC METROPOLITAN AREA, AND SUBSTANTIALLY ALL OF OUR  LOANS ARE MADE TO BORROWERS IN THAT AREA ADVERSE CHANGES IN THE REAL ESTATE  MARKET OR ECONOMY IN THIS AREA COULD LEAD TO HIGHER LEVELS OF PROBLEM LOANS AND  CHARGE OFFS, AND ADVERSELY AFFECT OUR EARNINGS AND FINANCIAL CONDITION             We have a substantial amount of loans <font color="blue">secured by real estate</font> in the  Northern Virginia/Washington DC <font color="blue"><font color="blue">metropolitan area</font> as collateral</font>, and  <font color="blue">substantially</font> all of our loans are to borrowers in that area</td>
+    </tr>
+    <tr>
+      <td><font color="blue">At <font color="blue">December </font></font>31,  2005, 71dtta2prca of our loans were <font color="blue">commercial real estate loans</font> and 11dtta6prca were  <font color="blue">construction</font> and <font color="blue">land <font color="blue">development</font> loans</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">additional</font> 12dtta5prca were commercial and  <font color="blue"><font color="blue">industrial loans</font> which</font> are not <font color="blue">secured by real estate</font></td>
+    </tr>
+    <tr>
+      <td>These loans have a higher  risk of <font color="blue">default than</font> other types of loans, such as single family residential  <font color="blue">mortgage loans</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">repayments</font> of these <font color="blue">loans often depends on</font> the  <font color="blue">successful operation</font> of a business or the sale or <font color="blue">development</font> of the underlying  property, and as a result are more likely to be <font color="blue">adversely</font> affected by adverse  <font color="blue">conditions</font> in the <font color="blue">real <font color="blue">estate market</font></font> or the economy in general</td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue"><font color="blue">concentration</font>s expose us</font> to the risk that adverse <font color="blue">development</font>s in the real  <font color="blue">estate market</font>, or in the general economic <font color="blue">conditions</font> in the Northern                                             11  <PAGE>    Virginia/Washington DC <font color="blue">metropolitan area</font>, could increase the levels of  <font color="blue"><font color="blue">nonperforming</font> loans</font> and <font color="blue">charge offs</font>, and <font color="blue">reduce loan demand</font> and <font color="blue">deposit growth</font></td>
+    </tr>
+    <tr>
+      <td>In that event, we <font color="blue">would likely</font> experience <font color="blue">lower earnings</font> or losses</td>
+    </tr>
+    <tr>
+      <td>Additionally, if economic <font color="blue">conditions</font> in the <font color="blue">area deteriorate</font>, or there is  <font color="blue">significant</font> volatility or weakness in the economy or any <font color="blue">significant</font> sector of  the areaapstas economy, our ability to develop our business <font color="blue">relationships may</font> be  diminished, the quality and <font color="blue">collectibility</font> of our loans may be <font color="blue">adversely</font>  affected, the value of <font color="blue">collateral may decline</font> and <font color="blue">loan demand may</font> be reduced</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Commercial </font>and commercial real estate and <font color="blue">construction</font> loans also  <font color="blue">generally</font> have larger balances than single family mortgages loans and other  <font color="blue">consumer loans</font></td>
+    </tr>
+    <tr>
+      <td>Because the <font color="blue">loan portfolio</font> contains a <font color="blue">significant</font> number of  commercial and commercial real estate and <font color="blue">construction</font> loans with <font color="blue">relatively</font>  large balances, the <font color="blue">deterioration</font> of one or a few of these loans may cause a  <font color="blue">significant</font> increase in <font color="blue"><font color="blue">nonperforming</font> assets</font></td>
+    </tr>
+    <tr>
+      <td>An increase in <font color="blue"><font color="blue">nonperforming</font> loans</font>  could result in: a loss of <font color="blue">earnings from</font> these loans, an increase in the  provision for <font color="blue">loan losses</font>, or an increase in loan charge-offs, which could have  an <font color="blue">adverse impact on</font> our results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>OUR FINANCIAL CONDITION AND RESULTS OF OPERATIONS WOULD BE ADVERSELY  AFFECTED IF OUR ALLOWANCE FOR LOAN LOSSES IS NOT SUFFICIENT TO ABSORB ACTUAL  LOSSES OR IF WE ARE REQUIRED TO INCREASE OUR ALLOWANCE FOR LOAN LOSSES             Experience in the <font color="blue">banking industry indicates</font> that a portion of our  <font color="blue">loans will become delinquent</font>, and that some may only be <font color="blue">partially repaid</font> or may  never be repaid at all</td>
+    </tr>
+    <tr>
+      <td>Despite our <font color="blue">underwriting criteria</font>, we may experience  losses for <font color="blue">reasons beyond</font> our control, such as general economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>We  may be <font color="blue">particularly susceptible</font> to losses due to: (1) the geographic  <font color="blue">concentration</font> of our loans, (2) the <font color="blue">concentration</font> of higher risk loans, such as  commercial real estate, <font color="blue">construction</font> and commercial and <font color="blue">industrial loans</font>, and  (3) the <font color="blue">relative lack</font> of seasoning of certain of our loans</td>
+    </tr>
+    <tr>
+      <td>Although we believe  that our allowance for <font color="blue">loan losses</font> is maintained at a <font color="blue">level adequate</font> to absorb  any <font color="blue">inherent losses</font> in our <font color="blue">loan portfolio</font>, these estimates of <font color="blue">loan losses</font> are  <font color="blue">necessarily subjective</font> and their <font color="blue">accuracy depends on</font> the outcome of future  events</td>
+    </tr>
+    <tr>
+      <td>As a result, there can be no assurance that we will be able to maintain  our <font color="blue"><font color="blue">relatively</font> low levels</font> of non-performing assets and charge-offs</td>
+    </tr>
+    <tr>
+      <td>If we need  to make <font color="blue">significant</font> and <font color="blue">unanticipated increases</font> in our <font color="blue">loss allowance</font> in the  future, our results of <font color="blue">operations</font> would be materially <font color="blue">adversely</font> affected at that  time</td>
+    </tr>
+    <tr>
+      <td>While we strive to <font color="blue">carefully monitor</font> credit quality and to identify  loans that may become <font color="blue">nonperforming</font>, at any time there are loans included in the  portfolio that will result in losses, but that have not been identified as  <font color="blue">nonperforming</font> or <font color="blue">potential problem loans</font></td>
+    </tr>
+    <tr>
+      <td>We cannot be sure that we will be able  to identify <font color="blue">deteriorating loans</font> before they become <font color="blue"><font color="blue">nonperforming</font> assets</font>, or that  we will be able to <font color="blue">limit losses on</font> those loans that are identified</td>
+    </tr>
+    <tr>
+      <td>As a result,  future <font color="blue">additions</font> to the <font color="blue">allowance may</font> be <font color="blue">necessary</font></td>
+    </tr>
+    <tr>
+      <td>OUR BANK REGULATORS MAY REQUIRE US TO INCREASE OUR ALLOWANCE FOR LOAN  LOSSES, WHICH COULD HAVE A NEGATIVE EFFECT ON OUR FINANCIAL CONDITION AND  RESULTS OF OPERATIONS             Federal and state <font color="blue">regulators</font>, as an integral part of their <font color="blue">supervisory</font>  function, <font color="blue">periodically</font> review our allowance for <font color="blue">loan losses</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulatory</font>  <font color="blue">agencies may</font> require us to increase our provision for <font color="blue">loan losses</font> or to  recognize further loan <font color="blue">charge offs</font> based upon their judgments, which may be  <font color="blue">different from ours</font></td>
+    </tr>
+    <tr>
+      <td>Any increase in the allowance for <font color="blue">loan losses</font> required by  these <font color="blue">regulatory</font> agencies could have a negative effect on our financial  condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>LACK OF SEASONING OF OUR LOAN PORTFOLIO MAY INCREASE THE RISK OF CREDIT  DEFAULTS IN THE FUTURE             Most of the loans in our <font color="blue">loan portfolio</font> were <font color="blue">originated within</font> the past  four years, and as of <font color="blue">December </font>31, 2005, approximately 46prca of <font color="blue">loans outstanding</font>  were <font color="blue">either originated</font> or renewed within 2005</td>
+    </tr>
+    <tr>
+      <td>In general, loans do not begin to  show signs of credit <font color="blue">deterioration</font> or <font color="blue">default until</font> they have <font color="blue">been outstanding</font>  for some period of time, a <font color="blue">process referred</font> to as  &amp;quote seasoning &amp;quote</td>
+    </tr>
+    <tr>
+      <td>As a result, a  portfolio of older loans will usually behave more <font color="blue">predictably</font> than a newer  portfolio</td>
+    </tr>
+    <tr>
+      <td>Because our <font color="blue">loan portfolio</font> is <font color="blue">relatively</font> new, the <font color="blue">current level</font> of  <font color="blue">delinquencies</font> and <font color="blue">defaults may</font> not be <font color="blue">representative</font> of the level that will  prevail when the <font color="blue">portfolio becomes</font> more seasoned, which may be <font color="blue">somewhat higher</font>  than <font color="blue">current level</font>s</td>
+    </tr>
+    <tr>
+      <td>THERE IS NO ASSURANCE THAT WE WILL BE ABLE TO SUCCESSFULLY COMPETE WITH  OTHERS FOR BUSINESS             The Northern Virginia/Washington DC <font color="blue">metropolitan area</font> in which we  operate is considered <font color="blue">highly attractive from</font> an economic and <font color="blue">demographic</font>  viewpoint, and is therefore a <font color="blue">highly competitive banking market</font></td>
+    </tr>
+    <tr>
+      <td>We compete for  loans, deposits, and <font color="blue">investment</font> dollars with numerous large, regional and  <font color="blue">national banks</font> and other community banking institutions, as well as other kinds  of <font color="blue">financial institutions</font> and enterprises, such as the <font color="blue">online divisions</font> of  out-of market banks, securities firms,                                             12  <PAGE>    insurance companies, savings associations, credit unions, mortgage brokers, and  <font color="blue">private lenders</font></td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue">competitors</font> have <font color="blue">substantially</font> greater resources than us,  and operate under less stringent <font color="blue">regulatory</font> regimens</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">differences</font> in  resources and <font color="blue">regulations</font> may make it harder for us to <font color="blue">compete profitably</font>,  reduce the rates that we can <font color="blue">earn on loans</font> and <font color="blue">investment</font>s, increase the rates  we <font color="blue">must offer on deposits</font> and other funds, and <font color="blue">adversely</font> affect our overall  <font color="blue">financial condition</font> and earnings</td>
+    </tr>
+    <tr>
+      <td>CHANGES IN INTEREST RATES AND OTHER FACTORS BEYOND OUR CONTROL COULD  HAVE AN ADVERSE IMPACT ON OUR EARNINGS             Our operating income and net income depend to a great extent on our net  <font color="blue">interest margin ie</font>, the <font color="blue">difference between</font> the <font color="blue">interest yields</font> we receive on  loans, securities and other <font color="blue">interest bearing assets</font> and the <font color="blue">interest rates</font> we  <font color="blue">pay on interest bearing deposits</font> and other <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>These rates are highly  sensitive to many <font color="blue">factors which</font> are beyond our control, including <font color="blue">competition</font>,  general economic <font color="blue">conditions</font> and monetary and <font color="blue">fiscal policies</font> of various  <font color="blue">governmental</font> and <font color="blue">regulatory</font> authorities, including the <font color="blue">Board of Governors </font>of the  <font color="blue"><font color="blue">Federal Reserve</font> System</font></td>
+    </tr>
+    <tr>
+      <td>As discussed in Item 7 of this report,  &amp;quote Managementapstas  Discussion and Analysis of Financial Condition and Results of Operations &amp;quote , under  the caption  &amp;quote <font color="blue">Liquidity and Interest Rate Sensitivity Management </font>&amp;quote , the <font color="blue">Company  </font>manages its exposure to possible changes in <font color="blue">interest rates</font> by simulation  modeling or  &amp;quote what if &amp;quote  scenarios to quantify the <font color="blue">potential financial implications</font>  of changes in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">At <font color="blue">December </font></font>31, 2005, the Companyapstas modeling  indicated that <font color="blue">continued declines</font> in market <font color="blue">interest rates</font> could reduce net  <font color="blue">interest income up</font> to 5dtta5prca</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in market rates <font color="blue">would likely</font> have an  <font color="blue">adverse impact on</font> our <font color="blue">noninterest</font> income, as a result of reduced demand for  <font color="blue">mortgage loans</font>, which we make on a pre-sold basis</td>
+    </tr>
+    <tr>
+      <td>Adverse changes in the <font color="blue">real <font color="blue">estate market</font></font> in our <font color="blue">market area could also</font>  have an <font color="blue">adverse affect on</font> our cost of funds and <font color="blue">net interest margin</font>, as we  typically have a large amount of <font color="blue">noninterest</font> bearing deposits related to real  <font color="blue">estate sales</font> and <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>While we expect that we would be able to replace  the <font color="blue">liquidity provided by</font> these deposits, the replacement funds <font color="blue">would likely</font> be  more costly, negatively impacting earnings</td>
+    </tr>
+    <tr>
+      <td>Additionally, changes in <font color="blue">applicable law</font>, if enacted, including those  that <font color="blue">would permit banks</font> to <font color="blue">pay interest on checking</font> and <font color="blue">demand deposit accounts</font>  established by businesses, could have a <font color="blue">significant</font> negative effect on net  interest income, net income, <font color="blue">net interest margin</font>, return on assets and return on  equity</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our deposits, 22dtta7prca at <font color="blue">December </font>31, 2005, are  <font color="blue">noninterest</font> bearing demand deposits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>policy relating to the <font color="blue">deposit insurance funds may also</font>  <font color="blue">adversely</font> affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Under <font color="blue">current law</font> and regulation, if  the <font color="blue">reserve ratio</font> of the <font color="blue">Bank Insurance Fund </font>falls below 1dtta25prca, all insured  <font color="blue">banks will</font> be required to <font color="blue">pay <font color="blue">deposit insurance premiums</font></font></td>
+    </tr>
+    <tr>
+      <td>We do not currently  pay any <font color="blue">deposit insurance premiums</font></td>
+    </tr>
+    <tr>
+      <td>These changes or other <font color="blue">legislative</font> or  <font color="blue">regulatory</font> <font color="blue">development</font>s could have a <font color="blue">significant</font> negative effect on our net  interest income, net income, <font color="blue">net interest margin</font>, return on assets and return on  equity</td>
+    </tr>
+    <tr>
+      <td>SUBSTANTIAL REGULATORY LIMITATIONS ON CHANGES OF CONTROL AND  ANTI-TAKEOVER PROVISIONS OF VIRGINIA LAW MAY MAKE IT MORE DIFFICULT FOR YOU TO  RECEIVE A CHANGE IN CONTROL PREMIUM             With certain limited exceptions, federal <font color="blue">regulations</font> prohibit a person  or company or a group of persons deemed to be  &amp;quote acting in concert &amp;quote  from, directly  or <font color="blue">indirectly</font>, acquiring more than 10prca (5prca if the acquiror is a bank holding  company) of any class of our <font color="blue">voting stock</font> or obtaining the ability to control in  any manner the election of a majority of our <font color="blue">directors</font> or <font color="blue">otherwise direct</font> the  <font color="blue">management</font> or policies of our <font color="blue">company without prior</font> notice or <font color="blue">application</font> to and  the approval of the <font color="blue">Federal Reserve</font></td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">comparable prior approval</font>  <font color="blue">requirements</font> for changes in <font color="blue">control under</font> Virginia law</td>
+    </tr>
+    <tr>
+      <td>Also, Virginia corporate  <font color="blue">law contains several provisions</font> that may make it more <font color="blue">difficult</font> for a third  party to acquire control of us without the approval of our Board of Directors,  and may make it more <font color="blue">difficult</font> or expensive for a <font color="blue">third party</font> to acquire a  majority of our outstanding <font color="blue">common stock</font></td>
+    </tr>
+  </tbody>
+</table>

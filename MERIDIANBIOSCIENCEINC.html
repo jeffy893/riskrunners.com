@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: operations", fill: "#966"},
+{source: "2: operations", target: "2: uncertainties", fill: "#966"},
+{source: "2: operations", target: "9: businesses", fill: "#ff4500"},
+{source: "9: businesses", target: "9: manufacture", fill: "#ff4500"},
+{source: "9: manufacture", target: "9: development manufacture sale", fill: "#ff4500"},
+{source: "9: development manufacture sale", target: "9: distribution", fill: "#ff4500"},
+{source: "9: distribution", target: "9: diagnostic test kits primarily", fill: "#ff4500"},
+{source: "9: diagnostic test kits primarily", target: "9: certain respiratory gastrointestinal", fill: "#ff4500"},
+{source: "9: certain respiratory gastrointestinal", target: "9: infectious", fill: "#ff4500"},
+{source: "9: infectious", target: "9: bulk antigens antibodies", fill: "#ff4500"},
+{source: "9: bulk antigens antibodies", target: "9: reagents used by researchers", fill: "#ff4500"},
+{source: "9: reagents used by researchers", target: "9: diagnostic manufacturers", fill: "#ff4500"},
+{source: "9: diagnostic manufacturers", target: "9: contract manufacture", fill: "#ff4500"},
+{source: "9: contract manufacture", target: "9: biologicals", fill: "#ff4500"},
+{source: "9: biologicals", target: "9: biopharmaceutical", fill: "#ff4500"},
+{source: "9: biopharmaceutical", target: "9: biotechnology companies", fill: "#ff4500"},
+{source: "9: businesses", target: "10: therapeutic areas", fill: "#dcdcdc"},
+{source: "10: therapeutic areas", target: "10: key biologicals", fill: "#dcdcdc"},
+{source: "10: key biologicals", target: "10: maximize revenues", fill: "#dcdcdc"},
+{source: "10: maximize revenues", target: "10: efficiently invest", fill: "#dcdcdc"},
+{source: "10: efficiently invest", target: "10: development", fill: "#dcdcdc"},
+{source: "10: development", target: "10: increase profitability", fill: "#dcdcdc"},
+{source: "10: increase profitability", target: "10: manufacturing operations", fill: "#dcdcdc"},
+{source: "10: therapeutic areas", target: "16: Financial ", fill: "#89cff0"},
+{source: "16: Financial ", target: "16: Meridians ", fill: "#89cff0"},
+{source: "16: Meridians ", target: "16: consolidated financial statements contained", fill: "#89cff0"},
+{source: "16: Financial ", target: "START_HERE", fill: "#89cff0"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Travel to meet</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Manufacturing">Manufacturing</a></td>
+      <td>Manufacturing is the creation or production of goods with the help of equipment, labor, machines, tools, and chemical or biological processing or formulation. It is the essence of secondary sector of the economy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exponential_distribution">Exponential distribution</a></td>
+      <td>In probability theory and statistics, the exponential distribution is the probability distribution of the time between events in a Poisson point process, i.e., a process in which events occur continuously and independently at a constant average rate. It is a particular case of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Binomial_distribution">Binomial distribution</a></td>
+      <td>In probability theory and statistics, the binomial distribution with parameters n and p is the discrete probability distribution of the number of successes in a sequence of n independent experiments, each asking a yes–no question, and each with its own Boolean-valued outcome: success (with probability p) or failure (with probability q = 1 − p). A single success/failure experiment is also called a Bernoulli trial or Bernoulli experiment, and a sequence of outcomes is called a Bernoulli process; for a single trial, i.e., n = 1, the binomial distribution is a Bernoulli distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a></td>
+      <td>In probability theory and statistics, the beta distribution is a family of continuous probability distributions defined on the interval [0, 1] parameterized by two positive shape parameters, denoted by alpha (α) and beta (β), that appear as exponents of the random variable and control the shape of the distribution. The generalization to multiple variables is called a Dirichlet distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Film_distribution">Film distribution</a></td>
+      <td>Film distribution is the process of making a movie available for viewing by an audience. This is normally the task of a professional film distributor, who would determine the marketing strategy for the film, the media by which a film is to be exhibited or made available for viewing, and who may set the release date and other matters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Laplace_distribution">Laplace distribution</a></td>
+      <td>In probability theory and statistics, the Laplace distribution is a continuous probability distribution named after Pierre-Simon Laplace.  It is also sometimes called the double exponential distribution, because it can be thought of as two exponential distributions (with an additional location parameter) spliced together back-to-back, although the term is also sometimes used to refer to the Gumbel distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development/For!">Development/For!</a></td>
+      <td>Development/For! (Latvian: Attīstībai/Par!, AP!) is a liberal political alliance in Latvia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Child_development">Child development</a></td>
+      <td>Child development involves the biological, psychological and emotional changes that occur in human beings between birth and the conclusion of adolescence. Childhood is divided into 3 stages of life which include early childhood, middle childhood, late childhood ( preadolescence).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Personal_development">Personal development</a></td>
+      <td>Personal development or self improvement consists of activities that develop a person's capabilities and potential, build human capital, facilitate employability, and enhance quality of life and the realization of dreams and aspirations. Personal development may take place over the course of an individual's entire lifespan and is not limited to one stage of a person's life.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenatal_development">Prenatal development</a></td>
+      <td>Prenatal development (from Latin  natalis 'relating to birth') includes the development of the embryo and of the foetus during a viviparous animal's gestation. Prenatal development starts with fertilization, in the germinal stage of embryonic development, and continues in fetal development until birth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Meridian">Meridian</a></td>
+      <td>In statistics and probability theory, the median is the value separating the higher half from the lower half of a data sample, a population, or a probability distribution. For a data set, it may be thought of as "the middle" value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Meridian_(Chinese_medicine)">Meridian (Chinese medicine)</a></td>
+      <td>The meridian system (simplified Chinese: 经络; traditional Chinese: 經絡; pinyin: jīngluò, also called channel network) is a concept in traditional Chinese medicine (TCM). Meridians are paths through which the life-energy known as "qi" (ch'i) flows.Meridians are not real anatomical structures: scientists have found no evidence that supports their existence.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prime_meridian">Prime meridian</a></td>
+      <td>A prime meridian is the meridian (a line of longitude) in a geographic coordinate system at which longitude is defined to be 0°. Together, a prime meridian and its anti-meridian (the 180th meridian in a 360°-system) form a great circle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_acupuncture_points">List of acupuncture points</a></td>
+      <td>This article provides a comprehensive list of acupuncture points, locations on the body used in acupuncture, acupressure, and other treatment systems based on Traditional Chinese Medicine (TCM).\n\n\n== Locations and basis ==\n\nMore than four hundred acupuncture points have been described, with the majority located on one of the main meridians, pathways which run throughout the body and according to Traditional Chinese Medicine (TCM) transport life energy (qi, 氣).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Meridian_(geography)">Meridian (geography)</a></td>
+      <td>In geography and geodesy, a meridian is the locus connecting points of equal longitude, which is the angle (in degrees or other units) east or west of a given prime meridian (currently, the IERS Reference Meridian). In other words, it is a line of longitude.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Geographic_coordinate_system">Geographic coordinate system</a></td>
+      <td>The geographic coordinate system (GCS) is a spherical or ellipsoidal coordinate system for measuring and communicating positions directly on the Earth as latitude and longitude. It is the simplest, oldest and most widely used of the various of spatial reference systems that are in use, and forms the basis for most others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prime_meridian_(Greenwich)">Prime meridian (Greenwich)</a></td>
+      <td>The historic prime meridian or Greenwich meridian is a geographical reference line that passes through the Royal Observatory, Greenwich, in London, England. The modern IERS Reference Meridian widely used today is based on the Greenwich meridian, but differs slightly from it.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tropics_and_Meridians">Tropics and Meridians</a></td>
+      <td>Tropics and Meridians is the second studio album by Louisville-based math rock band June of 44, released on June 18, 1996 by Quarterstick Records.\n\n\n== Track listing ==\n\n\n== Personnel ==\nAdapted from the Tropics and Meridians liner notes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Washington_meridians">Washington meridians</a></td>
+      <td>The Washington meridians are four meridians that were used as prime meridians in the United States and pass through Washington, D.C. The four which have been specified are:\n\nthrough the Capitol\nthrough the White House\nthrough the old Naval Observatory\nthrough the new Naval Observatory.Their longitudes may be reported in three ways:\n\nrelative to the local vertical used by astronomic observations\nrelative to NAD 27 (North American Datum 1927), an ellipsoid of revolution that is at mean sea level beneath triangulation station Meades Ranch, Kansas (not Earth-centered);\nrelative to NAD 83, an Earth-centered ellipsoid of revolution with dimensions chosen to best fit the undulating (±100 m) geoid (world-wide mean sea level).NAD83 longitude of the Capitol is about 1.1 arc seconds less than its NAD27 longitude; astronomic longitude there is about 4 arc seconds less than NAD83.\n\n\n== Capitol meridian ==\nPierre (Peter) Charles L'Enfant specified the first meridian in his 1791 "Plan of the city intended for the permanent seat of the government of the United States . .</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_map_projections">List of map projections</a></td>
+      <td>This is a summary of map projections that have articles of their own on Wikipedia or that are otherwise notable. Because there is no limit to the number of possible map projections, there can be no comprehensive list.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><font color="blue">MERIDIAN BIOSCIENCE INC      </font>paragraph, Part I, Item 1A <font color="blue">Risk Factors </font>contains a list of <font color="blue">uncertainties</font> and     risks that may affect the <font color="blue">financial performance</font> of the Company</td>
+    </tr>
+    <tr>
+      <td>-3-       _________________________________________________________________    [28]Table of <font color="blue">Contents       </font>                               PART I       This <font color="blue">Annual Report </font>on Form 10-K includes forward-looking statements about     our  business  and results of <font color="blue">operations</font> that are subject to risks and     <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>See “Forward-Looking Statements” above</td>
+    </tr>
+    <tr>
+      <td>Factors that could     cause or contribute to <font color="blue">such differences</font> include those discussed in Item 1A     In addition to the <font color="blue">risk factors discussed herein</font>, we are also subject to     <font color="blue"><font color="blue">additional</font> risks</font> and <font color="blue">uncertainties</font> not <font color="blue">presently known</font> to us or that we     currently deem immaterial</td>
+    </tr>
+    <tr>
+      <td>If any of these risks and <font color="blue">uncertainties</font> develops     into  actual  events,  our business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font> could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>Unless the context requires otherwise, references in this <font color="blue">Annual Report </font>on     Form 10-K to “we,” “us,” “our,” “the company,” or “our company” refer to     Meridian Bioscience, Inc</td>
+    </tr>
+    <tr>
+      <td>and all of its <font color="blue">subsidiaries</font> and <font color="blue">predecessors as</font> a     combined entity</td>
+    </tr>
+    <tr>
+      <td>BUSINESS       Overview     <font color="blue">Meridian  </font>is  a  fully-integrated life science company whose principal     <font color="blue">businesses</font> are (i) the <font color="blue">development</font>, <font color="blue">manufacture</font>, sale and <font color="blue">distribution</font> of     <font color="blue">diagnostic</font> test kits, primarily for certain <font color="blue">respiratory</font>, gastrointestinal,     viral  and  parasitic  <font color="blue">infectious</font>  diseases,  (ii) the <font color="blue">manufacture</font> and     <font color="blue">distribution</font> of <font color="blue">bulk antigens</font>, <font color="blue">antibodies</font>, and <font color="blue">reagents used by researchers</font>     and other <font color="blue">diagnostic</font> <font color="blue">manufacture</font>rs and (iii) the contract <font color="blue">manufacture</font> of     proteins  and  other  <font color="blue">biologicals</font>  for  use  by  <font color="blue">bio<font color="blue">pharmaceutical</font></font> and     <font color="blue">bio<font color="blue">technology</font> companies</font> engaged in research for new drugs and vaccines</td>
+    </tr>
+    <tr>
+      <td>By     exploiting revenue opportunities across research, clinical <font color="blue">diagnostic</font>s, and     <font color="blue">therapeutic areas</font> for key <font color="blue">biologicals</font>, Meridian can <font color="blue">maximize revenues</font>,     <font color="blue">efficiently invest</font> in research and <font color="blue">development</font>, and <font color="blue">increase <font color="blue">profitability</font></font>     of <font color="blue">manufacturing</font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">US Diagnostics </font></font>operating segment consists     of  <font color="blue">manufacturing</font>  <font color="blue">operations</font>  in  Cincinnati,  Ohio, and the sale and     <font color="blue">distribution</font> of <font color="blue"><font color="blue">diagnostic</font>s test kits</font> in the US and countries outside of     Europe, <font color="blue">Africa and the Middle East</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The European Diagnostics </font>operating     segment consists of the sale and <font color="blue">distribution</font> of <font color="blue"><font color="blue">diagnostic</font>s test kits</font> in     Europe, <font color="blue">Africa and the Middle East</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">Life Science </font></font>operating segment     consists of <font color="blue">manufacturing</font> <font color="blue">operations</font> in Memphis, Tennessee, Saco, Maine, and     Boca  Raton,  Florida, and the sale and <font color="blue">distribution</font> of <font color="blue">bulk antigens</font>,     <font color="blue">antibodies</font>, and <font color="blue">bioresearch reagents</font> domestically and abroad</td>
+    </tr>
+    <tr>
+      <td>The Life     Science operating segment also includes <font color="blue">contract services</font>, including the     contract  <font color="blue">manufacture</font>  of  proteins  and  other <font color="blue">biologicals</font> for use by     <font color="blue">bio<font color="blue">pharmaceutical</font></font> and <font color="blue">bio<font color="blue">technology</font> companies</font> engaged in research for new     drugs and vaccines and contract                                        -4-       _________________________________________________________________    [29]Table of <font color="blue">Contents       </font>research and <font color="blue">development</font>, which involves growth of <font color="blue">proteins as</font> part of the     <font color="blue">development</font> process</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font>information for Meridian’s operating segments     is included in Note 9 to the <font color="blue"><font color="blue">consolidated</font> financial statements contained</font>     herein</td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue">primary source</font> of domestic and <font color="blue">international revenues continues</font>     to be its core <font color="blue">diagnostic</font> products, which represented 79prca of <font color="blue">consolidated</font>     net sales for fiscal 2006</td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue"><font color="blue">diagnostic</font> products provide accuracy</font>,     <font color="blue">simplicity</font>, and speed, enable early diagnosis and treatment of common, acute     <font color="blue">medical <font color="blue">conditions</font></font>, and provide for <font color="blue">better patient outcomes at reduced</font>     costs</td>
+    </tr>
+    <tr>
+      <td>Meridian <font color="blue">targets <font color="blue">diagnostic</font>s</font> for disease states that (i) are acute     <font color="blue">conditions</font>  where  rapid diagnosis impacts patient outcomes, (ii) have     <font color="blue">opportunistic demographic</font> and disease profiles, (iii) are <font color="blue">underserved by</font>     current  <font color="blue">diagnostic</font>  products, and (iv) have <font color="blue">difficult</font> sample handling     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>This approach has allowed Meridian to establish <font color="blue">significant</font>     market share in its target disease states</td>
+    </tr>
+    <tr>
+      <td>Meridian’s website is www</td>
+    </tr>
+    <tr>
+      <td>Meridian makes available     its <font color="blue">Annual Reports </font>on Form 10-K, <font color="blue">Quarterly Reports </font>on Form 10-Q, Current     Reports on Form 8-K and any amendments thereto, free of <font color="blue">charge through</font> this     website, as soon as reasonably practicable after such material has been     <font color="blue">electronically</font>  <font color="blue">filed with</font> or furnished to the Securities and Exchange     Commission</td>
+    </tr>
+    <tr>
+      <td>These reports may also be read and <font color="blue">copied at</font> the SEC’s public     reference room at 100 F Street, NE, Room 1580, Washington, DC 20549, phone     1-800-732-0330</td>
+    </tr>
+    <tr>
+      <td>The SEC maintains an <font color="blue">internet site containing</font> these filings     and other information regarding Meridian at http://www</td>
+    </tr>
+    <tr>
+      <td><font color="blue">US Diagnostics </font>Operating Segment     Overview     <font color="blue">The <font color="blue">US Diagnostics </font></font>operating segment’s business <font color="blue">focuses on</font> the <font color="blue">development</font>,     <font color="blue">manufacture</font>, sale and <font color="blue">distribution</font> of <font color="blue">diagnostic</font> test kits, primarily for     certain  <font color="blue">respiratory</font>, gastrointestinal, viral and parasitic <font color="blue">infectious</font>     diseases</td>
+    </tr>
+    <tr>
+      <td>In  addition to <font color="blue">diagnostic</font> test kits, products also include     transport  media that store and preserve specimen <font color="blue">samples from patient</font>     <font color="blue">collection</font> to <font color="blue"><font color="blue">laboratory</font> testing</font></td>
+    </tr>
+    <tr>
+      <td>Third-party sales for this operating     segment were dlra65cmam721cmam000, dlra53cmam485cmam000 and dlra48cmam153cmam000 for fiscal 2006, 2005     and 2004, <font color="blue">respectively</font>, reflecting a <font color="blue">compound annual growth rate</font> of 18prca</td>
+    </tr>
+    <tr>
+      <td>As     of  <font color="blue">September </font>30,  2006,  the <font color="blue">US Diagnostics </font>operating segment had 247     employees</td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue">diagnostic</font> test kits utilize immuno<font color="blue">diagnostic</font> <font color="blue">technologies</font>, which     <font color="blue">test samples</font> of blood, urine, stool, and other body fluids or tissue for the     presence  of  antigens and <font color="blue">antibodies</font> of specific <font color="blue">infectious</font> diseases</td>
+    </tr>
+    <tr>
+      <td>Specific immuno<font color="blue">diagnostic</font> <font color="blue">technologies</font> used in Meridian’s <font color="blue">diagnostic</font> test     kits   include   enzyme   <font color="blue">immunoassay</font>,   <font color="blue">immunofluorescence</font>,  particle     agglutination/aggregation,  <font color="blue">immunodiffusion</font>,  <font color="blue">complement fixation</font>, and     chemical                                        -5-       _________________________________________________________________    [30]Table of <font color="blue">Contents       </font>stains</td>
+    </tr>
+    <tr>
+      <td>The enzyme <font color="blue">immunoassay</font> <font color="blue">technology</font> is used in <font color="blue"><font color="blue">multiple test format</font>s</font>;     the Premierä products for large <font color="blue">volume users</font> and the ImmunoCardâ products     for rapid, single test, low <font color="blue">volume users</font></td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue">diagnostic</font> products are <font color="blue">used principally</font> in the <font color="blue">detection</font> of     <font color="blue">respiratory</font>  diseases, such as pneumonia, valley fever, influenza, and     Respiratory  Syncytial Virus (RSV); gastrointestinal diseases, such as     <font color="blue">stomach ulcers</font> (H pylori), antibiotic-associated diarrhea (C difficile)     and <font color="blue">pediatric diarrhea</font> (Rotavirus and Adenovirus); viral diseases, such as     Mononucleosis, Herpes Simplex, Chicken Pox and Shingles (Varicella-Zoster)     and Cytomegalovirus (organ <font color="blue">transplant <font color="blue">infections</font></font>); and <font color="blue">parasitic diseases</font>,     such as Giardiasis, Cryptosporidiosis and Lyme</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">primary markets</font> and     customers for these products are reference <font color="blue">laboratories</font>, hospitals, and     physicians’ offices</td>
+    </tr>
+    <tr>
+      <td>Market Trends     The <font color="blue">global market</font> for <font color="blue">infectious</font> disease tests continues to <font color="blue">expand as new</font>     disease states are identified, <font color="blue">new therapies become available</font>, and worldwide     standards of living and access to <font color="blue">health care improve</font></td>
+    </tr>
+    <tr>
+      <td>More <font color="blue">importantly</font>,     within this <font color="blue">market there</font> is a continuing shift <font color="blue">from conventional testing</font>,     which requires <font color="blue">highly trained personnel</font> and <font color="blue">lengthy turnaround times</font> for     test  results,  to  more <font color="blue"><font color="blue">technological</font>ly advanced testing which</font> can be     performed by less <font color="blue">highly trained personnel</font> and completed in minutes or     hours</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">increasing pressures</font> to <font color="blue">contain total health care costs</font> have <font color="blue">accelerated</font>     the <font color="blue">increased use</font> of <font color="blue">diagnostic</font> testing</td>
+    </tr>
+    <tr>
+      <td>With rapid and accurate <font color="blue">diagnoses</font>     of  <font color="blue">infectious</font> diseases, physicians can <font color="blue">pinpoint appropriate therapies</font>     quickly,  leading to faster recovery, shorter hospital stays and lower     treatment  expense</td>
+    </tr>
+    <tr>
+      <td>In  addition, these pressures have led to a major     <font color="blue">consolidation</font>  among  reference  <font color="blue">laboratories</font>  and  the  formation  of     multi-hospital alliances that have reduced the number of institutional     customers  for  <font color="blue">diagnostic</font>  products and resulted in changes in buying     practices</td>
+    </tr>
+    <tr>
+      <td>Specifically, multi-year exclusive or <font color="blue">primary source</font> marketing or     <font color="blue">distribution</font> contracts with <font color="blue">institutional customers</font> have become more common,     replacing less formal <font color="blue">distribution</font> <font color="blue">arrangements</font> of <font color="blue">shorter duration</font> and     <font color="blue">involving lower product volumes</font></td>
+    </tr>
+    <tr>
+      <td>Sales and Marketing     The  <font color="blue">US Diagnostics </font>operating segment’s sales and <font color="blue">distribution</font> network     consists of a <font color="blue">direct sales force</font> in the US and <font color="blue">independent</font> <font color="blue"><font color="blue">distributor</font>s</font> in     the US and abroad</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">direct sales force</font> consists of <font color="blue">one director</font> of sales,     three regional sales managers, <font color="blue">one director</font> of corporate health systems, one     director of managed health care, one international <font color="blue">distribution</font> manager, 24     <font color="blue">technical <font color="blue">sales representatives</font></font>, and three inside <font color="blue">sales representatives</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Meridian  </font>utilizes two primary <font color="blue">independent</font> <font color="blue"><font color="blue">distributor</font>s</font> in the US, who     accounted for 47prca of the <font color="blue">US Diagnostics </font>operating segment’s third-party     sales in fiscal 2006</td>
+    </tr>
+    <tr>
+      <td>Meridian drives the <font color="blue">selling effort</font> for <font color="blue">key customers</font>     where these <font color="blue">independent</font> <font color="blue"><font color="blue">distributor</font>s</font> are utilized</td>
+    </tr>
+    <tr>
+      <td>-6-       _________________________________________________________________    [31]Table of <font color="blue">Contents       </font>Consolidation of the US <font color="blue">healthcare industry</font> is expected to continue and     <font color="blue">potentially</font>  affect  Meridian’s customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Industry </font><font color="blue">consolidation</font> puts     <font color="blue">pressure on pricing</font> and <font color="blue">aggregates buying power</font></td>
+    </tr>
+    <tr>
+      <td>In response, in the last     five  years,  <font color="blue">Meridian  </font>has <font color="blue">entered into</font>, extended, or <font color="blue">renewed several</font>     exclusive multiple-year contracts with <font color="blue">consolidated</font> healthcare providers and     supply <font color="blue">agreement</font>s with major reference <font color="blue">laboratories</font></td>
+    </tr>
+    <tr>
+      <td>Products and Markets     Meridian has expertise in the <font color="blue">development</font> and <font color="blue">manufacture</font> of <font color="blue">products based</font>     on  multiple  core  <font color="blue">diagnostic</font> <font color="blue">technologies</font>, each of <font color="blue">which enables</font> the     <font color="blue">visualization</font> and <font color="blue">identification</font> of antigen/antibody reactions for specific     pathogens</td>
+    </tr>
+    <tr>
+      <td>As  a  result, Meridian is able to develop and <font color="blue">manufacture</font>     <font color="blue">diagnostic</font> tests in a variety of formats that <font color="blue">satisfy customer</font> needs and     preferences, whether in a hospital, commercial or <font color="blue">reference <font color="blue">laboratory</font></font> or     alternate  site  location</td>
+    </tr>
+    <tr>
+      <td>Meridian’s  product  offering  consists of     <font color="blue">approximately</font> 150 medical <font color="blue">diagnostic</font> products</td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue">products generally</font>     range in list price from dlra1 per test to dlra33 per test</td>
+    </tr>
+    <tr>
+      <td>Meridian’s    product   <font color="blue">technologies</font>   include   enzyme   <font color="blue">immunoassay</font>,     <font color="blue">immunofluorescence</font>, particle agglutination/aggregation, <font color="blue">immunodiffusion</font>,     <font color="blue">complement fixation</font> and <font color="blue">chemical stains</font></td>
+    </tr>
+    <tr>
+      <td>Enzyme  Immunoassay (EIA)/Rapid tests - Products incorporating the EIA     <font color="blue">technology</font>  achieve  extremely  high  levels  of accuracy in detecting     disease-related  antigens  or  <font color="blue">antibodies</font>  through  the use of special     color-based enzyme-substrate reactions</td>
+    </tr>
+    <tr>
+      <td>Meridian utilizes this <font color="blue">technology</font> in     some of its <font color="blue">multiple test format</font>, the Premier^TM product for large volume     users, and in some of its <font color="blue">single test formats</font>, the ImmunoCard^^®, <font color="blue">ImmunoCard </font>    STAT!</td>
+    </tr>
+    <tr>
+      <td>^® and MONOLERT^® products for lower <font color="blue">volume users</font></td>
+    </tr>
+    <tr>
+      <td>Immunofluorescence   -   When  the  microscopic  <font color="blue">visualization</font>  of  an     antigen/antibody  reaction is <font color="blue">necessary</font> or desired, <font color="blue">immunofluorescence</font>     <font color="blue">technology</font> is <font color="blue">frequently</font> utilized</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluorescing </font><font color="blue">immunochemicals</font>, in the     presence of the <font color="blue">target antigen</font> or antibody, can be viewed via a <font color="blue">fluorescent</font>     microscope</td>
+    </tr>
+    <tr>
+      <td>Meridian utilizes this <font color="blue">technology</font> in its MERIFLUOR^® products</td>
+    </tr>
+    <tr>
+      <td>Particle Agglutination/Aggregation - This <font color="blue">technology</font> utilizes microparticles     (eg, latex, red blood cells) coated with specific antigens or <font color="blue">antibodies</font>     that form <font color="blue">visible aggregates</font> in the presence of a specimen containing the     <font color="blue">complementary antigen</font> or antibody</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">technology</font> is rapid and economical     and is used in Meridian’s MERITEC^® and MONOSPOT^® products</td>
+    </tr>
+    <tr>
+      <td>Other Technologies - Meridian utilizes other <font color="blue">technologies</font> that include     <font color="blue">immunodiffusion</font>, <font color="blue">complement fixation</font>, and <font color="blue">chemical stains</font></td>
+    </tr>
+    <tr>
+      <td>Meridian also     <font color="blue">manufacture</font>s and markets specimen <font color="blue">collection</font>, transportation, preservation     and concentration products, such as Para-Pak^®, Macro-CON^® and Spin-Con^®</td>
+    </tr>
+    <tr>
+      <td>Research and Development                                        -7-       _________________________________________________________________    [32]Table of <font color="blue">Contents       </font><font color="blue">The <font color="blue">US Diagnostics </font></font>operating segment’s research and <font color="blue">development</font> organization     consists  of  13  research  <font color="blue">scientists with expertise</font> in <font color="blue">biochemistry</font>,     immunology, mycology, bacteriology, virology, and <font color="blue">parasitology</font></td>
+    </tr>
+    <tr>
+      <td>Research and     <font color="blue">development</font> expenses for the <font color="blue">US Diagnostics </font>operating segment for fiscal     2006,  2005  and  2004  were  dlra3cmam342cmam000,  dlra3cmam043cmam000  and dlra3cmam151cmam000,     <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>This  research and <font color="blue">development</font> organization focuses its     <font color="blue">activities</font>  on  <font color="blue">new <font color="blue">application</font>s</font> for Meridian’s existing <font color="blue">technologies</font>,     <font color="blue">improvements</font> to <font color="blue">existing products</font> and <font color="blue">development</font> of new <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>Research and <font color="blue">development</font> efforts may occur in-house or with <font color="blue">collaborative</font>     partners</td>
+    </tr>
+    <tr>
+      <td>Meridian believes that new product <font color="blue">development</font> is a key source for     <font color="blue">sustaining revenue growth</font></td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue">internally</font> developed products include     Premierä Platinum HpSA, Premierä Platinum HpSA PLUS, Premierä Toxins A &amp; B,     and ImmunoCardÒ Toxins A &amp; B, <font color="blue">which together accounted</font> for 36prca of the US     Diagnostics operating segment’s third-party sales during fiscal 2006</td>
+    </tr>
+    <tr>
+      <td>We believe that the use of <font color="blue">collaborative</font> partners in the <font color="blue">development</font> of new     <font color="blue">products will complement</font> our <font color="blue">internal research</font> and <font color="blue">development</font> staff in a     manner that <font color="blue">allows us</font> to <font color="blue">bring products</font> to market more <font color="blue">quickly than</font> if     <font color="blue">development</font> were to occur solely on an <font color="blue">internal basis</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">During October </font>2006, we executed a <font color="blue">license <font color="blue">agreement</font> with</font> Eiken Chemical     Co,  Ltd</td>
+    </tr>
+    <tr>
+      <td>that  provides  rights to Eiken’s loop-mediated isothermal     amplification <font color="blue">technology</font> for <font color="blue">infectious</font> disease testing in the <font color="blue"><font color="blue">United States </font>    </font>and 18 other geographic markets</td>
+    </tr>
+    <tr>
+      <td>This is Meridian’s <font color="blue">first look at molecular</font>     testing for <font color="blue">infectious</font> diseases</td>
+    </tr>
+    <tr>
+      <td>During  August 2006,  we <font color="blue">entered into</font> a <font color="blue">partnership <font color="blue">agreement</font> with</font> the     Performance &amp; <font color="blue">Life Science </font>Chemicals Division of Merck KGaA, Darmstadt,     Germany and its American company EMD for the <font color="blue">development</font> of new clinical     assays</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">first product under</font> this <font color="blue">agreement</font> is expected to be launched     during fiscal 2007</td>
+    </tr>
+    <tr>
+      <td>Manufacturing     Meridian’s  immuno<font color="blue">diagnostic</font> products require the production of highly     specific  and  sensitive  antigens  and  <font color="blue">antibodies</font></td>
+    </tr>
+    <tr>
+      <td>Meridian produces     <font color="blue">substantially</font> all of its own <font color="blue">requirements</font> including monoclonal <font color="blue">antibodies</font>     and polyclonal <font color="blue">antibodies</font>, plus a variety of fungal, bacterial, and viral     antigens</td>
+    </tr>
+    <tr>
+      <td>Meridian believes it has sufficient <font color="blue">manufacturing</font> capacity for     anticipated growth</td>
+    </tr>
+    <tr>
+      <td>Intellectual Property, Patents, and Licenses     <font color="blue">Meridian  </font>owns or licenses US and foreign patents for <font color="blue">approximately</font> 25     products <font color="blue">manufacture</font>d by the <font color="blue">US Diagnostics </font>operating segment, including     Premierä Platinum HpSA and Premierä Platinum HpSA PLUS In the absence of     patent  protection,  <font color="blue">Meridian  </font>may  be  vulnerable  to <font color="blue">competitors</font> who     <font color="blue"><font color="blue">successfully</font> replicate</font> Meridian’s production and <font color="blue">manufacturing</font> <font color="blue">technologies</font>     and processes</td>
+    </tr>
+    <tr>
+      <td>Meridian’s employees are required to execute <font color="blue">confidentiality</font>     and non-disclosure <font color="blue">agreement</font>s designed to protect Meridian’s <font color="blue">proprietary</font>     products</td>
+    </tr>
+    <tr>
+      <td>-8-       _________________________________________________________________    [33]Table of <font color="blue">Contents       </font>Government Regulation     Meridian’s  <font color="blue">diagnostic</font>  products  are  regulated  by  the  Food &amp; Drug     Administration (FDA) as “devices” pursuant to the Federal Food, Drug, and     Cosmetic Act (FDCA)</td>
+    </tr>
+    <tr>
+      <td>Under the FDCA, <font color="blue">medical devices</font> are <font color="blue">classified into one</font>     of three classes (ie, Class I, II or III)</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Class I and II </font>devices are not     <font color="blue">expressly approved by</font> the FDA, but, instead, are “cleared” for marketing</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Class III </font><font color="blue">devices generally must</font> receive “pre-market approval” from the FDA     as to safety and <font color="blue">effectiveness</font></td>
+    </tr>
+    <tr>
+      <td>Each of the <font color="blue">diagnostic</font> products currently marketed by Meridian in the United     States has <font color="blue">been cleared by</font> the FDA pursuant to the 510(k) clearance process     or is exempt from such <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Meridian believes that most, but not     all, products under <font color="blue">development</font> will be <font color="blue">classified as</font> <font color="blue">Class I or II </font>medical     devices and, in the case of <font color="blue">Class II </font>devices, will be eligible for 510(k)     clearance</td>
+    </tr>
+    <tr>
+      <td>A 510(k) clearance will be granted if the <font color="blue">submitted data establishes</font> that     the proposed device is “<font color="blue">substantially</font> equivalent” to an existing Class I or     <font color="blue">Class II </font>medical device or to a <font color="blue">Class III </font>medical device for which the FDA     does not require pre-market approval</td>
+    </tr>
+    <tr>
+      <td>The 510(k) clearance process for     “<font color="blue">substantially</font> equivalent” devices allows product sales to be made in the     <font color="blue">United States </font>after the filing of an <font color="blue">application</font> and <font color="blue">upon clearance by</font> the     FDA, typically within 90 to 120 days after submission</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the FDA </font>requests     <font color="blue">additional</font> information, the <font color="blue">product cannot</font> be sold in the <font color="blue"><font color="blue">United States </font>    </font>until the <font color="blue">application</font> has <font color="blue">been supplemented</font> and <font color="blue">upon acknowledgment by</font> the     FDA within 90 to 120 days of the supplemental <font color="blue">application</font></td>
+    </tr>
+    <tr>
+      <td>In practice, the     FDA has <font color="blue">been granting clearance</font> in about 90 days following submission of the     supplemental information</td>
+    </tr>
+    <tr>
+      <td>If there are no existing FDA-approved products or     <font color="blue">processes comparable</font> to a <font color="blue">diagnostic</font> product or process, approval by the FDA     involves the more lengthy pre-market approval procedures except where the     <font color="blue">product qualifies</font> for de novo 510(k)</td>
+    </tr>
+    <tr>
+      <td>Under the Food and Drug Export Reform     and Enforcement Act of 1996 (FDERA), unapproved FDA products can, under     certain <font color="blue">conditions</font>, be <font color="blue">sold outside</font> of the <font color="blue">United States </font>prior to receiving     clearance</td>
+    </tr>
+    <tr>
+      <td>Sales of Meridian’s <font color="blue">diagnostic</font> products in <font color="blue">foreign countries</font> are subject to     <font color="blue">foreign government regulation</font>, the <font color="blue">requirements</font> of which vary <font color="blue">substantially</font>     <font color="blue">from country</font> to country</td>
+    </tr>
+    <tr>
+      <td>The time required to obtain approval by a foreign     <font color="blue">country may</font> be longer or <font color="blue">shorter than</font> that required for FDA approval and the     <font color="blue">requirements</font> may differ</td>
+    </tr>
+    <tr>
+      <td>European Diagnostics Operating Segment     <font color="blue">The European Diagnostics </font>operating segment’s business <font color="blue">focuses on</font> the sale     and  <font color="blue">distribution</font> of <font color="blue">diagnostic</font> test kits, <font color="blue">manufacture</font>d both by the US     Diagnostics operating segment and by third-party vendors</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>66prca     of third-party sales for fiscal 2006 were <font color="blue">products purchased from</font> the US     Diagnostics operating segment</td>
+    </tr>
+    <tr>
+      <td>Third-party sales for this operating segment     were dlra19cmam828cmam000, dlra17cmam818cmam000 and dlra15cmam412cmam000 for fiscal 2006, 2005 and     2004, <font color="blue">respectively</font>, reflecting a <font color="blue">compound annual growth rate</font> of 13prca</td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">September </font>30, 2006,                                        -9-       _________________________________________________________________    [34]Table of <font color="blue">Contents       </font>the European Diagnostics operating segment had 38 employees, including 16     employees in the <font color="blue">direct sales force</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The European Diagnostics </font>operating     segment’s sales and <font color="blue">distribution</font> network consists of <font color="blue">direct sales force</font>s in     Belgium, France, Holland, and Italy, and <font color="blue">independent</font> <font color="blue"><font color="blue">distributor</font>s</font> in other     European countries, <font color="blue">Africa and the Middle East</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The European Diagnostics </font>    operating segment maintains a <font color="blue">distribution</font> center in Milan, Italy</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">primary markets</font> and customers for this operating segment are hospitals and     reference <font color="blue">laboratories</font></td>
+    </tr>
+    <tr>
+      <td>Due to the introduction of <font color="blue">new products</font> and <font color="blue">improvements</font> in <font color="blue">general market</font>     <font color="blue">conditions</font>, sales in <font color="blue">local currency</font>, the Euro, increased 15prca in fiscal 2006,     compared to fiscal 2005, and 11prca in fiscal 2005, compared to fiscal 2004</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The European Diagnostics </font>operating segment’s functional currency is the     Euro</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">translation</font> of Euros into US dollars is subject to <font color="blue">exchange rate</font>     <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Life Science </font>Operating Segment     Overview     <font color="blue">The <font color="blue">Life Science </font></font>operating segment’s business <font color="blue">focuses on</font> the <font color="blue">development</font>,     <font color="blue">manufacture</font>,  sale, and <font color="blue">distribution</font> of <font color="blue">bulk antigens</font>, <font color="blue">antibodies</font>, and     <font color="blue">reagents used by researchers</font> and other <font color="blue">diagnostic</font> companies, as well as     contract <font color="blue">development</font> and <font color="blue">manufacturing</font> services</td>
+    </tr>
+    <tr>
+      <td>Third-party sales for this     operating segment were dlra22cmam864cmam000, dlra21cmam662cmam000 and dlra16cmam041cmam000 for fiscal     2006, 2005 and 2004, <font color="blue">respectively</font>, reflecting a <font color="blue">compound annual growth rate</font>     of  23prca, including the <font color="blue">OEM Concepts </font><font color="blue"><font color="blue">acquisition</font> discussed</font> below</td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">September </font>30, 2006, the <font color="blue">Life Science </font>operating segment had 117 employees</td>
+    </tr>
+    <tr>
+      <td>Most of the revenue for the <font color="blue">Life Science </font>operating segment <font color="blue">currently comes</font>     from the <font color="blue">manufacture</font>, sale and <font color="blue">distribution</font> of <font color="blue">bulk antigens</font>, <font color="blue">antibodies</font>,     and <font color="blue">reagents used by researchers</font> and other <font color="blue">diagnostic</font> companies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">During     </font>fiscal 2006, 18prca of third-party sales for this segment were to <font color="blue">one customer</font>,     a substantial portion of which is <font color="blue">under exclusive supply</font> <font color="blue">agreement</font>s that     have <font color="blue">annual automatic renewal provisions</font></td>
+    </tr>
+    <tr>
+      <td>Meridian has a long-standing     <font color="blue"><font color="blue">relationship</font> with</font> this customer, and <font color="blue">although there</font> can be <font color="blue">no assurances</font>,     Meridian intends to renew these supply <font color="blue">agreement</font>s in the <font color="blue">normal course</font> of     business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">protein production</font> <font color="blue">facility</font> serves as</font> an enabling <font color="blue">technology</font> for process     <font color="blue">development</font> and large-scale <font color="blue">manufacturing</font> for <font color="blue">biologicals</font> used in new drugs     and  vaccines</td>
+    </tr>
+    <tr>
+      <td>The  size  of  the <font color="blue">facility</font> is intended to <font color="blue">accommodate</font>     <font color="blue">manufacturing</font> <font color="blue">requirements</font> for <font color="blue">Phase I and Phase II </font><font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>The     customer  base  for  this aspect of the <font color="blue">Life Science </font>business includes     <font color="blue">bio<font color="blue">pharmaceutical</font></font>  and  <font color="blue">bio<font color="blue">technology</font> companies</font>, as well as government     agencies, such as the <font color="blue">National Institutes of Health</font></td>
+    </tr>
+    <tr>
+      <td>Revenues for the Life     Science operating segment, in the <font color="blue">normal course</font> of business, may be affected     from  quarter  to <font color="blue">quarter by</font> the timing and nature of <font color="blue">arrangements</font> for     contract  services  work, which may have <font color="blue">longer production cycles than</font>     <font color="blue">bioresearch reagents</font>                                        -10-       _________________________________________________________________    [35]Table of <font color="blue">Contents       </font>and  <font color="blue">bulk antigens</font> and <font color="blue">antibodies</font>, as well as <font color="blue">buying patterns</font> of major     customers</td>
+    </tr>
+    <tr>
+      <td>See Note 1(j) to the Consolidated <font color="blue">Financial </font>Statements herein for     <font color="blue">revenue recognition policies</font></td>
+    </tr>
+    <tr>
+      <td>Meridian’s revenues for <font color="blue">contract services</font> were     dlra2cmam537cmam000, dlra3cmam053cmam000, and dlra1cmam528cmam000 in fiscal 2006, 2005, and 2004,     <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>Growth Strategies     Growth  strategies  for  the  Life  Science  operating segment include     (i) <font color="blue">development</font> of new product <font color="blue">application</font>s from existing <font color="blue">technologies</font> and     (ii) <font color="blue">acquisition</font>  or  licensing  of  <font color="blue">biologicals</font>  and <font color="blue">technologies</font> for     <font color="blue">development</font> of <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td>Contract <font color="blue">manufacturing</font> of proteins and other     <font color="blue">biologicals</font> used in research for new drugs and vaccines is an example of a     <font color="blue">significant</font> new product <font color="blue">application</font> built from Meridian’s <font color="blue">existing expertise</font>     in <font color="blue">manufacturing</font> <font color="blue">bulk antigens</font> and <font color="blue">reagents using cell culture techniques</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">BIODESIGN </font></font>brand <font color="blue">represents monoclonal</font> and polyclonal <font color="blue">antibodies</font>,     as  <font color="blue">well as assay reagents</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">OEM Concepts </font>brand <font color="blue">represents contract</font>     ascites  and  antibody  production  services</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">Viral Antigens </font></font>brand     <font color="blue">represents viral proteins</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">cGMP biologics</font> brand <font color="blue">represents contract</font>     <font color="blue">development</font> and <font color="blue">manufacturing</font> services for drug and <font color="blue">vaccine discovery</font> and     <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">customer base</font> for <font color="blue">bulk biomedical reagents</font> (BIODESIGN, OEM Concepts, and     Viral  Antigens  brands)  is  large and fragmented, and includes other     <font color="blue">diagnostic</font>  <font color="blue">manufacture</font>rs  as  <font color="blue">well as researchers</font> in academia and the     <font color="blue">pharmaceutical</font> and bio<font color="blue">technology</font> industries</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market segments</font> for drug     and <font color="blue">vaccine discovery</font> and <font color="blue">development</font> are intended to be <font color="blue">served via contract</font>     <font color="blue">manufacturing</font> in the <font color="blue"><font color="blue">protein production</font> <font color="blue">laboratory</font> discussed</font> above</td>
+    </tr>
+    <tr>
+      <td>Sales and Marketing     <font color="blue">The <font color="blue">Life Science </font></font>operating segment <font color="blue">applies sales</font> and <font color="blue">marketing efforts</font> in     two  <font color="blue">different manners</font> that are designed to <font color="blue">complement one</font> another</td>
+    </tr>
+    <tr>
+      <td>An     <font color="blue">internal sales</font> and marketing staff, as well as a website, have <font color="blue">been built</font> to     market <font color="blue">bulk biomedical reagents</font> directly to a large and <font color="blue">fragmented customer</font>     base</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">website provides detailed technical</font> information and <font color="blue">capability</font> to     submit  purchase  orders</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">major bulk biomedical reagent customers</font>,     <font color="blue">scientific resources</font> have <font color="blue">been dedicated</font> to establish sole-source supply     <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td>For drug and <font color="blue">vaccine discovery</font> and <font color="blue">development</font>, management and     <font color="blue">scientific resources</font> are dedicated to <font color="blue">each potential customer</font></td>
+    </tr>
+    <tr>
+      <td>Research and Development                                        -11-       _________________________________________________________________    [36]Table of <font color="blue">Contents       </font><font color="blue">The <font color="blue">Life Science </font></font>operating segment’s research and <font color="blue">development</font> organization     consists of 7 research scientists</td>
+    </tr>
+    <tr>
+      <td>Research and <font color="blue">development</font> expenses for the     Life  Science  operating  segment  for fiscal 2006, 2005 and 2004 were     dlra1cmam457cmam000,  dlra823cmam000  and dlra1cmam226cmam000, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>This research and     <font color="blue">development</font> organization focuses its <font color="blue">activities</font> on the <font color="blue">protein production</font>     <font color="blue">laboratory</font>, and developing <font color="blue">new biomedical reagents</font></td>
+    </tr>
+    <tr>
+      <td>Manufacturing and Government Regulation     The  proteins that are produced in the <font color="blue">protein production</font> <font color="blue">facility</font> are     intended to be used as “injectibles”</td>
+    </tr>
+    <tr>
+      <td>As such, they are produced under cGMP     <font color="blue">Regulations for Biologics and Human Drugs </font>under the auspices of the FDA     Approval and licensing, following <font color="blue">clinical trials</font>, of these products is the     <font color="blue">responsibility</font>  of the applicant, who owns the rights to <font color="blue">each protein</font></td>
+    </tr>
+    <tr>
+      <td>Typically, the customer is the applicant, not <font color="blue">Meridian Life Science</font></td>
+    </tr>
+    <tr>
+      <td>Competition     Diagnostics     The market for <font color="blue">diagnostic</font> tests is a multi-billion dollar international     industry, which is <font color="blue">highly <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td>Many of Meridian’s <font color="blue">competitors</font> are     larger  with  greater financial, research, <font color="blue">manufacturing</font> and marketing     resources</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Important </font><font color="blue"><font color="blue">competitive</font> factors</font> of Meridian’s products include     product quality, price, ease of use, customer service, and reputation</td>
+    </tr>
+    <tr>
+      <td>In a     broader  sense,  industry  <font color="blue">competition</font>  is  based  upon scientific and     <font color="blue">technological</font> <font color="blue">capability</font>, <font color="blue">proprietary</font> know-how, access to adequate capital,     the ability to develop and market products and processes, the ability to     attract  and retain qualified personnel and the <font color="blue">availability</font> of patent     protection</td>
+    </tr>
+    <tr>
+      <td>To the extent that Meridian’s <font color="blue">product lines</font> do not reflect     <font color="blue">technological</font> advances, Meridian’s ability to compete in those <font color="blue">product lines</font>     could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Companies </font>competing in the <font color="blue">diagnostic</font> test industry generally focus on a     limited number of tests or limited segments of the market</td>
+    </tr>
+    <tr>
+      <td>As a result, the     <font color="blue">diagnostic</font> test industry is highly fragmented and segmented</td>
+    </tr>
+    <tr>
+      <td>Hundreds of     companies in the <font color="blue">United States </font>alone supply immuno<font color="blue">diagnostic</font> tests</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>companies  range  from multi-national health care companies, for which     immuno<font color="blue">diagnostic</font>s is one line of business, to small start-up companies</td>
+    </tr>
+    <tr>
+      <td>Of     central  importance  in  the industry are mid-sized medical <font color="blue">diagnostic</font>     <font color="blue">specialty companies</font>, like Meridian, that offer multiple, broad <font color="blue">product lines</font>     and have the ability to deliver new, high value products quickly to the     marketplace</td>
+    </tr>
+    <tr>
+      <td>Among  the companies with which Meridian competes in the     marketing of one or more of its products are Abbott Laboratories Inc,     Becton, Dickinson and Company, Diagnostic Products Corporation (acquired by     Siemens in 2006), Quidel Corporation, and Inverness Medical</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Life Science </font>                                       -12-       _________________________________________________________________    [37]Table of <font color="blue">Contents       </font>The market for <font color="blue">bulk biomedical reagents</font> is <font color="blue">highly <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Important </font>    <font color="blue"><font color="blue">competitive</font> factors</font> include product quality, price, customer service, and     reputation</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Meridian  </font>faces  <font color="blue">competitors</font>,  many of which have greater     financial, research and <font color="blue">development</font>, sales and marketing, and <font color="blue">manufacturing</font>     resources where sole-source supply <font color="blue">arrangements</font> do not exist</td>
+    </tr>
+    <tr>
+      <td>From time to     time, <font color="blue">customers may choose</font> to <font color="blue">manufacture</font> their biomedical reagents in-house     <font color="blue">rather than purchase from outside vendors such as</font> Meridian</td>
+    </tr>
+    <tr>
+      <td>The market for contract <font color="blue">manufacturing</font> in a validated cGMP <font color="blue">facility</font> such as     Meridian’s <font color="blue">protein production</font> <font color="blue">laboratory</font> is <font color="blue">also <font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Important </font>    <font color="blue">competitive</font>  factors  include reputation, customer service, and price</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>the  product  <font color="blue">application</font>  for  this <font color="blue">facility</font> was built from     Meridian’s <font color="blue">existing expertise</font> in cell culture <font color="blue">manufacturing</font> techniques,     Meridian faces <font color="blue">competitors</font> with greater experience in contract <font color="blue">manufacturing</font>     in a <font color="blue">cGMP <font color="blue">environment</font></font></td>
+    </tr>
+    <tr>
+      <td>Acquisitions     Acquisitions have played an <font color="blue">important role</font> in the <font color="blue">historical growth</font> of     Meridian’s <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Meridian’s <font color="blue"><font color="blue">acquisition</font> objectives</font> are to, among other     things, (i) enhance product offerings, (ii) improve product <font color="blue">distribution</font>     <font color="blue">capabilities</font>, (iii) provide access to new markets, and/or (iv) provide     access to key <font color="blue">biologicals</font> or new <font color="blue">technologies</font> that lead to <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td>Recent examples of completed <font color="blue"><font color="blue">acquisition</font>s</font> include <font color="blue">Gull Laboratories </font>in     fiscal 1999, <font color="blue">Viral Antigens </font>in fiscal 2000, and <font color="blue">OEM Concepts </font>in fiscal 2005</td>
+    </tr>
+    <tr>
+      <td>The  Gull  <font color="blue">acquisition</font>  enhanced product offerings, expanded sales and     <font color="blue">distribution</font> <font color="blue">capabilities</font> in Europe, and provided the initial access into     the <font color="blue">Life Science </font>market for Meridian (through the <font color="blue">BIODESIGN </font>business)</td>
+    </tr>
+    <tr>
+      <td>The     Viral  Antigens  <font color="blue">acquisition</font>,  <font color="blue">coupled with</font> the opening of the protein     production <font color="blue">facility</font>, solidified Meridian’s <font color="blue">entry into</font> the <font color="blue">Life Science </font>    market</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">OEM Concepts </font><font color="blue">acquisition</font> strengthened Meridian’s <font color="blue">Life Science </font>    business  by  adding  custom  ascites  <font color="blue">manufacturing</font>  <font color="blue">capabilities</font> and     <font color="blue">diversifying</font> Meridian’s <font color="blue">customer base</font> of major <font color="blue">diagnostic</font> <font color="blue">manufacturing</font>     companies</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although Meridian </font><font color="blue">cannot provide</font> any assurance that it <font color="blue">will consummate</font> any     <font color="blue"><font color="blue">acquisition</font>s</font> in the future, Meridian expects that <font color="blue"><font color="blue">acquisition</font>s</font> will continue     to serve as a source of <font color="blue">new revenues</font> and <font color="blue">earnings growth</font> in the future</td>
+    </tr>
+    <tr>
+      <td>International Markets     International markets are an <font color="blue">important source</font> of revenue for Meridian’s     operating segments</td>
+    </tr>
+    <tr>
+      <td>For all operating segments combined, international sales     were dlra34cmam557cmam000 or 32prca of total fiscal 2006 sales, dlra30cmam232cmam000 or 33prca of     total fiscal 2005 sales and dlra24cmam916cmam000 or 31prca of total fiscal 2004 sales</td>
+    </tr>
+    <tr>
+      <td>Domestic exports for the <font color="blue">US Diagnostics </font>and <font color="blue">Life Science </font>operating segments     were dlra14cmam728cmam000, dlra12cmam414cmam000 and dlra9cmam504cmam000 in fiscal                                        -13-       _________________________________________________________________    [38]Table of <font color="blue">Contents       </font>2006, 2005 and 2004, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>Meridian expects to continue to look to     <font color="blue"><font color="blue">international markets</font> as</font> a source of <font color="blue">new revenues</font> and growth in the future</td>
+    </tr>
+    <tr>
+      <td>Environmental     Meridian is a <font color="blue">conditionally exempt</font> small <font color="blue">quantity generator</font> of <font color="blue">hazardous</font>     waste and has a US EPA <font color="blue">identification</font> number</td>
+    </tr>
+    <tr>
+      <td>All <font color="blue">hazardous</font> material is     manifested  and  disposed  of properly</td>
+    </tr>
+    <tr>
+      <td>Meridian is in <font color="blue">compliance with</font>     <font color="blue">applicable portions</font> of the federal and state <font color="blue">hazardous</font> waste <font color="blue">regulations</font> and     has never been a party to any <font color="blue"><font color="blue">environment</font>al proceeding</font></td>
+    </tr>
+    <tr>
+      <td>ITEM 1A                                    RISK FACTORS       In addition to the other information set forth in this report, you should     <font color="blue">carefully</font> consider the <font color="blue">following factors <font color="blue">which could</font> <font color="blue">materially</font> affect</font> our     business, <font color="blue">financial condition</font>, cash flows or future results</td>
+    </tr>
+    <tr>
+      <td>Any one of     these <font color="blue">factors could</font> cause the Company’s actual results to <font color="blue">vary <font color="blue">materially</font></font>     from recent results or from anticipated future results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">risks described</font>     below  are not the <font color="blue">only risks facing</font> our Company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks and     <font color="blue">uncertainties</font> not currently known to us or that we currently deem to be     <font color="blue">immaterial also may <font color="blue">materially</font> <font color="blue"><font color="blue">adversely</font> affect</font></font> our business, financial     condition and/or operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Risks Affecting </font>Growth and Profitability </font>of our Business     We may be unable to develop <font color="blue">new products</font> and services or acquire products     and <font color="blue">services on</font> favorable terms</td>
+    </tr>
+    <tr>
+      <td>The medical <font color="blue">diagnostic</font> and <font color="blue">life science industries</font> are <font color="blue">characterized by</font>     ongoing <font color="blue">technological</font> <font color="blue">development</font>s and changing customer <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>As     such, our results of <font color="blue">operations</font> and <font color="blue">continued growth depend</font>, in part, on our     ability in a <font color="blue">timely manner</font> to develop or acquire rights to, and <font color="blue">successfully</font>     introduce  into the marketplace, enhancements of <font color="blue">existing products</font> and     services  or  <font color="blue">new products</font> and services that incorporate <font color="blue">technological</font>     advances, meet customer <font color="blue">requirements</font>, and respond to products developed by     our <font color="blue">competition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide</font> any assurance that we will be successful     in developing or acquiring <font color="blue">such rights</font> to products and <font color="blue">services on</font> a timely     basis,  or that <font color="blue">such products</font> and <font color="blue">services will adequately address</font> the     changing needs of the marketplace, either of <font color="blue"><font color="blue">which could</font> <font color="blue"><font color="blue">adversely</font> affect</font></font>     our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">must regularly allocate</font> considerable resources to research     and <font color="blue">development</font> of <font color="blue">new products</font>, services, and <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>The research     and <font color="blue">development</font> process generally takes a <font color="blue">significant</font> amount of time from     <font color="blue">design stage</font> to <font color="blue">product launch</font></td>
+    </tr>
+    <tr>
+      <td>This process is conducted in <font color="blue">various stages</font></td>
+    </tr>
+    <tr>
+      <td>During each stage, there is a risk that we will not achieve our goals on a     <font color="blue">timely basis</font>, or at all, and we may have to abandon a product in which we     have invested substantial resources</td>
+    </tr>
+    <tr>
+      <td>During  2006,  2005, and 2004, we incurred dlra4cmam799cmam000, dlra3cmam866cmam000, and     dlra4cmam377cmam000, <font color="blue">respectively</font>, in research and <font color="blue">development</font> expenses</td>
+    </tr>
+    <tr>
+      <td>We expect to     continue to invest in our research and <font color="blue">development</font> <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>-14-       _________________________________________________________________    [39]Table of <font color="blue">Contents       </font>We may be unable to <font color="blue">successfully</font> integrate <font color="blue">operations</font> or to achieve expected     cost savings from <font color="blue"><font color="blue">acquisition</font>s</font> we make</td>
+    </tr>
+    <tr>
+      <td>One of our main growth strategies is the <font color="blue">acquisition</font> of companies and/or     products</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">additional</font> <font color="blue"><font color="blue">acquisition</font>s</font> of companies and <font color="blue">products may</font>     enhance  the  <font color="blue">opportunity</font>  to  increase  net  <font color="blue">earnings over</font> time, such     <font color="blue"><font color="blue">acquisition</font>s</font> could result in greater <font color="blue">administrative</font> burdens, increased     exposure  to the <font color="blue">uncertainties</font> inherent in marketing <font color="blue">new products</font>, and     financial  risks of <font color="blue">additional</font> operating costs</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">principal benefits</font>     expected to result from any <font color="blue"><font color="blue">acquisition</font>s</font> we make will not be achieved fully     unless we are able to <font color="blue">successfully</font> integrate the <font color="blue">operations</font> of the acquired     <font color="blue">entities with</font> our <font color="blue">operations</font> and realize the anticipated synergies, cost     savings, and <font color="blue">growth opportunities from integrating</font> these <font color="blue">businesses</font> into our     existing <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide</font> any assurance that we will be able to     identify and complete <font color="blue">additional</font> <font color="blue"><font color="blue">acquisition</font>s</font> on terms we consider favorable     or that, if completed, will be <font color="blue">successfully</font> integrated into our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Revenues  </font>for our <font color="blue">diagnostic</font> operating segments may be impacted by our     reliance upon two key <font color="blue"><font color="blue">distributor</font>s</font>, seasonal factors and sporadic outbreaks,     and changing <font color="blue">diagnostic</font> market <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Key Distributors     Our US Diagnostic operating segment sales through two <font color="blue"><font color="blue">distributor</font>s</font> were     <font color="blue">approximately</font> dlra31cmam003cmam000, or <font color="blue">approximately</font> 29prca of <font color="blue">total sales</font>, in fiscal     2006, and <font color="blue">approximately</font> dlra23cmam756cmam000, or <font color="blue">approximately</font> 26prca of <font color="blue">total sales</font> for     fiscal 2005</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">parties distribute</font> our products and other <font color="blue">laboratory</font>     products to end-user customers</td>
+    </tr>
+    <tr>
+      <td>The loss of either of these <font color="blue"><font color="blue">distributor</font>s</font>     <font color="blue">could negatively impact</font> our sales and results of <font color="blue">operations</font> unless suitable     <font color="blue"><font color="blue">alternative</font>s</font>  were  <font color="blue">timely found</font> or lost sales to one <font color="blue">distributor</font> were     absorbed  by  another  <font color="blue">distributor</font></td>
+    </tr>
+    <tr>
+      <td>Finding a suitable <font color="blue">alternative</font> on     satisfactory  terms  may pose <font color="blue">challenges</font> in our industry’s <font color="blue">competitive</font>     <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>As an <font color="blue">alternative</font>, we could expand our efforts to distribute and market our     products directly</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">alternative</font>, however, would require substantial     investment  in  <font color="blue">additional</font>  sales, marketing, and <font color="blue">logistics resources</font>,     including hiring <font color="blue">additional</font> sales and customer service personnel, which     would <font color="blue">significant</font>ly increase our future selling, general, and <font color="blue">administrative</font>     expenses</td>
+    </tr>
+    <tr>
+      <td>Seasonal Factors and Sporadic Outbreaks     Our principal business is the sale of a <font color="blue">broad range</font> of <font color="blue">diagnostic</font> test kits     for common <font color="blue">respiratory</font>, gastrointestinal, viral, and parasitic <font color="blue">infectious</font>     diseases</td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">infectious</font> diseases may be seasonal in nature, while     others  may  be associated with sporadic outbreaks, such as food-borne     illnesses</td>
+    </tr>
+    <tr>
+      <td>While we believe that the breadth of our <font color="blue">diagnostic</font> <font color="blue">product lines</font>     reduces  the  risk that <font color="blue">infections</font> subject to <font color="blue">seasonality</font> and sporadic     <font color="blue">outbreaks will</font> cause <font color="blue">variability</font> in <font color="blue">diagnostic</font> revenues, we can make no     assurance that <font color="blue">revenues will</font> not be <font color="blue">negatively impacted period over period</font>     <font color="blue">by such factors</font></td>
+    </tr>
+    <tr>
+      <td>Changing Diagnostic Market Conditions                                        -15-       _________________________________________________________________    [40]Table of <font color="blue">Contents       </font>Changes  in  the  healthcare  delivery  system  have resulted in major     <font color="blue">consolidation</font>  among  reference  <font color="blue">laboratories</font>  and in the formation of     multi-hospital alliances, reducing the number of <font color="blue">institutional customers</font> for     <font color="blue">diagnostic</font> test products</td>
+    </tr>
+    <tr>
+      <td>Due to such <font color="blue">consolidation</font>, we may not be able to     enter into and/or sustain <font color="blue">contractual</font> or other marketing or <font color="blue">distribution</font>     <font color="blue">arrangements</font>  on  a  satisfactory  <font color="blue">commercial basis with institutional</font>     customers, <font color="blue"><font color="blue">which could</font> <font color="blue"><font color="blue">adversely</font> affect</font></font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Third <font color="blue">party payors</font> for <font color="blue">medical products</font> and services, including state and     <font color="blue">federal governments</font>, are <font color="blue">increasingly concerned about escalating health care</font>     costs and can <font color="blue">indirectly affect</font> the pricing or the <font color="blue">relative attractiveness</font>     of our <font color="blue">products by regulating</font> the <font color="blue">maximum amount</font> of <font color="blue">reimbursement</font> they will     provide  for <font color="blue">diagnostic</font> testing services</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">reimbursement</font> amounts for     <font color="blue">diagnostic</font> testing services are decreased in the future, such decreases may     reduce the amount that will be reimbursed to hospitals or physicians for     <font color="blue">such services</font> and <font color="blue">consequently could</font> place <font color="blue">constraints on</font> the levels of     overall pricing, <font color="blue">which could</font> have a material effect on our sales and/or     <font color="blue">profit margins</font></td>
+    </tr>
+    <tr>
+      <td>Revenues for our <font color="blue">Life Science </font>operating segment may be <font color="blue">impacted by customer</font>     <font color="blue">concentrations</font> and <font color="blue">buying patterns</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Life Science </font>operating segment’s sales of <font color="blue">purified antigens</font> and reagents     to  one  customer  were 18prca and 23prca, <font color="blue">respectively</font>, of the <font color="blue">Life Science </font>    operating segment’s <font color="blue">total sales</font> for fiscal 2006 and fiscal 2005, or 4prca and     5prca, <font color="blue">respectively</font>, of our overall <font color="blue">total sales</font> for fiscal 2006 and fiscal     2005</td>
+    </tr>
+    <tr>
+      <td>A substantial portion of these sales are <font color="blue">under exclusive supply</font>     <font color="blue">agreement</font>s that have <font color="blue">annual automatic renewal provisions</font></td>
+    </tr>
+    <tr>
+      <td>Although we have a     long-standing  <font color="blue">relationship</font>  with this customer, we <font color="blue">cannot provide</font> any     assurance that we will be able to renew these supply <font color="blue">agreement</font>s, <font color="blue">which could</font>     <font color="blue"><font color="blue">adversely</font> affect</font> our sales and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Life Science </font>operating segment has five other <font color="blue">significant</font> customers who     purchase antigens, <font color="blue">antibodies</font> and reagents, which together comprised 20prca and     29prca, <font color="blue">respectively</font>, of the operating segment’s <font color="blue">total sales</font> for fiscal 2006     and fiscal 2005</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> alteration of <font color="blue">buying patterns</font> from these     customers could <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">period over period sales</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Revenues relating to research, <font color="blue">development</font> and <font color="blue">manufacturing</font> services for     our <font color="blue">Life Science </font>operating segment are <font color="blue">generated on</font> a <font color="blue">contract by contract</font>     basis</td>
+    </tr>
+    <tr>
+      <td>The nature of this business is such that <font color="blue">each contract provides</font> a     unique product and/or service and <font color="blue">corresponding revenue stream</font></td>
+    </tr>
+    <tr>
+      <td>Although we     believe that <font color="blue">future prospects</font> for this business <font color="blue">will generate targeted</font>     growth  rates, there can be no assurance that <font color="blue">future contracts will</font> be     secured, and if secured, will be profitable</td>
+    </tr>
+    <tr>
+      <td>Intense <font color="blue">competition</font> could <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The markets for our products and services are <font color="blue">characterized by</font> substantial     <font color="blue">competition</font> and rapid change</td>
+    </tr>
+    <tr>
+      <td>Hundreds of companies in the <font color="blue"><font color="blue">United States </font>    </font>supply immuno<font color="blue">diagnostic</font> tests and <font color="blue">purified reagents</font></td>
+    </tr>
+    <tr>
+      <td>These companies range     <font color="blue">from multinational healthcare entities</font>, for which immuno<font color="blue">diagnostic</font>s is one     line of business,                                        -16-       _________________________________________________________________    [41]Table of <font color="blue">Contents       </font>to small start-up companies</td>
+    </tr>
+    <tr>
+      <td>Many of our <font color="blue">competitors</font> have <font color="blue">significant</font>ly     greater financial, technical, <font color="blue">manufacturing</font>, and marketing resources than we     do</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide</font> any assurance that our products and services will be     able  to  compete  <font color="blue">successfully</font>  with the products and services of our     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue"><font color="blue">dependent on</font> international sales</font>, and our financial results may be     <font color="blue">adversely</font> impacted by foreign currency, regulatory or other <font color="blue">development</font>s     <font color="blue">affecting <font color="blue">international markets</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">sell products</font> and services into <font color="blue">approximately</font> 60 countries</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>    32prca of our net sales for fiscal 2006 and <font color="blue">approximately</font> 33prca of our net sales     for fiscal 2005 were <font color="blue">attributable</font> to <font color="blue">international markets</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>    49prca of our international sales were made in Euros, with the remaining 51prca     made  in  US  dollars</td>
+    </tr>
+    <tr>
+      <td>We  are subject to the <font color="blue">risks associated with</font>     <font color="blue">fluctuations</font> in the US dollar-Euro <font color="blue">exchange rate</font>s</td>
+    </tr>
+    <tr>
+      <td>We are also subject to     other <font color="blue">risks associated with</font> international <font color="blue">operations</font>, including longer     customer  payment  cycles, tariff <font color="blue">regulations</font>, <font color="blue">requirements</font> for export     licenses, stability of <font color="blue">foreign governments</font>, and governmental <font color="blue">requirements</font>     <font color="blue">with respect</font> to the <font color="blue">importation</font> and <font color="blue">distribution</font> of <font color="blue">medical devices</font> and     antigens, <font color="blue">antibodies</font> and reagents, all of <font color="blue">which may vary by country</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risks Affecting </font>our Manufacturing Operations     We are subject to <font color="blue">comprehensive regulation</font>, and our ability to <font color="blue">earn profits</font>     may be <font color="blue">restricted by</font> these <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Medical device <font color="blue">diagnostic</font>s and the <font color="blue">manufacture</font>, sale, and <font color="blue">distribution</font> of     <font color="blue">bulk antigens</font>, <font color="blue">antibodies</font>, and reagents are <font color="blue">highly regulated industries</font></td>
+    </tr>
+    <tr>
+      <td>We     cannot  provide any assurance that we will be able to obtain <font color="blue">necessary</font>     <font color="blue">governmental clearances</font> or approvals or <font color="blue">timely clearances</font> or approvals to     <font color="blue">market future products</font> in the <font color="blue">United States </font>and other countries</td>
+    </tr>
+    <tr>
+      <td>Costs and     <font color="blue">difficult</font>ies in complying with laws and <font color="blue">regulations</font> <font color="blue">administered</font> by the US     Food and Drug Administration, the US Department of Agriculture, the US     Department of Commerce, the US Drug Enforcement Agency, or the Centers for     Disease  Control  can  result in <font color="blue">unanticipated expenses</font> and delays and     <font color="blue">interruptions</font>  to  the  sale  of  new  and <font color="blue">existing products</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Contract     </font><font color="blue">manufacturing</font> of proteins and other <font color="blue">biologicals</font> is <font color="blue">regulated by</font> the US     Food and Drug Administration</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulatory </font>approval can be a lengthy, expensive, and <font color="blue">uncertain process</font>,     making the timing and costs of approvals <font color="blue">difficult</font> to predict</td>
+    </tr>
+    <tr>
+      <td>The failure     to  comply  with  these  <font color="blue">regulations</font>  can result in delay in obtaining     <font color="blue">authorization</font> to <font color="blue">sell products</font>, seizure or recall of products, suspension or     revocation of authority to <font color="blue">manufacture</font> or <font color="blue">sell products</font>, and other civil or     <font color="blue">criminal sanctions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font><font color="blue">interruptions</font> in <font color="blue">production at</font> our principal <font color="blue">manufacturing</font>     <font color="blue">facilities</font> and/or third-party <font color="blue">manufacturing</font> <font color="blue">facilities</font> would <font color="blue">adversely</font>     affect our business and operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>79prca of our <font color="blue">diagnostic</font>s revenues and 71prca of our <font color="blue">Life Science </font>    <font color="blue">revenues come from products</font> and services <font color="blue">manufacture</font>d at our Cincinnati,     Ohio, Boca Raton, Florida, Memphis, Tennessee, and Saco, Maine <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Our  global  supply of these products and services is <font color="blue">dependent on</font> the     <font color="blue">uninterrupted</font> and                                        -17-       _________________________________________________________________    [42]Table of <font color="blue">Contents       </font><font color="blue">efficient operation</font> of these <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">currently rely on</font> a     small  number  of  third-party <font color="blue">manufacture</font>rs to produce certain of our     <font color="blue">diagnostic</font> products</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">operations</font> of our <font color="blue">facilities</font> or these third-party     <font color="blue">manufacturing</font> <font color="blue">facilities</font> could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> by power failures,     natural  or other disasters, such as earthquakes, floods, or terrorist     threats</td>
+    </tr>
+    <tr>
+      <td>Although we carry insurance to <font color="blue">protect against certain</font> business     <font color="blue">interruptions</font>  at  our <font color="blue">facilities</font>, there can be no assurance that such     <font color="blue">coverage will</font> be adequate or that such <font color="blue">coverage will</font> continue to remain     <font color="blue">available on</font> acceptable terms, if at all</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> interruption in     the Company’s or third-party <font color="blue">manufacturing</font> <font color="blue">capabilities</font> could <font color="blue">materially</font> and     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> sole-source suppliers for <font color="blue">certain critical components</font>     and products</td>
+    </tr>
+    <tr>
+      <td>A supply interruption could <font color="blue"><font color="blue">adversely</font> affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>Our  products  are  made from a wide variety of <font color="blue">raw materials</font> that are     <font color="blue">generally available from alternate sources</font> of supply</td>
+    </tr>
+    <tr>
+      <td>However, certain     critical <font color="blue">raw materials</font> and supplies required for the production of some of     our  principal  products are <font color="blue">available on</font>ly from a <font color="blue">single supplier</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  certain  finished  products,  for  which Meridian acts as a     <font color="blue">distributor</font>, are <font color="blue">available on</font>ly from a <font color="blue">single supplier</font></td>
+    </tr>
+    <tr>
+      <td>If these suppliers     <font color="blue">become unable</font> or unwilling to supply the required <font color="blue">raw materials</font> or products,     we would need to find another source, and perform <font color="blue">additional</font> <font color="blue">development</font>     work and obtain <font color="blue">regulatory approvals</font> for the use of the <font color="blue">alternative</font> raw     materials for our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Completing </font>that <font color="blue">development</font> and obtaining such     <font color="blue">approvals could</font> require <font color="blue">significant</font> time and resources, and may not occur at     all</td>
+    </tr>
+    <tr>
+      <td>Any  <font color="blue">disruption</font> in the supply of these <font color="blue">raw materials</font> or finished     <font color="blue">products could</font> have a material <font color="blue"><font color="blue">adverse affect on</font> us</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Intellectual Property and Product Liability     We may be unable to protect or obtain <font color="blue">proprietary</font> rights that we utilize or     intend to utilize</td>
+    </tr>
+    <tr>
+      <td>In  developing  and <font color="blue">manufacturing</font> our products, we employ a variety of     <font color="blue">proprietary</font> and patented <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we have licensed, and     expect  to continue to license, various complementary <font color="blue">technologies</font> and     <font color="blue">methods from academic institutions</font> and public and <font color="blue">private companies</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot provide</font> any assurance that the <font color="blue">technologies</font> that we own or license     provide  protection from <font color="blue">competitive</font> threats or from <font color="blue">challenges</font> to our     <font color="blue"><font color="blue">intellectual</font> property</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">cannot provide</font> any assurances that we     will  be  successful  in obtaining licenses or <font color="blue">proprietary</font> or patented     <font color="blue">technologies</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Product  </font><font color="blue">infringement</font> claims by other <font color="blue">companies could</font> result in costly     disputes and <font color="blue">could limit</font> our ability to sell our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Litigation </font>over <font color="blue"><font color="blue">intellectual</font> property</font> rights is prevalent in the <font color="blue">diagnostic</font>     industry</td>
+    </tr>
+    <tr>
+      <td>As the market for <font color="blue">diagnostic</font>s continues to grow and the number of     <font color="blue">participants</font> in the <font color="blue">market increases</font>, we <font color="blue">may increasingly</font> be subject to     <font color="blue">patent <font color="blue">infringement</font></font> claims</td>
+    </tr>
+    <tr>
+      <td>It is possible that a third-party may claim     <font color="blue"><font color="blue">infringement</font> against us</font></td>
+    </tr>
+    <tr>
+      <td>If found to infringe, we may attempt to obtain a     license to such <font color="blue"><font color="blue">intellectual</font> property</font>, however, we may be unable to do so on     favorable terms, or at all</td>
+    </tr>
+    <tr>
+      <td>Additionally, if our products are found to     <font color="blue">infringe on</font> a third party’s                                        -18-       _________________________________________________________________    [43]Table of <font color="blue">Contents       </font><font color="blue">intellectual</font>  property,  we  may  be  required to pay damages for past     <font color="blue">infringement</font> and lose the ability to <font color="blue">sell certain products</font>, causing our     revenues to decrease</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue"><font color="blue">product <font color="blue">liability</font></font> lawsuits</font> are <font color="blue">successfully</font> brought against us, we may     incur substantial <font color="blue">liabilities</font> and may have to limit or <font color="blue">cease sales</font> of our     products</td>
+    </tr>
+    <tr>
+      <td>The testing, <font color="blue">manufacturing</font>, and marketing of medical <font color="blue">diagnostic</font> products     involves  an  inherent  risk of <font color="blue">product <font color="blue">liability</font></font> claims</td>
+    </tr>
+    <tr>
+      <td>If we cannot     <font color="blue">successfully</font> defend ourselves against <font color="blue">product <font color="blue">liability</font></font> claims, we may incur     substantial  <font color="blue">liabilities</font> or be required to limit or <font color="blue">cease sales</font> of our     products</td>
+    </tr>
+    <tr>
+      <td>We currently carry <font color="blue">product <font color="blue">liability</font></font> insurance at a level we     believe is commercially reasonable, <font color="blue">although there</font> is no assurance that it     will  be  adequate to cover claims that may arise</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">certain customer</font>     contracts, we <font color="blue">indemnify third parties</font> for certain <font color="blue">product <font color="blue">liability</font></font> claims     related to our products</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">indemnification <font color="blue">obligations</font> may</font> cause us to     pay  <font color="blue">significant</font>  sums  of  money for claims that are <font color="blue">covered by</font> these     <font color="blue">indemnifications</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a defect in the design or <font color="blue">manufacture</font> of our     <font color="blue">products could</font> have a material <font color="blue">adverse affect on</font> our reputation in the     industry and subject us to claims of <font color="blue">liability</font> for injury and otherwise</td>
+    </tr>
+    <tr>
+      <td>Any     substantial <font color="blue">underinsured loss</font> resulting from such a claim could have a     material  adverse  affect  on  our <font color="blue">profitability</font> and the damage to our     reputation in the <font color="blue">industry could</font> have a material <font color="blue">adverse affect on</font> our     business</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">Risks Affecting </font>Our Business     Our business could be <font color="blue">negatively affected</font> if we are unable to attract, hire,     and retain <font color="blue">key personnel</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success depends on</font> our <font color="blue">continued ability</font> to attract, hire, and     retain <font color="blue">highly qualified personnel</font>, including our <font color="blue">executive officers</font> and     scientific, technical, sales, and <font color="blue">marketing employees</font>, and their ability to     manage growth <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">such key employees</font> were to leave and we were     unable to obtain <font color="blue">adequate replacements</font>, our operating results could be     <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>Our  bank  credit  <font color="blue">agreement</font>  imposes <font color="blue">restrictions</font> <font color="blue">with respect</font> to our     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our bank credit <font color="blue">agreement</font> contains a number of <font color="blue">financial covenants</font> that     require us to <font color="blue">meet certain financial ratios</font> and tests</td>
+    </tr>
+    <tr>
+      <td>If we fail to comply     with the <font color="blue">obligations</font> in the credit <font color="blue">agreement</font>, we would be in <font color="blue">default under</font>     the credit <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td>If an event of default is not cured or waived, it     could result in <font color="blue">acceleration</font> of the <font color="blue">indebtedness under</font> our credit <font color="blue">agreement</font>     and under other <font color="blue">instruments</font> that contain cross-<font color="blue">acceleration</font> or cross-default     provisions,  any  of <font color="blue">which could</font> have a material adverse effect on our     business</td>
+    </tr>
+    <tr>
+      <td>At the present time, <font color="blue">no borrowings</font> are outstanding under the     credit <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td>Should we be unable to renew our bank credit <font color="blue">agreement</font> on an <font color="blue">ongoing basis</font>,     our <font color="blue">growth potential could</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>Our bank credit <font color="blue">agreement</font> provides us with access to funds that may be used     for <font color="blue"><font color="blue">acquisition</font>s</font> or ongoing operating expenses</td>
+    </tr>
+    <tr>
+      <td>If we were unable to renew     the credit <font color="blue">agreement</font> and unable to put into place a similar                                        -19-       _________________________________________________________________    [44]Table of <font color="blue">Contents       </font><font color="blue">agreement</font>,  we  could  <font color="blue">become unable</font> to fund future growth and/or take     advantage of <font color="blue">acquisition</font> opportunities</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">limitations on growth could</font>     have a material <font color="blue">adverse affect on</font> our business</td>
+    </tr>
+    <tr>
+      <td>Risks Related to Our Common Stock     Our board of <font color="blue">directors</font> has the authority to issue up to 1cmam000cmam000 shares of     <font color="blue">undesignated preferred stock</font> and to determine the rights, preferences,     privileges and <font color="blue">restrictions</font>, including <font color="blue">voting rights</font>, of <font color="blue">such shares without</font>     any <font color="blue">future vote</font> or <font color="blue">action by</font> the <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>The issuance of preferred     <font color="blue">stock under certain circumstances could</font> have the effect of delaying or     preventing a change in control of our company</td>
+    </tr>
+    <tr>
+      <td>Ohio <font color="blue">corporation law contains</font>     provisions that <font color="blue">may discourage takeover bids</font> for our company that have not     <font color="blue">been negotiated with</font> the board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Such provisions <font color="blue">could limit</font> the     price that investors might be willing to pay in the future for shares of the     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>In addition, sales of substantial amounts of such shares in     the public market could <font color="blue"><font color="blue">adversely</font> affect</font> the <font color="blue">market price</font> of the common     stock and our ability to raise <font color="blue">additional</font> capital at a price favorable to     us</td>
+    </tr>
+  </tbody>
+</table>

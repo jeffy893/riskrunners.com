@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: financial condition", fill: "#848482"},
+{source: "1: financial condition", target: "1: operations", fill: "#848482"},
+{source: "1: operations", target: "1: cash flows", fill: "#848482"},
+{source: "1: cash flows", target: "1: affected by", fill: "#848482"},
+{source: "1: affected by", target: "1: Annual Report ", fill: "#848482"},
+{source: "1: Annual Report ", target: "1: which could", fill: "#848482"},
+{source: "1: which could", target: "1: vary materially from recent", fill: "#848482"},
+{source: "1: financial condition", target: "6: cannot assure", fill: "#cf0"},
+{source: "6: cannot assure", target: "6: programs beyond", fill: "#cf0"},
+{source: "6: programs beyond", target: "6: initial contract", fill: "#cf0"},
+{source: "6: cannot assure", target: "10: aircraft manufacturers", fill: "#986960"},
+{source: "10: aircraft manufacturers", target: "10: downturns during periods", fill: "#986960"},
+{source: "10: downturns during periods", target: "10: during periods", fill: "#986960"},
+{source: "10: during periods", target: "10: airline industry", fill: "#986960"},
+{source: "10: airline industry", target: "10: weak general economic conditions as", fill: "#986960"},
+{source: "10: weak general economic conditions as", target: "10: new aircraft typically declines during", fill: "#986960"},
+{source: "10: aircraft manufacturers", target: "15: spending by airlines", fill: "#9370db"},
+{source: "15: spending by airlines", target: "15: aircraft manufacturers could", fill: "#9370db"},
+{source: "15: aircraft manufacturers could", target: "15: significant", fill: "#9370db"},
+{source: "15: significant", target: "15: products which could", fill: "#9370db"},
+{source: "15: products which could", target: "15: financial condition", fill: "#9370db"},
+{source: "15: financial condition", target: "15: operations", fill: "#9370db"},
+{source: "15: operations", target: "15: cash flows", fill: "#9370db"},
+{source: "15: spending by airlines", target: "30: defense spending", fill: "#7c0a02"},
+{source: "30: defense spending", target: "30: military flight operations could curtail", fill: "#7c0a02"},
+{source: "30: military flight operations could curtail", target: "30: market segments depending upon", fill: "#7c0a02"},
+{source: "30: market segments depending upon", target: "30: programs affected", fill: "#7c0a02"},
+{source: "30: defense spending", target: "64: liabilities", fill: "#ffef00"},
+{source: "64: liabilities", target: "64: environmental laws", fill: "#ffef00"},
+{source: "64: environmental laws", target: "64: regulations", fill: "#ffef00"},
+{source: "64: regulations", target: "64: could adversely affect", fill: "#ffef00"},
+{source: "64: liabilities", target: "68: cannot assure", fill: "#db7093"},
+{source: "68: cannot assure", target: "68: additional future", fill: "#db7093"},
+{source: "68: additional future", target: "68: developments", fill: "#db7093"},
+{source: "68: developments", target: "68: administrative", fill: "#db7093"},
+{source: "68: administrative", target: "68: liabilities", fill: "#db7093"},
+{source: "68: liabilities", target: "68: environmental matters will", fill: "#db7093"},
+{source: "68: environmental matters will", target: "68: operations andor cash flows", fill: "#db7093"},
+{source: "68: operations andor cash flows", target: "68: given period", fill: "#db7093"},
+{source: "68: cannot assure", target: "94: transactions denominated", fill: "#c54b8c"},
+{source: "94: transactions denominated", target: "94: translation", fill: "#c54b8c"},
+{source: "94: translation", target: "94: certain nonfunctional currency balances", fill: "#c54b8c"},
+{source: "94: certain nonfunctional currency balances", target: "94: subsidiaries", fill: "#c54b8c"},
+{source: "94: transactions denominated", target: "START_HERE", fill: "#c54b8c"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Diversified Commercial Services</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Travel to meet</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tourism_in_Abkhazia">Tourism in Abkhazia</a></td>
+      <td>Tourism in Abkhazia is possible under Georgian law for foreigners entering the occupied territory from Georgia, although Georgia cannot assure the safety inside disputed territory.\nHowever, the Abkazian beaches on the Black Sea continue to be accessible for tourists coming from the Russian side of the Abkhazia–Russia border which is not under Georgian control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Synchroscope">Synchroscope</a></td>
+      <td>In AC electrical power systems, a synchroscope is a device that indicates the degree to which two systems (generators or power networks) are synchronized with each other.For two electrical systems to be synchronized, both systems must operate at the same frequency, and the phase angle between the systems must be zero (and two polyphase systems must have the same phase sequence). Synchroscopes measure and display the frequency difference and phase angle between two power systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Airline">Airline</a></td>
+      <td>An airline is a company that provides air transport services for traveling passengers and freight. Airlines use aircraft to supply these services and may form partnerships or alliances with other airlines for codeshare agreements, in which they both offer and operate the same flight.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Simpsons">The Simpsons</a></td>
+      <td>The Simpsons is an American animated sitcom created by Matt Groening for the Fox Broadcasting Company. The series is a satirical depiction of American life, epitomized by the Simpson family, which consists of Homer, Marge, Bart, Lisa, and Maggie.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_Mother">Significant Mother</a></td>
+      <td>Significant Mother is an American television sitcom created by Erin Cardillo and Richard Keith. Starring Josh Zuckerman, Nathaniel Buzolic and Krista Allen, it premiered on The CW network on August 3 and ended its run on October 5, 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statement_of_Assets,_Liabilities,_and_Net_Worth">Statement of Assets, Liabilities, and Net Worth</a></td>
+      <td>A Statement of Assets, Liabilities, and Net Worth (SALN) is an annual document that all government workers in the Philippines, whether regular or temporary, must complete and submit attesting under oath to their total assets and liabilities, including businesses and financial interests, that make up their net worth.  The assets and liabilities of the official, his or her spouse, and any unmarried children under 18 who are living at home, must be included.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Liability">The Liability</a></td>
+      <td>The Liability (also known as The Hitman's Apprentice) is a 2013 British black comedy crime-thriller film directed by Craig Viveiros and written by John Wrathall. The film stars Tim Roth, Talulah Riley, Jack O'Connell and Peter Mullan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contingent_liability">Contingent liability</a></td>
+      <td>Contingent liabilities are liabilities that may be incurred by an entity depending on the outcome of an uncertain future event such as the outcome of a pending lawsuit. These liabilities are not recorded in a company's accounts and shown in the balance sheet when both probable and reasonably estimable as 'contingency' or 'worst case' financial outcome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Limited_liability_company">Limited liability company</a></td>
+      <td>A limited liability company (LLC) is the US-specific form of a private limited company. It is a business structure that can combine the pass-through taxation of a partnership or sole proprietorship with the limited liability of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Accrued_liabilities">Accrued liabilities</a></td>
+      <td>Accrued liabilities are liabilities that reflect expenses that have not yet been paid or logged under accounts payable during an accounting period; in other words, a company's obligation to pay for goods and services that have been provided for which invoices have not yet been received. Examples would include accrued wages payable, accrued sales tax payable, and accrued rent payable.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Legal_liability">Legal liability</a></td>
+      <td>In law, liable means  "responsible or answerable in law; legally obligated". Legal liability concerns both civil law and criminal law and can arise from various areas of law, such as contracts, torts, taxes, or fines given by government agencies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Elite_episodes">List of Elite episodes</a></td>
+      <td>Elite (Spanish: Élite; stylized as E L I T Ǝ) is a Spanish thriller teen drama television series created for Netflix by Carlos Montero and Darío Madrona. The series is set in Las Encinas, a fictional elite secondary school and revolves around the relationships between three working-class teenage students enrolled at the school through a scholarship program and their wealthy classmates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Greek_government-debt_crisis">Greek government-debt crisis</a></td>
+      <td>Greece faced a sovereign debt crisis in the aftermath of the financial crisis of 2007–2008. Widely known in the country as The Crisis (Greek: Η Κρίση), it reached the populace as a series of sudden reforms and austerity measures that led to impoverishment and loss of income and property, as well as a small-scale humanitarian crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Barron_Hilton">Barron Hilton</a></td>
+      <td>William Barron Hilton (October 23, 1927 – September 19, 2019) was an American business magnate, philanthropist and sportsman. The second son and successor of hotelier Conrad Hilton, he was the chairman, president and chief executive officer of Hilton Hotels Corporation and chairman emeritus of the Conrad N. Hilton Foundation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Corruption">Corruption</a></td>
+      <td>Corruption is a form of dishonesty or a criminal offense which is undertaken by a person or an organization which is entrusted in a position of authority, in order to acquire illicit benefits or abuse power for one's personal gain. Corruption may involve many activities which include bribery, influence peddling and the embezzlement, and it may also involve practices which are legal in many countries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary">Subsidiary</a></td>
+      <td>A subsidiary, subsidiary company or daughter company is a company owned or controlled by another company, which is called the parent company or holding company. Two or more subsidiaries that belong to the same parent company are called sister companies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Alphabet_Inc.">Alphabet Inc.</a></td>
+      <td>Alphabet Inc. is an American multinational technology conglomerate holding company headquartered in Mountain View, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subsidiary_right">Subsidiary right</a></td>
+      <td>A subsidiary right (also called a subright or sub-lease) is the right to produce or publish a product in different formats based on the original material. Subsidiary rights are common in the publishing and entertainment industries, in which subsidiary rights are granted by the author to an agent, publisher, newspaper, or film studio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Gazprom_subsidiaries">List of Gazprom subsidiaries</a></td>
+      <td>Russian energy company Gazprom has several hundred subsidiaries and affiliated companies owned and controlled directly or indirectly. The subsidiaries and affiliated companies are listed by country.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Paper_railroad">Paper railroad</a></td>
+      <td>In the United States, a paper railroad is a company in the railroad business that exists "on paper only":  as a legal entity which does not own any track, locomotives, or rolling stock.\nIn the early days of railroad construction, paper railroads had to exist by necessity while in the financing stage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Toshiba_subsidiaries">List of Toshiba subsidiaries</a></td>
+      <td>Subsidiaries of Toshiba. Together, these companies form the Toshiba Group.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GOODRICH CORP      Item 1A   Risk Factors       Our business, <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue">cash flows</font> can     be <font color="blue">affected by</font> a number of factors, including but not limited to those set     forth below and elsewhere in this <font color="blue">Annual Report </font>on Form 10-K, any one of     <font color="blue">which could</font> cause our actual results to <font color="blue">vary <font color="blue">materially</font> from recent</font> results     or from our anticipated future results</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success</font> is <font color="blue"><font color="blue">dependent</font> on demand</font> for and <font color="blue">market acceptance</font> of new     commercial and <font color="blue">military aircraft programs</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">currently under contract</font> to <font color="blue">supply <font color="blue">components</font></font> and systems for a     number of new commercial, general aviation and <font color="blue">military aircraft programs</font>,     including the Airbus A380 and                                         8       _________________________________________________________________           A350, the Boeing 787 Dreamliner, the Embraer 190, the <font color="blue">Dassault Falcon </font>7X and     the Lockheed Martin F-35 JSF and F-22 Raptor</td>
+    </tr>
+    <tr>
+      <td>We have made and <font color="blue">will continue</font>     to make substantial <font color="blue"><font color="blue">investment</font>s</font> and incur substantial <font color="blue">development costs</font> in     <font color="blue">connection with</font> these programs</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot provide assurance</font> that each of     these programs will enter full-scale production as expected or that demand     for the <font color="blue">aircraft will</font> be sufficient to allow us to recoup our <font color="blue">investment</font> in     these programs</td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">cannot assure</font> you that we will be able to     extend our contracts relating to these <font color="blue">programs beyond</font> the <font color="blue">initial contract</font>     periods</td>
+    </tr>
+    <tr>
+      <td>If any of these programs are not successful, it could have a     material adverse effect on our business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market segments</font> we serve are cyclical and sensitive to domestic and     <font color="blue">foreign economic considerations</font> that <font color="blue">could <font color="blue">adversely</font> affect</font> our business and     financial results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market segments</font> in which we sell our products are, to <font color="blue">varying degrees</font>,     cyclical and have experienced <font color="blue">periodic downturns</font> in demand</td>
+    </tr>
+    <tr>
+      <td>For example,     certain of our commercial aviation products sold to <font color="blue">aircraft <font color="blue">manufacture</font>rs</font>     have experienced <font color="blue">downturns <font color="blue">during periods</font></font> of slowdowns in the commercial     <font color="blue">airline industry</font> and <font color="blue">during periods</font> of weak general economic <font color="blue">conditions</font>, as     demand for <font color="blue">new aircraft typically declines during</font> these periods</td>
+    </tr>
+    <tr>
+      <td>Although we     believe that <font color="blue"><font color="blue">aftermarket</font> demand</font> for many of our <font color="blue">products may reduce</font> our     exposure to these business downturns, we have experienced these <font color="blue">conditions</font>     in our business in the <font color="blue">recent past</font> and may experience downturns in the     future</td>
+    </tr>
+    <tr>
+      <td>Capital <font color="blue">spending by airlines</font> and <font color="blue">aircraft <font color="blue">manufacture</font>rs</font> may be <font color="blue">influenced by</font>     a variety of factors including current and predicted traffic levels, load     factors, aircraft fuel pricing, labor issues, <font color="blue">competition</font>, the retirement of     <font color="blue">older aircraft</font>, <font color="blue">regulatory</font> changes, terrorism and related <font color="blue">safety concerns</font>,     general economic <font color="blue">conditions</font>, worldwide airline profits and <font color="blue">backlog levels</font></td>
+    </tr>
+    <tr>
+      <td>Also, since a substantial portion of <font color="blue">commercial airplane</font> OE <font color="blue">deliveries</font> are     scheduled beyond 2006, changes in economic <font color="blue">conditions</font> may cause customers to     request that <font color="blue">firm orders</font> be rescheduled or canceled</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Aftermarket </font>sales and     <font color="blue">service trends</font> are <font color="blue">affected by</font> similar factors, including usage, pricing,     <font color="blue">regulatory</font> changes, the retirement of <font color="blue">older aircraft</font> and <font color="blue">technological</font>     <font color="blue">improvements</font> that <font color="blue">increase re<font color="blue">liability</font></font> and performance</td>
+    </tr>
+    <tr>
+      <td>A reduction in     <font color="blue">spending by airlines</font> or <font color="blue">aircraft <font color="blue">manufacture</font>rs</font> could have a <font color="blue">significant</font>     effect on the demand for our products, <font color="blue">which could</font> have an adverse effect on     our business, <font color="blue">financial condition</font>, results of <font color="blue">operations</font> or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Current  </font><font color="blue">conditions</font> in the <font color="blue">airline industry</font> <font color="blue">could <font color="blue">adversely</font> affect</font> our     business and financial results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in fuel costs, high labor costs and heightened <font color="blue">competition</font> from     low cost carriers have <font color="blue">adversely</font> affected the <font color="blue">financial condition</font> of some     commercial airlines</td>
+    </tr>
+    <tr>
+      <td>Recently, <font color="blue">several airlines</font> have declared <font color="blue">bankruptcy</font> or     indicated  that <font color="blue">bankruptcy</font> may be imminent</td>
+    </tr>
+    <tr>
+      <td>A portion of our sales are     <font color="blue">derived from</font> the sale of <font color="blue">products directly</font> to airlines, and we sometimes     <font color="blue">provide sales <font color="blue">incentives</font></font> to airlines and <font color="blue">record <font color="blue">unamortized</font> sales <font color="blue">incentives</font></font>     as other assets</td>
+    </tr>
+    <tr>
+      <td>If an airline declares <font color="blue">bankruptcy</font>, we may be unable to     collect our outstanding <font color="blue">accounts</font> receivable from the airline and we may be     required to record a charge related to <font color="blue">unamortized</font> sales <font color="blue">incentives</font> to the     extent they cannot be recovered</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> decline in business with <font color="blue">Airbus or Boeing </font>could <font color="blue">adversely</font>     affect our business and financial results</td>
+    </tr>
+    <tr>
+      <td>For  the  year  ended  <font color="blue">December </font>31, 2005, <font color="blue">approximately</font> 16 percent and     12 percent of our sales were made to Airbus and Boeing, <font color="blue">respectively</font>, for     all  <font color="blue">categories</font>  of  products,  including  <font color="blue">original equipment</font> (OE) and     <font color="blue">aftermarket</font>  products  for  commercial and military aircraft and space     <font color="blue">applications</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, a <font color="blue">significant</font> reduction in purchases by either of     these  customers could have a material adverse effect on our business,     <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>9       _________________________________________________________________           Demand  for  our  defense and space-related products is <font color="blue">dependent</font> upon     <font color="blue">government</font> spending</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Approximately </font>28 percent of our sales for the year ended <font color="blue">December </font>31, 2005     were <font color="blue">derived from</font> the military and space <font color="blue">market segments</font></td>
+    </tr>
+    <tr>
+      <td>Included in that     category  are  direct and indirect sales to the US Government, which     represented  <font color="blue">approximately</font>  18 percent of our sales for the year ended     <font color="blue">December </font>31,  2005</td>
+    </tr>
+    <tr>
+      <td>The military and space <font color="blue">market segments</font> are largely     <font color="blue">dependent</font> upon <font color="blue">government</font> budgets, particularly the US <font color="blue">defense budget</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that an increase in <font color="blue"><font color="blue">defense spending</font> will</font> be allocated to     programs that <font color="blue">would benefit</font> our business</td>
+    </tr>
+    <tr>
+      <td>Moreover, we <font color="blue">cannot assure</font> you     that new <font color="blue">military aircraft programs</font> in which we <font color="blue">participate will enter</font>     full-scale production as expected</td>
+    </tr>
+    <tr>
+      <td>A change in levels of <font color="blue">defense spending</font> or     levels of military flight <font color="blue">operations</font> could curtail or enhance our prospects     in these <font color="blue">market segments</font>, depending upon the <font color="blue">programs affected</font></td>
+    </tr>
+    <tr>
+      <td>Our business could be <font color="blue">adversely</font> affected if we are unable to obtain the     <font color="blue">necessary <font color="blue">raw materials</font></font> and <font color="blue">components</font></td>
+    </tr>
+    <tr>
+      <td>We  purchase  a variety of <font color="blue">raw materials</font> and <font color="blue">components</font> for use in the     <font color="blue">manufacture</font> of our products, including aluminum, titanium, steel and carbon     fiber</td>
+    </tr>
+    <tr>
+      <td>The loss of a <font color="blue">significant</font> supplier or the <font color="blue">inability</font> of a supplier to     meet our performance and <font color="blue">quality specifications</font> or <font color="blue">delivery schedules could</font>     affect our ability to complete our <font color="blue">contractual <font color="blue">obligations</font></font> to our customers     on  a  satisfactory,  timely and/or profitable basis</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">events may</font>     <font color="blue">adversely</font> affect our operating results, result in the <font color="blue">termination</font> of one or     more of our <font color="blue">customer contracts</font> or damage our reputation and <font color="blue">relationships</font>     with our customers</td>
+    </tr>
+    <tr>
+      <td>We use a number of estimates in <font color="blue">accounting</font> for some long-term contracts</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes  </font>in our estimates could <font color="blue">materially</font> affect our future financial     results</td>
+    </tr>
+    <tr>
+      <td>We account for sales and <font color="blue">profits on</font> some long-term contracts in <font color="blue">accordance</font>     with the percentage-of-completion method of <font color="blue">accounting</font>, using the cumulative     catch-up   method   to   account   for  revisions  in  estimates</td>
+    </tr>
+    <tr>
+      <td>The     percentage-of-completion method of <font color="blue">accounting</font> involves the use of various     estimating  <font color="blue">techniques</font> to project revenues and <font color="blue">costs at completion</font> and     various  <font color="blue">assumptions</font> and <font color="blue">projections relative</font> to the outcome of future     events, including the quantity and timing of product <font color="blue">deliveries</font>, future     labor  performance  and  rates, and material and <font color="blue">overhead costs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">assumptions</font> involve various levels of expected performance <font color="blue">improvements</font></td>
+    </tr>
+    <tr>
+      <td>Under  the  cumulative catch-up method, the impact of revisions in our     estimates related to units shipped to date is recognized <font color="blue">immediately</font></td>
+    </tr>
+    <tr>
+      <td>Because of the significance of the judgments and estimates described above,     it is likely that we could record <font color="blue">materially</font> different amounts if we used     different <font color="blue">assumptions</font> or if the <font color="blue">underlying circumstances</font> or estimates were     to change</td>
+    </tr>
+    <tr>
+      <td>Accordingly, changes in underlying <font color="blue">assumptions</font>, circumstances or     estimates may <font color="blue">materially</font> affect our <font color="blue">future financial performance</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competitive  </font>pressures may <font color="blue">adversely</font> affect our business and financial     results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">aerospace industry</font> in which we operate is <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td>We compete     <font color="blue">worldwide with</font> a number of US and foreign companies that are both larger     and smaller than we are in terms of resources and market share, and some of     which are our customers</td>
+    </tr>
+    <tr>
+      <td>While we are the market and <font color="blue">technology leader</font> in     many of our products, in <font color="blue">certain areas</font> some of our <font color="blue"><font color="blue">competitors</font> may</font> have more     extensive  or more specialized engineering, manufacturing or marketing     <font color="blue">capabilities</font> and <font color="blue">lower manufacturing cost</font></td>
+    </tr>
+    <tr>
+      <td>As a result, these <font color="blue">competitors</font>     may  be able to adapt more quickly to new or emerging <font color="blue">technologies</font> and     changes in customer <font color="blue">requirements</font> or may be able to devote greater resources     to the development, promotion and sale of their <font color="blue">products than</font> we can</td>
+    </tr>
+    <tr>
+      <td>10       _________________________________________________________________           The <font color="blue">significant</font> consolidation occurring in the <font color="blue">aerospace industry</font> could     <font color="blue">adversely</font> affect our business and financial results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">aerospace industry</font> in which we operate has been experiencing <font color="blue">significant</font>     <font color="blue">consolidation among suppliers</font>, including us and our <font color="blue">competitors</font>, and the     customers we serve</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Commercial </font>airlines have <font color="blue">increasingly been merging</font> and     creating <font color="blue">global alliances</font> to achieve <font color="blue">greater economies</font> of scale and enhance     their <font color="blue">geographic reach</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Aircraft </font><font color="blue">manufacture</font>rs have made <font color="blue">acquisitions</font> to     expand their <font color="blue">product portfolios</font> to <font color="blue">better compete</font> in the <font color="blue">global marketplace</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  aviation  suppliers have <font color="blue">been consolidating</font> and forming     alliances to broaden their product and <font color="blue">integrated system offerings</font> and     achieve <font color="blue">critical mass</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">supplier consolidation</font> is in part <font color="blue">attributable</font>     to <font color="blue">aircraft <font color="blue">manufacture</font>rs</font> and airlines more frequently awarding long-term     sole source or <font color="blue">preferred supplier contracts</font> to the <font color="blue">most capable suppliers</font>,     <font color="blue">thus reducing</font> the total number of suppliers from whom <font color="blue">components</font> and systems     are purchased</td>
+    </tr>
+    <tr>
+      <td>Our business and financial results may be <font color="blue">adversely</font> impacted     as a result of <font color="blue">consolidation by</font> our <font color="blue">competitors</font> or customers</td>
+    </tr>
+    <tr>
+      <td>Expenses related to employee and <font color="blue">retiree medical</font> and <font color="blue"><font color="blue">pension benefits</font> may</font>     continue to rise</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">periodically</font> experienced <font color="blue">significant</font> increases in expenses related     to our employee and <font color="blue">retiree medical</font> and <font color="blue">pension benefits</font></td>
+    </tr>
+    <tr>
+      <td>Although we have     <font color="blue">taken action seeking</font> to contain these <font color="blue">cost increases</font>, including making     material changes to some of these plans, there are risks that our expenses     will  rise  as a result of <font color="blue">continued increases</font> in <font color="blue">medical costs due</font> to     increased  usage of <font color="blue">medical benefits</font> and <font color="blue">medical cost inflation</font> in the     US Pension <font color="blue">expense may increase</font> if <font color="blue">investment</font> returns on our pension plan     assets do not meet our long-term return assumption, if there are further     <font color="blue">reductions</font> in the <font color="blue">discount rate used</font> to determine the <font color="blue">present value</font> of our     <font color="blue">benefit obligation</font>, or if other actuarial <font color="blue">assumptions</font> are not realized</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">aerospace industry</font> is <font color="blue">highly regulated</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">aerospace industry</font> is <font color="blue">highly regulated</font> in the US by the Federal     Aviation  Administration  and in other <font color="blue">countries by</font> similar <font color="blue">regulatory</font>     agencies</td>
+    </tr>
+    <tr>
+      <td>We must be <font color="blue">certified by</font> these agencies and, in some cases, by     individual OE <font color="blue">manufacture</font>rs in order to engineer and <font color="blue">service systems</font> and     <font color="blue">components</font> used in <font color="blue">specific aircraft models</font></td>
+    </tr>
+    <tr>
+      <td>If material <font color="blue">authorizations</font> or     approvals were revoked or suspended, our <font color="blue">operations</font> would be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>New or more stringent <font color="blue">government</font>al <font color="blue">regulations</font> may be adopted, or     industry oversight heightened, in the future, and we may incur <font color="blue">significant</font>     expenses to <font color="blue">comply with</font> any new <font color="blue">regulations</font> or any <font color="blue">heightened industry</font>     oversight</td>
+    </tr>
+    <tr>
+      <td>We may have <font color="blue">liabilities</font> relating to <font color="blue"><font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font> that     <font color="blue">could <font color="blue">adversely</font> affect</font> our financial results</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">various domestic</font> and <font color="blue">international</font> <font color="blue"><font color="blue">environmental</font> laws</font> and     <font color="blue">regulations</font> which may require that we investigate and remediate the effects     of the release or disposal of <font color="blue">materials at sites associated with past</font> and     present <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">currently involved</font> in the <font color="blue">investigation</font> and     <font color="blue">remediation</font> of a number of sites for which we have been identified as a     <font color="blue">potentially responsible party under</font> these laws</td>
+    </tr>
+    <tr>
+      <td>Based on currently available     information, we do not believe that <font color="blue">future <font color="blue">environmental</font> costs</font> in excess of     those <font color="blue">accrued with respect</font> to <font color="blue">such sites will</font> have a material adverse effect     on our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">additional future</font>     <font color="blue">developments</font>,   <font color="blue">administrative</font>  actions  or  <font color="blue">liabilities</font>  relating  to     <font color="blue"><font color="blue">environmental</font> matters will</font> not have a material adverse effect on our results     of <font color="blue">operations</font> and/or <font color="blue">cash flows</font> in a <font color="blue">given period</font></td>
+    </tr>
+    <tr>
+      <td>11       _________________________________________________________________           Third <font color="blue">parties may</font> not satisfy their <font color="blue">contractual <font color="blue">obligations</font></font> to <font color="blue">indemnify us</font>     for <font color="blue">environmental</font> and other claims arising out of our <font color="blue">divested <font color="blue">businesses</font></font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font> the <font color="blue">divestiture</font> of our tire, vinyl and other <font color="blue">businesses</font>,     we received <font color="blue">contractual rights</font> of <font color="blue"><font color="blue">indemnification</font> from <font color="blue">third parties</font></font> for     <font color="blue">environmental</font> and other claims arising out of the <font color="blue">divested <font color="blue">businesses</font></font></td>
+    </tr>
+    <tr>
+      <td>If     these <font color="blue">third parties</font> do not honor their <font color="blue"><font color="blue">indemnification</font> <font color="blue">obligations</font></font> to us, it     could have a material adverse effect on our <font color="blue">financial condition</font>, results of     <font color="blue">operations</font> and/or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>Any  material  product  <font color="blue">liability</font> or <font color="blue">environmental</font> claims in excess of     <font color="blue">insurance may</font> <font color="blue">adversely</font> affect us</td>
+    </tr>
+    <tr>
+      <td>We are exposed to potential <font color="blue">liability</font> for <font color="blue">personal injury</font> or <font color="blue">death with</font>     respect to products that have <font color="blue">been designed</font>, <font color="blue">manufacture</font>d, serviced or sold     by us, including potential <font color="blue">liability</font> for asbestos and other <font color="blue">toxic tort</font>     claims</td>
+    </tr>
+    <tr>
+      <td>In addition, we are exposed to potential <font color="blue">liability</font> pursuant to     <font color="blue">various domestic</font> and <font color="blue">international</font> <font color="blue"><font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">While     </font>we believe that we have substantial <font color="blue">insurance coverage available</font> to us     related to any such claims, our <font color="blue">insurance may</font> not cover all <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, insurance coverage may not be available in the future at a     cost acceptable to us</td>
+    </tr>
+    <tr>
+      <td>Any material <font color="blue">liability</font> not <font color="blue">covered by insurance</font> or     for which third-party <font color="blue">indemnification</font> is not <font color="blue">available could</font> have a material     adverse effect on our <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and/or cash     flows</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> expose us to potential <font color="blue">liability</font> for warranty claims made by     <font color="blue">third parties</font> with respect to aircraft <font color="blue">components</font> that have <font color="blue">been designed</font>,     <font color="blue">manufacture</font>d, distributed or <font color="blue">serviced by us</font></td>
+    </tr>
+    <tr>
+      <td>Any material <font color="blue">product warranty</font>     <font color="blue"><font color="blue">obligations</font> could</font> have a material adverse effect on our <font color="blue">financial condition</font>,     results of <font color="blue">operations</font> and/or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> depend on our <font color="blue"><font color="blue">production facilities</font> throughout</font> the world</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">production facilities</font> are subject to physical and other risks that     <font color="blue">could disrupt production</font></td>
+    </tr>
+    <tr>
+      <td>Our  production  <font color="blue">facilities could</font> be damaged or <font color="blue">disrupted by</font> a natural     disaster, labor strike, war, political unrest, terrorist activity or a     pandemic</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although  </font>we  have  obtained  property  damage and business     <font color="blue">interruption insurance</font>, a <font color="blue">major catastrophe such as</font> an earthquake or other     <font color="blue">natural disaster at</font> any of our sites, or <font color="blue">significant</font> labor strikes, work     stoppages, political unrest, war or <font color="blue">terrorist <font color="blue">activities</font></font> in any of the areas     where we conduct <font color="blue">operations</font>, could result in a <font color="blue">prolonged interruption</font> of our     business</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">disruption</font> resulting from these <font color="blue">events could</font> cause <font color="blue">significant</font>     delays in shipments of products and the loss of sales and customers</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that we will have insurance to <font color="blue">adequately compensate us</font>     for any of these events</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">significant</font> <font color="blue">international</font> <font color="blue">operations</font> and assets and are therefore     subject to <font color="blue">additional financial</font> and <font color="blue">regulatory</font> risks</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">operations</font> and <font color="blue">assets throughout</font> the world</td>
+    </tr>
+    <tr>
+      <td>In addition, we sell our     products and services in <font color="blue">foreign countries</font> and seek to increase our level of     <font color="blue">international</font> business activity</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we are subject to various     risks, including: US-imposed <font color="blue">embargoes</font> of sales to <font color="blue">specific countries</font>;     foreign import controls (which may be <font color="blue">arbitrarily imposed</font> or enforced);     price and currency controls; exchange rate fluctuations; dividend remittance     restrictions; expropriation of assets; war, civil uprisings and riots;     <font color="blue">government</font> instability; the <font color="blue">necessity</font> of obtaining <font color="blue">government</font>al approval for     new and <font color="blue">continuing products</font> and <font color="blue">operations</font>; legal systems of decrees, laws,     taxes, <font color="blue">regulations</font>, interpretations and <font color="blue">court decisions</font> that are not always     fully developed and that may be <font color="blue">retroactively</font> or <font color="blue">arbitrarily applied</font>; and     <font color="blue">difficulties</font> in managing a <font color="blue">global enterprise</font></td>
+    </tr>
+    <tr>
+      <td>We may also be subject to     unanticipated income taxes, excise duties, import taxes, export taxes or     other <font color="blue">government</font>al assessments</td>
+    </tr>
+    <tr>
+      <td>Any of these <font color="blue">events could</font> result in a loss                                         12       _________________________________________________________________           of business or other <font color="blue">unexpected costs</font> that <font color="blue">could reduce sales</font> or profits and     have  a material adverse effect on our <font color="blue">financial condition</font>, results of     <font color="blue">operations</font> and/or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>We are exposed to <font color="blue">foreign currency risks</font> that arise from normal business     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>These  risks  include <font color="blue">transactions denominated</font> in foreign     currencies and the <font color="blue">translation</font> of certain non-functional currency balances     of  our  <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">international</font> <font color="blue">operations</font> also expose us to     <font color="blue">translation</font> risk when the <font color="blue">local currency financial statements</font> are translated     to US Dollars, our parent company’s functional currency</td>
+    </tr>
+    <tr>
+      <td>As currency     exchange  rates  fluctuate, <font color="blue">translation</font> of the statements of income of     <font color="blue">international</font> <font color="blue">businesses</font> into US Dollars <font color="blue">will affect comparability</font> of     revenues and <font color="blue">expenses between years</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Creditors </font>may seek to <font color="blue">recover from us</font> if the <font color="blue">businesses</font> that we spun off are     unable to meet their <font color="blue">obligations</font> in the future, including <font color="blue">obligations</font> to     <font color="blue">asbestos claimants</font></td>
+    </tr>
+    <tr>
+      <td>Prior to the spin-off, we <font color="blue">contributed</font> the <font color="blue">capital stock</font> of Coltec to     EnPro</td>
+    </tr>
+    <tr>
+      <td>At  the  time of the spin-off, two <font color="blue">subsidiaries</font> of Coltec were     <font color="blue">defendants</font> in a <font color="blue">significant</font> number of <font color="blue">personal injury</font> claims relating to     alleged asbestos-containing products sold by those <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>It is     possible that asbestos-related claims might be asserted <font color="blue"><font color="blue">against us</font> on</font> the     theory that we have some <font color="blue">responsibility</font> for the asbestos-related <font color="blue">liabilities</font>     of EnPro, Coltec or its <font color="blue">subsidiaries</font>, even though the <font color="blue">activities</font> that led to     those claims occurred prior to our ownership of any of those <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Also,  it  is  possible that a claim might be asserted <font color="blue">against us</font> that     Coltec’s dividend of its aerospace business to us prior to the spin-off was     made  at  a  time when Coltec was insolvent or caused Coltec to become     insolvent</td>
+    </tr>
+    <tr>
+      <td>A limited number of asbestos-related claims have been asserted <font color="blue">against us</font> as     “successor” to Coltec or one of its <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we have     substantial <font color="blue">legal defenses against</font> these claims, <font color="blue">as well as against</font> any     other claims that may be asserted <font color="blue"><font color="blue">against us</font> on</font> the <font color="blue">theories described</font>     above</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">agreement between</font> EnPro and us that was used to     <font color="blue">effectuate</font> the spin-off provides us with an <font color="blue">indemnification</font> from <font color="blue">EnPro     </font>covering, among other things, these <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>The success of any such     asbestos-related claims <font color="blue">would likely</font> require, as a practical matter, that     Coltec’s  <font color="blue">subsidiaries</font>  were  unable to satisfy their asbestos-related     <font color="blue">liabilities</font>  and  that  Coltec  was  found to be responsible for these     <font color="blue">liabilities</font> and was unable to meet its financial <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>We believe any     such claims would be <font color="blue">without merit</font> and that Coltec was <font color="blue">solvent both</font> before     and after the dividend of its aerospace business to us</td>
+    </tr>
+    <tr>
+      <td>If we are ultimately     found to be responsible for the asbestos-related <font color="blue">liabilities</font> of Coltec’s     <font color="blue">subsidiaries</font>, we believe it would not have a material adverse effect on our     <font color="blue">financial condition</font>, but could have a material adverse effect on our results     of <font color="blue">operations</font> and <font color="blue">cash flows</font> in a <font color="blue">particular period</font></td>
+    </tr>
+    <tr>
+      <td>However, because of the     <font color="blue">uncertainty</font>  as  to  the number, timing and payments related to future     asbestos-related claims, there can be no assurance that any such claims will     not have a material adverse effect on our <font color="blue">financial condition</font>, results of     <font color="blue">operations</font> and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>If a claim related to the dividend of Coltec’s     aerospace business were successful, it could have a material <font color="blue">adverse impact</font>     on our <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and/or <font color="blue">cash flows</font></td>
+    </tr>
+  </tbody>
+</table>

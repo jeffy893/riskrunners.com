@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: describe various risks", fill: "#ad6f69"},
+{source: "2: describe various risks", target: "2: uncertainties", fill: "#ad6f69"},
+{source: "2: describe various risks", target: "4: conditions", fill: "#cf3476"},
+{source: "4: conditions", target: "4: generally", fill: "#cf3476"},
+{source: "4: generally", target: "4: market regions", fill: "#cf3476"},
+{source: "4: market regions", target: "4: could decrease demand", fill: "#cf3476"},
+{source: "4: could decrease demand", target: "4: adversely affect", fill: "#cf3476"},
+{source: "4: adversely affect", target: "4: operations", fill: "#cf3476"},
+{source: "4: conditions", target: "5: residential homebuilding industry", fill: "#b57edc"},
+{source: "5: residential homebuilding industry", target: "5: availability", fill: "#b57edc"},
+{source: "5: availability", target: "5: homebuyers interest rates", fill: "#b57edc"},
+{source: "5: residential homebuilding industry", target: "14: Financial Services ", fill: "#ed872d"},
+{source: "14: Financial Services ", target: "14: operations", fill: "#ed872d"},
+{source: "14: Financial Services ", target: "91: volatility", fill: "#1f75fe"},
+{source: "91: volatility", target: "91: Financial Services ", fill: "#1f75fe"},
+{source: "91: Financial Services ", target: "91: operations due", fill: "#1f75fe"},
+{source: "91: operations due", target: "91: refinancing", fill: "#1f75fe"},
+{source: "91: refinancing", target: "91: activity could negatively impact operations", fill: "#1f75fe"},
+{source: "91: volatility", target: "112: serious disruption", fill: "#3b444b"},
+{source: "112: serious disruption", target: "112: capital markets", fill: "#3b444b"},
+{source: "112: capital markets", target: "112: difficult", fill: "#3b444b"},
+{source: "112: difficult", target: "112: raise capital", fill: "#3b444b"},
+{source: "112: raise capital", target: "112: home loans", fill: "#3b444b"},
+{source: "112: home loans", target: "112: loans originated by", fill: "#3b444b"},
+{source: "112: loans originated by", target: "112: Financial Services ", fill: "#3b444b"},
+{source: "112: Financial Services ", target: "112: securitize loans originated by", fill: "#3b444b"},
+{source: "112: securitize loans originated by", target: "112: discontinued", fill: "#3b444b"},
+{source: "112: discontinued", target: "112: Home Equity ", fill: "#3b444b"},
+{source: "112: Home Equity ", target: "112: operations", fill: "#3b444b"},
+{source: "112: serious disruption", target: "START_HERE", fill: "#3b444b"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+    <tr>
+      <td>Homebuilding</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty">Uncertainty</a></td>
+      <td>Uncertainty refers to epistemic situations involving imperfect or unknown information. It applies to predictions of future events, to physical measurements that are already made, or to the unknown.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Propagation_of_uncertainty">Propagation of uncertainty</a></td>
+      <td>In statistics, propagation of uncertainty (or propagation of error) is the effect of variables' uncertainties (or errors, more specifically random errors) on the uncertainty of a function based on them. When the variables are the values of experimental measurements they have uncertainties due to measurement limitations (e.g., instrument precision) which propagate due to the combination of variables in the function.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Measurement_uncertainty">Measurement uncertainty</a></td>
+      <td>In metrology, measurement uncertainty is the expression of the statistical dispersion of the values attributed to a measured quantity. All measurements are subject to uncertainty and a measurement result is complete only when it is accompanied by a statement of the associated uncertainty, such as the standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fear,_uncertainty,_and_doubt">Fear, uncertainty, and doubt</a></td>
+      <td>Fear, uncertainty, and doubt (often shortened to FUD) is a propaganda tactic used in sales, marketing, public relations, politics, polling and cults. FUD is generally a strategy to influence perception by disseminating negative and dubious or false information and a manifestation of the appeal to fear.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knightian_uncertainty">Knightian uncertainty</a></td>
+      <td>In economics, Knightian uncertainty is a lack of any quantifiable knowledge about some possible occurrence, as opposed to the presence of quantifiable risk (e.g., that in statistical noise or a parameter's confidence interval). The concept acknowledges some fundamental degree of ignorance, a limit to knowledge, and an essential unpredictability of future events.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cone_of_Uncertainty">Cone of Uncertainty</a></td>
+      <td>In project management, the Cone of Uncertainty describes the evolution of the amount of best case uncertainty during a project. At the beginning of a project, comparatively little is known about the product or work results, and so estimates are subject to large uncertainty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Uncertainty_parameter">Uncertainty parameter</a></td>
+      <td>The uncertainty parameter U is a parameter introduced by the Minor Planet Center (MPC) to quantify concisely the uncertainty of a perturbed orbital solution for a minor planet. The parameter is a logarithmic scale from 0 to 9 that measures the anticipated longitudinal uncertainty in the minor planet's mean anomaly after 10 years.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Policy_uncertainty">Policy uncertainty</a></td>
+      <td>Policy uncertainty (also called regime uncertainty) is a class of economic risk where the future path of government policy is uncertain, raising risk premia and leading businesses and individuals to delay spending and investment until this uncertainty has been resolved. Policy uncertainty may refer to uncertainty about monetary or fiscal policy, the tax or regulatory regime, or uncertainty over electoral outcomes that will influence political leadership.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability">Availability</a></td>
+      <td>In reliability engineering, the term availability has the following meanings:\n\nThe degree to which a system, subsystem or equipment is in a specified operable and committable state at the start of a mission, when the mission is called for at an unknown, i.e. a random, time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High_availability">High availability</a></td>
+      <td>High availability (HA) is a characteristic of a system which aims to ensure an agreed level of operational performance, usually uptime, for a higher than normal period.\nModernization has resulted in an increased reliance on these systems.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_heuristic">Availability heuristic</a></td>
+      <td>The availability heuristic, also known as availability bias, is a mental shortcut that relies on immediate examples that come to a given person's mind when evaluating a specific topic, concept, method or decision. The availability heuristic operates on the notion that if something can be recalled, it must be important, or at least more important than alternative solutions which are not as readily recalled.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Not_Available">Not Available</a></td>
+      <td>Not Available is the second studio album (released as the fourth) by the Residents, recorded in 1974. The album was allegedly meant to only be released once its creators completely forgot about its existence (adhering to their "Theory of Obscurity," in which an artist's purest work is created without an audience) - however, due to ongoing delays in the release of Eskimo, Not Available was released to supply the demand for new Residents material, given their unexpected critical and commercial success following the release of the Duck Stab EP.\n\n\n== History ==\nIt is said that the lyrics and themes of Not Available arose from personal tensions within the group, and that the project began as a private psychodrama before being adapted into a possible operetta.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Continuous_availability">Continuous availability</a></td>
+      <td>Continuous availability is an approach to computer system and application design that protects users against downtime, whatever the cause and ensures that users remain connected to their documents, data files and business applications. Continuous availability describes the information technology methods to ensure business continuity.In early days of computing, availability was not considered business critical.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/High-availability_cluster">High-availability cluster</a></td>
+      <td>High-availability clusters (also known as HA clusters, fail-over clusters) are groups of computers that support server applications that can be reliably utilized with a minimum amount of down-time.  They operate by using high availability software to harness redundant computers in groups or clusters that provide continued service when system components fail.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Availability_cascade">Availability cascade</a></td>
+      <td>An availability cascade is a self-reinforcing cycle that explains the development of certain kinds of collective beliefs. A novel idea or insight, usually one that seems to explain a complex process in a simple or straightforward manner, gains rapid currency in the popular discourse by its very simplicity and by its apparent insightfulness.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Available-to-promise">Available-to-promise</a></td>
+      <td>Available-to-promise (ATP) is a business function that provides a response to customer order inquiries, based on resource availability.\n It generates available quantities of the requested product, and delivery due dates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_services">Financial services</a></td>
+      <td>Financial services are the economic services provided by  the finance industry, which encompasses a broad range of businesses that manage money, including credit unions, banks, credit-card companies, insurance companies, accountancy companies, consumer-finance companies, stock brokerages, investment funds, individual asset managers, and some government-sponsored enterprises.\n\n\n== History ==\n\nThe term "financial services" became more prevalent in the United States partly as a result of the Gramm–Leach–Bliley Act of the late 1990s, which enabled different types of companies operating in the U.S. financial services industry at that time to merge.Companies usually have two distinct approaches to this new type of business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Siemens_Financial_Services">Siemens Financial Services</a></td>
+      <td>Siemens Financial Services (SFS) is a Division of Siemens. The company’s global headquarters is in Munich, Germany.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Motilal_Oswal_Financial_Services">Motilal Oswal Financial Services</a></td>
+      <td>Motilal Oswal Financial Services Limited is an Indian financial services company offering a range of financial products and services. The company was founded by Motilal Oswal and Raamdeo Agrawal in 1987.The company is listed on BSE and NSE stock exchanges.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First_Command_Financial_Services">First Command Financial Services</a></td>
+      <td>First Command Financial Planning, Inc. is a broker-dealer registered with the U.S. Securities and Exchange Commission (SEC), the Financial Industry Regulatory Authority (FINRA), all 50 states, and the District of Columbia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Oracle_Financial_Services_Software">Oracle Financial Services Software</a></td>
+      <td>Oracle Financial Services Software Limited (OFSS) is a subsidiary of Oracle Corporation. It is a retail banking, corporate banking, and insurance technology solutions provider for the banking industry.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PennyMac_Financial_Services">PennyMac Financial Services</a></td>
+      <td>PennyMac Financial Services, Inc. is an American residential mortgage company headquartered in Westlake Village, California.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Volvo_Financial_Services">Volvo Financial Services</a></td>
+      <td>Volvo Financial Services (VFS), established in 2001, develops and coordinates AB Volvo's operations in dealer and customer financing, insurance, and related services.  Its world headquarters are located in Greensboro, North Carolina, USA.  A global organization operating in more than 40 countries, it is focused exclusively on providing financial services to the Volvo Group's internal and external customers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Geojit_Financial_Services">Geojit Financial Services</a></td>
+      <td>Geojit Financial Services Ltd. is an investment services company in India headquartered in Kochi, Kerala.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_out_refinancing">Cash out refinancing</a></td>
+      <td>Cash out refinancing (in the case of real property) occurs when a loan is taken out on property already owned, and the loan amount is above and beyond the cost of transaction, payoff of existing liens, and related expenses.\n\n\n== Definition ==\nStrictly speaking, all refinancing of debt is "cash-out," when funds retrieved are utilized for anything other than repaying an existing loan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Home_equity">Home equity</a></td>
+      <td>Home equity is the market value of a homeowner's unencumbered interest in their real property, that is, the difference between the home's fair market value and the outstanding balance of all liens on the property. The property's equity increases as the debtor makes payments against the mortgage balance, or as the property value appreciates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/HomeEquity_Bank">HomeEquity Bank</a></td>
+      <td>HomeEquity Bank (French: Banque HomeEquity) is a Schedule 1 Canadian Chartered Bank, founded in 1986 as the Canadian Home Income Plan Corporation. HomeEquity Bank is the first Canadian bank to offer reverse mortgages to Canadian homeowners aged 55 and over, and is owned by private equity firm Birch Hill Equity Partners.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CENTEX CORP      ITEM 1A RISK FACTORS          The foregoing discussion of our business and <font color="blue"><font color="blue">operations</font> should</font> be read     <font color="blue">together with</font> the <font color="blue">risk factors set forth</font> below</td>
+    </tr>
+    <tr>
+      <td>They <font color="blue">describe various risks</font>     and <font color="blue">uncertainties</font> to which we are or may become subject, many of which are     outside of our control</td>
+    </tr>
+    <tr>
+      <td>These risks and <font color="blue">uncertainties</font>, <font color="blue">together with</font> other     <font color="blue">factors described elsewhere</font> in this Report, have the potential to affect our     business, <font color="blue">financial condition</font>, results of <font color="blue">operations</font>, cash flows, strategies     or prospects in a material and <font color="blue">adverse manner</font></td>
+    </tr>
+    <tr>
+      <td>HOME BUILDING     Deterioration in economic <font color="blue">conditions</font> <font color="blue">generally</font> or in the <font color="blue">market regions</font>     where  we  operate <font color="blue">could decrease demand</font> and pricing for new homes and     <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">residential <font color="blue"><font color="blue">homebuilding</font> industry</font></font> is sensitive to changes in     regional  and national economic <font color="blue">conditions</font> such as job growth, housing     demand,  <font color="blue">availability</font>  of financing for <font color="blue">homebuyers</font>, <font color="blue">interest rates</font> and     consumer  confidence</td>
+    </tr>
+    <tr>
+      <td>Adverse changes in any of these <font color="blue">conditions</font> on a     <font color="blue">national level</font>, or in the markets where we operate, <font color="blue">could decrease demand</font>     and pricing for our homes or cause customers who have <font color="blue">entered into purchase</font>     contracts for our homes to fail to perform their <font color="blue">obligation</font>s, which could     <font color="blue"><font color="blue">adversely</font> affect</font> the number of <font color="blue">home <font color="blue">deliveries</font></font> we make or reduce the prices     we can charge for homes</td>
+    </tr>
+    <tr>
+      <td>Adverse changes in these <font color="blue">conditions</font> could also     result in a <font color="blue">decreased value</font> for the land, housing inventory and housing     work-in-progress that we own</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>on the nature and magnitude of these     <font color="blue">economic factors</font>, they could have a material adverse effect on our business,     revenues or earnings</td>
+    </tr>
+    <tr>
+      <td>In the last few months, a number of <font color="blue">homebuilders</font> have reported declines     or slower growth rates in the volume of <font color="blue">homes sold as</font> a result of higher     interest  rates  and other factors that <font color="blue">could signal</font> a downturn in the     <font color="blue"><font color="blue">homebuilding</font> industry</font></td>
+    </tr>
+    <tr>
+      <td>For example, during the <font color="blue">second half</font> of <font color="blue">fiscal year</font>     2006,  we experienced an increase in customer <font color="blue">cancellations</font>, which has     resulted in <font color="blue">either declines</font> in sales orders or <font color="blue">less rapid growth</font> in sales of     our homes in a number of markets</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue"><font color="blue">significant</font> <font color="blue">deterioration</font></font> of these and     other <font color="blue">homebuilding</font> <font color="blue">economic factors</font> could result in continued and prolonged     <font color="blue">decreases</font> in demand for new homes</td>
+    </tr>
+    <tr>
+      <td>A decline in prices of new homes or in     the volume of <font color="blue">homes sold by us</font> for any <font color="blue">reason could</font> have a material adverse     effect on our revenues, earnings and margins</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in <font color="blue">interest rates</font> or other <font color="blue">adverse <font color="blue">development</font>s affecting mortgage</font>     credit <font color="blue">markets could</font> make it more <font color="blue">difficult</font> or costly for customers to     purchase our homes</td>
+    </tr>
+    <tr>
+      <td>Most of our <font color="blue">homebuilding</font> customers finance their home purchases through     our <font color="blue">Financial Services </font><font color="blue">operations</font> or, in some cases, third-party lenders</td>
+    </tr>
+    <tr>
+      <td>In     general, housing demand is <font color="blue"><font color="blue">adversely</font> affect</font>ed by increases in <font color="blue">interest rates</font>     or by <font color="blue">decreases</font> in the <font color="blue">availability</font> of <font color="blue">mortgage financing as</font> a result of     <font color="blue">deteriorating customer</font> credit quality or other factors</td>
+    </tr>
+    <tr>
+      <td>Interest rates have     <font color="blue">been at historical lows</font> for <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, many <font color="blue">homebuyers</font> have     <font color="blue">chosen adjustable rate</font> or <font color="blue">interest only mortgages</font> or other mortgages that     <font color="blue">involve initial lower monthly payments</font></td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">interest rates</font> are <font color="blue">currently on</font> a     modest <font color="blue">upward trend</font>, and <font color="blue">may continue</font> to increase in <font color="blue">future periods</font></td>
+    </tr>
+    <tr>
+      <td>Any     <font color="blue">future increases</font> in <font color="blue">interest rates</font> could cause potential <font color="blue">homebuyers</font> to be     <font color="blue">less willing</font> to purchase our homes or to <font color="blue">cancel <font color="blue">sales contracts</font></font> in backlog</td>
+    </tr>
+    <tr>
+      <td>In addition, if lenders perceive <font color="blue">deterioration</font> in credit <font color="blue">quality among home</font>     buyers, lenders may increase the <font color="blue">qualifications</font> needed for mortgages or     adjust their terms to address any increased credit risk</td>
+    </tr>
+    <tr>
+      <td>In general, if     <font color="blue">mortgage rates increase</font> or lenders make it more <font color="blue">difficult</font> for prospective     buyers to <font color="blue">finance home purchases</font>, it <font color="blue">could become</font> more <font color="blue">difficult</font> or costly     for customers to purchase our homes, which would have an <font color="blue">adverse affect on</font>     our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for <font color="blue">homebuyers</font> <font color="blue">could reduce</font> our <font color="blue">deliveries</font> or decrease our     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">homebuilding</font> industry</font> is <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td>We compete in each of     our <font color="blue">markets with</font> many national, regional and local <font color="blue">homebuilders</font></td>
+    </tr>
+    <tr>
+      <td>In recent     years, national <font color="blue">homebuilders</font> have been able to compete more <font color="blue">effectively</font> and     increase their share of the <font color="blue">national <font color="blue">homebuilding</font> market</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increasing </font>levels     of <font color="blue"><font color="blue">competition</font> from</font> other national <font color="blue">homebuilders</font> or <font color="blue">from regional</font> and local     <font color="blue">homebuilders</font> in the markets in which we operate <font color="blue">could reduce</font> the number of     homes we deliver, or cause us to <font color="blue">accept <font color="blue">reduced margins</font></font> in order to maintain     <font color="blue">sales volume</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also compete with resales</font> of <font color="blue">existing used</font> or <font color="blue">foreclosed homes</font>,     <font color="blue">homes offered by investors</font> and housing speculators and <font color="blue">available rental</font>     housing</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font>competitive <font color="blue">conditions</font> in the <font color="blue">residential resale</font> or     <font color="blue">rental market</font> in the regions where we operate <font color="blue">could decrease demand</font> for new     homes, cause us to increase our <font color="blue">sales incentives</font> or price                                         13       _________________________________________________________________    [70]Table of <font color="blue">Contents       </font><font color="blue">discounts</font> in order to maintain <font color="blue">sales volume</font>s, increase the <font color="blue">volatility</font> of the     market for new homes or lead to <font color="blue">cancellations</font> of <font color="blue">sales contracts</font> in backlog,     any of which could <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>We may not be able to acquire <font color="blue">land suitable</font> for <font color="blue">residential <font color="blue">homebuilding</font> at</font>     reasonable prices, which <font color="blue">could limit</font> our ability to expand our <font color="blue">homebuilding</font>     <font color="blue">operations</font> and increase our costs</td>
+    </tr>
+    <tr>
+      <td>Our ability to expand our <font color="blue">homebuilding</font> <font color="blue">operations</font> depends upon our     ability to acquire <font color="blue">land suitable</font> for <font color="blue">residential building at reasonable</font>     prices and in locations where we want to build</td>
+    </tr>
+    <tr>
+      <td>Over the past decade, we     have experienced an increase in <font color="blue">competition</font> for suitable land as a result of     land <font color="blue">constraints</font> in certain of our markets</td>
+    </tr>
+    <tr>
+      <td>As <font color="blue">competition</font> for suitable land     increases, and <font color="blue">as available land</font> is developed, the <font color="blue">availability</font> of suitable     land at acceptable <font color="blue">prices may decline</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">land shortages</font> or any decrease in     the supply of <font color="blue">suitable land at reasonable prices</font> in <font color="blue">certain specific markets</font>     <font color="blue">could limit</font> our ability to develop <font color="blue">new <font color="blue">neighborhoods</font></font> or result in increased     <font color="blue">land acquisition costs</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that, if we experience     increased  <font color="blue">land acquisition costs</font>, we will be able to pass these costs     through  to  our customers, which could <font color="blue">adversely</font> impact our revenues,     earnings and margins</td>
+    </tr>
+    <tr>
+      <td>The  lag  between  when  we acquire land and when we sell homes in our     <font color="blue">communities</font> can make our <font color="blue">operations</font> susceptible to the effects of rapid     changes in market <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>There is often a <font color="blue"><font color="blue">significant</font> lag</font> time between when we acquire land for     <font color="blue">development</font>  and  when we sell homes in <font color="blue">neighborhoods</font> we have planned,     developed and <font color="blue">constructed</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market value</font> of home <font color="blue">inventories</font>, undeveloped     land and developed <font color="blue">home sites</font> can <font color="blue">fluctuate <font color="blue">significant</font>ly during</font> this time     period because of changing market <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">market value</font> of home     <font color="blue">inventories</font> or other <font color="blue">property decline during</font> this period, we may need to     sell homes or other <font color="blue">property at prices</font> that <font color="blue">generate lower margins than</font> we     anticipated when we acquired the land</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">certain situations</font> to the extent     <font color="blue">sales prices</font> do not exceed the carrying value of the related assets, we may     be required to record a write-down of our land or home <font color="blue">inventories</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, inventory carrying costs for land can be <font color="blue">significant</font> and can     result  in <font color="blue">reduced margins</font> or losses in a poorly performing project or     market</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>entities have adopted or <font color="blue">may adopt slow</font> or <font color="blue">no growth initiatives</font>,     which could <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">municipalities</font> in regions where we operate have approved, and     others may approve, slow growth or no growth <font color="blue">homebuilding</font> <font color="blue">regulations</font> or     laws that <font color="blue">could <font color="blue"><font color="blue">negatively</font> impact</font></font> the <font color="blue">availability</font> of land and building     <font color="blue"><font color="blue">opportunities</font> within</font> those <font color="blue">localities</font></td>
+    </tr>
+    <tr>
+      <td>Approval of these initiatives could     <font color="blue"><font color="blue">adversely</font> affect</font> our ability to build and sell homes in the <font color="blue">affected markets</font>     or could require that we <font color="blue">satisfy <font color="blue">additional</font> administrative</font> and <font color="blue">regulatory</font>     <font color="blue">requirements</font>, which could slow the progress or increase the costs of our     <font color="blue">homebuilding</font> <font color="blue">operations</font> in these markets</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such delays</font> or <font color="blue">costs could</font>     have an adverse effect on our revenues and earnings</td>
+    </tr>
+    <tr>
+      <td>Natural <font color="blue">disasters</font> and adverse weather <font color="blue">conditions</font> could delay <font color="blue">deliveries</font> or     increase costs to <font color="blue">build new homes</font> in <font color="blue">affected areas</font></td>
+    </tr>
+    <tr>
+      <td>The occurrence of natural <font color="blue">disasters</font> or adverse weather <font color="blue">conditions</font> in     the areas in which we operate can delay new <font color="blue">home <font color="blue">deliveries</font></font>, increase costs     by damaging <font color="blue">inventories</font> of homes and <font color="blue">construction</font> materials, reduce the     <font color="blue">availability</font> of <font color="blue">raw materials</font> and <font color="blue">skilled labor</font>, and <font color="blue"><font color="blue">negatively</font> impact</font> the     demand for new homes in <font color="blue">affected areas</font></td>
+    </tr>
+    <tr>
+      <td>In addition, when natural <font color="blue">disasters</font>     such as hurricanes, tornadoes, earthquakes, floods and <font color="blue">fires affect</font> an area     in which we build, or one nearby, there can be a diversion of labor and     materials in the <font color="blue">area from new home <font color="blue">construction</font></font> to the rebuilding of the     <font color="blue">existing homes damaged</font> or destroyed in the <font color="blue">natural disaster</font></td>
+    </tr>
+    <tr>
+      <td>This can cause     delays  in  <font color="blue">construction</font> and delivery of new homes and/or increase our     <font color="blue">construction</font> costs</td>
+    </tr>
+    <tr>
+      <td>Furthermore, if our insurance does not <font color="blue">fully cover</font>     business <font color="blue">interruptions</font> or losses resulting from these events, our earnings,     liquidity or <font color="blue">capital resources could</font> be <font color="blue"><font color="blue">adversely</font> affect</font>ed</td>
+    </tr>
+    <tr>
+      <td>Supply or labor shortages and other risks related to the demand for building     materials and <font color="blue">skilled labor</font> could delay <font color="blue">deliveries</font> and affect our results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  ability to conduct and expand our <font color="blue">homebuilding</font> <font color="blue">operations</font> is     <font color="blue">dependent on continued access</font> to <font color="blue">building materials</font> and <font color="blue">skilled labor</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Shortages </font>of <font color="blue">building materials</font> or <font color="blue">skilled labor</font> could delay <font color="blue">deliveries</font> of     our  homes, which could <font color="blue"><font color="blue">adversely</font> affect</font> our revenues and earnings</td>
+    </tr>
+    <tr>
+      <td>In     addition,  increased  costs or shortages of <font color="blue">building materials</font> such as     concrete, wood, roofing materials, gypsum, insulation and plumbing and     electrical  <font color="blue">components could</font> cause increases in <font color="blue">construction</font> costs and     <font color="blue">construction</font> delays</td>
+    </tr>
+    <tr>
+      <td>Labor disputes or <font color="blue">increased costs</font> or shortages of     <font color="blue">skilled labor</font>, such as carpenters, plumbers and electricians, could also     cause increases in costs and delays</td>
+    </tr>
+    <tr>
+      <td>We estimate and forecast <font color="blue">construction</font>     costs  as  part of our business, and attempt to plan for <font color="blue">possible cost</font>     <font color="blue">increases due</font> to changes in the cost or                                         14       _________________________________________________________________    [71]Table of <font color="blue">Contents       </font><font color="blue">availability</font> of materials and labor</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">generally</font> we are unable to     <font color="blue">pass on unanticipated increases</font> in <font color="blue">construction</font> costs to those customers who     have  already  entered  into <font color="blue">sales contracts</font>, as those <font color="blue">sales contracts</font>     <font color="blue">generally</font> fix the price of the home at the time the contract is signed,     which may be well in advance of the <font color="blue">construction</font> of the home</td>
+    </tr>
+    <tr>
+      <td>In general,     <font color="blue">significant</font>  unexpected  increases  in costs of materials or <font color="blue">labor may</font>     <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with <font color="blue">regulatory</font> <font color="blue">requirements</font> affecting our business could have     substantial  costs  both in time and money, and some <font color="blue"><font color="blue">regulations</font> could</font>     prohibit or restrict some <font color="blue">homebuilding</font> activity</td>
+    </tr>
+    <tr>
+      <td>We are subject to extensive and <font color="blue">complex laws</font> and <font color="blue">regulations</font> that     affect the land <font color="blue">development</font> and <font color="blue">homebuilding</font> process, including laws and     <font color="blue">regulations</font> related to zoning, permitted land uses, levels of density,     building  design,  warranties,  <font color="blue">storm water</font> and use of open spaces</td>
+    </tr>
+    <tr>
+      <td>In     addition, we are subject to a variety of laws and <font color="blue">regulations</font> concerning     safety and the protection of health and the <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>The particular     <font color="blue">environment</font>al  laws  that apply to any <font color="blue">given neighborhood vary greatly</font>     <font color="blue">according</font> to the <font color="blue">neighborhood site</font>, the site’s <font color="blue">environment</font>al <font color="blue">conditions</font> and     the present and <font color="blue">former uses</font> of the site</td>
+    </tr>
+    <tr>
+      <td>In some of the markets where we     operate, we are required to pay <font color="blue">environment</font>al impact fees, use energy-saving     <font color="blue">construction</font> materials and make <font color="blue">commitments</font> to <font color="blue">municipalities</font> to provide     certain  <font color="blue">infrastructure</font>  such  as roads and <font color="blue">sewage systems</font></td>
+    </tr>
+    <tr>
+      <td>We and the     <font color="blue">contractors</font> that we engage to work on our jobsites are also subject to laws     and  <font color="blue">regulations</font> related to workers’ health and safety, wages and hour     practices and <font color="blue">immigration</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">generally</font> are required to obtain permits and     approvals  <font color="blue">from local authorities</font> to commence and complete residential     <font color="blue">development</font> or home <font color="blue">construction</font></td>
+    </tr>
+    <tr>
+      <td>Such permits and approvals may, from     time-to-time, be opposed or challenged by local <font color="blue">government</font>s, neighboring     <font color="blue">property owners</font> or other interested parties, adding delays, costs and risks     of non-approval to the process</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">obligation</font> to <font color="blue">comply with</font> the laws and     <font color="blue">regulations</font> under which we operate, or the <font color="blue">obligation</font> of our sub<font color="blue">contractors</font>     and other agents to <font color="blue">comply with</font> these and other laws and <font color="blue">regulations</font>, could     result in delays in land <font color="blue">development</font> and <font color="blue">homebuilding</font> activity, cause us to     incur  substantial costs and prohibit or restrict land <font color="blue">development</font> and     <font color="blue">construction</font></td>
+    </tr>
+    <tr>
+      <td>It is possible that increasingly stringent <font color="blue">requirements</font> will be imposed     <font color="blue">on developers</font> and <font color="blue">homebuilders</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">cannot predict</font>     with any <font color="blue">certainty either</font> the nature of the <font color="blue">requirements</font> or the effect on     our business, they could result in time-consuming and <font color="blue">expensive compliance</font>     programs and in substantial expenditures, which could cause delays and     increase our cost of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>FINANCIAL SERVICES     General business, economic and market <font color="blue">conditions</font> may <font color="blue">significant</font>ly affect     the earnings of our <font color="blue">Financial Services </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Financial Services </font><font color="blue">operations</font> are sensitive to general business and     economic  <font color="blue">conditions</font>  in  the  <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">conditions</font> include     short-term and long-term <font color="blue">interest rates</font>, inflation, fluctuations in both     debt and <font color="blue">equity <font color="blue">capital markets</font></font>, and the strength of the US economy, as     well as the <font color="blue">local economies</font> in which we conduct business</td>
+    </tr>
+    <tr>
+      <td>If any of these     <font color="blue">conditions</font>  worsen, our <font color="blue">Financial Services </font>business could be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>Also, because <font color="blue">Financial Services </font><font color="blue">focuses on providing services</font> to     customers who are considering the purchase of a home from <font color="blue">Home Building </font>or     third  parties,  reduced  home sales will likely also impact Financial     Services’ business in the form of reduced <font color="blue">home loans</font>, <font color="blue">title services</font> and     <font color="blue">insurance services</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">Financial Services </font>business is <font color="blue">significant</font>ly affected     by  the fiscal and <font color="blue">monetary policies</font> of the <font color="blue">federal <font color="blue">government</font></font> and its     agencies</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">particularly affected by</font> the policies of the Federal     Reserve Board, <font color="blue">which regulates</font> the supply of money and credit in the United     States</td>
+    </tr>
+    <tr>
+      <td>The Federal Reserve Board’s <font color="blue">policies influence</font> the size of the     <font color="blue">mortgage origination market</font></td>
+    </tr>
+    <tr>
+      <td>The Federal Reserve Board’s <font color="blue">policies also</font>     influence the yield on our interest-earning assets and the cost of our     interest-bearing liabilities</td>
+    </tr>
+    <tr>
+      <td>Changes in those policies are beyond our     control and <font color="blue">difficult</font> to predict and can have a material effect on the     results of <font color="blue">operations</font> of our <font color="blue">Financial Services </font>segment</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">mortgage financing industry</font> is <font color="blue">highly competitive</font></td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">Financial Services </font>business operates in a <font color="blue">highly competitive</font>     industry that <font color="blue">could become</font> even more <font color="blue">competitive as</font> a result of economic,     legislative, <font color="blue">regulatory</font> and <font color="blue">technological</font> changes</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for mortgage     loans comes primarily from large commercial banks, mortgage companies and     savings and other <font color="blue">financial institutions</font></td>
+    </tr>
+    <tr>
+      <td>We face <font color="blue">competition</font> in such areas     as mortgage product offerings, rates and fees, and <font color="blue">customer service</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  <font color="blue">technological</font>  advances  such as <font color="blue">development</font>s in e-commerce     <font color="blue">activities</font> have increased consumers’ accessibility to products and services     <font color="blue">generally</font></td>
+    </tr>
+    <tr>
+      <td>This  has intensified <font color="blue">competition</font> among banking as well as     nonbanking  companies in <font color="blue">offering <font color="blue">mortgage loans</font></font> and similar financial     products and services</td>
+    </tr>
+    <tr>
+      <td>15       _________________________________________________________________    [72]Table of <font color="blue">Contents       </font>Changes in lending laws could hurt our <font color="blue">Financial Services </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Financial Services </font><font color="blue">operations</font> are subject to extensive and complex     laws and <font color="blue">regulations</font> that <font color="blue">affect loan origination</font></td>
+    </tr>
+    <tr>
+      <td>These include <font color="blue">eligibility</font>     <font color="blue">requirements</font> for <font color="blue">participation</font> in <font color="blue">federal loan programs</font> and <font color="blue">compliance with</font>     <font color="blue">consumer lending</font> and similar <font color="blue">requirements</font> such as disclosure <font color="blue">requirements</font>,     <font color="blue">prohibitions against discrimination</font> and <font color="blue">real estate settlement procedures</font></td>
+    </tr>
+    <tr>
+      <td>They may also subject our <font color="blue">operations</font> to <font color="blue">examination by applicable agencies</font></td>
+    </tr>
+    <tr>
+      <td>These may limit our ability to <font color="blue">provide mortgage financing</font> or <font color="blue">title services</font>     to <font color="blue">potential purchasers</font> of our homes</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">volatility</font> of our <font color="blue">Financial Services </font><font color="blue">operations</font> due to <font color="blue">refinancing</font>     activity <font color="blue">could <font color="blue"><font color="blue">negatively</font> impact</font></font> <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A decline in mortgage rates <font color="blue">generally</font> increases the demand for home     loans  <font color="blue">as borrowers refinance</font></td>
+    </tr>
+    <tr>
+      <td>An increase in mortgage rates <font color="blue">generally</font>     results in a decrease in the demand for <font color="blue">home loans</font> and a <font color="blue">corresponding</font>     decrease in the level of <font color="blue">refinancing</font> activity</td>
+    </tr>
+    <tr>
+      <td>Mortgage rates are currently     on  a modest <font color="blue">upward trend</font>, which could <font color="blue">negatively</font> affect our volume of     refinanced <font color="blue">home loans</font> and our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>CONSTRUCTION SERVICES     Supply and labor shortages and other <font color="blue">risks could increase costs</font> and delay     <font color="blue">completion</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our <font color="blue">Construction Services </font></font><font color="blue">operations</font> could be <font color="blue"><font color="blue">adversely</font> affect</font>ed by     <font color="blue">fluctuating prices</font> and limited supplies of <font color="blue">building materials</font>, as well as     the cost and <font color="blue">availability</font> of labor, particularly trades personnel</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>prices and <font color="blue">supplies may</font> be further <font color="blue"><font color="blue">adversely</font> affect</font>ed by natural <font color="blue">disasters</font>     and adverse weather <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>These factors, which are similar to those     discussed above in <font color="blue"><font color="blue">connection</font> with</font> our <font color="blue">Home Building </font><font color="blue">operations</font>, could cause     <font color="blue">increased costs</font> and delays in <font color="blue">construction</font> that could have an adverse effect     upon our <font color="blue">Construction Services </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to regional changes in the demand for commercial <font color="blue">construction</font>     projects</td>
+    </tr>
+    <tr>
+      <td>Although <font color="blue">national demand</font> for commercial <font color="blue">construction</font> is currently     <font color="blue">relatively stable</font>, individual markets experience <font color="blue">greater cyclicality</font> and can     be sensitive to <font color="blue">overall capital spending trends</font> in the economy, changes in     federal and state <font color="blue">appropriations</font> for <font color="blue">construction</font> projects, financing and     capital <font color="blue">availability</font> for <font color="blue">commercial real estate</font> and <font color="blue">competitive pressures on</font>     the <font color="blue">availability</font> and pricing of <font color="blue">construction</font> projects</td>
+    </tr>
+    <tr>
+      <td>These factors can     result  in  a  reduction in the supply of suitable projects, increased     <font color="blue">competition</font> and <font color="blue">reduced margins</font> on <font color="blue">construction</font> contracts</td>
+    </tr>
+    <tr>
+      <td>The  timing  and  funding  of  awards  and other <font color="blue">factors could lead</font> to     unpredictable operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our <font color="blue">Construction Services </font></font><font color="blue">operations</font> are also subject to other risks     and <font color="blue">uncertainties</font>, including the timing of new awards and the funding of     such awards; the length of time over which <font color="blue">construction</font> contracts are to be     performed; <font color="blue">cancellations</font> of, or changes in the scope of, <font color="blue">existing contracts</font>;     and  the  ability  to <font color="blue">meet performance</font> or <font color="blue">schedule <font color="blue">guarantees</font></font> and cost     overruns</td>
+    </tr>
+    <tr>
+      <td>FACTORS AFFECTING MULTIPLE BUSINESS SEGMENTS     New <font color="blue">federal laws</font> that <font color="blue"><font color="blue">adversely</font> affect</font> liquidity in the <font color="blue">secondary mortgage</font>     <font color="blue">market could hurt</font> our business</td>
+    </tr>
+    <tr>
+      <td>The Government-sponsored enterprises, principally FNMA and FHLMC, play     a  <font color="blue">significant</font>  role  in <font color="blue">buying home mortgages</font> and <font color="blue">packaging them into</font>     <font color="blue"><font color="blue">investment</font> securities</font> that they <font color="blue">either sell</font> to investors or hold in their     portfolios</td>
+    </tr>
+    <tr>
+      <td>Recent <font color="blue">federal laws</font> and <font color="blue">proposed legislation could</font> have the     effect of curtailing the <font color="blue">activities</font> of <font color="blue">FNMA and FHLMC </font>These <font color="blue">organizations</font>     <font color="blue">provide liquidity</font> to the <font color="blue">secondary mortgage</font> market</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">restriction</font> or     <font color="blue">curtailment</font> of their <font color="blue">activities</font> could affect the ability of our customers to     obtain <font color="blue">mortgage loans</font> or increase mortgage <font color="blue">interest rates</font>, which could     <font color="blue">reduce demand</font> for our homes and/or the loans that we originate and <font color="blue">adversely</font>     affect our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We  could  be <font color="blue"><font color="blue">adversely</font> affect</font>ed by a change in our credit rating or a     <font color="blue">disruption</font> in the <font color="blue">capital markets</font></td>
+    </tr>
+    <tr>
+      <td>Our  ability to continue to grow our business and <font color="blue">operations</font> in a     <font color="blue">profitable manner depends</font> to a <font color="blue">significant</font> extent upon our ability to access     <font color="blue">capital on</font> favorable terms</td>
+    </tr>
+    <tr>
+      <td>If we were to lose our <font color="blue">investment</font>-grade credit rating for any     reason, it would become more <font color="blue">difficult</font> and costly for us to access the     capital  that is required in order to implement our business plans and     achieve our <font color="blue">growth <font color="blue">objectives</font></font></td>
+    </tr>
+    <tr>
+      <td>16       _________________________________________________________________    [73]Table of <font color="blue">Contents       </font>     In addition, a long-term or serious <font color="blue">disruption</font> in the <font color="blue">capital markets</font>     could make it more <font color="blue">difficult</font> or more expensive for us to <font color="blue">raise capital</font> for     use in our business, for our customers to obtain <font color="blue">home loans</font> or for us to     sell  <font color="blue">loans originated by</font> our <font color="blue">Financial Services </font>segment or to sell or     securitize <font color="blue">loans originated by</font> our <font color="blue">discontinued</font> <font color="blue">Home Equity </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Further, a reduction of the positive <font color="blue">spread between</font> the <font color="blue">rate at which</font> we can     borrow and the <font color="blue">rate at which</font> we can <font color="blue">lend could hurt</font> our ability to profit     from our <font color="blue">loan origination businesses</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Reductions </font>in tax benefits could make home ownership more expensive or less     attractive</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>expenses of owning a home, including <font color="blue">mortgage interest</font>     expense and real estate taxes, <font color="blue">generally</font> are <font color="blue">deductible expenses</font> for an     individual’s federal, and in some cases state, <font color="blue">income taxes</font>, subject to     various  <font color="blue">limitations</font>  <font color="blue">under current tax law</font> and policy</td>
+    </tr>
+    <tr>
+      <td>If the federal     <font color="blue">government</font> or a state <font color="blue">government</font> changes <font color="blue">income tax laws</font> to eliminate or     <font color="blue">substantially modify</font> these <font color="blue">income tax deductions</font>, the after-tax costs of     owning a <font color="blue">new home would increase</font> for the <font color="blue">typical homeowner</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">such tax law</font>     changes were <font color="blue">enacted without</font> other offsetting provisions or effects, they     could <font color="blue">adversely</font> impact the demand for, and/or <font color="blue">sales prices</font> of, new homes,     <font color="blue">mortgage loans</font> and <font color="blue">home equity loans</font>, and our <font color="blue">operations</font> might be <font color="blue">negatively</font>     affected</td>
+    </tr>
+    <tr>
+      <td>We may incur <font color="blue">increased costs</font> related to repairing <font color="blue">construction</font> defects in     the homes we sell or the buildings we construct</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Home Building </font>and <font color="blue">Construction Services </font><font color="blue">operations</font> are subject to     warranty  and  other  claims related to <font color="blue">construction</font> defects and other     <font color="blue">construction</font>-related issues, including <font color="blue">compliance with</font> building codes</td>
+    </tr>
+    <tr>
+      <td>The     costs we incur to resolve those warranties and other claims reduce our     <font color="blue">profitability</font>, and if we were to experience an <font color="blue">unusually high level</font> of     claims, or <font color="blue">unusually severe</font> claims, our <font color="blue">profitability</font> could be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">inability</font> to obtain bonding <font color="blue">could limit</font> the number of projects we are     able to pursue</td>
+    </tr>
+    <tr>
+      <td>As is customary in the <font color="blue">construction</font> and <font color="blue">home building <font color="blue">industries</font></font>, we     often are required to <font color="blue">provide <font color="blue">surety bonds</font></font> to secure our <font color="blue">performance under</font>     <font color="blue">construction</font> contracts, <font color="blue">development</font> agreements and other <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td>Our     ability to obtain <font color="blue"><font color="blue">surety bonds</font> primarily depends upon</font> our <font color="blue">capitalization</font>,     working capital, past performance, <font color="blue">management</font> expertise and <font color="blue">certain external</font>     factors,  including  the <font color="blue">overall capacity</font> of the <font color="blue">surety market</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Surety     </font>companies consider <font color="blue">such factors</font> in <font color="blue">relationship</font> to the amount of our backlog     and their underwriting standards, which may change from time to time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Since     </font>2001, the <font color="blue">surety industry</font> has undergone <font color="blue">significant</font> changes <font color="blue">with several</font>     <font color="blue">companies withdrawing completely from</font> the industry or <font color="blue">significant</font>ly reducing     their <font color="blue">bonding commitment</font></td>
+    </tr>
+    <tr>
+      <td>In addition, certain reinsurers of <font color="blue">surety risk</font>     have limited their <font color="blue">participation</font> in this market</td>
+    </tr>
+    <tr>
+      <td>Therefore, we could be     unable to obtain <font color="blue">surety bonds</font>, when required, which could <font color="blue"><font color="blue">adversely</font> affect</font>     our future results of <font color="blue">operations</font> and revenues</td>
+    </tr>
+    <tr>
+      <td>DISCONTINUED OPERATIONS     There are <font color="blue">uncertainties</font> associated with our planned <font color="blue">disposition</font> of Home     Equity</td>
+    </tr>
+    <tr>
+      <td>On March 30, 2006, we announced that we signed a <font color="blue">definitive agreement</font>     to sell <font color="blue">Home Equity </font>to an <font color="blue">unrelated third party</font></td>
+    </tr>
+    <tr>
+      <td>As a result, <font color="blue">Home Equity </font>is     now <font color="blue">reflected as</font> a <font color="blue">discontinued</font> operation in our <font color="blue">financial statements</font></td>
+    </tr>
+    <tr>
+      <td>However, the sale of <font color="blue">Home Equity </font>is subject to certain <font color="blue">conditions</font>, including     obtaining a substantial number of <font color="blue">regulatory</font> approvals from state financial     services or other <font color="blue">regulatory</font> authorities</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that all     of these <font color="blue">regulatory</font> approvals will be obtained, or that the purchaser will     agree to close the purchase of <font color="blue">Home Equity </font>in the absence of one or more of     these approvals</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">purchase price</font> to be received in <font color="blue"><font color="blue">connection</font> with</font> the sale of Home     Equity <font color="blue">will consist</font> of <font color="blue">payments based on</font> the book value of Home Equity, plus     a premium to be <font color="blue">calculated</font> in <font color="blue">accordance with</font> an <font color="blue">agreed upon formula</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">With     </font><font color="blue">one exception</font>, the amount of the <font color="blue">premium will</font> be determined shortly after     closing <font color="blue">by agreement</font> of the parties or <font color="blue">through determinations by independent</font>     <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td>However, one <font color="blue">significant</font> component of the <font color="blue">purchase price</font> will     not be determined until after the <font color="blue">second anniversary</font> of the closing of the     sale</td>
+    </tr>
+    <tr>
+      <td>Accordingly, the amount of the premium to be received in <font color="blue">connection</font>     with the sale of <font color="blue">Home Equity </font>cannot be determined at the present time, and     may be less than the estimated amounts we currently expect to receive, as     reflected  in  our <font color="blue">public announcements</font> regarding this <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, any amount received by us in <font color="blue"><font color="blue">connection</font> with</font> this <font color="blue">transaction</font>     could be <font color="blue">effectively</font> reduced by any <font color="blue">indemnification payments</font> that we may be     required to make to the purchaser under the purchase and <font color="blue">sale agreement</font>     <font color="blue">entered into by</font> the parties</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional</font> information regarding the planned sale of Home Equity,     please see the <font color="blue">Current Reports </font>on Form 8-K filed by us with the SEC on <font color="blue">April     </font>4 and May 2, 2006</td>
+    </tr>
+    <tr>
+      <td>17       _________________________________________________________________    [74]Table of <font color="blue">Contents       </font>Loan losses <font color="blue">could reduce</font> the <font color="blue">profitability</font> of our <font color="blue">Home Equity </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Home Equity </font><font color="blue">operations</font> include holding residential <font color="blue">mortgage loans</font>     for <font color="blue">investment</font> and <font color="blue">establishing</font> an allowance for credit losses on these     loans</td>
+    </tr>
+    <tr>
+      <td>To a lesser extent, our <font color="blue">operations</font> also involve holding properties     obtained through foreclosure pending resale and <font color="blue">establishing</font> an allowance     for losses on these properties</td>
+    </tr>
+    <tr>
+      <td>Although the amount of these <font color="blue">allowances</font>     reflects our judgment as to our present loss exposure on these loans and     properties, there can be no assurance that it will be sufficient to cover     any losses that may ultimately be incurred</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Judgments </font>as to loss exposure     are  subject  to <font color="blue">significant</font> <font color="blue">uncertainties</font>, and the amount of the loss     ultimately  incurred  may be determined <font color="blue">by various factors outside</font> our     control</td>
+    </tr>
+    <tr>
+      <td>Changes in lending laws could hurt our <font color="blue">Home Equity </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">discontinued</font> <font color="blue">Home Equity </font><font color="blue">operations</font> are <font color="blue">particularly affected by</font>     laws and <font color="blue">regulations</font> related to the extension of credit to <font color="blue">individuals whose</font>     credit ratings do not <font color="blue">qualify them</font> for <font color="blue">conventional mortgage financing</font></td>
+    </tr>
+    <tr>
+      <td>Changes in these laws or the way that they are enforced may <font color="blue"><font color="blue">adversely</font> affect</font>     the way that we operate or our ability to <font color="blue">profitably originate loans</font></td>
+    </tr>
+    <tr>
+      <td>FORWARD-LOOKING STATEMENTS     This report includes various forward-looking statements, which are not facts     or <font color="blue">guarantees</font> of <font color="blue">future performance</font> and which are subject to <font color="blue">significant</font>     risks and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>Certain information included in this Report or in other materials we     have filed or <font color="blue">will file with</font> the SEC, as well as information included in     oral  statements or other <font color="blue">written statements</font> made or to be made by us,     contains or may contain forward-looking statements within the meaning of     Section 27A of the <font color="blue">Securities Act </font>of 1933, Section 21E of the Securities     Exchange Act of 1934 and the Private Securities Litigation Reform Act of     1995, as amended</td>
+    </tr>
+    <tr>
+      <td>You can identify these <font color="blue">statements by</font> the fact that they do     not  relate  to matters of a strictly factual or historical nature and     <font color="blue">generally</font> discuss or relate to forecasts, estimates or other <font color="blue">expectations</font>     regarding  future  events</td>
+    </tr>
+    <tr>
+      <td>Generally,  the words “believe,” “expect,”     “intend,”  “estimate,” “anticipate,” “project,” “may,” “can,” “could,”     “might,” “will” and similar <font color="blue">expressions</font> identify forward-looking statements,     including statements related to expected operating and performing results,     planned <font color="blue">transaction</font>s, planned <font color="blue">objectives</font> of <font color="blue">management</font>, future <font color="blue">development</font>     in the <font color="blue">industries</font> in which we <font color="blue">participate</font> and other trends, <font color="blue">development</font>s and     <font color="blue">uncertainties</font> that may affect our business in the future</td>
+    </tr>
+    <tr>
+      <td>Such statements     include information related to anticipated operating results, financial     resources,  changes in <font color="blue">interest rates</font>, changes in revenues, changes in     <font color="blue">profitability</font>, interest expense, growth and expansion, anticipated income to     be realized by our <font color="blue">investment</font> in <font color="blue">unconsolidated entities</font>, the ability to     acquire land, the ability to <font color="blue">gain approvals</font> and to open new <font color="blue">communities</font>, the     ability to sell homes and properties, the ability to deliver <font color="blue">homes from</font>     backlog, the ability to <font color="blue">secure materials</font> and sub<font color="blue">contractors</font>, the ability to     produce the liquidity and <font color="blue">capital necessary</font> to expand and take advantage of     <font color="blue">opportunities</font> in the future, the <font color="blue">completion</font> of and <font color="blue">effects from</font> planned     <font color="blue">transaction</font>s and <font color="blue">stock market valuations</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, forward-looking     statements  also  are  included  in  our  other  periodic  reports  on     Forms 10-K, 10-Q and 8-K, press releases and presentations, on our web site     and in other material released to the public</td>
+    </tr>
+    <tr>
+      <td>Forward-looking statements are not <font color="blue">historical facts</font> or <font color="blue">guarantees</font> of     <font color="blue">future performance</font> but instead represent only our <font color="blue">beliefs at</font> the time the     statements  were  made  regarding  <font color="blue">future events</font>, which are subject to     <font color="blue">significant</font>  risks, <font color="blue">uncertainties</font>, and other factors many of which are     outside of the Company’s control and certain of which are listed above</td>
+    </tr>
+    <tr>
+      <td>Any     or all of the forward-looking statements included in this Report and in any     other reports or <font color="blue">public statements</font> made by us may turn out to be <font color="blue">materially</font>     <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>This can occur as a result of incorrect <font color="blue">assumptions</font> or as a     consequence of known or <font color="blue">unknown risks</font> and <font color="blue">uncertainties</font></td>
+    </tr>
+    <tr>
+      <td>Many of the risks     and <font color="blue">uncertainties</font> mentioned in this Report or another report or public     statement made by us, such as those discussed in these risk factors, will be     important in determining whether these forward-looking statements prove to     be accurate</td>
+    </tr>
+    <tr>
+      <td>Consequently, neither our <font color="blue">stockholders nor</font> any other person     should place <font color="blue">undue reliance on</font> our forward-looking statements and should     recognize that actual results may differ <font color="blue">materially</font> from those that may be     anticipated by us</td>
+    </tr>
+    <tr>
+      <td>All forward-looking statements made in this Report are made as of the     <font color="blue">date hereof</font>, and the risk that actual results will differ <font color="blue">materially</font> from     <font color="blue">expectations</font> expressed in this Report <font color="blue">will increase with</font> the passage of     time</td>
+    </tr>
+    <tr>
+      <td>We undertake no <font color="blue">obligation</font>, and disclaim any duty, to <font color="blue">publicly update</font>     or  revise  any forward-looking statements, whether as a result of new     information,  <font color="blue">future events</font>, changes in our <font color="blue">expectations</font> or otherwise</td>
+    </tr>
+    <tr>
+      <td>However, we may make <font color="blue">further disclosures</font> regarding <font color="blue">future events</font>, trends and     <font color="blue">uncertainties</font> in our subsequent reports on <font color="blue">Forms     </font>10-K, 10-Q and 8-K The above <font color="blue">cautionary</font> discussion of risks, <font color="blue">uncertainties</font>     and possible <font color="blue">inaccurate</font> <font color="blue">assumptions</font> relevant to our business include factors     we believe could cause our actual results to differ <font color="blue">materially</font> from expected     and historical results</td>
+    </tr>
+    <tr>
+      <td>Other <font color="blue">factors beyond</font> those listed above, including     <font color="blue">factors unknown</font> to us and <font color="blue">factors known</font> to us which we have not determined     to be material, could also <font color="blue"><font color="blue">adversely</font> affect</font> us</td>
+    </tr>
+    <tr>
+      <td>This discussion is provided     <font color="blue">as permitted by</font> the                                         18       _________________________________________________________________    [75]Table of <font color="blue">Contents       </font>Private  Securities  Litigation  Reform  Act  of  1995  and all of our     forward-looking statements are expressly qualified in their entirety by the     <font color="blue">cautionary</font> statements contained or referenced in this section</td>
+    </tr>
+  </tbody>
+</table>

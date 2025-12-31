@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: risks described", fill: "#008b8b"},
+{source: "1: risks described", target: "1: could adversely", fill: "#008b8b"},
+{source: "1: could adversely", target: "1: common stock", fill: "#008b8b"},
+{source: "1: risks described", target: "6: potential products with", fill: "#c41e3a"},
+{source: "6: potential products with", target: "6: Multikine ", fill: "#c41e3a"},
+{source: "6: Multikine ", target: "6: early stages", fill: "#c41e3a"},
+{source: "6: early stages", target: "6: development", fill: "#c41e3a"},
+{source: "6: development", target: "6: commercial sale", fill: "#c41e3a"},
+{source: "6: commercial sale", target: "6: products will", fill: "#c41e3a"},
+{source: "6: products will", target: "6: years away", fill: "#c41e3a"},
+{source: "6: potential products with", target: "16: different", fill: "#ffa500"},
+{source: "16: different", target: "16: necessary", fill: "#ffa500"},
+{source: "16: necessary", target: "16: regulatory approval", fill: "#ffa500"},
+{source: "16: regulatory approval", target: "16: especially", fill: "#ffa500"},
+{source: "16: especially", target: "16: Food and Drug Administration ", fill: "#ffa500"},
+{source: "16: Food and Drug Administration ", target: "16: involve significant costs", fill: "#ffa500"},
+{source: "16: involve significant costs", target: "16: several years", fill: "#ffa500"},
+{source: "16: different", target: "21: development expenditures", fill: "#138808"},
+{source: "21: development expenditures", target: "21: decreased due", fill: "#138808"},
+{source: "21: decreased due", target: "21: inability", fill: "#138808"},
+{source: "21: inability", target: "21: regulatory approval will prevent", fill: "#138808"},
+{source: "21: regulatory approval will prevent", target: "21: regulatory approval", fill: "#138808"},
+{source: "21: regulatory approval", target: "21: products which", fill: "#138808"},
+{source: "21: development expenditures", target: "22: raise additional capital", fill: "#fbab60"},
+{source: "22: raise additional capital", target: "22: will most likely sell shares", fill: "#fbab60"},
+{source: "22: will most likely sell shares", target: "22: common stock", fill: "#fbab60"},
+{source: "22: common stock", target: "22: securities convertible into common stock at prices", fill: "#fbab60"},
+{source: "22: securities convertible into common stock at prices", target: "22: common stock at", fill: "#fbab60"},
+{source: "22: common stock at", target: "22: prevailing market price", fill: "#fbab60"},
+{source: "22: raise additional capital", target: "23: additional shares will", fill: "#c33"},
+{source: "23: additional shares will", target: "23: dilutive impact on", fill: "#c33"},
+{source: "23: dilutive impact on", target: "23: stockholders", fill: "#c33"},
+{source: "23: stockholders", target: "23: market price", fill: "#c33"},
+{source: "23: market price", target: "23: common stock", fill: "#c33"},
+{source: "23: additional shares will", target: "25: regulatory", fill: "#a4c639"},
+{source: "25: regulatory", target: "25: approvals may adversely affect", fill: "#a4c639"},
+{source: "25: approvals may adversely affect", target: "25: successfully", fill: "#a4c639"},
+{source: "25: regulatory", target: "40: candidates", fill: "#aa4069"},
+{source: "40: candidates", target: "40: regulatory", fill: "#aa4069"},
+{source: "40: regulatory", target: "40: product candidates", fill: "#aa4069"},
+{source: "40: product candidates", target: "40: commercial sale", fill: "#aa4069"},
+{source: "40: candidates", target: "START_HERE", fill: "#aa4069"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Pharmaceuticals Biotechnology and Life Sciences</td>
+    </tr>
+    <tr>
+      <td>Biotechnology</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Convertible_bond">Convertible bond</a></td>
+      <td>In finance, a convertible bond or  convertible note or convertible debt (or a convertible debenture if it has a maturity of greater than 10 years) is a type of bond that the holder can convert into a specified number of shares of common stock in the issuing company or cash of equal value.  It is a hybrid security with debt- and equity-like features.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development/For!">Development/For!</a></td>
+      <td>Development/For! (Latvian: Attīstībai/Par!, AP!) is a liberal political alliance in Latvia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development_hell">Development hell</a></td>
+      <td>Development hell, development purgatory, and development limbo are media and software industry jargon for a project, concept, or idea that remains in development for an especially long time, often moving between different crews, scripts, game engines, or studios before it progresses to production, if it ever does. Projects in development hell are usually not released until development has reached a satisfying state worthy of being released, ready for production.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_development">Software development</a></td>
+      <td>Software development is the process of conceiving, specifying, designing, programming, documenting, testing, and bug fixing involved in creating and maintaining applications, frameworks, or other software components. Software development involves writing and maintaining the source code, but in a broader sense, it includes all processes from the conception of the desired software through to the final manifestation of the software, typically in a planned and structured process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medicines_and_Healthcare_products_Regulatory_Agency">Medicines and Healthcare products Regulatory Agency</a></td>
+      <td>The Medicines and Healthcare products Regulatory Agency (MHRA) is an executive agency of the Department of Health and Social Care in the United Kingdom which is responsible for ensuring that medicines and medical devices work and are acceptably safe.\nThe MHRA was formed in 2003 with the merger of the Medicines Control Agency (MCA) and the Medical Devices Agency (MDA).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Praziquantel">Praziquantel</a></td>
+      <td>Praziquantel (PZQ), sold under the brandname Biltricide among others, is a medication used to treat a number of types of parasitic worm infections in mammals, birds, amphibians, reptiles, and fish. In humans specifically, it is used to treat schistosomiasis, clonorchiasis, opisthorchiasis, tapeworm infections, cysticercosis, hydatid disease, and other fluke infections.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Merger_of_Sprint_Corporation_and_T-Mobile_US">Merger of Sprint Corporation and T-Mobile US</a></td>
+      <td>Sprint Corporation and T-Mobile US merged in 2020 in an all shares deal for $26 billion. The deal was announced on April 29, 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/1,2-Cyclohexane_dicarboxylic_acid_diisononyl_ester">1,2-Cyclohexane dicarboxylic acid diisononyl ester</a></td>
+      <td>1,2-Cyclohexane dicarboxylic acid diisononyl ester (DINCH) is a mixture of organic compounds with the formula C6H10(CO2C9H19)2. DINCH is colorless oil.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gilead_Sciences">Gilead Sciences</a></td>
+      <td>Gilead Sciences, Inc. , is an American biopharmaceutical company headquartered in Foster City, California, that focuses on researching and developing antiviral drugs used in the treatment of HIV/AIDS, hepatitis B, hepatitis C, influenza, and COVID-19, including ledipasvir/sofosbuvir and sofosbuvir.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_capture">Regulatory capture</a></td>
+      <td>In politics, regulatory capture (also agency capture and client politics) is a form of corruption of authority that occurs when a political entity, policymaker, or regulator is co-opted to serve the commercial, ideological, or political interests of a minor constituency, such as a particular geographic area, industry, profession, or ideological group.When regulatory capture occurs, a special interest is prioritized over the general interests of the public, leading to a net loss for society. The theory of client politics is related to that of rent-seeking and political failure; client politics "occurs when most or all of the benefits of a program go to some single, reasonably small interest (e.g., industry, profession, or locality) but most or all of the costs will be borne by a large number of people (for example, all taxpayers)".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Market_trend">Market trend</a></td>
+      <td>A market trend is a perceived tendency of financial markets to move in a particular direction over time. These trends are classified as secular for long time frames, primary for medium time frames, and secondary for short time frames.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price">Price</a></td>
+      <td>A prince is a male ruler (ranked below a king, grand prince, and grand duke) or a male member of a monarch's or former monarch's family. Prince is also a title of nobility (often highest), often hereditary, in some European states.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pricing_strategies">Pricing strategies</a></td>
+      <td>A business can use a variety of pricing strategies when selling a product or service. To determine the most effective pricing strategy for a company, senior executives need to first identify the company's pricing position, pricing segment, pricing capability and their competitive pricing reaction strategy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price_discrimination">Price discrimination</a></td>
+      <td>Price discrimination is a microeconomic pricing strategy where identical or largely similar goods or services are sold at different prices by the same provider in different markets. Price discrimination is distinguished from product differentiation by the more substantial difference in production cost for the differently priced products involved in the latter strategy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-price_competition">Non-price competition</a></td>
+      <td>Non-price competition is a marketing strategy "in which one firm tries to distinguish its product or service from competing products on the basis of attributes like design and workmanship". It often occurs in imperfectly competitive markets because it exists between two or more producers that sell goods and services at the same prices but compete to increase their respective market shares through non-price measures such as marketing schemes and greater quality.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price_Chopper_and_Market_32_Supermarkets">Price Chopper and Market 32 Supermarkets</a></td>
+      <td>Golub Corporation is an American supermarket operator. Headquartered in Schenectady, New York, it owns the chains Market 32 and Price Chopper Supermarkets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_agency">Regulatory agency</a></td>
+      <td>A regulatory agency (regulatory body, regulator) or independent agency (independent regulatory agency) is a government authority that is responsible for exercising autonomous dominion over some area of human activity in a licensing and regulating capacity.\nThese are customarily set up to strengthen safety and standards, and/or to protect consumers in markets where there is a lack of effective competition.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_state">Regulatory state</a></td>
+      <td>The term regulatory state refers to the expansion in the use of rulemaking, monitoring and enforcement techniques and institutions by the state and to a parallel change in the way its positive or negative functions in society are being carried out. The expansion of the state nowadays is generally via regulation and less via taxing and spending.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_sequence">Regulatory sequence</a></td>
+      <td>A regulatory sequence is a segment of a nucleic acid molecule which is capable of increasing or decreasing the expression of specific genes within an organism. Regulation of gene expression is an essential feature of all living organisms and viruses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulatory_T_cell">Regulatory T cell</a></td>
+      <td>The regulatory T cells (Tregs  or Treg cells), formerly known as suppressor T cells, are a subpopulation of T cells that modulate the immune system, maintain tolerance to self-antigens, and prevent autoimmune disease. Treg cells are immunosuppressive and generally suppress or downregulate induction and proliferation of effector T cells.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cis-regulatory_element">Cis-regulatory element</a></td>
+      <td>Cis-regulatory elements (CREs) or Cis-regulatory modules (CRMs) are regions of non-coding DNA which regulate the transcription of neighboring genes. CREs are vital components of genetic regulatory networks, which in turn control morphogenesis, the development of anatomy, and other aspects of embryonic development, studied in evolutionary developmental biology.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Halozyme">Halozyme</a></td>
+      <td>Halozyme Therapeutics is an American biotechnology company that develops novel oncology therapies designed to target the tumor microenvironment and licenses a novel drug delivery technology through corporate partnerships.\nThe company was founded in 1998 and went public in 2004.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/MediGene">MediGene</a></td>
+      <td>Medigene AG (FSE: MDG1, ISIN DE000A1X3W00, Prime Standard) is a publicly listed biotechnology company headquartered in Martinsried near Munich, Germany. Medigene is working on the development of immunotherapies to enhance T cell activity against solid cancers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medicago_Inc.">Medicago Inc.</a></td>
+      <td>Medicago Inc. is a privately-owned Canadian biotechnology company focused on the discovery, development, and commercialization of virus-like particles using plants as "bioreactors" to produce proteins as candidate vaccines and medications.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bavarian_Nordic">Bavarian Nordic</a></td>
+      <td>Bavarian Nordic A/S is a fully integrated biotechnology company focused on the development, manufacturing and commercialization of vaccines for infectious diseases and cancer immunotherapies. The company is headquartered in Hellerup, Denmark, with a manufacturing facility in Kvistgård, and an additional site in Hørsholm.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Takeda_Oncology">Takeda Oncology</a></td>
+      <td>Takeda Oncology (originally Millennium Pharmaceuticals) is a biopharmaceutical company based in Cambridge, Massachusetts. It is a fully owned subsidiary of Takeda Pharmaceutical.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CEL SCI CORP    ITEM 1A  RISK FACTORS          Investors should be aware that the <font color="blue">risks described</font> below <font color="blue">could adversely</font>  affect the price of CEL-SCIapstas <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI has had only limited <font color="blue">revenues since</font> it was formed in 1983</td>
+    </tr>
+    <tr>
+      <td>Since  the date of its formation and through <font color="blue">September </font>30, 2005 CEL-SCI <font color="blue">incurred net</font>  losses of approximately dlra99cmam000cmam000</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI has <font color="blue">relied principally upon</font> the  proceeds of public and <font color="blue">private sales</font> of its securities to finance its <font color="blue">activities</font>  to date</td>
+    </tr>
+    <tr>
+      <td>All of CEL-SCIapstas potential products, with the exception of Multikine,  are in the <font color="blue">early stages</font> of <font color="blue">development</font>, and any <font color="blue">commercial sale</font> of these  <font color="blue">products will</font> be many <font color="blue">years away</font></td>
+    </tr>
+    <tr>
+      <td>Even <font color="blue">potential product sales from</font> <font color="blue">Multikine  </font>are many <font color="blue">years away</font> as cancer trials can be lengthy</td>
+    </tr>
+    <tr>
+      <td>Accordingly, CEL-SCI  expects to incur substantial losses for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>17  <PAGE>    Since CEL-SCI does not intend to <font color="blue">pay dividends on</font> its <font color="blue">common stock</font>, any return  to <font color="blue">investors will come only from potential increases</font> in the price of CEL-SCIapstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>At the present time, CEL-SCI intends to <font color="blue">use available funds</font> to finance  CEL-SCIapstas <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, <font color="blue">while payment</font> of dividends rests within the  <font color="blue">discretion</font> of the Board of Directors, no <font color="blue">common stock</font> dividends have been  declared or paid by CEL-SCI and CEL-SCI has <font color="blue">no intention</font> of paying any common  <font color="blue">stock dividends</font></td>
+    </tr>
+    <tr>
+      <td>If CEL-SCI cannot obtain <font color="blue"><font color="blue">additional</font> capital</font>, CEL-SCI may have to postpone  <font color="blue">development</font> and <font color="blue">research expenditures which will delay</font> CEL-SCIapstas ability to  produce a <font color="blue">competitive product</font></td>
+    </tr>
+    <tr>
+      <td>Delays of this nature may depress the price of  CEL-SCIapstas <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Clinical and other <font color="blue">studies <font color="blue">necessary</font></font> to obtain approval of a new drug can  be time consuming and costly, <font color="blue">especially</font> in the United States, but also in  <font color="blue">foreign countries</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCIapstas estimates of the <font color="blue">costs associated with future</font>  <font color="blue">clinical trials</font> and <font color="blue">research may</font> be <font color="blue"><font color="blue">substantially</font> lower than</font> the <font color="blue">actual costs</font> of  these <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">different</font> steps <font color="blue">necessary</font> to obtain <font color="blue"><font color="blue">regulatory</font> approval</font>,  <font color="blue">especially</font> that of the Food and Drug Administration, <font color="blue">involve <font color="blue">significant</font> costs</font>  and may require <font color="blue">several years</font> to complete</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI expects that it will need  substantial <font color="blue"><font color="blue">additional</font> financing over</font> an <font color="blue">extended period</font> of time in order to  fund the costs of future <font color="blue">clinical trials</font>, related research, and general and  <font color="blue"><font color="blue">administrative</font> expenses</font></td>
+    </tr>
+    <tr>
+      <td>Although CEL-SCIapstas <font color="blue">equity line</font> of credit <font color="blue">agreement</font> is  expected to be a source of funding, the <font color="blue">amounts which</font> CEL-SCI is able to draw  from the <font color="blue">equity line</font> during each drawdown period are limited and may not satisfy  CEL-SCIapstas capital needs</td>
+    </tr>
+    <tr>
+      <td>The extent of CEL-SCIapstas <font color="blue">clinical trials</font> and <font color="blue">research programs</font> are  <font color="blue">primarily based upon</font> the amount of <font color="blue">capital available</font> to CEL-SCI and the extent  to which CEL-SCI has received <font color="blue"><font color="blue">regulatory</font> approval</font>s for <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI  is unable to estimate the future costs of <font color="blue">clinical trials</font> since CEL-SCI has not  <font color="blue">yet met with</font> the FDA to discuss the design of future <font color="blue">clinical trials</font>; and until  the scope of future <font color="blue">clinical trials</font> is known, CEL-SCI will not be able to price  any <font color="blue">trials with clinical trial organizations</font></td>
+    </tr>
+    <tr>
+      <td>Over the past three years CEL-SCIapstas research and <font color="blue">development</font> expenditures  have decreased, due in part to the <font color="blue">capital available</font> to CEL-SCI The <font color="blue">inability</font>  of CEL-SCI to conduct <font color="blue">clinical trials</font> or research, whether due to a lack of  capital or <font color="blue"><font color="blue">regulatory</font> approval</font>, will prevent CEL-SCI from completing the studies  and research required to obtain <font color="blue"><font color="blue">regulatory</font> approval</font> for any <font color="blue">products which</font>  CEL-SCI is developing</td>
+    </tr>
+    <tr>
+      <td>To raise <font color="blue"><font color="blue">additional</font> capital</font> CEL-SCI <font color="blue">will most likely sell shares</font> of its  <font color="blue">common stock</font> or securities convertible into <font color="blue">common stock</font> at prices that may be  below the <font color="blue">prevailing <font color="blue">market price</font></font> of CEL-SCIapstas <font color="blue">common stock</font> at the time of sale</td>
+    </tr>
+    <tr>
+      <td>The issuance of <font color="blue"><font color="blue">additional</font> <font color="blue">shares will</font></font> have a <font color="blue">dilutive impact on</font> other  <font color="blue">stockholders</font> and could have a negative effect on the <font color="blue">market price</font> of CEL-SCIapstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>During the two years ended <font color="blue">September </font>2005 CEL-SCI has sold  approximately 11cmam700cmam000 shares of its <font color="blue">common stock</font> to <font color="blue">private investors at</font>  prices that were between 11prca and 22prca below the <font color="blue">market price</font> of CEL-SCIapstas common  stock at the time of sale</td>
+    </tr>
+    <tr>
+      <td>Any failure to obtain or any delay in obtaining required <font color="blue">regulatory</font>  <font color="blue">approvals <font color="blue">may adversely affect</font></font> the ability of CEL-SCI or potential licensees to  <font color="blue">successfully</font> market any products they may develop</td>
+    </tr>
+    <tr>
+      <td>18  <PAGE>    Multikine is made <font color="blue">from components</font> of <font color="blue"><font color="blue">human blood</font> which involves inherent risks</font>  that may lead to <font color="blue">product destruction</font> or <font color="blue">patient injury <font color="blue">which could</font> <font color="blue">materially</font></font>  harm CEL-SCIapstas financial results, reputation and stock price</td>
+    </tr>
+    <tr>
+      <td>Multikine is made, in part, <font color="blue">from components</font> of <font color="blue">human blood</font></td>
+    </tr>
+    <tr>
+      <td>There are  <font color="blue">inherent <font color="blue">risks associated with</font> products</font> that involve <font color="blue">human blood</font> such as  possible contamination with viruses, including <font color="blue">Hepatitis or HIV Any </font>possible  <font color="blue">contamination could</font> require CEL-SCI to destroy batches <font color="blue">of Multikine </font>or cause  injuries to patients who receive the product thereby subjecting CEL-SCI to  possible financial losses and harm to its business</td>
+    </tr>
+    <tr>
+      <td>Although CEL-SCI has <font color="blue">product <font color="blue">liability</font> insurance</font> for Multikine, the successful  <font color="blue">prosecution</font> of a <font color="blue">product <font color="blue">liability</font> case against</font> CEL-SCI could have a <font color="blue">materially</font>  adverse effect upon its business if the amount of any <font color="blue">judgment exceeds</font> CEL-SCIapstas  <font color="blue">insurance coverage</font></td>
+    </tr>
+    <tr>
+      <td>Although no claims have been brought to date, <font color="blue">participants</font> in CEL-SCIapstas  <font color="blue">clinical trials</font> could bring civil actions against CEL-SCI for any <font color="blue">unanticipated</font>  <font color="blue">harmful effects</font> arising from the use <font color="blue">of Multikine </font>or any drug or product that  CEL-SCI may try to develop</td>
+    </tr>
+    <tr>
+      <td>Although CEL-SCI believes its <font color="blue">insurance coverage</font> of  dlra1cmam000cmam000 per claim is adequate, the defense or settlement of any product  <font color="blue">liability</font> claim <font color="blue">could adversely</font> affect CEL-SCI even if the defense and  <font color="blue">settlement costs</font> did not exceed CEL-SCIapstas <font color="blue">insurance coverage</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCIapstas <font color="blue">directors</font> are allowed to <font color="blue">issue shares</font> of <font color="blue">preferred stock with</font>  provisions that could be <font color="blue">detrimental</font> to the interests of the holders of  CEL-SCIapstas <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The provisions in CEL-SCIapstas Articles of Incorporation relating to  CEL-SCIapstas <font color="blue">Preferred Stock </font><font color="blue">would allow</font> CEL-SCIapstas <font color="blue">directors</font> to issue Preferred  Stock <font color="blue">with rights</font> to <font color="blue">multiple votes per</font> share and <font color="blue">dividend rights which would</font>  have <font color="blue">priority over</font> any <font color="blue">dividends paid with respect</font> to CEL-SCIapstas Common Stock</td>
+    </tr>
+    <tr>
+      <td>The issuance of <font color="blue">Preferred Stock </font><font color="blue">with such rights may</font> make more <font color="blue">difficult</font> the  removal of <font color="blue">management even</font> if <font color="blue">such removal would</font> be considered <font color="blue">beneficial</font> to  <font color="blue">shareholders generally</font>, and will have the effect of <font color="blue">limiting shareholder</font>  <font color="blue">participation</font> in <font color="blue">certain <font color="blue">transactions</font> such as mergers</font> or <font color="blue">tender offers</font> if such  <font color="blue">transactions</font> are not <font color="blue">favored by incumbent management</font></td>
+    </tr>
+    <tr>
+      <td>Risks Related to Government Approvals    CEL-SCIapstas <font color="blue">product <font color="blue">candidates</font> must undergo rigorous preclinical</font> and clinical  testing and <font color="blue"><font color="blue">regulatory</font> approval</font>s, <font color="blue">which could</font> be costly and time-consuming and  subject CEL-SCI to <font color="blue">unanticipated</font> delays or prevent CEL-SCI <font color="blue">from marketing</font> any  products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Therapeutic </font>agents, drugs and <font color="blue">diagnostic products</font> are subject to approval,  prior to <font color="blue">general market</font>ing, by the FDA in the <font color="blue">United States </font>and by comparable  agencies in most <font color="blue">foreign countries</font></td>
+    </tr>
+    <tr>
+      <td>Before obtaining <font color="blue">marketing approval</font>,  CEL-SCIapstas <font color="blue">product <font color="blue">candidates</font> must undergo rigorous preclinical</font> and clinical  <font color="blue">testing which</font> is costly and time consuming and subject to <font color="blue">unanticipated</font> delays</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that <font color="blue">such approvals will</font> be granted</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI  cannot be certain when or under what  <font color="blue">conditions</font> it will undertake  further  clinical  trials,  including  a <font color="blue">Phase III </font>program  for  Multikine</td>
+    </tr>
+    <tr>
+      <td>The  clinical  trials  of  CEL-SCIapstas  product  <font color="blue">candidates</font>  may  not be  completed  on  schedule,  and the FDA or foreign <font color="blue">regulatory</font>  agencies may order CEL-SCI to stop                                             19  <PAGE>    or modify its  research  or these  agencies  may not  ultimately  approve any of  CEL-SCIapstas product <font color="blue">candidates</font> for <font color="blue">commercial sale</font></td>
+    </tr>
+    <tr>
+      <td>Varying <font color="blue"><font color="blue">interpretation</font>s</font> of the  data  obtained from  pre-clinical  and clinical  testing  <font color="blue">could delay</font>,  limit or  prevent <font color="blue"><font color="blue">regulatory</font> approval</font> of CEL-SCIapstas product <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">data collected</font>  from  CEL-SCIapstas  clinical  <font color="blue">trials may</font> not be  sufficient  to support  <font color="blue">regulatory</font>  approval of its various product <font color="blue">candidates</font>,  including  Multikine</td>
+    </tr>
+    <tr>
+      <td>For example,  <font color="blue">Multikine  </font>is now being made by a process  that was  <font color="blue">different</font>  from the process  tested in many of CEL-SCIapstas  clinical  studies to date</td>
+    </tr>
+    <tr>
+      <td>It is possible that the  FDA will require CEL-SCI to conduct  <font color="blue">additional</font>  studies to <font color="blue">demonstrate</font> that the  <font color="blue">Multikine  </font>that it plans to use for its  Phase  III  program  is the same as the  product  <font color="blue">previously</font>  tested  in  CEL-SCIapstas  phase II  studies</td>
+    </tr>
+    <tr>
+      <td>Even if  CEL-SCI  believes the <font color="blue">data collected</font> from its <font color="blue">clinical trials</font> are sufficient, the FDA has  substantial  <font color="blue">discretion</font> in the approval  process and <font color="blue">may disagree with</font> CEL-SCIapstas  <font color="blue">interpretation</font> of the data</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI can make <font color="blue">no assurances</font> that the FDA will not  require  CEL-SCI to conduct  more <font color="blue">Phase II </font>studies  before  beginning  <font color="blue">Phase III </font> trials</td>
+    </tr>
+    <tr>
+      <td>CEL-SCIapstas failure to <font color="blue">adequately</font>  <font color="blue">demonstrate</font> the safety and efficacy of  any of its product <font color="blue">candidates</font> would delay or prevent <font color="blue">regulatory</font>  approval of its  product  <font color="blue">candidates</font>  in the United  States,  <font color="blue">which could</font>  prevent  CEL-SCI  from  achieving <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">requirements</font> governing</font> the conduct of <font color="blue">clinical trials</font>, <font color="blue">manufacturing</font>,  and marketing of CEL-SCIapstas product <font color="blue">candidates</font>, including Multikine, outside the  <font color="blue">United States </font><font color="blue">vary widely from country</font> to country</td>
+    </tr>
+    <tr>
+      <td>Foreign approvals may take  longer to obtain than FDA approvals and can require, among other things,  <font color="blue">additional</font> testing and <font color="blue">different</font> trial designs</td>
+    </tr>
+    <tr>
+      <td>Foreign <font color="blue"><font color="blue">regulatory</font> approval</font>  processes include all of the <font color="blue">risks associated with</font> the FDA <font color="blue">approval processes</font></td>
+    </tr>
+    <tr>
+      <td>Approval of a  <font color="blue">product by</font> the FDA does not <font color="blue">ensure approval</font> of the same <font color="blue">product by</font> the health  <font color="blue">authorities</font> of other countries</td>
+    </tr>
+    <tr>
+      <td>In addition, changes in <font color="blue">regulatory</font> policy in the  US or in <font color="blue">foreign countries</font> for product approval during the period of product  <font color="blue">development</font> and <font color="blue">regulatory</font> agency review of <font color="blue">each submitted new application may</font>  cause delays or <font color="blue">rejections</font></td>
+    </tr>
+    <tr>
+      <td>In addition to <font color="blue">conducting further clinical studies</font> <font color="blue">of Multikine </font>and  CEL-SCIapstas other product <font color="blue">candidates</font>, CEL-SCI also must undertake the <font color="blue">development</font>  of its <font color="blue"><font color="blue">manufacturing</font> process</font> and optimize its <font color="blue">product formulations</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI has only limited experience in filing and <font color="blue">pursuing <font color="blue">applications</font></font>  <font color="blue">necessary</font> to gain <font color="blue"><font color="blue">regulatory</font> approval</font>s, which may impede its ability to obtain  <font color="blue">timely approvals from</font> the FDA or foreign <font color="blue">regulatory</font> agencies, if at all</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI  will not be able to <font color="blue">commercialize</font> Multikine and other product <font color="blue">candidates</font> until  it has obtained <font color="blue"><font color="blue">regulatory</font> approval</font>, and any delay in obtaining, or <font color="blue">inability</font> to  obtain, <font color="blue"><font color="blue">regulatory</font> approval</font> could harm its business</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">regulatory</font>  <font color="blue">authorities</font> may also limit the types of patients to which CEL-SCI or others may  market Multikine or CEL-SCIapstas other products</td>
+    </tr>
+    <tr>
+      <td>Even if CEL-SCI obtains <font color="blue"><font color="blue">regulatory</font> approval</font> for its product <font color="blue">candidates</font>, CEL-SCI  will be subject to stringent, ongoing <font color="blue">government</font> regulation</td>
+    </tr>
+    <tr>
+      <td>Even if CEL-SCIapstas products receive <font color="blue"><font color="blue">regulatory</font> approval</font>, either in the  <font color="blue">United States </font>or <font color="blue">internationally</font>, it will continue to be subject to extensive  <font color="blue">regulatory</font> <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulations</font> are wide-ranging and govern, among  other things:                                             20  <PAGE>    o    product design, <font color="blue">development</font>, manufacture and testing;  o    <font color="blue">adverse drug</font> experience and other reporting <font color="blue">regulations</font>;  o    <font color="blue">product advertising</font> and promotion;  o    <font color="blue">product <font color="blue">manufacturing</font></font>, including good <font color="blue">manufacturing</font> practice <font color="blue">requirements</font>;  o    record keeping <font color="blue">requirements</font>;  o    <font color="blue">registration</font>  of CEL-SCIapstas  <font color="blue">establishments</font>  with the FDA and certain  state       agencies;  o    product storage and shipping;  o    drug sampling and <font color="blue">distribution</font> <font color="blue">requirements</font>;  o    <font color="blue">electronic</font> record and signature <font color="blue">requirements</font>; and  o    labeling changes or <font color="blue">modifications</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI and any third-party <font color="blue">manufacturers</font> or <font color="blue">suppliers must continually</font>  adhere to federal <font color="blue">regulations</font> setting forth <font color="blue">requirements</font>, known as current Good  Manufacturing Practices, or cGMPs, and their foreign <font color="blue">equivalents</font>, which are  enforced by the FDA and other national <font color="blue">regulatory</font> bodies through their  <font color="blue"><font color="blue">facilities</font> inspection programs</font></td>
+    </tr>
+    <tr>
+      <td>If CEL-SCIapstas <font color="blue">facilities</font>, or the <font color="blue">facilities</font> of  its <font color="blue">manufacturers</font> or suppliers, cannot pass a pre-approval plant inspection, the  FDA will not approve the <font color="blue">marketing application</font> of CEL-SCIapstas product <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">complying with cGMP</font> and foreign <font color="blue">regulatory</font> <font color="blue">requirements</font>, CEL-SCI and any of  its potential third-party <font color="blue">manufacturers</font> or <font color="blue">suppliers will</font> be obligated to expend  time, money and effort in production, record-keeping and <font color="blue">quality control</font> to  ensure that its <font color="blue">products meet applicable specifications</font> and other <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>State <font color="blue">regulatory</font> agencies and the <font color="blue">regulatory</font> agencies of other countries have  similar <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI has an <font color="blue">agreement</font> with Cambrex Bio Science, Inc</td>
+    </tr>
+    <tr>
+      <td>whereby <font color="blue">Cambrex  </font>agreed to provide CEL-SCI with a <font color="blue">facility</font> for the <font color="blue">periodic <font color="blue">manufacturing</font></font> of  Multikine in <font color="blue">accordance</font> with the cGMPs established by FDA <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>This  <font color="blue">agreement</font> expires on <font color="blue">December </font>31, 2006</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the Cambrex </font><font color="blue">facility</font> were not  available for the production of Multikine, CEL-SCI estimates that it would take  <font color="blue">approximately six</font> to ten months to find or build an <font color="blue">alternative <font color="blue">manufacturing</font></font>  <font color="blue">facility</font> for Multikine</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI does not know what cost it <font color="blue">would incur</font> to obtain  an <font color="blue">alternative source</font> of Multikine</td>
+    </tr>
+    <tr>
+      <td>If CEL-SCI does not comply with <font color="blue">regulatory</font> <font color="blue">requirements</font> at any stage,  whether before or after <font color="blue">marketing approval</font> is obtained, it may be subject to  criminal <font color="blue">prosecution</font>, seizure, injuction, fines, or be forced to remove a  <font color="blue">product from</font> the market or experience other <font color="blue">adverse consequences</font>, including  <font color="blue">restrictions</font> or delays in obtaining <font color="blue">regulatory</font> <font color="blue">marketing approval</font>, <font color="blue">which could</font>  <font color="blue">materially</font> harm CEL-SCIapstas financial results, reputation and stock price</td>
+    </tr>
+    <tr>
+      <td>Additionally, CEL-SCI may not be able to obtain the labeling claims <font color="blue">necessary</font> or  desirable for <font color="blue">product promotion</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI may also be required to undertake  post-marketing trials</td>
+    </tr>
+    <tr>
+      <td>In addition, if CEL-SCI or other parties identify adverse  effects after any of CEL-SCIapstas products are on the market, or if <font color="blue">manufacturing</font>  problems occur, <font color="blue"><font color="blue">regulatory</font> approval</font> may be withdrawn and CEL-SCI may be required  to <font color="blue">reformulate</font> its products, conduct <font color="blue">additional</font> <font color="blue">clinical trials</font>, make changes in  its productapstas labeling or <font color="blue">indications</font> of use, or submit <font color="blue">additional</font> marketing  <font color="blue">applications</font> to support these changes</td>
+    </tr>
+    <tr>
+      <td>If CEL-SCI <font color="blue">encounters</font> any of the  <font color="blue">foregoing problems</font>, its business and results of <font color="blue">operations</font> will be harmed and  the <font color="blue">market price</font> of our <font color="blue">common stock</font> may decline</td>
+    </tr>
+    <tr>
+      <td>Also, the extent of adverse <font color="blue">government</font> <font color="blue">regulations</font> which might arise from  future <font color="blue">legislative</font> or <font color="blue">administrative</font> action cannot be predicted</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Without  </font><font color="blue">government</font> approval, CEL-SCI will be unable to sell any of its products</td>
+    </tr>
+    <tr>
+      <td>21  <PAGE>    Risks Related to Intellectual Property    CEL-SCI may not be able to achieve or maintain a <font color="blue">competitive position</font> and other  technological <font color="blue">development</font>s may result in CEL-SCIapstas <font color="blue"><font color="blue">proprietary</font> <font color="blue">technologies</font></font>  <font color="blue">becoming uneconomical</font> or obsolete</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">biomedical field</font> in which CEL-SCI is involved is <font color="blue">undergoing rapid</font> and  <font color="blue"><font color="blue">significant</font> technological</font> change</td>
+    </tr>
+    <tr>
+      <td>The successful <font color="blue">development</font> of therapeutic  <font color="blue">agents from</font> CEL-SCIapstas compounds, compositions and <font color="blue">processes through</font>  CEL-SCI-financed research, or as a result of <font color="blue">possible licensing <font color="blue">arrangement</font>s</font>  <font color="blue">with <font color="blue">pharmaceutical</font></font> or other companies, will depend on its ability to be in the  <font color="blue">technological forefront</font> of this field</td>
+    </tr>
+    <tr>
+      <td>Many <font color="blue">pharmaceutical</font> and <font color="blue">bio<font color="blue">technology</font> companies</font> are developing products  for the prevention or treatment of cancer and <font color="blue">infectious diseases</font> including  Introgen Therapeutics, Inc</td>
+    </tr>
+    <tr>
+      <td>and ImClone Systems, Inc</td>
+    </tr>
+    <tr>
+      <td>which are currently  developing drugs for head and <font color="blue">neck cancer</font></td>
+    </tr>
+    <tr>
+      <td>Both Introgen and ImClone, as well as  many other companies working <font color="blue">on drugs designed</font> to prevent, cure or <font color="blue">treat cancer</font>,  have substantial financial, research and <font color="blue">development</font>, and <font color="blue">marketing resources</font>  and are capable of providing <font color="blue">significant</font> long-term competition either by  establishing in-house research groups or <font color="blue">by forming collaborative ventures with</font>  other entities</td>
+    </tr>
+    <tr>
+      <td>In addition, smaller companies and non-profit institutions are  active in research relating to cancer and <font color="blue">infectious diseases</font> and are expected  to become more active in the future</td>
+    </tr>
+    <tr>
+      <td>CEL-SCIapstas <font color="blue">patents might</font> not protect CEL-SCIapstas <font color="blue"><font color="blue">technology</font> from <font color="blue">competitors</font></font>, in  which case CEL-SCI may not have any <font color="blue">advantage over <font color="blue">competitors</font></font> in selling any  <font color="blue">products which</font> it may develop</td>
+    </tr>
+    <tr>
+      <td>Certain aspects of CEL-SCIapstas  <font color="blue">technologies</font>  are <font color="blue">covered by</font> US and foreign  patents</td>
+    </tr>
+    <tr>
+      <td>In addition,  CEL-SCI has a number of new patent <font color="blue">applications</font>  pending</td>
+    </tr>
+    <tr>
+      <td>There is no assurance that the <font color="blue">applications</font>  <font color="blue">still pending</font> or which may be filed  in the <font color="blue">future will</font> result in the issuance of any patents</td>
+    </tr>
+    <tr>
+      <td>Furthermore,  there is  <font color="blue">no assurance as</font> to the breadth and degree of protection any issued <font color="blue">patents might</font>  afford  CEL-SCI  Disputes may arise between  CEL-SCI and others as to the scope  and validity of these or other  patents</td>
+    </tr>
+    <tr>
+      <td>Any defense of the <font color="blue">patents could prove</font>  costly and time  consuming and there can be no assurance that CEL-SCI will be in  a position, or will deem it advisable, to carry on such a defense</td>
+    </tr>
+    <tr>
+      <td>Other private  and <font color="blue">public concerns</font>, including universities, may have filed <font color="blue">applications</font> for, or  may have <font color="blue">been issued</font>,  patents and are expected to obtain <font color="blue">additional</font> patents and  other  <font color="blue">proprietary</font>  rights to  <font color="blue">technology</font>  <font color="blue">potentially</font>  useful or  <font color="blue">necessary</font>  to  CEL-SCI  The scope and  validity of such  patents,  if any, the extent to which  CEL-SCI may wish or need to acquire the rights to <font color="blue">such patents</font>, and the cost and  <font color="blue">availability</font>  of such  rights are  presently  unknown</td>
+    </tr>
+    <tr>
+      <td>Also,  as far as CEL-SCI  relies upon unpatented <font color="blue">proprietary</font> <font color="blue">technology</font>, there is no assurance that others  may not  acquire  or  <font color="blue">independently</font>  develop  the  same or  similar  <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCIapstas first Multikine <font color="blue">patent expired</font> in 2000</td>
+    </tr>
+    <tr>
+      <td>Since CEL-SCI does not know if  it will ever be able to sell  Multikine on a commercial  basis,  CEL-SCI  cannot  predict  what  effect  the  expiration  of this  patent  will  have on  CEL-SCI  Notwithstanding the above,  CEL-SCI believes that <font color="blue">trade secrets</font> and <font color="blue">later issued</font>  <font color="blue">patents will protect</font> the <font color="blue">technology</font> associated with Multikine</td>
+    </tr>
+    <tr>
+      <td>22  <PAGE>    Risks Related to CEL-SCIapstas Common Stock    Since the <font color="blue">market price</font> for CEL-SCIapstas <font color="blue">common stock</font> is volatile, investors in this  offering may not be able to sell any of CEL-SCIapstas shares at a profit</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of CEL-SCIapstas <font color="blue">common stock</font>, as well as the securities of  other bio<font color="blue">pharmaceutical</font> and <font color="blue">bio<font color="blue">technology</font> companies</font>, have <font color="blue">historically been</font>  <font color="blue">highly volatile</font>, and the market has from time to time experienced <font color="blue">significant</font>  price and <font color="blue">volume fluctuations</font> that are unrelated to the operating performance of  <font color="blue">particular companies</font></td>
+    </tr>
+    <tr>
+      <td>During the year ended <font color="blue">September </font>30, 2005 CEL-SCIapstas stock  price has <font color="blue">ranged from</font> a low of dlra0dtta46 per share to a high of dlra1dtta08 per share</td>
+    </tr>
+    <tr>
+      <td>Factors <font color="blue">such as fluctuations</font> in CEL-SCIapstas operating results, <font color="blue">announcements</font> of  <font color="blue">technological innovations</font> or <font color="blue">new therapeutic products by</font> CEL-SCI or its  <font color="blue">competitors</font>, <font color="blue">government</font>al regulation, <font color="blue">development</font>s in patent or other  <font color="blue">proprietary</font> rights, public concern as to the safety of products developed by  CEL-SCI or other bio<font color="blue">technology</font> and <font color="blue">pharmaceutical</font> companies, and <font color="blue">general market</font>  <font color="blue">conditions</font> may have a <font color="blue">significant</font> effect on the future <font color="blue">market price</font> of CEL-SCIapstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Shares <font color="blue">issuable upon</font> the exercise of options and warrants, or as a result of  sales made in <font color="blue">connection with</font> the <font color="blue">equity line</font> of credit may <font color="blue">substantially</font>  increase the number of <font color="blue">shares available</font> for sale in the <font color="blue">public market</font> and may  depress the price of CEL-SCIapstas <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>CEL-SCI had <font color="blue">outstanding options</font> and <font color="blue">warrants which as</font> of <font color="blue">September </font>30,  2005 allow the holders to acquire up to 15cmam798cmam603 <font color="blue">additional</font> shares of  CEL-SCIapstas <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Until the options and warrants expire, the holders will  have an <font color="blue">opportunity</font> to profit from any increase in the <font color="blue">market price</font> of CEL-SCIapstas  <font color="blue">common stock</font> without assuming the risks of ownership</td>
+    </tr>
+    <tr>
+      <td>Holders of the options and  <font color="blue"><font color="blue">warrants may</font> exercise</font> or convert these <font color="blue">securities at</font> a time when CEL-SCI could  obtain <font color="blue"><font color="blue">additional</font> capital</font> on terms more favorable than those <font color="blue">provided by</font> the  options</td>
+    </tr>
+    <tr>
+      <td>The exercise of the options and <font color="blue">warrants will dilute</font> the voting  interest of the owners of <font color="blue">presently outstanding shares</font> of CEL-SCIapstas common  stock</td>
+    </tr>
+    <tr>
+      <td>CEL-SCI has filed, or plans to file, <font color="blue">registration</font> statements with the  <font color="blue">Securities and Exchange Commission </font>so that <font color="blue">substantially</font> all of the shares of  <font color="blue">common stock</font> which are <font color="blue">issuable upon</font> the exercise of <font color="blue">outstanding options</font> and  <font color="blue">warrants may</font> be sold in the <font color="blue">public market</font></td>
+    </tr>
+    <tr>
+      <td>The sale of <font color="blue">common stock</font> issued or  <font color="blue">issuable upon</font> the exercise of the <font color="blue">warrants described</font> above, or the <font color="blue">perception</font>  that <font color="blue">such sales could</font> occur, <font color="blue">may adversely affect</font> the <font color="blue">market price</font> of CEL-SCIapstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Equity Line of Credit         An  unknown  number of shares  of  common  stock may also be sold  under an  <font color="blue">equity line</font> of credit  <font color="blue">arrangement</font>  with Jena  Holdings  LLC  As CEL-SCI  sells  shares of its <font color="blue">common stock</font> to <font color="blue">Jena Holdings LLC </font>under the <font color="blue">equity line</font> of credit,  and Jena  Holdings  LLC sells the common  stock to third  parties,  the price of  CEL-SCIapstas <font color="blue">common stock</font> may decrease due to the <font color="blue">additional</font>  shares in the market</td>
+    </tr>
+    <tr>
+      <td>If CEL-SCI decides to <font color="blue">draw down on</font> the <font color="blue">equity line</font> of credit as the price of its  common  stock  decreases,  CEL-SCI  will be required to issue more shares of its  <font color="blue">common stock</font> for any <font color="blue">given dollar amount invested by</font> Jena Holdings LLC,  subject  to the minimum  selling  price  specified  by CEL-SCI  The more shares that are  issued  under the <font color="blue">equity line</font> of credit,  the more  CEL-SCIapstas  then  outstanding  <font color="blue">shares will</font> be diluted and the more  CEL-SCIapstas  stock  price may  decrease</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Any                                             </font>23  <PAGE>    decline in the price of CEL-SCIapstas <font color="blue">common stock</font> may encourage short sales,  which  could place further  downward  <font color="blue">pressure on</font> the price of CEL-SCIapstas  <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Short  selling is a practice of selling  shares  which are not owned by a seller  with the  <font color="blue">expectation</font>  that the <font color="blue">market price</font> of the <font color="blue">shares will</font> decline in value  after the sale</td>
+    </tr>
+  </tbody>
+</table>

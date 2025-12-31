@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: common stock", fill: "#08e8de"},
+{source: "1: common stock", target: "1: following risks", fill: "#08e8de"},
+{source: "1: common stock", target: "2: December ", fill: "#ed1c24"},
+{source: "2: December ", target: "2: generated only", fill: "#ed1c24"},
+{source: "2: generated only", target: "2: incurred net losses", fill: "#ed1c24"},
+{source: "2: December ", target: "9: available on", fill: "#20b2aa"},
+{source: "9: available on", target: "9: development", fill: "#20b2aa"},
+{source: "9: development", target: "9: operations", fill: "#20b2aa"},
+{source: "9: available on", target: "10: additional funds", fill: "#a81c07"},
+{source: "10: additional funds", target: "10: development programs", fill: "#a81c07"},
+{source: "10: development programs", target: "10: independently", fill: "#a81c07"},
+{source: "10: independently", target: "10: regulatory approval", fill: "#a81c07"},
+{source: "10: regulatory approval", target: "10: proposed products", fill: "#a81c07"},
+{source: "10: additional funds", target: "19: clinical trials", fill: "#ffdead"},
+{source: "19: clinical trials", target: "19: costs involved", fill: "#ffdead"},
+{source: "19: costs involved", target: "19: regulatory approvals", fill: "#ffdead"},
+{source: "19: regulatory approvals", target: "19: agreements", fill: "#ffdead"},
+{source: "19: agreements", target: "19: enforcing patents", fill: "#ffdead"},
+{source: "19: enforcing patents", target: "19: litigation by third parties", fill: "#ffdead"},
+{source: "19: clinical trials", target: "22: stockholders", fill: "#9acd32"},
+{source: "22: stockholders", target: "24: funds through", fill: "#30ba8f"},
+{source: "24: funds through", target: "24: arrangements with collaborative partners", fill: "#30ba8f"},
+{source: "24: arrangements with collaborative partners", target: "24: relinquish", fill: "#30ba8f"},
+{source: "24: relinquish", target: "24: technologies product candidates", fill: "#30ba8f"},
+{source: "24: funds through", target: "27: technologies", fill: "#882d17"},
+{source: "27: technologies", target: "START_HERE", fill: "#882d17"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Pharmaceuticals Biotechnology and Life Sciences</td>
+    </tr>
+    <tr>
+      <td>Biotechnology</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock_dividend">Common stock dividend</a></td>
+      <td>A common stock dividend is the dividend paid to common stock owners from the profits of the company.  Like other dividends, the payout is in the form of either cash or stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Treasury_stock">Treasury stock</a></td>
+      <td>A treasury stock or reacquired stock is stock which is bought back by the issuing company, reducing the amount of outstanding stock on the open market ("open market" including insiders' holdings). \nStock repurchases are used as a tax efficient method to put cash into shareholders' hands, rather than paying dividends, in jurisdictions that treat capital gains more favorably.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Convertible_bond">Convertible bond</a></td>
+      <td>In finance, a convertible bond or  convertible note or convertible debt (or a convertible debenture if it has a maturity of greater than 10 years) is a type of bond that the holder can convert into a specified number of shares of common stock in the issuing company or cash of equal value.  It is a hybrid security with debt- and equity-like features.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_17">December 17</a></td>
+      <td>December 17 is the 351st day of the year (352nd in leap years) in the Gregorian calendar;  14 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n497 BC – The first Saturnalia festival was celebrated in ancient Rome.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_10">December 10</a></td>
+      <td>December 10 is the 344th day of the year (345th in leap years) in the Gregorian calendar;  21 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n1317 – The "Nyköping Banquet": King Birger of Sweden treacherously seizes his two brothers Valdemar, Duke of Finland and Eric, Duke of Södermanland, who were subsequently starved to death in the dungeon of Nyköping Castle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_1">December 1</a></td>
+      <td>December is the twelfth and the final month of the year in the Julian and Gregorian calendars. It is also the last of seven months to have a length of 31 days.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2016_in_aviation">2016 in aviation</a></td>
+      <td>This is a list of aviation-related events from 2016.\n\n\n== Events ==\n\n\n=== January ===\nThe Government of Italy permitted United States unmanned aerial vehicles (UAVs or drones) to fly strike missions from Naval Air Station Sigonella in Sicily where the US has operated unarmed surveillance UAVs since 2001 against Islamic State targets in Libya, but only if they are "defensive," protecting U.S. forces or rescuers retrieving downed pilots.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_18">December 18</a></td>
+      <td>December 11 is the 345th day of the year (346th in leap years) in the Gregorian calendar;  20 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n220 – Emperor Xian of Han is forced to abdicate the throne by Cao Cao's son Cao Pi, ending the Han dynasty.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_26">December 26</a></td>
+      <td>December 15 is the 349th day of the year (350th in leap years) in the Gregorian calendar;  16 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n533 – Vandalic War: Byzantine general Belisarius defeats the Vandals, commanded by King Gelimer, at the Battle of Tricamarum.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_31">December 31</a></td>
+      <td>December 3 is the 337th day of the year (338th in leap years) in the Gregorian calendar;  28 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n915 – Pope John X crowns Berengar I of Italy as Holy Roman Emperor (probable date).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/December_8">December 8</a></td>
+      <td>December 3 is the 337th day of the year (338th in leap years) in the Gregorian calendar;  28 days remain until the end of the year.\n\n\n== Events ==\n\n\n=== Pre-1600 ===\n915 – Pope John X crowns Berengar I of Italy as Holy Roman Emperor (probable date).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenatal_development">Prenatal development</a></td>
+      <td>Prenatal development (from Latin  natalis 'relating to birth') includes the development of the embryo and of the foetus during a viviparous animal's gestation. Prenatal development starts with fertilization, in the germinal stage of embryonic development, and continues in fetal development until birth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Personal_development">Personal development</a></td>
+      <td>Personal development or self improvement consists of activities that develop a person's capabilities and potential, build human capital, facilitate employability, and enhance quality of life and the realization of dreams and aspirations. Personal development may take place over the course of an individual's entire lifespan and is not limited to one stage of a person's life.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Minsk_agreements">Minsk agreements</a></td>
+      <td>The Minsk agreements were a series of international agreements which sought to end the war in the Donbas region of Ukraine. The first, known as the Minsk Protocol, was drafted in 2014 by the Trilateral Contact Group on Ukraine, consisting of Ukraine, Russia, and the Organization for Security and Co-operation in Europe (OSCE), with mediation by the leaders of France and Germany in the so-called Normandy Format.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Non-disclosure_agreement">Non-disclosure agreement</a></td>
+      <td>A non-disclosure agreement (NDA), also known as a confidentiality agreement (CA), confidential disclosure agreement (CDA), proprietary information agreement (PIA), secrecy agreement (SA), or non-disparagement agreement, is a legal contract or part of a contract between at least two parties that outlines confidential material, knowledge, or information that the parties wish to share with one another for certain purposes, but wish to restrict access to. Doctor–patient confidentiality (physician–patient privilege), attorney–client privilege, priest–penitent privilege and bank–client confidentiality agreements are examples of NDAs, which are often not enshrined in a written contract between the parties.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholders'_agreement">Shareholders' agreement</a></td>
+      <td>A shareholders' agreement (sometimes referred to in the U.S. as a stockholders' agreement) (SHA) is an agreement amongst the shareholders or members of a company. In practical effect, it is analogous to a partnership agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_Technologies">United Technologies</a></td>
+      <td>United Technologies Corporation (UTC) was an American multinational conglomerate headquartered in Farmington, Connecticut.  It researched, developed, and manufactured products in numerous areas, including aircraft engines, aerospace systems, HVAC, elevators and escalators, fire and security, building automation, and industrial products, among others.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Renaissance_Technologies">Renaissance Technologies</a></td>
+      <td>Renaissance Technologies LLC, also known as RenTech or RenTec, is an American hedge fund based in East Setauket, New York, on Long Island, which specializes in systematic trading using quantitative models derived from mathematical and statistical analysis. Their signature Medallion fund is famed for the best record in investing history.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Technology">Technology</a></td>
+      <td>Technology is the result of accumulated knowledge and application of skills, methods, and processes used in industrial production and scientific research. Technology is embedded in the operation of all machines, with or without detailed knowledge of their function, for the intended purpose of an organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Raytheon_Technologies">Raytheon Technologies</a></td>
+      <td>Raytheon Technologies Corporation is an American multinational aerospace and defense conglomerate headquartered in Waltham, Massachusetts. It is one of the largest aerospace, intelligence services providers, and defense manufacturers in the world by revenue and market capitalization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/HCL_Technologies">HCL Technologies</a></td>
+      <td>HCL Technologies (Hindustan Computers Limited) is an Indian multinational information technology (IT) services and consulting company headquartered in Noida. It is a subsidiary of HCL Enterprise.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Palantir_Technologies">Palantir Technologies</a></td>
+      <td>Palantir Technologies is a public American software company that specializes in big data analytics. Headquartered in Denver, Colorado, it was founded by Peter Thiel, Nathan Gettings, Joe Lonsdale, Stephen Cohen, and Alex Karp in 2003.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lumen_Technologies">Lumen Technologies</a></td>
+      <td>Lumen Technologies, Inc. (formerly CenturyLink) is an American \ntelecommunications company headquartered in Monroe, Louisiana, that offers communications, network services, security, cloud solutions, voice, and managed services.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CORTEX PHARMACEUTICALS INC/DE/      Item 1A Risk Factors        In addition to the other matters set forth in this Annual Report on Form     10-K,  our continuing <font color="blue">operations</font> and the price of our <font color="blue">common stock</font> are     subject to the <font color="blue">following risks</font>:       Risks related to our business        We have a history of net losses; we expect to continue to incur net losses     and we may never achieve or maintain profitability</td>
+    </tr>
+    <tr>
+      <td>Since our formation on February 10, 1987 through <font color="blue">December </font>31, 2005, we have     <font color="blue">generated only</font> modest operating revenues and we have <font color="blue">incurred net losses</font>     approximating dlra63cmam700cmam000</td>
+    </tr>
+    <tr>
+      <td>For the years ended <font color="blue">December </font>31, 2005 and 2004,     our net losses were <font color="blue">approximately</font> dlra11cmam606cmam000 and dlra6cmam234cmam000, respectively</td>
+    </tr>
+    <tr>
+      <td>For the six months ended <font color="blue">December </font>31, 2004 and 2003 and <font color="blue">fiscal years</font> ended     June 30, 2004 and 2003, our <font color="blue">net losses amounted</font> to <font color="blue">approximately</font> dlra4cmam046cmam000,     dlra3cmam806cmam000, dlra5cmam994cmam000 and dlra1cmam175cmam000, respectively</td>
+    </tr>
+    <tr>
+      <td>We have     not generated any <font color="blue">revenue from product sales</font> to date, and it is possible     that we <font color="blue">will never generate revenues from product sales</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Even     </font>if we do achieve <font color="blue">significant</font> revenues from product sales, we expect to incur     <font color="blue">significant</font> operating losses over the <font color="blue">next several years</font></td>
+    </tr>
+    <tr>
+      <td>We will need <font color="blue"><font color="blue">additional</font> capital</font> in the future and, if it is not <font color="blue">available on</font>     terms acceptable to us, or at all, we may need to scale back our research     and  <font color="blue">development</font>  efforts  and  may be unable to continue our business     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We will require substantial <font color="blue"><font color="blue">additional</font> funds</font> to advance our research and     <font color="blue">development</font> programs and to continue our <font color="blue">operations</font>, particularly if we     decide to <font color="blue">in<font color="blue">dependent</font>ly</font> conduct later-stage clinical testing and apply for     <font color="blue"><font color="blue">regulatory</font> approval</font> of any of our <font color="blue">proposed products</font>, and if we <font color="blue">in<font color="blue">dependent</font>ly</font>     undertake marketing and promotion of our products</td>
+    </tr>
+    <tr>
+      <td>Additionally, we may     require <font color="blue"><font color="blue">additional</font> funds</font> in the event that we decide to pursue strategic     <font color="blue">acquisitions</font> of or licenses for other products or <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Based                                         - 18 -     ______________________________________________________________________    [46]Table of Contents       on our current operating plan, including planned <font color="blue">clinical trials</font> and other     <font color="blue">product research</font> and <font color="blue">development</font> costs, we estimate that our <font color="blue">existing cash</font>     resources, including <font color="blue">committed sources</font> of funding from Servier, will be     sufficient to meet our <font color="blue">requirements</font> into calendar year 2007</td>
+    </tr>
+    <tr>
+      <td>However, we     believe that we will require <font color="blue"><font color="blue">additional</font> capital</font> to fund on-going <font color="blue">operations</font>     beyond  that time</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>funds may result from milestone payments     related to our <font color="blue"><font color="blue">agreement</font>s</font> with Organon and Servier, although there is no     assurance that we will receive milestone payments from Organon or Servier     within the desired timeframe, or at all</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font><font color="blue">funds also may</font> result     from the exercise of warrants to <font color="blue">purchase shares</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>As of     <font color="blue">December </font>31, 2005, warrants to purchase up to <font color="blue">approximately</font> 10dtta5 million     shares of our <font color="blue">common stock</font> were outstanding</td>
+    </tr>
+    <tr>
+      <td><font color="blue">In February </font>2006, warrants to     purchase  <font color="blue">approximately</font> 333cmam000 shares of <font color="blue">common stock</font> were exercised,     resulting in proceeds of <font color="blue">approximately</font> dlra850cmam000</td>
+    </tr>
+    <tr>
+      <td>If the remaining warrants     are fully exercised, of which there can be no assurance, such exercise would     provide <font color="blue">approximately</font> dlra30cmam000cmam000 of <font color="blue"><font color="blue">additional</font> capital</font></td>
+    </tr>
+    <tr>
+      <td>Our cash <font color="blue">requirements</font> in the future may be <font color="blue">significant</font>ly different from our     current estimates and depend on many factors, including:           •   the results of our <font color="blue">clinical trials</font>;           •   the time and <font color="blue">costs involved</font> in obtaining <font color="blue"><font color="blue">regulatory</font> approval</font>s;           •   the costs of setting up and operating our own marketing and sales     organization;           •   the ability to obtain funding under contractual and licensing     <font color="blue"><font color="blue">agreement</font>s</font>;           •   the <font color="blue">costs involved</font> in obtaining and <font color="blue">enforcing patents</font> or any     <font color="blue"><font color="blue">litigation</font> by third parties</font> regarding intellectual property; and           •   our success in entering into collaborative relationships with other     parties</td>
+    </tr>
+    <tr>
+      <td>To finance our <font color="blue">future activities</font>, we may seek <font color="blue">funds through</font> <font color="blue">additional</font>     rounds of financing, including private or <font color="blue">public equity</font> or <font color="blue">debt offerings</font>     and collaborative arrangements with corporate partners</td>
+    </tr>
+    <tr>
+      <td>We cannot say with     any certainty that we will be able to obtain the <font color="blue">additional</font> needed funds on     reasonable terms, or at all</td>
+    </tr>
+    <tr>
+      <td>The sale of <font color="blue">additional</font> equity or convertible     debt securities could result in <font color="blue">additional</font> dilution to our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>If     we issued preferred equity or debt securities, these securities could have     rights superior to holders of our <font color="blue">common stock</font>, and could contain covenants     that will restrict our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We might have to obtain <font color="blue">funds through</font>     <font color="blue">arrangements with collaborative partners</font> or others that may require us to     <font color="blue">relinquish</font> rights to our <font color="blue">technologies</font>, product candidates or products that     we otherwise would not <font color="blue">relinquish</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we may be unable to meet our     <font color="blue">research spending obligations under</font> our existing licensing <font color="blue"><font color="blue">agreement</font>s</font> and     may be unable to continue our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our  products  rely  on licenses from The Regents of the <font color="blue">University </font>of     California, and if we lose access to these <font color="blue">technologies</font>, our business would     be <font color="blue">substantially</font> impaired</td>
+    </tr>
+    <tr>
+      <td>Under our <font color="blue"><font color="blue">agreement</font>s</font> with The Regents of the <font color="blue">University </font>of California, we     have exclusive rights to AMPAKINE compounds for all <font color="blue">applications</font> for which     the <font color="blue">University </font>has patent rights, other than endocrine modulation</td>
+    </tr>
+    <tr>
+      <td>Our  rights to the AMPAKINE compounds are secured by patents or patent     <font color="blue">applications</font>  owned wholly by the <font color="blue">University </font>or by the <font color="blue">University </font>as a     co-owner with us</td>
+    </tr>
+    <tr>
+      <td>Our existing <font color="blue"><font color="blue">agreement</font>s</font> with the <font color="blue">University </font>require the     <font color="blue">University </font>to prepare, file, prosecute and maintain patent <font color="blue">applications</font>     related to our licensed rights at our expense</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue"><font color="blue">agreement</font>s</font> also require     us to make certain minimum annual payments, meet certain milestones or     diligently seek to <font color="blue">commercialize</font> the <font color="blue">underlying technology</font></td>
+    </tr>
+    <tr>
+      <td>- 19 -     ______________________________________________________________________    [47]Table of Contents       Under  our  <font color="blue"><font color="blue">agreement</font>s</font>, we are required to make minimum annual royalty     payments approximating dlra70cmam000</td>
+    </tr>
+    <tr>
+      <td>At the end of May 2006, our spending     <font color="blue">requirements</font> will decrease to dlra250cmam000 per year, and <font color="blue">will continue at</font> that     level until we begin marketing an AMPAKINE compound</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">commercialization</font>     efforts in the <font color="blue"><font color="blue">agreement</font>s</font> require us to file for <font color="blue"><font color="blue">regulatory</font> approval</font> of an     AMPAKINE compound before October 2007</td>
+    </tr>
+    <tr>
+      <td>Although we currently are in <font color="blue">compliance with</font> our obligations under the     <font color="blue"><font color="blue">agreement</font>s</font>, including minimum annual payments and diligence milestones, our     failure to meet any of these <font color="blue">requirements</font> could allow the <font color="blue">University </font>to     terminate that particular <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management </font>believes that it maintains a     <font color="blue">strong <font color="blue">relationship with</font></font> the University</td>
+    </tr>
+    <tr>
+      <td>We  are  at  an  early  stage of <font color="blue">development</font> and we may not be able to     <font color="blue">successfully</font> develop and <font color="blue">commercialize</font> our products and <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">development</font> of AMPAKINE products is subject to the risks of failure     commonly experienced in the <font color="blue">development</font> of <font color="blue">products based upon innovative</font>     <font color="blue">technologies</font> and the expense and <font color="blue">difficult</font>y of obtaining <font color="blue">approvals from</font>     <font color="blue">regulatory</font> agencies</td>
+    </tr>
+    <tr>
+      <td>Drug discovery and <font color="blue">development</font> is time consuming,     expensive and unpredictable</td>
+    </tr>
+    <tr>
+      <td>On average, only one out of many thousands of     chemical compounds discovered by researchers proves to be both medically     effective and safe enough to become an approved medicine</td>
+    </tr>
+    <tr>
+      <td>In the fields that     we target, <font color="blue">approximately</font> one in five compounds placed in <font color="blue">clinical trials</font>     <font color="blue">generally</font>  reaches the market</td>
+    </tr>
+    <tr>
+      <td>All of our <font color="blue">proposed products</font> are in the     preclinical  or  early  <font color="blue">clinical stage</font> of <font color="blue">development</font> and will require     <font color="blue">significant</font>  <font color="blue">additional</font> funding for research, <font color="blue">development</font> and clinical     testing before we are able to submit them to any of the <font color="blue">regulatory</font> agencies     for <font color="blue">clearances</font> for commercial use</td>
+    </tr>
+    <tr>
+      <td>Our trials [that are subject to our     <font color="blue">collaborative research arrangements</font>] are being <font color="blue">funded by third parties</font> and     do not involve financial commitments from Cortex</td>
+    </tr>
+    <tr>
+      <td>The process from discovery to <font color="blue">development</font> to <font color="blue"><font color="blue">regulatory</font> approval</font> can take     several years and drug candidates can fail at any stage of the process</td>
+    </tr>
+    <tr>
+      <td>Historically, in our industry more than half of all compounds in     <font color="blue">development</font> failed during <font color="blue">Phase II </font>trials and 30prca failed during Phase III     trials</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we will be able to complete <font color="blue">successfully</font>     any of our research and <font color="blue">development</font> activities</td>
+    </tr>
+    <tr>
+      <td>Even if we do complete them,     we may not be able to market <font color="blue">successfully</font> any of the products or be able to     obtain  the  <font color="blue">necessary</font>  <font color="blue"><font color="blue">regulatory</font> approval</font>s or assure that healthcare     providers and payors will accept our products</td>
+    </tr>
+    <tr>
+      <td>Due to the     extended testing and <font color="blue">regulatory</font> <font color="blue">review process</font> required before we can obtain     marketing  clearance, we do not expect to be able to <font color="blue">commercialize</font> any     <font color="blue"><font color="blue">therapeutic</font> drug</font> for several years, either directly or through our corporate     partners or licensees</td>
+    </tr>
+    <tr>
+      <td>- 20 -     ______________________________________________________________________    [48]Table of Contents       We may not be able to <font color="blue">enter into</font> the strategic alliances <font color="blue">necessary</font> to fully     develop and <font color="blue">commercialize</font> our products and <font color="blue">technologies</font>, and we will be     <font color="blue">dependent</font> on our corporate partners if we do</td>
+    </tr>
+    <tr>
+      <td>In addition to our <font color="blue"><font color="blue">agreement</font>s</font> with Organon and Servier, we are seeking other     <font color="blue">pharmaceutical</font> company partners to develop other major indications for the     AMPAKINE compounds</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">agreement</font>s</font> would potentially provide us with     <font color="blue"><font color="blue">additional</font> funds</font> in exchange for exclusive or non-exclusive license or other     rights to the <font color="blue">technologies</font> and products that we are currently developing</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Competition </font> </font>between  <font color="blue">bio<font color="blue">pharmaceutical</font></font>  companies  for these types of     arrangements is intense</td>
+    </tr>
+    <tr>
+      <td>Although we have been engaged in discussions with     candidate companies for some time, we cannot give any assurance that these     discussions will result in an <font color="blue">agreement</font> or <font color="blue"><font color="blue">agreement</font>s</font> in a timely manner, or     at all</td>
+    </tr>
+    <tr>
+      <td>Additionally, we <font color="blue">cannot assure</font> you that any resulting <font color="blue">agreement</font> will     generate  sufficient  revenues  to  offset  our operating expenses and     longer-term funding <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Lynch’s <font color="blue">laboratories at</font> the <font color="blue">University </font>of California, Irvine     that is part of our product <font color="blue">development</font> and <font color="blue">corporate partnering profile</font></td>
+    </tr>
+    <tr>
+      <td>If     our <font color="blue">relationship with</font> Dr</td>
+    </tr>
+    <tr>
+      <td>Lynch commenced in November     1987 and will continue until terminated by either party to the <font color="blue">agreement</font>     upon  at  least  60 days’ prior written notice to the other party</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue"><font color="blue">agreement</font>s</font> with our other <font color="blue">consultants</font> are <font color="blue">generally</font> also terminable by the     consultant  on  short notice</td>
+    </tr>
+    <tr>
+      <td>We maintain a positive <font color="blue">relationship with</font>     Dr</td>
+    </tr>
+    <tr>
+      <td>Risks related to our industry        If we fail to <font color="blue">secure adequate intellectual property protection</font>, it could     <font color="blue">significant</font>ly harm our financial results and ability to compete</td>
+    </tr>
+    <tr>
+      <td>Our success will depend, in part, on our ability to get <font color="blue">patent protection</font>     for our products and processes in the US and elsewhere</td>
+    </tr>
+    <tr>
+      <td>We have filed and     intend to continue to file patent <font color="blue">applications</font> as we need them</td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain sufficient protection of our <font color="blue">proprietary</font> rights     in  our  products  or processes prior to or after obtaining <font color="blue">regulatory</font>     <font color="blue">clearances</font>, our <font color="blue">competitors</font> may be able to obtain <font color="blue">regulatory</font> clearance and     market competing products by demonstrating the <font color="blue">equivalency</font> of their products     to our products</td>
+    </tr>
+    <tr>
+      <td>If they are successful at demonstrating the <font color="blue">equivalency</font>     between the products, our <font color="blue"><font color="blue">competitors</font> would</font> not have to conduct the same     <font color="blue">lengthy clinical tests</font> that we have conducted</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also rely on <font color="blue">trade secrets</font></font> and confidential information that we try to     protect by entering into confidentiality <font color="blue"><font color="blue">agreement</font>s</font> with other parties</td>
+    </tr>
+    <tr>
+      <td>Further, our     <font color="blue">competitors</font> may <font color="blue">in<font color="blue">dependent</font>ly</font> learn our <font color="blue">trade secrets</font> or develop similar or     superior <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that our <font color="blue">consultants</font>, key employees or     others apply technological information <font color="blue">in<font color="blue">dependent</font>ly</font> developed by them or by     others to our projects, disputes may arise regarding the <font color="blue">proprietary</font> rights     to  such  information</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that such disputes will be     resolved in our favor</td>
+    </tr>
+    <tr>
+      <td>We maintain <font color="blue">liability</font> insurance with     <font color="blue">coverage limits</font> of dlra10 million per occurrence and dlra10 million in the annual     aggregate</td>
+    </tr>
+    <tr>
+      <td>We have never been subject to a product <font color="blue">liability</font> claim, and we     require each patient in our <font color="blue">clinical trials</font> to sign an informed consent     <font color="blue">agreement</font> that describes the risks related to the trials, but we cannot     assure  you that the <font color="blue">coverage limits</font> of our insurance policies will be     adequate or that one or more successful claims brought against us would not     have a material adverse effect on our business, <font color="blue">financial condition</font> and     result of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Any adverse outcome resulting from a product     <font color="blue">liability</font>  claim could have a material adverse effect on our business,     <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>- 22 -     ______________________________________________________________________    [50]Table of Contents       We <font color="blue">face intense <font color="blue">competition</font></font> that could result in products that are superior     to the products that we are developing</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font>     include  many companies, research institutes and <font color="blue">universities</font> that are     working  in a number of <font color="blue">pharmaceutical</font> or <font color="blue"><font color="blue">biotechnology</font> disciplines</font> to     develop  <font color="blue">therapeutic</font>  products  similar  to  those  we  are  currently     <font color="blue">investigating</font></td>
+    </tr>
+    <tr>
+      <td>For example, the <font color="blue">Pharmaceutical Research and Manufacturers </font>of     <font color="blue">America  </font>recently  estimated  that  more  than  100 <font color="blue">pharmaceutical</font> and     <font color="blue"><font color="blue">biotechnology</font> companies</font> are <font color="blue">conducting research</font> in the field of neurological     disorders, with over 25 drugs under clinical investigation in the US for     the  treatment  of  Alzheimer’s  disease</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Virtually  </font>all of the major     multinational <font color="blue">pharmaceutical</font> companies have active projects in these areas</td>
+    </tr>
+    <tr>
+      <td>Most of these <font color="blue">competitors</font> have <font color="blue">substantially</font> greater financial, technical,     <font color="blue">manufacturing</font>, marketing, <font color="blue">distribution</font> and/or other resources than we do</td>
+    </tr>
+    <tr>
+      <td>In     addition,  many of our <font color="blue">competitors</font> have experience in performing human     clinical  trials of new or improved <font color="blue">therapeutic</font> products and obtaining     <font color="blue">approvals from</font> the FDA and other <font color="blue">regulatory</font> agencies</td>
+    </tr>
+    <tr>
+      <td>We have no experience     in conducting and managing later-stage clinical testing or in preparing     <font color="blue">applications</font> <font color="blue">necessary</font> to obtain <font color="blue"><font color="blue">regulatory</font> approval</font>s</td>
+    </tr>
+    <tr>
+      <td>Accordingly, it is     possible that our <font color="blue">competitors</font> may succeed in developing products that are     safer or more <font color="blue">effective than</font> those that we are developing and may obtain FDA     approvals for their <font color="blue">products faster than</font> we can</td>
+    </tr>
+    <tr>
+      <td>We expect that <font color="blue">competition</font>     in this <font color="blue">field will continue</font> to intensify</td>
+    </tr>
+    <tr>
+      <td>We may be unable to recruit and retain our <font color="blue">senior <font color="blue">management</font></font> and other key     <font color="blue"><font color="blue">technical personnel</font> on whom</font> we are <font color="blue">dependent</font></td>
+    </tr>
+    <tr>
+      <td>We are highly <font color="blue">dependent</font> upon key <font color="blue">management</font> and <font color="blue">technical personnel</font> and     currently  do  not  carry  any  <font color="blue">insurance policies on such persons</font></td>
+    </tr>
+    <tr>
+      <td>In     particular, we are highly <font color="blue">dependent</font> on our Chairman, President and Chief     Executive Officer, Roger G Stoll, Ph</td>
+    </tr>
+    <tr>
+      <td>D, all of whom have <font color="blue">entered into employment</font>     <font color="blue"><font color="blue">agreement</font>s</font> with us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for qualified employees among <font color="blue">pharmaceutical</font>     and  <font color="blue">biotechnology</font>  companies  is  intense</td>
+    </tr>
+    <tr>
+      <td>The loss of any of our key     <font color="blue">management</font> or <font color="blue">technical personnel</font>, or our <font color="blue">inability</font> to attract, retain and     motivate the <font color="blue">additional</font> highly-skilled employees and <font color="blue">consultants</font> that our     business requires, could <font color="blue">substantially</font> hurt our business and prospects</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that we will be able to retain our <font color="blue">existing personnel</font> or     attract <font color="blue">additional</font> qualified employees when we need them</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">regulatory</font> approval</font> process is expensive, time consuming, uncertain and     <font color="blue"><font color="blue">may prevent</font> us from</font> obtaining required approvals for the <font color="blue">commercialization</font>     of some of our products</td>
+    </tr>
+    <tr>
+      <td>The FDA and other similar agencies in foreign countries have substantial     <font color="blue">requirements</font> for <font color="blue">therapeutic</font> products</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">requirements</font> often involve     lengthy  and  detailed  laboratory, clinical and post-clinical testing     procedures and are expensive to complete</td>
+    </tr>
+    <tr>
+      <td>It often takes companies many     years to satisfy these <font color="blue">requirements</font>, depending on the <font color="blue">complexity</font> and novelty     of the product</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">review process</font> is also extensive, <font color="blue">which may delay</font> the     <font color="blue">approval process even</font> more</td>
+    </tr>
+    <tr>
+      <td><font color="blue">According to the Pharmaceutical Research </font>and     <font color="blue">Manufacturers  </font>of  America,  <font color="blue">historically</font> the cost of developing a new     <font color="blue">pharmaceutical</font> from discovery to approval was <font color="blue">approximately</font> dlra800 million,     and this amount is expected to <font color="blue">increase annually</font></td>
+    </tr>
+    <tr>
+      <td>Further, we <font color="blue">cannot assure</font> you that the FDA or other <font color="blue">regulatory</font> agency will     <font color="blue">grant us approval</font> for any of our <font color="blue">products on</font> a <font color="blue">timely basis</font>, if at all</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Even     </font>if <font color="blue">regulatory</font> <font color="blue">clearances</font> are obtained, a marketed product is subject to     <font color="blue">continual review</font>, and <font color="blue">later discovery</font> of <font color="blue">previously unknown problems may</font>     result in <font color="blue">restrictions on marketing</font> or withdrawal of the <font color="blue">product from</font> the     market</td>
+    </tr>
+    <tr>
+      <td>- 23 -     ______________________________________________________________________    [51]Table of Contents       Other risks        Our <font color="blue">stock price may</font> be volatile and our <font color="blue">common stock</font> could decline in value</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of securities of <font color="blue">life sciences companies</font> in general has     been very unpredictable</td>
+    </tr>
+    <tr>
+      <td>The range of <font color="blue">sales prices</font> of our <font color="blue">common stock</font> for     the  fiscal  year  ended <font color="blue">December </font>31, 2005, the six-month period ended     <font color="blue">December </font>31, 2004 and <font color="blue">fiscal years</font> ended June 30, 2004 and June 30, 2003, as     quoted on The American Stock Exchange, was dlra1dtta96 to dlra3dtta03, dlra1dtta40 to dlra3dtta10,     dlra1dtta62 to dlra4dtta99 and dlra0dtta51 to dlra2dtta49, respectively</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">following factors</font>, in     addition to factors that affect that market <font color="blue">generally</font>, could <font color="blue">significant</font>ly     impact our business, and the <font color="blue">market price</font> of our <font color="blue">common stock</font> could decline:           •   <font color="blue">competitors</font> announcing <font color="blue">technological innovations</font> or <font color="blue">new commercial</font>     products;           •   <font color="blue">competitors</font>’ publicity regarding actual or <font color="blue">potential products under</font>     <font color="blue">development</font>;           •   <font color="blue">regulatory</font> <font color="blue">development</font>s in the US and foreign countries;           •   <font color="blue">development</font>s concerning <font color="blue">proprietary</font> rights, including patent     <font color="blue">litigation</font>;           •   public concern over the safety of <font color="blue">therapeutic</font> products; and           •   changes in healthcare <font color="blue">reimbursement</font> policies and healthcare     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>There is a large number of shares of <font color="blue">common stock</font> that may be sold, which     <font color="blue">may depress</font> the <font color="blue">market price</font> of our stock</td>
+    </tr>
+    <tr>
+      <td>If  all  <font color="blue">outstanding warrants</font> and options are <font color="blue">exercised prior</font> to their     expiration, <font color="blue">approximately</font> 18 million <font color="blue">additional</font> shares of <font color="blue">common stock</font> could     <font color="blue">become freely tradable without restriction</font></td>
+    </tr>
+    <tr>
+      <td>Sales of substantial amounts of     <font color="blue">common stock</font> in the <font color="blue">public market could adversely affect</font> the prevailing     <font color="blue">market price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">charter document</font> and <font color="blue"><font color="blue">shareholder</font> rights</font> plan <font color="blue">may prevent</font> or delay an     <font color="blue">attempt by</font> our <font color="blue">stockholders</font> to replace or remove <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>Certain provisions of our <font color="blue">restated certificate</font> of incorporation, as amended,     could make it more <font color="blue">difficult</font> for a <font color="blue">third party</font> to acquire control of our     business,  even  if  such change in <font color="blue">control would</font> be <font color="blue">beneficial</font> to our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">restated certificate</font> of incorporation, as amended, allows     our <font color="blue">Board of Directors </font>to issue up to 549cmam500 shares of preferred stock     without stockholder approval</td>
+    </tr>
+    <tr>
+      <td>Pursuant to this authority, <font color="blue">in February </font>2002     our <font color="blue">Board of Directors </font>adopted a <font color="blue"><font color="blue">shareholder</font> rights</font> plan and declared a     dividend of a right to purchase one one-thousandth of a share of preferred     stock for <font color="blue">each outstanding</font> share of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The ability of our     <font color="blue">Board of Directors </font>to issue <font color="blue">additional</font> preferred stock and our <font color="blue">shareholder</font>     rights plan may have the effect of delaying or preventing an <font color="blue">attempt by</font> our     <font color="blue">stockholders</font> to replace or remove existing <font color="blue">directors</font> and <font color="blue">management</font></td>
+    </tr>
+  </tbody>
+</table>

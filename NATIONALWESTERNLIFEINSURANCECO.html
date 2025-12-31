@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: following risks manifests into actual occurrences", fill: "#ff1493"},
+{source: "2: following risks manifests into actual occurrences", target: "2: operations", fill: "#ff1493"},
+{source: "2: operations", target: "2: financial position", fill: "#ff1493"},
+{source: "2: financial position", target: "2: financial performance could", fill: "#ff1493"},
+{source: "2: financial performance could", target: "2: negatively impacted", fill: "#ff1493"},
+{source: "2: following risks manifests into actual occurrences", target: "3: interest rates market volatility", fill: "#c46210"},
+{source: "3: interest rates market volatility", target: "3: conditions which may affect", fill: "#c46210"},
+{source: "3: conditions which may affect", target: "3: returns on both", fill: "#c46210"},
+{source: "3: returns on both", target: "3: investment portfolio", fill: "#c46210"},
+{source: "3: interest rates market volatility", target: "5: Substantial ", fill: "#af4035"},
+{source: "5: Substantial ", target: "5: materially", fill: "#af4035"},
+{source: "5: materially", target: "5: profitability", fill: "#af4035"},
+{source: "5: profitability", target: "5: investments", fill: "#af4035"},
+{source: "5: investments", target: "5: stockholders", fill: "#af4035"},
+{source: "5: Substantial ", target: "11: profitability", fill: "#7c1c05"},
+{source: "11: profitability", target: "11: investment", fill: "#7c1c05"},
+{source: "11: investment", target: "11: difference between", fill: "#7c1c05"},
+{source: "11: difference between", target: "11: investments", fill: "#7c1c05"},
+{source: "11: investments", target: "11: policyholders on", fill: "#7c1c05"},
+{source: "11: profitability", target: "21: The Company ", fill: "#ff1dce"},
+{source: "21: The Company ", target: "21: substantially invests monies", fill: "#ff1dce"},
+{source: "21: substantially invests monies", target: "21: investment", fill: "#ff1dce"},
+{source: "21: investment", target: "21: obligations", fill: "#ff1dce"},
+{source: "21: obligations", target: "21: policyholders", fill: "#ff1dce"},
+{source: "21: policyholders", target: "21: deployed capital", fill: "#ff1dce"},
+{source: "21: The Company ", target: "START_HERE", fill: "#ff1dce"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_accounting">Financial accounting</a></td>
+      <td>Financial accounting is the field of accounting concerned with the summary, analysis and reporting of financial transactions related to a business. This involves the preparation of financial statements available for public use.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Futures_contract">Futures contract</a></td>
+      <td>In finance, a futures contract (sometimes called a futures) is a standardized legal contract to buy or sell something at a predetermined price for delivery at a specified time in the future, between parties not yet known to each other. The asset transacted is usually a commodity or financial instrument.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/International_Financial_Reporting_Standards">International Financial Reporting Standards</a></td>
+      <td>International Financial Reporting Standards, commonly called IFRS, are accounting standards issued by the IFRS Foundation and the International Accounting Standards Board (IASB). They constitute a standardised way of describing the company's financial performance and position so that company financial statements are understandable and comparable across international boundaries.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_services">Financial services</a></td>
+      <td>Financial services are the economic services provided by  the finance industry, which encompasses a broad range of businesses that manage money, including credit unions, banks, credit-card companies, insurance companies, accountancy companies, consumer-finance companies, stock brokerages, investment funds, individual asset managers, and some government-sponsored enterprises.\n\n\n== History ==\n\nThe term "financial services" became more prevalent in the United States partly as a result of the Gramm–Leach–Bliley Act of the late 1990s, which enabled different types of companies operating in the U.S. financial services industry at that time to merge.Companies usually have two distinct approaches to this new type of business.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Reliance_Retail">Reliance Retail</a></td>
+      <td>Reliance Retail is an Indian retail company and a subsidiary of Reliance Industries Limited. Founded in 2006, it is the largest retailer in India in terms of revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Finance">Finance</a></td>
+      <td>Finance is the study and discipline of money, currency and capital assets. It is related with, but not synonymous with economics, the study of production, distribution, and consumption of money, assets, goods and services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_management">Investment management</a></td>
+      <td>Investment management is the professional asset management of various securities, including shareholdings, bonds, and other assets, such as real estate, to meet specified investment goals for the benefit of investors. Investors may be institutions, such as insurance companies, pension funds, corporations, charities, educational establishments, or private investors, either directly via investment contracts or, more commonly, via collective investment schemes like mutual funds, exchange-traded funds, or REITs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Foreign_direct_investment">Foreign direct investment</a></td>
+      <td>A foreign direct investment (FDI) is an investment in the form of a controlling ownership in a business in one country by an entity based in another country. It is thus distinguished from a foreign portfolio investment by a notion of direct control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profit_(economics)">Profit (economics)</a></td>
+      <td>An economic profit is the difference between the revenue a  commercial entity has received from its outputs and the opportunity costs of its inputs. It equals to total revenue minus total cost, including both explicit and implicit costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Profitability_analysis">Profitability analysis</a></td>
+      <td>In cost accounting, profitability analysis is an analysis of the profitability of an organisation's output. Output of an organisation can be grouped into products, customers, locations, channels and/or transactions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Small_Is_Profitable">Small Is Profitable</a></td>
+      <td>Small Is Profitable: The Hidden Economic Benefits of Making Electrical Resources the Right Size is a 2002 book by energy analyst Amory Lovins and others.  The book describes 207 ways in which the size of "electrical resources"—devices that make, save, or store electricity—affects their economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Customer_profitability">Customer profitability</a></td>
+      <td>Customer Profitability Analysis (in short CPA) is a management accounting and a credit underwriting method, allowing businesses and lenders to determine the profitability of each customer or segments of customers, by attributing profits and costs to each customer separately. CPA can be applied at the individual customer level (more time consuming, but providing a better understanding of business situation) or at the level of customer aggregates / groups (e.g.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/SAP_ERP">SAP ERP</a></td>
+      <td>SAP ERP is an enterprise resource planning software developed by the German company SAP SE. SAP ERP incorporates the key business functions of an organization. The latest version of SAP ERP (V.6.0) was made available in 2006.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Porter's_five_forces_analysis">Porter's five forces analysis</a></td>
+      <td>Porter's Five Forces Framework is a method of analysing the operating environment of a competition of a business. It draws from industrial organization (IO) economics to derive five forces that determine the competitive intensity and, therefore, the attractiveness (or lack thereof) of an industry in terms of its profitability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment">Investment</a></td>
+      <td>Investment is the dedication of an asset to attain an increase in value over a period of time. Investment requires a sacrifice of some present asset, such as time, money, or effort.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ariel_Investments">Ariel Investments</a></td>
+      <td>Ariel Investments is an investment company located in Chicago, Illinois. It specializes in small and mid-capitalized stocks based in the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_banking">Investment banking</a></td>
+      <td>Investment banking denotes certain activities of a financial services company or a corporate division that consist in advisory-based financial transactions on behalf of individuals, corporations, and governments. Traditionally associated with corporate finance, such a bank might assist in raising financial capital by underwriting or acting as the client's agent in the issuance of debt or equity securities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mapletree_Investments">Mapletree Investments</a></td>
+      <td>Mapletree Investments Pte Ltd is a real estate development, investment, capital and property management company headquartered in Singapore. The Group currently manages four Singapore-listed real estate investment trusts (REITs) and seven private equity real estate funds, which comprise a diverse portfolio of assets in Asia Pacific, Europe, the United Kingdom (UK) and the United States (US).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Qatar_Sports_Investments">Qatar Sports Investments</a></td>
+      <td>Qatar Sports Investments (QSi) is a closed shareholding organization founded in 2005 and based in Doha, Qatar. Revenues generated from ventures of QSi are reinvested into Qatar's sport, leisure and entertainment sectors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cascade_Investment">Cascade Investment</a></td>
+      <td>Cascade Investment, L.L.C. is an American holding company and private investment firm headquartered in Kirkland, Washington, United States. It is controlled by Bill Gates, and managed by Michael Larson.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_company">Investment company</a></td>
+      <td>An investment company is a financial institution principally engaged in investing in securities. These companies in the United States are regulated by the U.S. Securities and Exchange Commission and must be registered under the Investment Company Act of 1940.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_fund">Investment fund</a></td>
+      <td>An investment fund is a way of investing money alongside other investors in order to benefit from the inherent advantages of working as part of a group such as reducing the risks of the investment by a significant percentage. These advantages include an ability to:\n\nhire professional investment managers, who may offer better returns and more adequate risk management;\nbenefit from economies of scale, i.e., lower transaction costs;\nincrease the asset diversification to reduce some unsystematic risk.It remains unclear whether professional active investment managers can reliably enhance risk adjusted returns by an amount that exceeds fees and expenses of investment management.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Investment_(macroeconomics)">Investment (macroeconomics)</a></td>
+      <td>In macroeconomics, investment "consists of the additions to the nation's capital stock of buildings, equipment, software, and inventories during a year" or, alternatively, investment spending — "spending on productive physical capital such as machinery and construction of buildings, and on changes to inventories — as part of total spending" on goods and services per year.The types of investment include residential investment in housing that will provide a flow of housing services over an extended time, non-residential fixed investment in things such as new machinery or factories, human capital investment in workforce education, and inventory investment (the accumulation, intentional or unintentional, of goods inventories)\nIn measures of national income and output, "gross investment" (represented by the variable I ) is a component of gross domestic product (GDP), given in the formula GDP = C + I + G + NX, where C is consumption, G is government spending, and NX is net exports, given by the difference between the exports and imports, X − M. Thus investment is everything that remains of total expenditure after consumption, government spending, and net exports are subtracted (i.e. I = GDP − C − G − NX ).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mutual_insurance">Mutual insurance</a></td>
+      <td>A mutual insurance company is an insurance company owned entirely by its policyholders. Any profits earned by a mutual insurance company are either retained within the company or rebated to policyholders in the form of dividend distributions or reduced future premiums.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Melinda_Ballard">Melinda Ballard</a></td>
+      <td>Melinda Ballard (1958–2013) was a financial executive and activist for insurance policyholders in America. In 1999, she sued her insurer over mold damage in her 22-room family home in Dripping Springs, Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/FM_Global">FM Global</a></td>
+      <td>FM Global is an American mutual insurance company based in Johnston, Rhode Island, United States, with offices worldwide, that specializes in loss prevention services primarily to large corporations throughout the world in the Highly Protected Risk (HPR) property insurance market sector. "FM Global" is the communicative name of the company, whereas the legal name is "Factory Mutual Insurance Company".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/MetLife">MetLife</a></td>
+      <td>MetLife, Inc. is the holding corporation for the Metropolitan Life Insurance Company (MLIC), better known as MetLife, and its affiliates.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Liberty_Mutual">Liberty Mutual</a></td>
+      <td>Liberty Mutual Group is an American diversified global insurer and the sixth-largest property and casualty insurer in the United States. It ranks 71st on the Fortune 100 list of largest corporations in the United States based on 2020 revenue.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Embedded_value">Embedded value</a></td>
+      <td>The Embedded Value (EV) of a life insurance company is the present value of future profits plus adjusted net asset value. It is a construct from the field of actuarial science which allows insurance companies to be valued.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Company">Company</a></td>
+      <td>A company, abbreviated as co., is a legal entity representing an association of people, whether natural, legal or a mixture of both, with a specific objective. Company members share a common purpose and unite to achieve specific, declared goals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Holding_company">Holding company</a></td>
+      <td>A holding company is a company whose primary business is holding a controlling interest in the securities of other companies. A holding company usually does not produce goods or services itself.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Weather_Company">The Weather Company</a></td>
+      <td>The Weather Company is a weather forecasting and information technology company that owns and operates weather.com and Weather Underground. The Weather Company has been a subsidiary of the Watson &amp; Cloud Platform business unit of IBM since 2016.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Honest_Company">The Honest Company</a></td>
+      <td>The Honest Company, Inc. is an American consumer goods company, founded by actress Jessica Alba.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Longaberger_Company">The Longaberger Company</a></td>
+      <td>The Longaberger Company is an American manufacturer and distributor of handcrafted maple wood baskets and other home and lifestyle products. The company opened in 1973, was acquired in 2013 by CVSL, Inc., and closed in 2018.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>NATIONAL WESTERN LIFE INSURANCE CO                              ITEM 1A RISK FACTORS       Company  performance is subject to <font color="blue">varying risk factors</font></td>
+    </tr>
+    <tr>
+      <td>If any of the     <font color="blue">following risks manifests into actual occurrences</font>, the Companyapstas <font color="blue">operations</font>,     <font color="blue">financial position</font> or <font color="blue">financial performance could</font> be <font color="blue"><font color="blue"><font color="blue">negatively</font> impact</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to changing <font color="blue"><font color="blue">interest rate</font>s</font>, market <font color="blue">volatility</font>, and general     economic  <font color="blue"><font color="blue">conditions</font> which may affect</font> the risk and <font color="blue">returns on both</font> our     <font color="blue"><font color="blue">investment</font> portfolio</font> and our products</td>
+    </tr>
+    <tr>
+      <td>We are exposed to <font color="blue"><font color="blue">significant</font> capital market risk</font> related to changes in     <font color="blue"><font color="blue">interest rate</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantial </font>and sustained changes, up or down, in market     interest  rate  levels  can <font color="blue">materially</font> affect the <font color="blue">profitability</font> of our     products, the <font color="blue">market value</font> of our <font color="blue"><font color="blue">investment</font>s</font>, and ultimately the reported     amount of <font color="blue">stockholders</font> &amp;apos  equity</td>
+    </tr>
+    <tr>
+      <td>A rise in <font color="blue"><font color="blue">interest rate</font>s</font> will reduce the <font color="blue">net unrealized gain position</font> of our     <font color="blue"><font color="blue">investment</font> portfolio</font> and may subject <font color="blue">the Company </font>to <font color="blue">disintermediation</font> risk</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Disintermediation </font>risk is the risk that <font color="blue"><font color="blue">policyholders</font> may surrender</font> their     contracts in a <font color="blue">rising <font color="blue">interest rate</font> environment</font>, requiring <font color="blue">the Company </font>to     liquidate <font color="blue"><font color="blue">investment</font>s</font> in an unrealized loss position (ie the <font color="blue">market value</font>     less than the carrying value of the <font color="blue"><font color="blue">investment</font>s</font>)</td>
+    </tr>
+    <tr>
+      <td>With respect to fixed     income security <font color="blue"><font color="blue">investment</font>s</font> <font color="blue">the Company </font>maintains in an  &amp;quote <font color="blue">Available </font>for sale &amp;quote      category, rising <font color="blue"><font color="blue">interest rate</font>s</font> will cause declines in the <font color="blue">market value</font> of     these securities</td>
+    </tr>
+    <tr>
+      <td>These declines are reported in our <font color="blue">financial statements as</font>     an <font color="blue">unrealized <font color="blue">investment</font> loss</font> and a reduction of <font color="blue">stockholders</font> &amp;apos  equity</td>
+    </tr>
+    <tr>
+      <td>A  decline  in  interest  rates  could  expose  <font color="blue">the Company </font>to reduced     <font color="blue">profitability</font> due to minimum <font color="blue">interest rate</font> <font color="blue">guarantees</font> that are required in     our products by regulation</td>
+    </tr>
+    <tr>
+      <td>A key component of <font color="blue">profitability</font> is <font color="blue">investment</font>     spread, or the <font color="blue">difference between</font> the yield on our <font color="blue"><font color="blue">investment</font>s</font> and the rates     we  credit to <font color="blue"><font color="blue">policyholders</font> on</font> our products</td>
+    </tr>
+    <tr>
+      <td>A narrowing of <font color="blue">investment</font>     <font color="blue">spreads could <font color="blue">negatively</font> affect</font> operating results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although <font color="blue">the Company </font></font>has     the ability to adjust the rates credited on products in order to maintain     our required <font color="blue">investment</font> spread, a <font color="blue"><font color="blue">significant</font> decline</font> in <font color="blue">interest rate</font>     levels <font color="blue">could affect</font> <font color="blue">investment</font> yields to the point where the <font color="blue">investment</font>     spread is <font color="blue">compromised due</font> to minimum <font color="blue">interest rate</font> <font color="blue">guarantees</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     the  potential  for  <font color="blue">increased policy surrenders</font> and <font color="blue">cash withdrawals</font>,     <font color="blue">competitor activities</font>, and other <font color="blue">factors could further limit</font> the Companyapstas     ability to maintain crediting rates on its <font color="blue">products at levels necessary</font> to     avoid sacrificing <font color="blue">investment</font> spread</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">general domestic</font> and <font color="blue">international <font color="blue">economic <font color="blue">conditions</font></font></font>     that may be less favorable <font color="blue">than currently</font> exists or is anticipated</td>
+    </tr>
+    <tr>
+      <td>The demand for financial and <font color="blue">insurance products</font> is subject to <font color="blue">factors such</font>     <font color="blue">as consumer sentiment</font> and behavior, business <font color="blue">investment</font> and <font color="blue">government</font>     spending, the <font color="blue">volatility</font> and strength of capital markets, inflation, and     overall  economic  climate</td>
+    </tr>
+    <tr>
+      <td>Further, since we <font color="blue">accept applications from</font>     residents in North America, Latin America, Eastern Europe and the Pacific     Rim, we are exposed to <font color="blue">economic <font color="blue">conditions</font></font> in <font color="blue">multiple geographic locations</font></td>
+    </tr>
+    <tr>
+      <td>Economic downturns in any of these <font color="blue">geographic locations characterized by</font>     political, social or economic instability, higher unemployment, lower family     income or <font color="blue">consumer spending could <font color="blue">negatively</font> affect</font> the demand for the     Companyapstas products</td>
+    </tr>
+    <tr>
+      <td>Accordingly, the Companyapstas <font color="blue">overall success depends</font>, in     part,  upon the ability to succeed despite these differing and dynamic     <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">investment</font> portfolio</font> is subject to credit <font color="blue">quality risks which may lessen</font>     the value of <font color="blue">invested assets</font> and the Companyapstas <font color="blue">book value per</font> share</td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font><font color="blue">substantially invests monies</font> received in <font color="blue">investment</font> grade, fixed     income  <font color="blue">investment</font>  securities  in  order  to  meet its <font color="blue">obligations</font> to     <font color="blue">policyholders</font> and provide a return on its <font color="blue">deployed capital</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, we     are subject to the risk that issuers of these <font color="blue">securities may default on</font>     principal  and interest payments, particularly in the event of a major     downturn  in  economic  and/or business climate</td>
+    </tr>
+    <tr>
+      <td><font color="blue">At December </font>31, 2005,     approximately 3dtta2prca of the Companyapstas dlra5dtta3 billion fixed <font color="blue">income securities</font>     portfolio was comprised of issuers who were <font color="blue">investment</font> grade at the time the     Company acquired them but were <font color="blue">subsequently downgraded</font> for <font color="blue">various reasons</font></td>
+    </tr>
+    <tr>
+      <td>A  substantial  increase in <font color="blue">defaults from</font> these or other <font color="blue">issuers could</font>     <font color="blue"><font color="blue">negatively</font> impact</font> the Companyapstas <font color="blue">financial position</font> and results</td>
+    </tr>
+    <tr>
+      <td>For the Companyapstas equity-indexed products, over the <font color="blue">counter <font color="blue">derivative</font></font>     <font color="blue">instruments</font> are <font color="blue">purchased from</font> a number of <font color="blue">highly rated <font color="blue">counterparties</font></font> to     fund the equity-index credit to <font color="blue">policyholders</font></td>
+    </tr>
+    <tr>
+      <td>In the event that any of     these <font color="blue"><font color="blue">counterparties</font> fails</font> to meet their contractual <font color="blue">obligations</font> under these     <font color="blue">derivative</font>  <font color="blue">instruments</font>,  <font color="blue">the Company </font>would be <font color="blue">financially at risk</font> for     providing the credits due that the <font color="blue"><font color="blue">counterparty</font> reneged on</font></td>
+    </tr>
+    <tr>
+      <td>Although the     financial impact is limited due to the credit <font color="blue">support agreements</font> that the     Company has with all if its <font color="blue">counterparties</font>, the failure of a <font color="blue">counterparty</font> to     perform  could  <font color="blue"><font color="blue">negatively</font> impact</font> the Companyapstas <font color="blue">financial position</font> and     results</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">incurring <font color="blue">difficult</font>ies</font> in marketing and <font color="blue">distributing</font> our     <font color="blue">products through</font> our current and <font color="blue">future distribution channels</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font><font color="blue">distributes</font> its life and annuity <font color="blue">products through</font> <font color="blue">in<font color="blue">dependent</font></font>     broker-agents</td>
+    </tr>
+    <tr>
+      <td>There  is substantial competition, particularly in the     Companyapstas  domestic  market,  for  <font color="blue">in<font color="blue">dependent</font></font>  broker-agents with the     <font color="blue">demonstrated ability</font> to market and sell <font color="blue">insurance products</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>for     these  <font color="blue">individuals</font>  or  <font color="blue">organizations</font>  typically  centers on products,     <font color="blue">compensation</font>, home office support and the insurerapstas financial strength     ratings</td>
+    </tr>
+    <tr>
+      <td>The Companyapstas <font color="blue">future sales</font> and <font color="blue">financial condition</font> are <font color="blue">dependent</font>     upon  avoiding  <font color="blue">significant</font>  <font color="blue">interruptions</font> in attracting and retaining     <font color="blue">in<font color="blue">dependent</font></font> broker-agents</td>
+    </tr>
+    <tr>
+      <td>We are subject to a downgrade in our <font color="blue">financial <font color="blue">strength ratings</font> which may</font>     <font color="blue">negatively</font>  effect  our  ability  to  attract  and  retain <font color="blue">in<font color="blue">dependent</font></font>     <font color="blue">distributors</font>, make our <font color="blue">products less attractive</font> to consumers, and may have     an adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Financial </font><font color="blue">strength ratings</font> have grown to become an <font color="blue">important criteria</font> in     <font color="blue">establishing</font> the <font color="blue"><font color="blue">competitive</font> position</font> of insurers</td>
+    </tr>
+    <tr>
+      <td>Ratings <font color="blue">generally reflect</font>     the rating agencies &amp;apos  view of a particular companyapstas financial strength,     operating performance, and ability to meet its <font color="blue">obligations</font> to <font color="blue">policyholders</font></td>
+    </tr>
+    <tr>
+      <td>However, some of the <font color="blue">rating factors often</font> relate to the particular views of     the <font color="blue">rating agency</font>, their <font color="blue">in<font color="blue">dependent</font></font> economic modeling, the <font color="blue">general economic</font>     climate,  and  other  <font color="blue">circumstances</font>  outside of the insurerapstas control</td>
+    </tr>
+    <tr>
+      <td>Accordingly,  we <font color="blue">cannot predict with</font> any <font color="blue">certainty</font> what <font color="blue">actions rating</font>     <font color="blue">agencies may</font> take</td>
+    </tr>
+    <tr>
+      <td>A downgrade in our <font color="blue">financial strength rating</font>, or an     announced potential downgrade, <font color="blue">could affect</font> our <font color="blue"><font color="blue">competitive</font> position</font> and     make it more <font color="blue">difficult</font> to market our products vis-à-vis competitors with     higher financial <font color="blue">strength ratings</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">extreme situations</font>, a <font color="blue">significant</font>     downgrade  action  by  one or more <font color="blue">rating agency</font> could induce existing     <font color="blue">policyholders</font> to cancel their policies and <font color="blue">withdraw funds from</font> the Company</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">events could</font> have a material adverse effect on our <font color="blue">financial position</font>     and liquidity</td>
+    </tr>
+    <tr>
+      <td>We are subject to <font color="blue">competition from new sources as well as companies</font> having     substantially greater financial resources which could have an <font color="blue">adverse impact</font>     upon our business levels and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In recent years, there has been considerable <font color="blue">consolidation among companies</font>     in the insurance and <font color="blue">financial sectors</font> resulting in large, well-capitalized     entities that <font color="blue">offer products comparable</font> to the Company</td>
+    </tr>
+    <tr>
+      <td>Frequently, these     larger <font color="blue">organizations</font> are not domiciled in the <font color="blue">United States </font>or are financial     services  entities attempting to establish a position in the insurance     industry</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">larger competitors often enjoy economies</font> of <font color="blue">scale which</font>     produce lower operating costs and the wherewithal to <font color="blue">absorb greater risk</font>     <font color="blue">allowing them</font> to <font color="blue">price products</font> more <font color="blue"><font color="blue">competitive</font>ly</font> and, in turn, attract     <font color="blue">in<font color="blue">dependent</font></font> <font color="blue">distributors</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, <font color="blue">the Company </font><font color="blue">may encounter additional</font>     product  <font color="blue">pricing pressures</font> and be challenged to maintain <font color="blue">profit margin</font>     targets and <font color="blue">profitability</font> criteria</td>
+    </tr>
+    <tr>
+      <td>Because of these <font color="blue">competitive</font> presences,     <font color="blue">the Company </font>may not be able to <font color="blue">effectively compete without negative affects</font>     on our <font color="blue">financial position</font> and results</td>
+    </tr>
+    <tr>
+      <td>We are subject to regulation and changes to <font color="blue">existing laws</font> that may affect     our <font color="blue">profitability</font> or means of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The Company </font>is subject to extensive laws and <font color="blue"><font color="blue">regulations</font> which</font> are complex     and subject to change</td>
+    </tr>
+    <tr>
+      <td>In addition, these laws and <font color="blue">regulations</font> are enforced     by a number of <font color="blue">different authorities</font> including, but not limited to, state     <font color="blue">insurance regulators</font>, the National Association of Insurance Commissioners,     the Securities and Exchange Commission, state <font color="blue">attorney generals</font>, and the     <font color="blue">US Department of Justice</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these laws and <font color="blue">regulations</font> is     time consuming and any changes may <font color="blue">materially</font> increase our <font color="blue">compliance costs</font>     and other expenses of doing business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">regulatory framework at</font> the state     and,  increasingly, federal level pertaining to <font color="blue">insurance products</font> and     practices is advancing and <font color="blue">could affect</font> not only the design of our products     but our ability to continue to <font color="blue">sell certain products</font></td>
+    </tr>
+    <tr>
+      <td>Life <font color="blue">insurer products generally offer tax advantages</font> to <font color="blue">policyholders</font> via     the deferral of <font color="blue">income tax on policy earnings during</font> the <font color="blue">accumulation phase</font>     of the product, be it an annuity or a <font color="blue">life insurance product</font></td>
+    </tr>
+    <tr>
+      <td>Periodically,     <font color="blue">Congress </font>has considered <font color="blue">legislation</font> that would reduce or eliminate this tax     <font color="blue">deferral advantage inherent</font> to the <font color="blue">life insurance industry</font> and subject the     industryapstas products to treatment more <font color="blue">equivalent with</font> other <font color="blue"><font color="blue">investment</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In     the event that the tax-deferred status of life <font color="blue">insurance products</font> is revised     or reduced by <font color="blue">Congress </font>all <font color="blue">life insurers would</font> be <font color="blue">adversely impacted</font></td>
+    </tr>
+    <tr>
+      <td>We may be subject to <font color="blue">unfavorable judicial developments</font>, including the time     and expense of litigation, which potentially <font color="blue">could affect</font> our financial     position and results</td>
+    </tr>
+    <tr>
+      <td>In the ordinary course of business, we are involved in various legal actions     common to the <font color="blue">life insurance industry</font>, some of <font color="blue">which may occasionally</font> assert     claims  for  large  amounts</td>
+    </tr>
+    <tr>
+      <td>These actions, for example, could include     <font color="blue">allegations</font> of <font color="blue">improper sales practices</font> in <font color="blue">connection with</font> the sale of life     insurance or bad faith in the handling of insurance claims</td>
+    </tr>
+    <tr>
+      <td>While we are not     a party to any lawsuit that we believe will have a material adverse effect     on our <font color="blue">financial position</font> or <font color="blue">operations</font>, given the <font color="blue">inherent unpredictability</font>     of litigation, there can be no assurance that such litigation, current or in     the future, will not have such a material adverse effect on the Companyapstas     results of operation or <font color="blue">cash flows</font> in any particular reporting period</td>
+    </tr>
+  </tbody>
+</table>

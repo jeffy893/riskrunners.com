@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: adversely", fill: "#087830"},
+{source: "2: adversely", target: "2: liabilities", fill: "#087830"},
+{source: "2: liabilities", target: "2: pay dividends on", fill: "#087830"},
+{source: "2: pay dividends on", target: "2: common stock", fill: "#087830"},
+{source: "2: common stock", target: "2: adversely affect", fill: "#087830"},
+{source: "2: adversely affect", target: "2: quoted market prices", fill: "#087830"},
+{source: "2: adversely", target: "3: significant", fill: "#f4f0ec"},
+{source: "3: significant", target: "3: environmental", fill: "#f4f0ec"},
+{source: "3: significant", target: "4: manufactured lead pigments", fill: "#008b8b"},
+{source: "4: manufactured lead pigments", target: "5: defendants", fill: "#b0e0e6"},
+{source: "5: defendants", target: "5: proceedings", fill: "#b0e0e6"},
+{source: "5: proceedings", target: "5: governmental", fill: "#b0e0e6"},
+{source: "5: governmental", target: "5: expenditures", fill: "#b0e0e6"},
+{source: "5: expenditures", target: "5: allegedly", fill: "#b0e0e6"},
+{source: "5: defendants", target: "6: lawsuits seek recovery under", fill: "#c5b358"},
+{source: "6: lawsuits seek recovery under", target: "6: liability", fill: "#c5b358"},
+{source: "6: liability", target: "6: action aiding", fill: "#c5b358"},
+{source: "6: action aiding", target: "6: enterprise liability market", fill: "#c5b358"},
+{source: "6: enterprise liability market", target: "6: contribution", fill: "#c5b358"},
+{source: "6: contribution", target: "6: intentional", fill: "#c5b358"},
+{source: "6: intentional", target: "6: misrepresentation", fill: "#c5b358"},
+{source: "6: misrepresentation", target: "6: consumer protection", fill: "#c5b358"},
+{source: "6: lawsuits seek recovery under", target: "7: actions generally seek", fill: "#000080"},
+{source: "7: actions generally seek", target: "7: defendants", fill: "#000080"},
+{source: "7: defendants", target: "7: responsibility", fill: "#000080"},
+{source: "7: responsibility", target: "7: lead paint", fill: "#000080"},
+{source: "7: lead paint", target: "7: abatement", fill: "#000080"},
+{source: "7: abatement", target: "7: associated with", fill: "#000080"},
+{source: "7: associated with", target: "7: contribution", fill: "#000080"},
+{source: "7: contribution", target: "7: indemnification", fill: "#000080"},
+{source: "7: indemnification", target: "7: educational", fill: "#000080"},
+{source: "7: actions generally seek", target: "8: legal proceedings", fill: "#de6fa1"},
+{source: "8: legal proceedings", target: "9: liability", fill: "#873260"},
+{source: "9: liability", target: "9: might incur", fill: "#873260"},
+{source: "9: liability", target: "START_HERE", fill: "#873260"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Covert monitoring</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_effect">Adverse effect</a></td>
+      <td>An adverse effect is an undesired harmful effect resulting from a medication or other intervention, such as surgery. An adverse effect may be termed a "side effect", when judged to be secondary to a main or therapeutic effect.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Adverse_(film)">Adverse (film)</a></td>
+      <td>Adverse is a 2020 American crime thriller film written and directed by Brian Metcalf and starring Thomas Nicholas, Lou Diamond Phillips, Sean Astin, Kelly Arjen, Penelope Ann Miller, and Mickey Rourke. It premiered at the Fantasporto Film Festival, Portugal's largest film festival, on February 28, 2020.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ex-dividend_date">Ex-dividend date</a></td>
+      <td>The ex-dividend date, also known as the reinvestment date, is an investment term involving the timing of payment of dividends on stocks of corporations, income trusts, and other financial holdings, both publicly and privately held. The ex-date or ex-dividend date represents the date on or after which a security is traded without a previously declared dividend or distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government-owned_and_controlled_corporation">Government-owned and controlled corporation</a></td>
+      <td>In the Philippines, a government-owned and controlled corporation (GOCC), sometimes with an "and/or", is a state-owned enterprise that conducts both commercial and non-commercial activity. Examples of the latter would be the Government Service Insurance System (GSIS), a social security system for government employees.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Misophonia">Misophonia</a></td>
+      <td>Misophonia is a disorder of decreased tolerance to specific sounds or their associated stimuli that has been characterized using different language and methodologies. Reactions to trigger sounds range from anger and annoyance to activating a fight-or-flight response.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Anthropogenic_hazard">Anthropogenic hazard</a></td>
+      <td>Anthropogenic hazards are hazards caused by human action or inaction. They are contrasted with natural hazards.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Reproductive_toxicity">Reproductive toxicity</a></td>
+      <td>Reproductive toxicity refers to the potential risk from a given chemical, physical or biologic agent to adversely affect  both male and female fertility as well as offspring development. Reproductive toxicants may adversely affect sexual function, ovarian failure, fertility  as well as causing developmental toxicity in the offspring.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Terrorist_and_Disruptive_Activities_(Prevention)_Act">Terrorist and Disruptive Activities (Prevention) Act</a></td>
+      <td>Terrorist and Disruptive Activities (Prevention) Act, commonly known as TADA, was an Indian anti-terrorism law which was in force between 1985 and 1995 (modified in 1987) under the background of  the Punjab insurgency and was applied to whole of India. It was originally assented to by the President on 23 May 1985 and came into effect on 24 May 1985.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Market_trend">Market trend</a></td>
+      <td>A market trend is a perceived tendency of financial markets to move in a particular direction over time. These trends are classified as secular for long time frames, primary for medium time frames, and secondary for short time frames.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Market_risk">Market risk</a></td>
+      <td>Market risk is   the risk of losses in positions arising from movements in market variables like prices and volatility.\nThere is no unique classification as each classification may refer to different aspects of market risk.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Price_discrimination">Price discrimination</a></td>
+      <td>Price discrimination is a microeconomic pricing strategy where identical or largely similar goods or services are sold at different prices by the same provider in different markets. Price discrimination is distinguished from product differentiation by the more substantial difference in production cost for the differently priced products involved in the latter strategy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market_crash">Stock market crash</a></td>
+      <td>A stock market crash is a sudden dramatic decline of stock prices across a major cross-section of a stock market, resulting in a significant loss of paper wealth. Crashes are driven by panic selling and underlying economic factors.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Internet">Internet</a></td>
+      <td>In finance and economics, interest is payment from a borrower or deposit-taking financial institution to a lender or depositor of an amount above repayment of the principal sum (that is, the amount borrowed), at a particular rate. It is distinct from a fee which the borrower may pay the lender or some third party.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Lead-tin-yellow">Lead-tin-yellow</a></td>
+      <td>Lead-tin-yellow is a yellow pigment, of historical importance in oil painting, sometimes called the "Yellow of the Old Masters" because of the frequency with which it was used by those famous painters.\n\n\n== Nomenclature ==\nThe name lead-tin yellow is a modern label.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Krebs_Pigments_and_Chemical_Company">Krebs Pigments and Chemical Company</a></td>
+      <td>Krebs Pigments and Chemical Company was founded in 1902 by Henrik J. Krebs and was a manufacturer of lithopone and titanium dioxide.\n\n\n== History ==\nThe company was founded in 1902 by Henrik J. Krebs in Newport, Delaware.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_defendants_at_the_International_Military_Tribunal">List of defendants at the International Military Tribunal</a></td>
+      <td>Between 20 November 1945 and 1 October 1946, the International Military Tribunal (IMT) tried 24 of the most important political and military leaders of Nazi Germany. Most of the defendants had surrendered to the United States Army, but the Soviet Union also held a few top Nazis who were extradited for trial at Nuremberg.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Proceedings_of_SPIE">Proceedings of SPIE</a></td>
+      <td>Proceedings of SPIE is the conference record of the Society of Photo-Optical Instrumentation Engineers (SPIE). The first proceedings were published in 1963.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Tax_expenditure">Tax expenditure</a></td>
+      <td>Tax expenditures are government revenue losses from tax exclusions, exemptions, deductions, credits, deferrals, and preferential tax rates. They are a counterpart to direct expenditures, in that they both are forms of government spending.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Old_Testament_messianic_prophecies_quoted_in_the_New_Testament">Old Testament messianic prophecies quoted in the New Testament</a></td>
+      <td>The New Testament frequently cites Jewish scripture to support the claim of the Early Christians that Jesus was the promised Jewish Messiah, but few of these citations are actual predictions in their original context. The majority of these quotations and references are taken from the Book of Isaiah, but they range over the entire corpus of Jewish writings.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/ActionAid">ActionAid</a></td>
+      <td>ActionAid is an international non-governmental organization whose stated primary aim is to work against poverty and injustice worldwide.ActionAid is a federation of 45 country offices that works with communities, often via local partner organisations, on a range of development issues. It was founded in 1972 by Cecil Jackson-Cole as a child sponsorship charity (originally called Action in Distress) when 88 UK supporters sponsored 88 children in India and Kenya, the primary focus being is providing children with an education, further the human rights for all, assisting people that are in poverty, assisting those who face discrimination, and also assist people who face injustice.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Phoebe_Dynevor">Phoebe Dynevor</a></td>
+      <td>Phoebe Harriet Dynevor (; born 17 April 1995) is an English actress. She is known for her role as Daphne, the fourth Bridgerton child, in the Netflix period drama Bridgerton (2020–present).Dynevor began her career as a child actress, appearing in the BBC school drama Waterloo Road (2009–2010).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contribution_claim_(legal)">Contribution claim (legal)</a></td>
+      <td>A contribution claim is a claim brought by one or more defendants to a lawsuit for money damages brought by a plaintiff.  A contribution claim asserts the party (usually a defendant) is entitled to "contribution" from a third party for any money damages awarded to the plaintiff.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Intention">Intention</a></td>
+      <td>Attention is the behavioral and cognitive process of selectively concentrating on a discrete aspect of information, whether considered subjective or objective, while ignoring other perceivable information. William James (1890) wrote that "Attention is the taking possession by the mind, in clear and vivid form, of one out of what seem several simultaneously possible objects or trains of thought.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Intentional_programming">Intentional programming</a></td>
+      <td>In computer programming, Intentional Programming is a programming paradigm developed by Charles Simonyi that encodes in software source code the precise intention which programmers (or users) have in mind when conceiving their work. By using the appropriate level of abstraction at which the programmer is thinking, creating and maintaining computer programs become easier.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Intentional_stance">Intentional stance</a></td>
+      <td>The intentional stance is a term coined by philosopher Daniel Dennett for the level of abstraction in which we view the behavior of an entity in terms of mental properties. It is part of a theory of mental content proposed by Dennett, which provides the underpinnings of his later works on free will, consciousness, folk psychology, and evolution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dodd–Frank_Wall_Street_Reform_and_Consumer_Protection_Act">Dodd–Frank Wall Street Reform and Consumer Protection Act</a></td>
+      <td>The Dodd–Frank Wall Street Reform and Consumer Protection Act (commonly referred to as Dodd–Frank) is a United States federal law that was enacted on July 21, 2010. The law overhauled financial regulation in the aftermath of the Great Recession, and it made changes affecting all federal financial regulatory agencies and almost every part of the nation's financial services industry.Responding to widespread calls for changes to the financial regulatory system, in June 2009, President Barack Obama introduced a proposal for a "sweeping overhaul of the United States financial regulatory system, a transformation on a scale not seen since the reforms that followed the Great Depression".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Central_Consumer_Protection_Authority">Central Consumer Protection Authority</a></td>
+      <td>Central Consumer Protection Authority is a regulatory authority set up under Section 10(1) of the Consumer Protection Act, 2019 in relation to matters affecting rights of consumers by individuals or entities following improper trade practices or by display of inappropriate or wrong advertisements affecting public interest and helps promoting consumer trust by  enforcing the rights of consumers through effective guidelines.\n\n\n== History and Objective ==\nCentral Consumer Protection Authority replaced the previous The Consumer Protection Act, 1986 and is formed as per The Consumer Protection Act, 2019.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Responsibility_for_the_September_11_attacks">Responsibility for the September 11 attacks</a></td>
+      <td>At around 9:30 pm on September 11, 2001, George Tenet, director of the Central Intelligence Agency (CIA) told President George W. Bush and U.S. senior officials that the CIA's Counterterrorism Center had determined that Osama Bin Laden and al-Qaeda were responsible for the September 11 attacks. Two weeks after 9/11, the Federal Bureau of Investigation connected the hijackers to al-Qaeda, a militant Salafist Islamist multi-national organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Marginal_abatement_cost">Marginal abatement cost</a></td>
+      <td>Abatement cost is the cost of reducing environmental negatives such as pollution. Marginal cost is an economic concept that measures the cost of an additional unit.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Relics_associated_with_Jesus">Relics associated with Jesus</a></td>
+      <td>A number of alleged relics associated with Jesus have been displayed throughout the history of Christianity. While some individuals believe in the authenticity of Jesus relics, others doubt their validity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Francesco_Schettino">Francesco Schettino</a></td>
+      <td>Francesco Schettino (Italian pronunciation: [franˈtʃesko sketˈtiːno]; born 14 November 1960) is an Italian ex-sea captain who commanded the cruise ship Costa Concordia when it struck an underwater rock and capsized with the deaths of 32 passengers and crew off the Italian island of Giglio on 13 January 2012. In 2015, he was sentenced to sixteen years in prison for his role in the incident.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arizona_Coyotes">Arizona Coyotes</a></td>
+      <td>The Arizona Coyotes are a professional ice hockey team based in the Phoenix metropolitan area. The Coyotes compete in the National Hockey League (NHL) as a member of the Central Division in the Western Conference.</td>
+    </tr>
+  </tbody>
+</table>

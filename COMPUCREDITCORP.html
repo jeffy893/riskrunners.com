@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: following risks", fill: "#b31b1b"},
+{source: "3: following risks", target: "3: actual events", fill: "#b31b1b"},
+{source: "3: actual events", target: "3: financial condition", fill: "#b31b1b"},
+{source: "3: financial condition", target: "3: operations", fill: "#b31b1b"},
+{source: "3: operations", target: "3: negatively affected", fill: "#b31b1b"},
+{source: "3: negatively affected", target: "3: market price", fill: "#b31b1b"},
+{source: "3: market price", target: "3: common stock could", fill: "#b31b1b"},
+{source: "3: common stock could", target: "3: investment", fill: "#b31b1b"},
+{source: "3: following risks", target: "5: collectibility", fill: "#ca1f7b"},
+{source: "5: collectibility", target: "5: receivables underlying", fill: "#ca1f7b"},
+{source: "5: receivables underlying", target: "5: securitizations", fill: "#ca1f7b"},
+{source: "5: securitizations", target: "5: criteria used", fill: "#ca1f7b"},
+{source: "5: criteria used", target: "5: relationships general economic", fill: "#ca1f7b"},
+{source: "5: relationships general economic", target: "5: conditions", fill: "#ca1f7b"},
+{source: "5: conditions", target: "5: rate at which customers repay", fill: "#ca1f7b"},
+{source: "5: rate at which customers repay", target: "5: accounts", fill: "#ca1f7b"},
+{source: "5: accounts", target: "5: delinquent", fill: "#ca1f7b"},
+{source: "5: delinquent", target: "5: rate at which cardholders use", fill: "#ca1f7b"},
+{source: "5: collectibility", target: "15: consumer spending", fill: "#008080"},
+{source: "15: consumer spending", target: "15: economic slowdown", fill: "#008080"},
+{source: "15: economic slowdown", target: "15: recession could", fill: "#008080"},
+{source: "15: recession could", target: "15: difficult", fill: "#008080"},
+{source: "15: difficult", target: "15: accounts", fill: "#008080"},
+{source: "15: accounts", target: "15: account balances", fill: "#008080"},
+{source: "15: consumer spending", target: "17: actual rates", fill: "#fffafa"},
+{source: "17: actual rates", target: "17: delinquencies", fill: "#fffafa"},
+{source: "17: delinquencies", target: "17: higher under adverse economic conditions than", fill: "#fffafa"},
+{source: "17: higher under adverse economic conditions than", target: "17: industry generally", fill: "#fffafa"},
+{source: "17: industry generally", target: "17: subprime market", fill: "#fffafa"},
+{source: "17: actual rates", target: "22: Because ", fill: "#b53389"},
+{source: "22: Because ", target: "22: significant", fill: "#b53389"},
+{source: "22: significant", target: "22: managements", fill: "#b53389"},
+{source: "22: managements", target: "22: future performance", fill: "#b53389"},
+{source: "22: future performance", target: "22: securitized receivables", fill: "#b53389"},
+{source: "22: securitized receivables", target: "22: differences between actual", fill: "#b53389"},
+{source: "22: differences between actual", target: "22: receivables may", fill: "#b53389"},
+{source: "22: receivables may", target: "22: fluctuations", fill: "#b53389"},
+{source: "22: Because ", target: "23: receivables", fill: "#e4717a"},
+{source: "23: receivables", target: "23: securitization transactions", fill: "#e4717a"},
+{source: "23: securitization transactions", target: "23: receivables securitized", fill: "#e4717a"},
+{source: "23: receivables securitized", target: "23: constitute", fill: "#e4717a"},
+{source: "23: constitute", target: "23: significant", fill: "#e4717a"},
+{source: "23: receivables", target: "START_HERE", fill: "#e4717a"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Internet Software and Services</td>
+    </tr>
+    <tr>
+      <td>Internet Retail</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Research and Consulting Services</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Rally support</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Collaborate</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Protest demonstrations</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Securitization">Securitization</a></td>
+      <td>Securitization is the financial practice of pooling various types of contractual debt such as residential mortgages, commercial mortgages, auto loans or credit card debt obligations (or other non-debt assets which generate receivables) and selling their related cash flows to third party investors as securities, which may be described as bonds, pass-through securities, or collateralized debt obligations (CDOs). Investors are repaid from the principal and interest cash flows collected from the underlying debt and redistributed through the capital structure of the new financing.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Asset-backed_security">Asset-backed security</a></td>
+      <td>An asset-backed security (ABS) is a security whose income payments and hence value are derived from and collateralized (or "backed") by a specified pool of underlying assets.\nThe pool of assets is typically a group of small and illiquid assets which are unable to be sold individually.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mortgage-backed_security">Mortgage-backed security</a></td>
+      <td>A mortgage-backed security (MBS) is a type of asset-backed security (an 'instrument') which is secured by a mortgage or collection of mortgages. The mortgages are aggregated and sold to a group of individuals (a government agency or investment bank) that securitizes, or packages, the loans together into a security that investors can buy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Predatory_mortgage_securitization">Predatory mortgage securitization</a></td>
+      <td>Predatory mortgage securitization (predatory securitization) is any mortgage securitization products created with lax underwriting standards and improper due diligence.A book titled The Crime of Our Time by author Danny Schechter delves deeply into the predatory securitization process and the financial collapse of 2007.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Securitization_(international_relations)">Securitization (international relations)</a></td>
+      <td>Securitization in international relations and national politics is the process of state actors transforming subjects from regular political issues into matters of "security": thus enabling extraordinary means to be used in the name of security. Issues that become securitized do not necessarily represent issues that are essential to the objective survival of a state, but rather represent issues where someone was successful in constructing an issue into an existential problem.Securitization theorists assert that successfully securitized subjects receive disproportionate amounts of attention and resources compared to unsuccessfully securitized subjects causing more human damage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Moral_hazard">Moral hazard</a></td>
+      <td>In economics, a moral hazard is a situation where an economic actor has an incentive to increase its exposure to risk because it does not bear the full costs of that risk. For example, when a corporation is insured, it may take on higher risk knowing that its insurance will pay the associated costs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special-purpose_entity">Special-purpose entity</a></td>
+      <td>A special-purpose entity (SPE; or, in Europe and India, special-purpose vehicle/SPV; or, in some cases in each EU jurisdiction, FVC, financial vehicle corporation) is a legal entity (usually a limited company of some type or, sometimes, a limited partnership) created to fulfill narrow, specific or temporary objectives.  SPEs are typically used by companies to isolate the firm from financial risk.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Subprime_mortgage_crisis">Subprime mortgage crisis</a></td>
+      <td>The United States subprime mortgage crisis was a multinational financial crisis that occurred between 2007 and 2010 that contributed to the 2007–2008 global financial crisis. It was triggered by a large decline in US home prices after the collapse of a housing bubble, leading to mortgage delinquencies, foreclosures, and the devaluation of housing-related securities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Securities_Industry_and_Financial_Markets_Association">Securities Industry and Financial Markets Association</a></td>
+      <td>The Securities Industry and Financial Markets Association (SIFMA) is a United States industry trade group representing securities firms, banks, and asset management companies.  SIFMA was formed on November 1, 2006, from the merger of the Bond Market Association and the Securities Industry Association.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_crisis_of_2007–2008">Financial crisis of 2007–2008</a></td>
+      <td>The financial crisis of 2008, or Global Financial Crisis, was a severe worldwide economic crisis that occurred in the early 21st century. It was the most serious financial crisis since the Great Depression (1929).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Copenhagen_School_(international_relations)">Copenhagen School (international relations)</a></td>
+      <td>The Copenhagen School of security studies is a school of academic thought with its origins in international relations theorist Barry Buzan's book People, States and Fear: The National Security Problem in International Relations, first published in 1983. The Copenhagen School places particular emphasis on the non-military aspects of security, representing a shift away from traditional security studies.: 168  Theorists associated with the school include Barry Buzan, Ole Wæver and Jaap de Wilde.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Accounts_receivable">Accounts receivable</a></td>
+      <td>Accounts receivable, abbreviated as AR or A/R, are legally enforceable claims for payment held by a business for goods supplied or services rendered that customers have ordered but not paid for. These are generally in the form of invoices raised by a business and delivered to the customer for payment within an agreed time frame.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Healing_Is_Difficult">Healing Is Difficult</a></td>
+      <td>Healing Is Difficult is the second studio album by Australian singer and songwriter Sia. It was released in the United Kingdom on 9 July 2001 and in the United States on 28 May 2002.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/A_Difficult_Woman">A Difficult Woman</a></td>
+      <td>A Difficult Woman is an Australian television series which screened in 1998 on the ABC. The three part series starred Caroline Goodall, in the title role of a woman whose best friend is murdered and is determined to find out why. It was written by Nicholas Hammond and Steven Vidler and directed by Tony Tilse.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_to_Cure">Difficult to Cure</a></td>
+      <td>Difficult to Cure is the fifth studio album by the British hard rock band Rainbow, released in 1981. The album marked the further commercialization of the band's sound, with Ritchie Blackmore once describing at the time his appreciation of the band Foreigner.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/For_Love_or_Money_(2014_film)">For Love or Money (2014 film)</a></td>
+      <td>For Love or Money (Chinese: 露水红颜) is a Chinese romance film based on Hong Kong novelist Amy Cheung's 2006 novel of the same name. The film was directed by Gao Xixi and starring Liu Yifei and Rain.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Difficult_Couple">The Difficult Couple</a></td>
+      <td>The Difficult Couple (Chinese: 难夫难妻; pinyin: Nànfū Nànqī), also translated as Die for Marriage, is a 1913 Chinese film. It is known for being the earliest Chinese feature film.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second-language_acquisition">Second-language acquisition</a></td>
+      <td>Second-language acquisition (SLA), sometimes called second-language learning — otherwise referred to as L2 (language 2) acquisition, is the process by which people learn a second language. Second-language acquisition is also the scientific discipline devoted to studying that process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_Loves">Difficult Loves</a></td>
+      <td>Difficult Loves (Italian: Gli amori difficili) is a 1970 short story collection by Italo Calvino. It concerns love and the difficulty of communication.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Difficult_(song)">Difficult (song)</a></td>
+      <td>"Difficult" is the fourth single from French-American recording artist Uffie's debut album, Sex Dreams and Denim Jeans. The single was produced by Uffie's label-mate and friend SebastiAn and was released by Ed Banger Records, Because Music and Elektra Records on October 18, 2010.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_debt_obligation">Collateralized debt obligation</a></td>
+      <td>A collateralized debt obligation (CDO) is a type of structured asset-backed security (ABS). Originally developed as instruments for the corporate debt markets, after 2002 CDOs became vehicles for refinancing mortgage-backed securities (MBS).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Asset-based_lending">Asset-based lending</a></td>
+      <td>Asset-based lending is any kind of lending secured by an asset. This means, if the loan is not repaid, the asset is taken.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Factoring_(finance)">Factoring (finance)</a></td>
+      <td>Factoring is a financial transaction and a type of debtor finance in which a business sells its accounts receivable (i.e., invoices) to a third party (called a factor) at a discount. A business will sometimes factor its receivable assets to meet its present and immediate cash needs.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Asset">Asset</a></td>
+      <td>In financial accounting, an asset is any resource owned or controlled by a business or an economic entity. It is anything (tangible or intangible) that can be used to produce positive economic value.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/PRA_Group">PRA Group</a></td>
+      <td>PRA Group, Inc. is a publicly traded global debt buyer based in Norfolk, Virginia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Notes_receivable">Notes receivable</a></td>
+      <td>Notes receivable represents claims for which formal instruments of credit are issued as evidence of debt, such as a promissory note. The credit instrument normally requires the debtor to pay interest and extends for time periods of 30 days or longer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Receivables_turnover_ratio">Receivables turnover ratio</a></td>
+      <td>Receivable Turnover Ratio or Debtor's Turnover Ratio is an accounting measure used to measure how effective a company is in extending credit as well as collecting debts. The receivables turnover ratio is an activity ratio, measuring how efficiently a firm uses its assets.Formula:\n\n  \n    \n      \n        \n          R\n          e\n          c\n          e\n          i\n          v\n          a\n          b\n          l\n          e\n           \n          T\n          u\n          r\n          n\n          o\n          v\n          e\n          r\n           \n          R\n          a\n          t\n          i\n          o\n        \n        =\n        \n          \n            \n              N\n              e\n              t\n               \n              r\n              e\n              c\n              e\n              i\n              v\n              a\n              b\n              l\n              e\n               \n              s\n              a\n              l\n              e\n              s\n            \n            \n              A\n              v\n              e\n              r\n              a\n              g\n              e\n               \n              n\n              e\n              t\n               \n              r\n              e\n              c\n              e\n              i\n              v\n              a\n              b\n              l\n              e\n              s\n            \n          \n        \n      \n    \n    {\displaystyle \mathrm {Receivable\ Turnover\ Ratio} ={\mathrm {Net\ receivable\ sales}  \over \mathrm {Average\ net\ receivables} }}\n  A high ratio implies either that a company operates on a cash basis or that its extension of credit and collection of accounts receivable is efficient.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash_conversion_cycle">Cash conversion cycle</a></td>
+      <td>In management accounting, the Cash conversion cycle (CCC) measures how long a firm will be deprived of cash if it increases its investment in inventory in order to expand customer sales. It is thus a measure of the liquidity risk entailed by growth.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>COMPUCREDIT CORP      ITEM 1A RISK FACTORS        An <font color="blue">investment</font> in our <font color="blue"><font color="blue">common stock</font> involves</font> a number of risks</td>
+    </tr>
+    <tr>
+      <td>You should     <font color="blue">carefully</font> consider each of the <font color="blue">risks described</font> below before deciding to     invest in our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>If any of the <font color="blue">following risks</font> develops into     <font color="blue">actual events</font>, our business, <font color="blue">financial condition</font> or results of <font color="blue">operations</font>     could be <font color="blue"><font color="blue">negatively</font> affected</font>, the <font color="blue">market price</font> of our <font color="blue">common stock</font> could     decline and you may lose all or part of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">collectibility</font> of the <font color="blue"><font color="blue">receivables</font> underlying</font> our <font color="blue"><font color="blue">securitization</font>s</font> and     those that we hold and do not securitize is a function of many factors     including the <font color="blue">criteria used</font> to select who is issued credit, the pricing of     the credit products, the lengths of the <font color="blue">relationship</font>s, <font color="blue">general economic</font>     <font color="blue">conditions</font>, the <font color="blue">rate at which customers repay</font> their <font color="blue">accounts</font> or become     <font color="blue">delinquent</font> and the <font color="blue">rate at which <font color="blue">cardholders</font> use</font> their cards</td>
+    </tr>
+    <tr>
+      <td>To the extent     we  have over estimated <font color="blue">collectibility</font>, in all likelihood we have over     estimated our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>We may not <font color="blue"><font color="blue">successfully</font> evaluate</font> the <font color="blue">creditworthiness</font> of our customers and     may  not  price  our  credit  products so as to <font color="blue">remain profitable</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">creditworthiness</font> of our <font color="blue"><font color="blue">target market</font> <font color="blue">generally</font></font> is considered “sub-prime”     <font color="blue"><font color="blue">based on</font> guidance issued by</font> the agencies that regulate the <font color="blue">banking industry</font></td>
+    </tr>
+    <tr>
+      <td>Thus, our <font color="blue">customers <font color="blue">generally</font></font> have a higher frequency of <font color="blue">delinquencies</font>,     higher  risk  of nonpayment and, ultimately, higher credit <font color="blue">losses than</font>     consumers who are served by more <font color="blue">traditional providers</font> of consumer credit</td>
+    </tr>
+    <tr>
+      <td>Some of the consumers included in our <font color="blue">target market</font> are consumers who are     <font color="blue">dependent upon</font> finance companies, consumers with only retail store credit     cards  and/or  <font color="blue">lacking <font color="blue">general purpose</font></font> credit cards, consumers who are     <font color="blue">establishing</font> or expanding their credit and consumers who may have had a     <font color="blue">delinquency</font>, a default or, in some instances, a <font color="blue">bankruptcy</font> in their credit     histories, but have, in our view, <font color="blue">demonstrated recovery</font></td>
+    </tr>
+    <tr>
+      <td>If our estimates are incorrect, <font color="blue">customer default rates will</font> be     higher, we will receive <font color="blue">less cash from</font> our <font color="blue"><font color="blue">securitization</font>s</font> and other credit     products, which will result in a decrease in the value of our retained     interests (which are <font color="blue">based on</font> expected <font color="blue">future <font color="blue">cash flows</font></font>) and our loans     receivable, and we will experience <font color="blue">reduced levels</font> of net income</td>
+    </tr>
+    <tr>
+      <td>An  <font color="blue"><font color="blue">economic slowdown</font> could increase</font> credit losses and/or decrease our     growth</td>
+    </tr>
+    <tr>
+      <td>Because our business is directly related to <font color="blue">consumer spending</font>, any     period of <font color="blue">economic slowdown</font> or <font color="blue">recession could</font> make it more <font color="blue">difficult</font> for us     to add or retain <font color="blue">accounts</font> or <font color="blue">account balances</font></td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">during periods</font>     of <font color="blue">economic slowdown</font> or recession, we expect to experience an increase in     rates of <font color="blue">delinquencies</font> and frequency and severity of credit losses</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">actual rates</font> of <font color="blue">delinquencies</font> and frequency and severity of credit losses     may be higher under adverse economic <font color="blue">conditions</font> than those experienced in     the  consumer  finance  <font color="blue">industry <font color="blue">generally</font></font> because of our focus on the     sub-prime market</td>
+    </tr>
+    <tr>
+      <td>Changes in credit use, payment patterns and the rate of     <font color="blue">defaults by <font color="blue">account holders</font> may</font> result from a variety of unpredictable     social, economic and <font color="blue">geographic factors</font></td>
+    </tr>
+    <tr>
+      <td>Social factors include, among other     things, changes in <font color="blue">consumer confidence levels</font>, the public’s <font color="blue">perception</font> of     the use of credit and changing <font color="blue">attitudes about incurring debt</font> and the stigma     of personal <font color="blue">bankruptcy</font></td>
+    </tr>
+    <tr>
+      <td>Economic factors include, among other things, the     rates of inflation, the <font color="blue">unemployment rates</font> and the <font color="blue">relative <font color="blue">interest rates</font></font>     offered for <font color="blue">various types</font> of loans</td>
+    </tr>
+    <tr>
+      <td>Moreover, adverse changes in economic     <font color="blue">conditions</font> in states where <font color="blue">account holders</font> are located, including as a     result of severe weather, could have a <font color="blue">direct impact on</font> the timing and     amount of <font color="blue">payments on</font> our credit card <font color="blue">accounts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because  </font>a  <font color="blue">significant</font>  portion  of  our  reported income is <font color="blue">based on</font>     <font color="blue">management</font>’s estimates of the <font color="blue">future performance</font> of <font color="blue"><font color="blue">securitized</font> <font color="blue">receivables</font></font>,     <font color="blue">differences <font color="blue">between actual</font></font> and expected performance of the <font color="blue"><font color="blue">receivables</font> may</font>     cause  <font color="blue">fluctuations</font> in net income</td>
+    </tr>
+    <tr>
+      <td>Income from the sale of credit card     <font color="blue">receivables</font> and other credit products in <font color="blue"><font color="blue">securitization</font> <font color="blue">transactions</font></font> and     <font color="blue">income from</font> retained interests in <font color="blue">receivables</font> <font color="blue">securitized</font> have <font color="blue">constitute</font>d,     and are likely to continue to <font color="blue">constitute</font>, a <font color="blue">significant</font> portion of our     income</td>
+    </tr>
+    <tr>
+      <td>Portions of this income are <font color="blue">based on</font> <font color="blue">management</font>’s estimates of cash     flows  we  expect to receive from the interests that we retain when we     securitize <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Differences </font><font color="blue">between actual</font> and expected performance     of the <font color="blue">receivables</font> will occur and                                           16     ______________________________________________________________________    [57]Table of <font color="blue">Contents    </font>[58]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>may cause <font color="blue">fluctuations</font> in our net income</td>
+    </tr>
+    <tr>
+      <td>The expected <font color="blue">cash flows</font> are based     on <font color="blue">management</font>’s estimates of <font color="blue">interest rates</font>, default rates, payment rates,     new purchases, costs of funds paid to investors in the <font color="blue"><font color="blue">securitization</font>s</font>,     servicing costs, <font color="blue">discount rate</font>s and required <font color="blue">amortization payments</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>estimates are <font color="blue">based on</font> a variety of factors, many of which are not within     our  control</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Increases </font> </font>in  expected  losses  and <font color="blue">delinquencies</font> may prevent us from     continuing to securitize <font color="blue">receivables</font> in the future on similar terms</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Greater     </font>than expected <font color="blue">delinquencies</font> and <font color="blue">losses also could impact</font> our ability to     complete other <font color="blue"><font color="blue">securitization</font> <font color="blue">transactions</font></font> on acceptable terms or at all,     <font color="blue">thereby <font color="blue">decreasing</font></font> our liquidity and <font color="blue">forcing us</font> to <font color="blue">either decrease</font> or stop     our growth or <font color="blue">rely on <font color="blue">alternative</font></font>, and <font color="blue">potentially</font> more expensive, funding     sources if <font color="blue">even available</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">utilization</font> of existing credit lines by <font color="blue">cardholders</font> would require     us to <font color="blue">establish <font color="blue">additional</font> <font color="blue">securitization</font> <font color="blue">facilities</font></font> or curtail credit     lines</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">existing commitments</font> to extend credit to <font color="blue"><font color="blue">cardholders</font> exceeded</font> our     <font color="blue">available <font color="blue">securitization</font> <font color="blue">facilities</font> at</font> <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td>If all of our     <font color="blue">cardholders</font> were to use their <font color="blue">entire lines</font> of credit at the same time, we     would not have <font color="blue">sufficient capacity</font> to <font color="blue">fund card use</font></td>
+    </tr>
+    <tr>
+      <td>However, in that event,     we could either reduce our <font color="blue">cardholders</font>’ available credit lines or establish     <font color="blue">additional</font> <font color="blue">securitization</font> <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>beyond expected losses and <font color="blue">delinquencies</font> may cause us to incur     losses on our retained interests</td>
+    </tr>
+    <tr>
+      <td>If the actual amounts of <font color="blue">delinquencies</font> and     losses  that occur in our <font color="blue"><font color="blue">securitized</font> <font color="blue">receivables</font></font> are <font color="blue">greater than</font> our     <font color="blue">expectations</font>, the value of our retained interests in the <font color="blue">securitization</font>     <font color="blue"><font color="blue">transactions</font> will decrease</font></td>
+    </tr>
+    <tr>
+      <td>Since we derive a portion of our <font color="blue">income from</font>     these retained interests, higher than expected rates of <font color="blue">delinquency</font> and loss     could cause our net income to be lower than expected</td>
+    </tr>
+    <tr>
+      <td>In addition, under the     terms of our <font color="blue"><font color="blue">securitization</font>s</font> <font color="blue">agreements</font>, levels of loss and <font color="blue">delinquency</font>     could result in us being required to repay our <font color="blue">securitization</font> investors     <font color="blue">earlier than</font> expected, <font color="blue">reducing funds available</font> to us for <font color="blue">future growth</font></td>
+    </tr>
+    <tr>
+      <td>Our  portfolio  of  <font color="blue">receivables</font> is not diversified and <font color="blue">originates from</font>     customers whose <font color="blue">creditworthiness</font> is considered sub-prime</td>
+    </tr>
+    <tr>
+      <td>We obtain the     <font color="blue">receivables</font>  that we securitize in one of two ways—we either originate     <font color="blue">receivables</font> or purchase <font color="blue">receivables</font> from other credit <font color="blue">card issuers</font></td>
+    </tr>
+    <tr>
+      <td>In     either case, <font color="blue">substantially</font> all of our <font color="blue"><font color="blue">securitized</font> <font color="blue">receivables</font></font> originate from     sub-prime borrowers</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">reliance on</font> sub-prime <font color="blue">receivables</font> has in the past     (and may in the future) <font color="blue"><font color="blue">negatively</font> impacted</font> our performance</td>
+    </tr>
+    <tr>
+      <td>For example, in     the  fourth  quarter  of 2001, we suffered a substantial loss after we     increased our <font color="blue">discount rate</font> to reflect the <font color="blue">higher rate</font> of return required by     investors in sub-prime markets</td>
+    </tr>
+    <tr>
+      <td>Because our <font color="blue">receivables</font> portfolios are all     of  <font color="blue">substantially</font>  the same character (ie, sub-prime), the increased     <font color="blue">discount rate</font> resulted in a decrease in the value of our retained interests     in our <font color="blue"><font color="blue">securitized</font> <font color="blue">receivables</font></font> portfolios</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">losses might</font> have been     mitigated  had our <font color="blue">portfolios consisted</font> of higher-grade <font color="blue">receivables</font> in     addition  to  our  sub-prime  <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>Because our portfolios are     <font color="blue">undiversified</font>,  negative  market  forces have the potential to cause a     <font color="blue">widespread adverse impact</font></td>
+    </tr>
+    <tr>
+      <td>We have no immediate plans to issue or acquire     <font color="blue">significant</font> <font color="blue">receivables</font> of a <font color="blue">higher quality</font></td>
+    </tr>
+    <tr>
+      <td>Seasonal <font color="blue">consumer spending</font> may result in <font color="blue">fluctuations</font> in our net income</td>
+    </tr>
+    <tr>
+      <td>Our     quarterly  income  may <font color="blue">substantially</font> fluctuate as a result of seasonal     <font color="blue">consumer spending</font></td>
+    </tr>
+    <tr>
+      <td>In particular, our <font color="blue"><font color="blue">customers may</font> charge</font> more and carry     <font color="blue">higher balances during</font> the year-end holiday season and during the late     summer  vacation and back-to-school period, resulting in <font color="blue">corresponding</font>     increases in the <font color="blue">receivables</font> we manage and <font color="blue">subsequently securitize during</font>     those periods</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in <font color="blue">interest rates</font> will increase our cost of funds and may reduce     the <font color="blue">payment performance</font> of our customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in <font color="blue">interest rates</font> will     increase our cost of funds, <font color="blue">which could</font> <font color="blue">significant</font>ly affect our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our credit card <font color="blue">accounts</font> have variable     <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font>increases in these variable <font color="blue">interest rates</font> may     reduce the <font color="blue">payment performance</font> of our customers</td>
+    </tr>
+    <tr>
+      <td>Due to the lack of historical experience with Internet customers, we may not     be  able  to  <font color="blue">successfully</font>  target  these  customers or evaluate their     <font color="blue">creditworthiness</font></td>
+    </tr>
+    <tr>
+      <td>There is <font color="blue">less historical</font> experience <font color="blue">with respect</font> to the     credit                                           17     ______________________________________________________________________    [59]Table of <font color="blue">Contents    </font>[60]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>risk and performance of customers acquired over the Internet</td>
+    </tr>
+    <tr>
+      <td>As part of our     <font color="blue">growth strategy</font>, we are expanding our <font color="blue">origination</font> of <font color="blue">accounts</font> over the     Internet; however, we may not be able to <font color="blue">successfully</font> target and evaluate     the  <font color="blue">creditworthiness</font>  of these <font color="blue">potential customers</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, we may     encounter <font color="blue">difficult</font>ies managing the expected <font color="blue">delinquencies</font> and losses and     <font color="blue">appropriately pricing</font> our products</td>
+    </tr>
+    <tr>
+      <td>All of our <font color="blue">securitization</font> <font color="blue">facilities</font> are of finite duration (and ultimately     will need to be extended or replaced) and contain <font color="blue">conditions</font> that must be     fulfilled in order for funding to be available</td>
+    </tr>
+    <tr>
+      <td>Although our primary credit     card <font color="blue">receivables</font> <font color="blue">facility</font> with <font color="blue">Merrill Lynch </font><font color="blue">alleviates</font> for the foreseeable     future our <font color="blue">principal exposure</font> to advance rate <font color="blue">fluctuations</font>, in the event     that future advance rates (ie, the <font color="blue">percentage on</font> a dollar of <font color="blue">receivables</font>     that <font color="blue">lenders will lend us</font>) for <font color="blue"><font color="blue">securitization</font>s</font> are reduced, investors in     <font color="blue"><font color="blue">securitization</font>s</font>  require a <font color="blue">greater rate</font> of return, we fail to meet the     <font color="blue">requirements</font> for <font color="blue">continued funding</font> or <font color="blue"><font color="blue">securitization</font>s</font> otherwise become     unavailable  to us, we may not be able to maintain or grow our base of     <font color="blue">receivables</font>  or it may be more expensive for us to do so</td>
+    </tr>
+    <tr>
+      <td>In addition,     because of <font color="blue">advance rate limitations</font>, we retain <font color="blue">subordinate interests</font> in our     <font color="blue"><font color="blue">securitization</font>s</font>, the “retained interests,” that must be <font color="blue">funded through</font>     profitable <font color="blue">operations</font>, equity raised from third parties or <font color="blue">funds borrowed</font>     elsewhere</td>
+    </tr>
+    <tr>
+      <td>The  cost and <font color="blue">availability</font> of equity and <font color="blue">borrowed funds</font> is     <font color="blue">dependent upon</font> our <font color="blue">financial performance</font>, the performance of our industry     <font color="blue">generally</font> and <font color="blue">general economic</font> and market <font color="blue">conditions</font>, and has <font color="blue">at times been</font>     <font color="blue">both expensive</font> and <font color="blue">difficult</font> to obtain</td>
+    </tr>
+    <tr>
+      <td>Our growth is <font color="blue">dependent on</font> our ability to add new <font color="blue">securitization</font> <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">finance most</font> of our <font color="blue">receivables</font> through <font color="blue"><font color="blue">securitization</font>s</font></td>
+    </tr>
+    <tr>
+      <td>To the extent we     grow our <font color="blue">receivables</font> <font color="blue">significant</font>ly, our cash <font color="blue">requirements</font> are likely to     exceed the amount of cash we generate from <font color="blue">operations</font>, thus requiring us to     add new <font color="blue">securitization</font> <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Our historic and projected performance     impact whether, on what terms and at what cost we can <font color="blue">sell interests</font> in our     <font color="blue"><font color="blue">securitization</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">additional</font> <font color="blue">securitization</font> <font color="blue">facilities</font> are not available     on terms we consider acceptable, or if existing <font color="blue">securitization</font> <font color="blue">facilities</font>     are not <font color="blue">renewed on terms as</font> favorable as we have now or are not <font color="blue">renewed at</font>     all, we may not be able to grow</td>
+    </tr>
+    <tr>
+      <td>As our <font color="blue">securitization</font> <font color="blue">facilities</font> mature, they will be required to <font color="blue">accumulate</font>     cash that <font color="blue">therefore will</font> not be available for <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Repayment </font>for our     <font color="blue">securitization</font>  <font color="blue">facilities</font>  begins as early as one year prior to their     maturity  dates</td>
+    </tr>
+    <tr>
+      <td>Once repayment begins and until the <font color="blue">facility</font> is paid,     payments  from  customers  on <font color="blue">receivables</font> are <font color="blue">accumulate</font>d to repay the     investors  and  are  no  longer  reinvested in new <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>When a     <font color="blue">securitization</font> <font color="blue">facility</font> matures, the underlying trust continues to own the     <font color="blue">receivables</font> and <font color="blue"><font color="blue">effective</font>ly</font> the maturing <font color="blue">facility</font> maintains its priority in     its right to payments following <font color="blue"><font color="blue">collection</font>s</font> on the underlying <font color="blue">receivables</font>     until it is repaid in full</td>
+    </tr>
+    <tr>
+      <td>As a result, new purchases need to be funded     using debt, equity or a <font color="blue">replacement</font> <font color="blue">facility</font> subordinate to the maturing     <font color="blue">facility</font>’s  interest  in  the  underlying  <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>Although this     <font color="blue">subordination</font>  <font color="blue">historically</font>  has  not made it more <font color="blue">difficult</font> to obtain     <font color="blue">replacement</font> <font color="blue">facilities</font>, it may do so in the future</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">securitization</font>     <font color="blue">facilities</font>  begin  to <font color="blue">accumulate</font> cash and we also are unable to obtain     <font color="blue">additional</font> sources of liquidity, such as debt, equity or new <font color="blue">securitization</font>     <font color="blue">facilities</font> that are <font color="blue">structurally subordinate</font> to the <font color="blue">facilities</font> accumulating     cash, we may be forced to <font color="blue">prohibit new purchases</font> in some or all of our     <font color="blue">accounts</font> in order to <font color="blue">significant</font>ly reduce our need for any <font color="blue">additional</font> cash</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">documents under which</font> the <font color="blue">securitization</font> <font color="blue">facilities</font> are established     provide that, upon the occurrence of <font color="blue">certain adverse events known as early</font>     <font color="blue">redemption</font>  events,  the  timing of payments to the <font color="blue">investors could</font> be     <font color="blue">accelerated</font></td>
+    </tr>
+    <tr>
+      <td>Early <font color="blue">redemption</font> events include <font color="blue">portfolio performance triggers</font>,     the <font color="blue">termination</font> of the <font color="blue">affinity <font color="blue">agreement with</font></font> CB&amp;T, breach of certain     <font color="blue"><font color="blue">representation</font>s</font>, warranties and covenants, insolvency or <font color="blue">receivership</font>,     <font color="blue">servicer defaults</font>, and may include the occurrence of an early <font color="blue">redemption</font>     event <font color="blue">with respect</font> to another <font color="blue">securitization</font> transaction</td>
+    </tr>
+    <tr>
+      <td>In the Merrill     Lynch <font color="blue">facility</font>, an early <font color="blue">redemption</font> event also may be triggered <font color="blue">based on</font> a     <font color="blue">total <font color="blue">consolidate</font>d equity test</font> or a change of control in CompuCredit</td>
+    </tr>
+    <tr>
+      <td>If an     early <font color="blue">redemption</font> event occurs, principal payments would be made to investors     to reduce their interests in our <font color="blue"><font color="blue">securitization</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As investors’ interests in     our <font color="blue"><font color="blue">securitization</font>s</font> decrease, our <font color="blue">liquidity would</font> be <font color="blue"><font color="blue">negatively</font> impacted</font> and     our  financial results may suffer</td>
+    </tr>
+    <tr>
+      <td>We would need to obtain <font color="blue">alternative</font>     sources of funding, and there is <font color="blue">no certainty</font> that we would be able to do     so</td>
+    </tr>
+    <tr>
+      <td>18     ______________________________________________________________________    [61]Table of <font color="blue">Contents    </font>[62]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>We may be unable to obtain <font color="blue">capital from third parties</font> needed to fund our     existing <font color="blue"><font color="blue">securitization</font>s</font> or may be forced to rely on more <font color="blue">expensive funding</font>     sources</td>
+    </tr>
+    <tr>
+      <td>We need equity or <font color="blue">debt capital</font> to fund our retained interests in     our <font color="blue"><font color="blue">securitization</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investors </font>should be aware of our <font color="blue">dependence on third</font>     parties for funding and our exposure to increases in costs for that funding</td>
+    </tr>
+    <tr>
+      <td>External factors, including the <font color="blue">general economy</font>, impact our ability to     obtain funds</td>
+    </tr>
+    <tr>
+      <td>For instance, in late 2001, we needed <font color="blue">additional</font> liquidity to     fund our <font color="blue">operations</font> and the growth in our retained interests, and we had a     <font color="blue">difficult</font> time obtaining the needed cash</td>
+    </tr>
+    <tr>
+      <td>If in the future we need to raise     cash by issuing <font color="blue">additional</font> debt or equity or by selling a portion of our     retained interests, there is <font color="blue">no certainty</font> that we will be able to do so or     that we will be able to do so on favorable terms</td>
+    </tr>
+    <tr>
+      <td>Our ability to raise cash     <font color="blue">will depend on <font color="blue">factors such as</font></font> our performance and <font color="blue">creditworthiness</font>, the     performance of our industry, the performance of issuers of other non-credit     card-based asset backed securities and the <font color="blue">general economy</font></td>
+    </tr>
+    <tr>
+      <td>The timing and volume of <font color="blue"><font color="blue">securitization</font>s</font> may cause <font color="blue">fluctuations</font> in quarterly     income</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in the timing or the volume of <font color="blue">receivables</font> <font color="blue">securitized</font>     will cause <font color="blue">fluctuations</font> in our <font color="blue">quarterly income</font></td>
+    </tr>
+    <tr>
+      <td>Factors that affect the     timing  or  volume  of  our  <font color="blue"><font color="blue">securitization</font>s</font> include the growth in our     <font color="blue">receivables</font>, market <font color="blue">conditions</font> and the <font color="blue">approval by</font> all parties of the terms     of the <font color="blue">securitization</font></td>
+    </tr>
+    <tr>
+      <td>The  performance  of  our  <font color="blue">competitors</font>  may  impact  the  costs of our     <font color="blue">securitization</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Investors </font> in our <font color="blue"><font color="blue">securitization</font>s</font> compare us to other     sub-prime credit <font color="blue">card issuers</font> and, to some degree, our performance is tied     to many of the factors that impact their performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Generally </font>speaking,     our   <font color="blue"><font color="blue">securitization</font>s</font>   investors  also  invest  in  our  <font color="blue">competitors</font>’     <font color="blue"><font color="blue">securitization</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">investors broadly invest</font> in <font color="blue">receivables</font>, and when     they  evaluate their <font color="blue">investment</font>s, they typically do so on the basis of     <font color="blue">overall industry performance</font></td>
+    </tr>
+    <tr>
+      <td>Thus, when our <font color="blue">competitors</font> perform poorly, we     typically experience <font color="blue">negative investor sentiment</font>, and the investors in our     <font color="blue"><font color="blue">securitization</font>s</font>  require greater returns, particularly <font color="blue">with respect</font> to     subordinated  interests</td>
+    </tr>
+    <tr>
+      <td>In the fourth quarter of 2001, for instance,     investors  demanded <font color="blue">unprecedented</font> returns</td>
+    </tr>
+    <tr>
+      <td>In the event that investors     require higher returns and we sell our retained interests at that time, the     total return to the buyer may be <font color="blue">greater than</font> the <font color="blue">discount rate</font> we are using     to value the retained interests in our <font color="blue">financial statements</font></td>
+    </tr>
+    <tr>
+      <td>This would     result in a loss for us at the time of the sale as the <font color="blue">total proceeds from</font>     the sale would be less than the carrying amount of the retained interests in     our <font color="blue">financial statements</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue"><font color="blue">also might</font> increase</font> the <font color="blue">discount rate</font> used to     value  all of our other retained interests, which also would result in     <font color="blue">further losses</font></td>
+    </tr>
+    <tr>
+      <td>Conversely, if we sold our retained interests for a total     return to the investor that was less than our current <font color="blue">discount rate</font>, we     would record <font color="blue">income from</font> the sale, and we would <font color="blue">potentially</font> decrease the     rate used to value all of our other retained interests, which would result     in <font color="blue">additional</font> income</td>
+    </tr>
+    <tr>
+      <td>We may be required to pay to investors in our <font color="blue"><font color="blue">securitization</font>s</font> an amount     equal  to the amount of <font color="blue"><font color="blue">securitized</font> <font color="blue">receivables</font></font> if <font color="blue"><font color="blue">representation</font>s</font> and     warranties made to <font color="blue">us by sellers</font> of the <font color="blue">receivables</font> are <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue"><font color="blue">representation</font>s</font> and warranties made to <font color="blue">us by sellers</font> of <font color="blue">receivables</font> we     <font color="blue">purchased may</font> be <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>We rely on these <font color="blue"><font color="blue">representation</font>s</font> and warranties     when  we  securitize  these  purchased  <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">securitization</font>     <font color="blue">transactions</font>, we make <font color="blue"><font color="blue">representation</font>s</font> and warranties to investors and,     <font color="blue">generally</font>  speaking,  if  there is a breach of our <font color="blue"><font color="blue">representation</font>s</font> and     warranties, then under the terms of the applicable <font color="blue">investment</font> agreement we     could be required to pay the investors the amount of the non-compliant     <font color="blue">receivables</font></td>
+    </tr>
+    <tr>
+      <td>Thus,  our <font color="blue">reliance on</font> a <font color="blue">representation</font> or warranty of a     <font color="blue">receivables</font> seller, which proves to be false and causes a breach of one of     our <font color="blue"><font color="blue">representation</font>s</font> or warranties, could subject us to a <font color="blue">potentially</font> costly     <font color="blue">liability</font></td>
+    </tr>
+    <tr>
+      <td>Our Financial Performance Is, in Part, a Function of the Aggregate Amount of     <font color="blue"><font color="blue">Receivables </font>That Are Outstanding</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">aggregate amount</font> of outstanding <font color="blue">receivables</font> is a function of many     factors  including  purchase  rates,  payment  rates,  <font color="blue">interest rates</font>,     seasonality, <font color="blue">general economic</font> <font color="blue">conditions</font>, <font color="blue">competition</font> from other credit card     issuers and other sources of consumer financing, access to <font color="blue">funding as</font> noted     above and the success of our <font color="blue">marketing efforts</font></td>
+    </tr>
+    <tr>
+      <td>To the extent that we have     over estimated the size or growth of our <font color="blue">receivables</font>, in all likelihood we     have over estimated our future <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>19     ______________________________________________________________________    [63]Table of <font color="blue">Contents    </font>[64]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>Intense  <font color="blue">competition</font> for <font color="blue">customers may</font> cause us to lose <font color="blue">receivables</font> to     <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>We  may lose <font color="blue">receivables</font> to <font color="blue">competitors</font> that <font color="blue">offer lower</font>     <font color="blue">interest rates</font> and fees or other more <font color="blue">attractive terms</font> or features</td>
+    </tr>
+    <tr>
+      <td>We     believe that <font color="blue">customers choose</font> credit <font color="blue">card issuers</font> and other <font color="blue">lenders largely</font>     on  the basis of <font color="blue">interest rates</font>, fees, credit limits and other product     features</td>
+    </tr>
+    <tr>
+      <td>For this reason, customer loyalty is often limited</td>
+    </tr>
+    <tr>
+      <td>Our future     growth  <font color="blue">depends largely upon</font> the success of our <font color="blue">marketing programs</font> and     strategies</td>
+    </tr>
+    <tr>
+      <td>Our credit card business competes with national, regional and     local bank <font color="blue">card issuers</font> and with other <font color="blue">general purpose</font> credit <font color="blue">card issuers</font>,     including  American  Express^®,  Discover^®  and issuers of Visa^® and     MasterCard^® credit cards</td>
+    </tr>
+    <tr>
+      <td>Our other <font color="blue">businesses</font> have substantial <font color="blue">competitors</font>     as well</td>
+    </tr>
+    <tr>
+      <td>Some of these <font color="blue">competitors</font> already may use or may begin using many     of the programs and strategies that we have used to attract new <font color="blue">accounts</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, many of our <font color="blue">competitors</font> are <font color="blue">substantially</font> larger than we are and     have <font color="blue">greater financial resources</font></td>
+    </tr>
+    <tr>
+      <td>Further, the Gramm-Leach-Bliley Act of     1999, which permits the <font color="blue">affiliation</font> of commercial banks, insurance companies     and securities firms, may increase the level of <font color="blue">competition</font> in the financial     <font color="blue">services market</font>, including the credit card business</td>
+    </tr>
+    <tr>
+      <td>We may experience     <font color="blue">fluctuations</font> in net income or sustain net losses if we are not able to     sustain  or  <font color="blue"><font color="blue">effective</font>ly</font>  manage  our growth</td>
+    </tr>
+    <tr>
+      <td>Growth is a product of a     <font color="blue">combination</font>  of factors, many of which are not in our control</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Factors     </font>include:           •   growth in <font color="blue">both existing</font> and new <font color="blue">receivables</font>;           •   the degree to which we lose <font color="blue">receivables</font> to <font color="blue">competitors</font>;           •   levels of <font color="blue">delinquencies</font> and <font color="blue">charge offs</font>;           •   the <font color="blue">availability</font> of funding, including <font color="blue"><font color="blue">securitization</font>s</font>, on favorable     terms;           •   our ability to sell retained <font color="blue">interests on</font> favorable terms;           •   our ability to attract new customers through <font color="blue">origination</font>s or portfolio     purchases;           •   the level of costs of <font color="blue">soliciting new customers</font>;           •   the level of response to our <font color="blue"><font color="blue">solicitation</font>s</font>;           •   our ability to employ and <font color="blue">train new personnel</font>;           •   our ability to maintain adequate <font color="blue">management</font> systems, <font color="blue">collection</font>     procedures, internal controls and <font color="blue">automated systems</font>; and           •   <font color="blue">general economic</font> and other <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">decisions</font> regarding marketing can have a <font color="blue">significant</font> impact on our     growth</td>
+    </tr>
+    <tr>
+      <td>We can increase or decrease the size of our outstanding <font color="blue">receivables</font>     <font color="blue">balances by increasing</font> or <font color="blue">decreasing</font> our <font color="blue">marketing efforts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Marketing </font>is     expensive, and <font color="blue">during periods</font> when we have <font color="blue">less liquidity than</font> we like or     when prospects for <font color="blue">continued liquidity</font> in the future do not <font color="blue">look promising</font>,     we may decide to limit our marketing and thereby our growth</td>
+    </tr>
+    <tr>
+      <td>We decreased     our marketing during 2003, although we increased our marketing in 2004 and     2005 because of our <font color="blue">improved access</font> to <font color="blue">capital attributable</font> to our Merrill     Lynch <font color="blue">securitization</font> <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>Our operating expenses and our ability to <font color="blue"><font color="blue">effective</font>ly</font> service our <font color="blue">accounts</font>     are <font color="blue">dependent on</font> our ability to estimate the <font color="blue">future size</font> and <font color="blue">general growth</font>     rate of the portfolio</td>
+    </tr>
+    <tr>
+      <td>One of our servicing <font color="blue">agreements</font> causes us to make     <font color="blue">additional</font> payments if we <font color="blue">overestimate</font> the size or growth of our business</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">additional</font> payments compensate the servicer for increased staffing     expenses it incurs in <font color="blue">anticipation</font> of our growth</td>
+    </tr>
+    <tr>
+      <td>If we grow more slowly     than  anticipated, we still may have <font color="blue">higher servicing expenses than</font> we     actually need, <font color="blue">thus reducing</font> our net income</td>
+    </tr>
+    <tr>
+      <td><font color="blue">We Operate in a Heavily Regulated Industry</font></td>
+    </tr>
+    <tr>
+      <td>Changes in <font color="blue">bankruptcy</font>, privacy or other <font color="blue">consumer protection laws</font>, or to the     prevailing <font color="blue">interpretation</font> thereof, may expose us to <font color="blue">litigation</font>, <font color="blue">adversely</font>     affect our ability to collect <font color="blue">account balances</font> in <font color="blue">connection with</font>                                           20     ______________________________________________________________________    [65]Table of <font color="blue">Contents    </font>[66]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>our  traditional credit card business, Jefferson Capital’s charged-off     <font color="blue">receivables</font> <font color="blue">operations</font>, auto finance and micro-loan <font color="blue">activities</font>, or otherwise     <font color="blue">adversely</font>  affect  our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Similarly, <font color="blue">regulatory</font> changes could     <font color="blue">adversely</font> affect our ability or <font color="blue">willingness</font> to market credit cards and other     products and services to our customers</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">accounting rules</font> that govern our     business are exceedingly complex, <font color="blue">difficult</font> to apply and in a state of flux</td>
+    </tr>
+    <tr>
+      <td>As a result, how we value our <font color="blue">receivables</font> and otherwise account for our     business (including whether we <font color="blue">consolidate</font> our <font color="blue"><font color="blue">securitization</font>s</font>) is subject     to change depending upon the <font color="blue">interpretation</font> of, and changes in, those rules</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Enforcement </font>actions or inquiries by <font color="blue">regulatory</font> <font color="blue">authorities</font> under consumer     protection  laws and <font color="blue"><font color="blue">regulations</font> may</font> result in changes to our business     practices, may make <font color="blue">collection</font> of <font color="blue">account balances</font> more <font color="blue">difficult</font> or may     expose  us to the risk of fines and <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> and the     <font color="blue">operations</font> of CB&amp;T and the other <font color="blue"><font color="blue">issuing bank</font>s through which</font> we originate     certain <font color="blue">receivables</font> are subject to the <font color="blue">jurisdiction</font> of federal, state and     local  <font color="blue">government</font>  <font color="blue">authorities</font>, including the SEC, the Federal Deposit     Insurance Corporation, the Office of the Comptroller of the Currency, state     <font color="blue">regulators</font>  having  <font color="blue">jurisdiction</font>  <font color="blue">over financial <font color="blue">institutions</font></font> and debt     <font color="blue">origination</font> and debt <font color="blue">collection</font> and state <font color="blue">attorneys general</font></td>
+    </tr>
+    <tr>
+      <td>Our business     practices, including our marketing, servicing and <font color="blue">collection</font> practices and     in some cases the terms of our products, are subject to review by these     <font color="blue">regulatory</font> and <font color="blue">enforcement</font> <font color="blue">authorities</font></td>
+    </tr>
+    <tr>
+      <td>Because of the consumer-oriented     nature of our business, from time to time we receive inquiries and requests     for information from these <font color="blue">regulatory</font> and <font color="blue">enforcement</font> <font color="blue">authorities</font> that can     <font color="blue">range from</font> the <font color="blue"><font color="blue">investigation</font>s</font> of <font color="blue">specific consumer complaints</font> or concerns to     <font color="blue">broader inquiries into</font> our practices <font color="blue">generally</font></td>
+    </tr>
+    <tr>
+      <td>Recently, we received and     responded to inquiries relating to our use of marketing and other materials     in our <font color="blue">solicitation</font> of consumers and our servicing and <font color="blue">collection</font> practices</td>
+    </tr>
+    <tr>
+      <td>The investigating authority has taken the position that <font color="blue">certain specific</font>     practices are not in <font color="blue">compliance with</font> its <font color="blue">interpretation</font> of <font color="blue">applicable law</font>     and has suggested that we take <font color="blue">various remedial actions as</font> a result</td>
+    </tr>
+    <tr>
+      <td>We     believe that our <font color="blue">compliance with</font> the suggested <font color="blue">remedial actions will</font> not     result in a material adverse change in our <font color="blue">financial condition</font>, results of     <font color="blue">operations</font>  or  business</td>
+    </tr>
+    <tr>
+      <td>However,  if any <font color="blue">additional</font> <font color="blue">deficiencies</font> or     violations of law or <font color="blue">regulations</font> <font color="blue">with respect</font> to our practices or marketing     or other materials are identified by us or any <font color="blue">regulatory</font> or <font color="blue">enforcement</font>     <font color="blue">agency as</font> a result of this <font color="blue">particular inquiry</font>, or any other <font color="blue">communications</font>     or  inquiries,  there  can be no assurance that the <font color="blue">correction</font> of such     <font color="blue">deficiencies</font> or <font color="blue">violations would</font> not have a material adverse effect on our     financial  condition,  results of <font color="blue">operations</font> or business</td>
+    </tr>
+    <tr>
+      <td>In addition,     <font color="blue">notwithstanding</font> our policy of full <font color="blue">cooperation</font>, a <font color="blue">regulatory</font> or <font color="blue">enforcement</font>     <font color="blue">authority could</font> require us to change our practices in <font color="blue">specific ways</font> or take     remedial action <font color="blue">with respect</font> to <font color="blue">affected customers</font>, or it could take other     action <font color="blue">against us</font>, such as the imposition of a fine or penalty</td>
+    </tr>
+    <tr>
+      <td>Furthermore,     <font color="blue">negative publicity</font> relating to the <font color="blue">announcement</font> of any <font color="blue">specific inquiry</font> or     <font color="blue">investigation</font>  <font color="blue">could hurt</font> our ability to conduct business <font color="blue">with various</font>     <font color="blue"><font color="blue">industry participant</font>s</font> or attract new <font color="blue">accounts</font> and <font color="blue">could <font color="blue">negatively</font> affect</font>     our  stock  price,  which  would <font color="blue">adversely</font> affect our ability to raise     <font color="blue">additional</font> capital or raise our costs of doing business</td>
+    </tr>
+    <tr>
+      <td>The imposition of     <font color="blue">significant</font>  fines  or  burdensome  remedial  actions, or the negative     <font color="blue">consequences</font> of any <font color="blue">significant</font> or high profile <font color="blue">regulatory</font> or <font color="blue">enforcement</font>     actions  could  <font color="blue">adversely</font>  affect  our <font color="blue">financial condition</font>, results of     <font color="blue">operations</font> or business</td>
+    </tr>
+    <tr>
+      <td>In addition, whether or not we modify our practices when a <font color="blue">regulatory</font> or     <font color="blue">enforcement</font> authority requests or requires that we do so, there is a risk     that  we  or other <font color="blue"><font color="blue">industry participant</font>s</font> may be <font color="blue">named as defendants</font> in     <font color="blue">litigation</font>  involving alleged violations of federal and state laws and     <font color="blue">regulations</font>, including <font color="blue">consumer protection laws</font></td>
+    </tr>
+    <tr>
+      <td>Any failure to <font color="blue">comply with</font>     legal <font color="blue">requirements</font> by us or any other issuer of credit products, including     CB&amp;T,  or  by  us or our agents as the servicer of our <font color="blue">accounts</font>, could     <font color="blue">significant</font>ly impair our ability to collect the full amount of the account     balances</td>
+    </tr>
+    <tr>
+      <td>The institution of any <font color="blue">litigation</font> of this nature, or any judgment     <font color="blue">against us</font> or any other <font color="blue">industry participant</font> in any <font color="blue">litigation</font> of this     nature, could <font color="blue">adversely</font> affect our business and <font color="blue">financial condition</font> in a     variety of ways</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Required  </font>changes  in <font color="blue">minimum payment levels could impact</font> our business     <font color="blue">adversely</font></td>
+    </tr>
+    <tr>
+      <td>Recently, <font color="blue">regulators</font> of credit <font color="blue">card issuers</font> have requested or     required  that  the  issuers  increase  their  <font color="blue">minimum monthly payment</font>     <font color="blue">requirements</font> to prevent so-called “negative amortization</td>
+    </tr>
+    <tr>
+      <td>” To date, none of     our <font color="blue">issuing bank</font>s has required that we change our <font color="blue">minimum payment practices</font>,     although it is possible that they will</td>
+    </tr>
+    <tr>
+      <td>We have not made any <font color="blue">assessment</font> of     the impact of a change in our <font color="blue">minimum payment practices</font> on our business,     although a change in                                           21     ______________________________________________________________________    [67]Table of <font color="blue">Contents    </font>[68]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>response to the <font color="blue">requirements</font> of our <font color="blue">issuing bank</font>s could <font color="blue">adversely</font> impact our     <font color="blue">delinquency</font> and <font color="blue">charge off statistics</font> and the <font color="blue">amounts ultimately collected</font>     from <font color="blue">cardholders</font></td>
+    </tr>
+    <tr>
+      <td>Adverse <font color="blue">regulatory</font> action <font color="blue">with respect</font> to <font color="blue">issuing bank</font>s would <font color="blue">adversely</font>     impact our business</td>
+    </tr>
+    <tr>
+      <td>It is possible that a <font color="blue">regulatory</font> position or action     taken  with  respect to CB&amp;T, or another <font color="blue"><font color="blue">issuing bank</font> through which</font> we     originate <font color="blue">receivables</font> or for whom we service <font color="blue">receivables</font>, might result in     CB&amp;T’s,  or  the other bank’s, <font color="blue">inability</font> or un<font color="blue">willingness</font> to originate     <font color="blue">receivables</font>  on our behalf or in <font color="blue">partnership with us</font></td>
+    </tr>
+    <tr>
+      <td>For instance, in     <font color="blue">February </font>2006 the FDIC <font color="blue"><font color="blue">effective</font>ly</font> asked insured financial <font color="blue">institutions</font> not     to  <font color="blue">issue <font color="blue">cash advance</font></font> and installment micro loans through third-party     servicers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Immediately </font>after this request the <font color="blue">issuing bank</font> for which we     <font color="blue">provide services</font> in four states stopped making new loans</td>
+    </tr>
+    <tr>
+      <td>In the future, the     FDIC or other <font color="blue">regulators</font> may find other aspects of the products that we     originate or <font color="blue">service objectionable</font>, including, for instance, the terms of     the credit offerings (particularly for our <font color="blue">high fee products</font>) or the manner     in  which  we  market  them</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">entirely dependent</font> in our issuing     <font color="blue"><font color="blue">relationship</font>s with</font> these <font color="blue">institutions</font>, and their <font color="blue">regulators</font> could at any     time limit their ability to issue some or all <font color="blue">products on</font> our behalf, or     that we <font color="blue">service on</font> their behalf, or to modify those products <font color="blue">significant</font>ly</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">significant</font> interruption of those <font color="blue"><font color="blue">relationship</font>s would</font> result in our     being unable to originate new <font color="blue">receivables</font>, which would have a <font color="blue">materially</font>     <font color="blue">adverse impact on</font> our business</td>
+    </tr>
+    <tr>
+      <td>Changes to <font color="blue">consumer protection laws</font> or changes in their <font color="blue">interpretation</font> may     impede  <font color="blue">collection</font>  efforts or otherwise <font color="blue">adversely</font> impact our business     practices</td>
+    </tr>
+    <tr>
+      <td>Federal and state <font color="blue">consumer protection laws</font> regulate the creation     and <font color="blue">enforcement</font> of consumer credit card <font color="blue">receivables</font> and other loans</td>
+    </tr>
+    <tr>
+      <td>As an     <font color="blue">originator</font> and servicer of sub-prime <font color="blue">receivables</font>, we typically charge higher     <font color="blue">interest rates</font> and fees than lenders serving consumers with higher credit     scores</td>
+    </tr>
+    <tr>
+      <td>Sub-prime lenders are commonly the target of <font color="blue">legislation</font> (and     revised <font color="blue">legislative</font> <font color="blue">interpretation</font>s) intended to prohibit or curtail these     and other industry-standard practices as well as non-standard practices</td>
+    </tr>
+    <tr>
+      <td>Among others, changes in the <font color="blue">consumer protection laws</font> could result in the     following:           •   <font color="blue">receivables</font> not originated in <font color="blue">compliance with</font> law (or revised     <font color="blue">interpretation</font>s) could become unenforceable and <font color="blue"><font color="blue">uncollectible</font> under</font> their     <font color="blue">terms against</font> the obligors;           •   we may be required to <font color="blue">refund <font color="blue">previously</font> collected amounts</font>;           •   certain of our <font color="blue">collection</font> methods could be prohibited, <font color="blue">forcing us</font> to     revise our practices or adopt more costly or <font color="blue">less <font color="blue">effective</font> practices</font>;           •   federal and state <font color="blue">laws may limit</font> our ability to <font color="blue">recover on</font> charged-off     <font color="blue">receivables</font> regardless of any act or <font color="blue">omission on</font> our part;           •   <font color="blue">reductions</font> in <font color="blue">statutory limits</font> for fees and <font color="blue">finance charges could</font>     cause us to reduce our fees and charges;           •   some of our products and <font color="blue">services could</font> be banned in certain states or     at the <font color="blue">federal level</font>; for example, in 2004 the <font color="blue">State of Georgia </font>made certain     micro-loan practices illegal and <font color="blue">regulatory</font> action and <font color="blue">litigation</font> has been     brought in <font color="blue">North Carolina </font>alleging that certain micro-loan practices are     prohibited in that state; and           •   federal or state <font color="blue">bankruptcy</font> or <font color="blue">debtor relief laws could offer</font>     <font color="blue">additional</font> protections to customers seeking <font color="blue">bankruptcy</font> protection, providing     a <font color="blue">court greater leeway</font> to reduce or discharge <font color="blue">amounts owed</font> to us</td>
+    </tr>
+    <tr>
+      <td>Accordingly, our business is always subject to changes in the <font color="blue">regulatory</font>     <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Changes or <font color="blue">additions</font> to the <font color="blue">consumer protection laws</font> and     related <font color="blue">regulations</font>, or to the prevailing <font color="blue">interpretation</font>s thereof, could     invalidate or <font color="blue">call into question</font> a number of our existing products, services     and business practices, including our credit card <font color="blue">origination</font>, charged-off     receivable <font color="blue">collection</font>, auto finance and micro-loan <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Any material     <font color="blue">regulatory</font> <font color="blue">developments could</font> <font color="blue">adversely</font> impact our results from <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Changes in law may increase our credit losses and <font color="blue">administrative</font> expenses,     restrict the amount of interest and other <font color="blue">charges imposed on</font> the credit card     <font color="blue">accounts</font> or limit our ability to make changes to existing <font color="blue">accounts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Numerous     </font><font color="blue">legislative</font>  and  <font color="blue">regulatory</font> proposals are <font color="blue">advanced each year</font> that, if     adopted,  <font color="blue">could harm</font> our <font color="blue">profitability</font> or limit the manner in which we     conduct our <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>Changes in federal and state <font color="blue">bankruptcy</font> and                                           22     ______________________________________________________________________    [69]Table of <font color="blue">Contents    </font>[70]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>debtor  relief  <font color="blue">laws may increase</font> our credit losses and <font color="blue">administrative</font>     expenses</td>
+    </tr>
+    <tr>
+      <td>More restrictive laws, rules and <font color="blue"><font color="blue">regulations</font> may</font> be adopted in the     future that could make compliance more <font color="blue">difficult</font> or expensive, further     restrict the amount of interest and other charges we can impose on the     credit products we originate or market, target sub-prime lenders, limit our     ability to make changes to the terms of existing <font color="blue">accounts</font> or otherwise     <font color="blue">significant</font>ly harm our business</td>
+    </tr>
+    <tr>
+      <td>Recent  changes  in  <font color="blue">bankruptcy</font> laws may have an <font color="blue">adverse impact on</font> our     performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effective October </font>17, 2005, the federal <font color="blue">bankruptcy</font> code was     amended in <font color="blue">several respects</font></td>
+    </tr>
+    <tr>
+      <td>One of the changes made it <font color="blue">substantially</font> more     <font color="blue">difficult</font> for <font color="blue">individuals</font> to obtain a complete <font color="blue">release from</font> their debts     through a <font color="blue">bankruptcy</font> filing</td>
+    </tr>
+    <tr>
+      <td>As a result, <font color="blue">immediately</font> prior to the <font color="blue">effective</font>     date  of the <font color="blue"><font color="blue">amendments</font> there</font> was a substantial increase in <font color="blue">bankruptcy</font>     filings by <font color="blue">individuals</font></td>
+    </tr>
+    <tr>
+      <td>We are not yet able to <font color="blue">fully assess</font> the impact of     this increase</td>
+    </tr>
+    <tr>
+      <td>Much of the impact appears to have been to <font color="blue">simply accelerate</font>     the <font color="blue">bankruptcy</font> filings by <font color="blue">individuals</font> who <font color="blue">otherwise would</font> have filed in due     course</td>
+    </tr>
+    <tr>
+      <td>Also,  the  <font color="blue">individuals</font>  who filed in many cases already were     <font color="blue">delinquent</font> in payments, whether to us or to others, and their <font color="blue">receivables</font>     already  may  have been considered <font color="blue">uncollectible</font></td>
+    </tr>
+    <tr>
+      <td>We do not expect the     <font color="blue">amendments</font> to have a material long-term impact on our business</td>
+    </tr>
+    <tr>
+      <td>The Retail Micro-Loans segment of our business operates in an <font color="blue">increasingly</font>     hostile <font color="blue">regulatory</font> <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Most states have <font color="blue">specific laws regulating</font>     micro-loan  <font color="blue">activities</font>  and practices (one form of these <font color="blue">activities</font> is     <font color="blue">sometimes referred</font> to as “payday” lending)</td>
+    </tr>
+    <tr>
+      <td>Moreover, during the last few     years,  <font color="blue">legislation</font>  has <font color="blue">been adopted</font> in some states that prohibits or     severely  restricts  micro-loan <font color="blue">cash advance</font> services</td>
+    </tr>
+    <tr>
+      <td>For example, in     May 2004, a new law became <font color="blue">effective</font> in Georgia that <font color="blue"><font color="blue">effective</font>ly</font> prohibits     certain micro-loan practices in the state</td>
+    </tr>
+    <tr>
+      <td>Several other state <font color="blue">legislatures</font>     have introduced bills to restrict or prohibit “<font color="blue">cash advance</font>” micro-loans</td>
+    </tr>
+    <tr>
+      <td>In     addition, <font color="blue">Mississippi and Arizona </font>have <font color="blue">sunset provisions</font> in their laws     permitting  micro-loans  that require renewal of the laws by the state     <font color="blue">legislatures</font> at periodic intervals</td>
+    </tr>
+    <tr>
+      <td>Although states provide the primary     <font color="blue">regulatory</font> framework under which we conduct our micro-loan services, certain     federal  laws  <font color="blue">also impact</font> our business</td>
+    </tr>
+    <tr>
+      <td>In March 2005 the FDIC issued     guidance  limiting  the  frequency  of  <font color="blue">borrower usage</font> of <font color="blue">cash advance</font>     micro-loans  offered  by FDIC supervised <font color="blue">institutions</font> and the period a     <font color="blue">customer may</font> have <font color="blue">cash advance</font> micro-loans outstanding from any lender to     <font color="blue">three months during</font> the previous 12-month period; subsequently, we have only     <font color="blue">recently learned</font> that, during <font color="blue">February </font>2006, the FDIC asked FDIC-insured     financial <font color="blue">institutions</font> to cease <font color="blue">cash advance</font> and installment micro-loan     <font color="blue">activities</font> conducted through a processing and <font color="blue">servicing agent such as us</font></td>
+    </tr>
+    <tr>
+      <td>We     are evaluating the impact of this <font color="blue">regulatory</font> development on our business,     and it could have a material adverse effect on our business, results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, <font color="blue">future laws</font> or <font color="blue">regulations</font> (at     the state, federal or local level) prohibiting micro-loan services or making     <font color="blue">them unprofitable could</font> be passed at any time or existing micro-loan laws     could expire or be amended, any of <font color="blue">which could</font> have a material adverse     effect on our business, results of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Additionally,  state <font color="blue">attorneys general</font>, banking <font color="blue">regulators</font>, and others     continue to scrutinize the micro-loan industry and may take actions that     could require us to cease or suspend <font color="blue">operations</font> in their respective states</td>
+    </tr>
+    <tr>
+      <td>For example, a group of plaintiffs has brought a series of putative class     <font color="blue">action lawsuits</font> in <font color="blue">North Carolina </font>claiming, among other things, that the     <font color="blue">cash advance</font> micro-loan <font color="blue">activities</font> of the <font color="blue">defendants violate numerous</font> North     Carolina  <font color="blue">consumer protection laws</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">lawsuits seek various remedies</font>     including  treble  damages</td>
+    </tr>
+    <tr>
+      <td>One  of these lawsuits is pending against     <font color="blue">CompuCredit </font>and five of our <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>If these cases are determined     <font color="blue">adversely</font> to us, there could be <font color="blue">significant</font> <font color="blue">consequences</font> to us, including     the <font color="blue">inability</font> to continue <font color="blue">cash advance</font> micro-loan servicing <font color="blue">activities</font> in     North  Carolina,  the  <font color="blue">inability</font> to collect loans outstanding in North     Carolina, a potential <font color="blue">impairment</font> in the value of the <font color="blue">goodwill attendant</font> to     the micro-loan business, and the payment of <font color="blue">monetary damages</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">also might</font>     <font color="blue">secede voluntarily</font> (or with the <font color="blue">encouragement</font> of a regulator) to withdraw     from a particular state <font color="blue">which could</font> have a similar effect</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Negative  </font>publicity  <font color="blue">may impair <font color="blue">acceptance</font></font> of our products</td>
+    </tr>
+    <tr>
+      <td>Critics of     sub-prime  credit and micro-loan providers have in the <font color="blue">past focused on</font>     <font color="blue">marketing practices</font> that they claim <font color="blue">encourage consumers</font> to borrow more money     than they should, as well as on pricing practices that they claim are either     confusing or result in prices that are too high</td>
+    </tr>
+    <tr>
+      <td>Consumer groups, <font color="blue"><font color="blue">Internet  </font>   </font>chat sites and media reports frequently characterize sub-prime lenders as     predatory or <font color="blue">abusive toward consumers</font> and <font color="blue">may misinform consumers</font> regarding     their rights</td>
+    </tr>
+    <tr>
+      <td>If these negative                                           23     ______________________________________________________________________    [71]Table of <font color="blue">Contents    </font>[72]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font><font color="blue">characterizations</font> and <font color="blue">misinformation become widely accepted by consumers</font>,     demand for our products and <font color="blue">services could</font> be <font color="blue">adversely</font> impacted</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font>    criticism  of the industry or criticism of us in the future <font color="blue">could hurt</font>     customer  <font color="blue">acceptance</font>  of our products or lead to changes in the law or     <font color="blue">regulatory</font>  <font color="blue">environment</font>,  either of which would <font color="blue">significant</font>ly harm our     business</td>
+    </tr>
+    <tr>
+      <td>We routinely consider <font color="blue"><font color="blue">acquisition</font>s</font> of, or <font color="blue">investment</font>s in, portfolios and     other <font color="blue">businesses</font> as well as the sale of portfolios and portions of our     business</td>
+    </tr>
+    <tr>
+      <td>There  are  a number of <font color="blue">risks attendant</font> to any <font color="blue">acquisition</font>,     including the <font color="blue">possibility</font> that we will overvalue the assets to be purchased,     that we will not be able to <font color="blue">successfully</font> integrate the acquired business or     assets  and  that we will not be able to produce the expected level of     <font color="blue">profitability</font> from the acquired business or assets</td>
+    </tr>
+    <tr>
+      <td>Similarly, there are a     number of <font color="blue">risks attendant</font> to sales, including the <font color="blue">possibility</font> that we will     undervalue the assets to be sold</td>
+    </tr>
+    <tr>
+      <td>As a result, the impact of any <font color="blue">acquisition</font>     or sale on our <font color="blue">future performance</font> may not be as favorable as expected and     <font color="blue">actually may</font> be adverse</td>
+    </tr>
+    <tr>
+      <td>Our  portfolio  purchases  may  cause <font color="blue">fluctuations</font> in reported managed     <font color="blue">receivables</font> data, which may reduce the usefulness of <font color="blue">historical managed loan</font>     data in evaluating our business</td>
+    </tr>
+    <tr>
+      <td>Our reported managed <font color="blue">receivables</font> data may     fluctuate <font color="blue">substantially</font> from quarter to <font color="blue">quarter as</font> a result of recent and     future  portfolio  <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue">December </font>31, 2005, portfolio     <font color="blue"><font color="blue">acquisition</font>s</font> account for 30dtta4prca of our total portfolio <font color="blue">based on</font> our ownership     <font color="blue">percentages</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Receivables </font> </font>included  in <font color="blue">purchased portfolios</font> are likely to have been     <font color="blue">originated using</font> credit criteria <font color="blue">different</font> from our criteria</td>
+    </tr>
+    <tr>
+      <td>As a result,     some of these <font color="blue">receivables</font> have a <font color="blue">different</font> credit quality than <font color="blue">receivables</font>     we originated</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Receivables </font>included in any <font color="blue">particular purchased portfolio</font>     may have <font color="blue">significant</font>ly <font color="blue">different</font> <font color="blue">delinquency</font> rates and <font color="blue">charge off rates than</font>     the <font color="blue">receivables</font> <font color="blue">previously</font> originated and <font color="blue">purchased by us</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">receivables</font>     also may earn <font color="blue">different</font> <font color="blue">interest rates</font> and <font color="blue">fees as compared</font> to other similar     <font color="blue">receivables</font> in our <font color="blue">receivables</font> portfolio</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">variables could</font> cause our     reported managed <font color="blue">receivables</font> data to fluctuate <font color="blue">substantially</font> in future     periods making the <font color="blue">evaluation</font> of our business more <font color="blue">difficult</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">acquisition</font> or <font color="blue">investment</font> that we make, including our recent <font color="blue">acquisition</font>     of Wells Fargo Financial’s CAR business unit and our pending <font color="blue">acquisition</font> of     CardWorks, Inc, will involve risks <font color="blue">different</font> from and in addition to the     risks to which our business is <font color="blue">currently exposed</font></td>
+    </tr>
+    <tr>
+      <td>These include the risks     that  we  will  not  be able to <font color="blue">successfully</font> integrate and operate new     <font color="blue">businesses</font>, that we will have to incur substantial <font color="blue">indebtedness</font> and increase     our leverage in order to pay for the <font color="blue"><font color="blue">acquisition</font>s</font>, that we will be exposed     to, and have to <font color="blue">comply with</font>, <font color="blue">different</font> <font color="blue">regulatory</font> regimes and that we will     not be able to apply our traditional analytical framework (which is what we     expect to be able to do) in a successful and value-enhancing manner</td>
+    </tr>
+    <tr>
+      <td>Other Risks of Our Business        Unless we obtain a <font color="blue">bank charter</font>, we <font color="blue">cannot issue</font> credit cards other than     through <font color="blue">agreements</font> with banks</td>
+    </tr>
+    <tr>
+      <td>Because we do not have a <font color="blue">bank charter</font>, we     currently <font color="blue">cannot issue</font> credit cards other than through <font color="blue">agreements</font> with     banks, and <font color="blue">substantially</font> all of our new credit <font color="blue">card issuances</font> are made under     an <font color="blue">agreement with</font> CB&amp;T Previously we applied for <font color="blue">permission</font> to acquire a     bank and our <font color="blue">application</font> was denied</td>
+    </tr>
+    <tr>
+      <td>Unless we obtain a bank or credit card     <font color="blue">bank charter</font>, we <font color="blue">will continue</font> to <font color="blue">rely upon banking <font color="blue">relationship</font>s</font> like the     CB&amp;T  <font color="blue">relationship</font>  to provide for the issuance of credit cards to our     customers</td>
+    </tr>
+    <tr>
+      <td>Our  current <font color="blue">agreement with</font> CB&amp;T is scheduled to expire on     March 31, 2009</td>
+    </tr>
+    <tr>
+      <td>If we are unable to execute a new <font color="blue">agreement with</font> CB&amp;T at the     expiration of the <font color="blue">current agreement</font> or if our existing or new <font color="blue">agreement with</font>     CB&amp;T were terminated or otherwise disrupted, there is a risk that we would     not be able to <font color="blue">enter into</font> an <font color="blue">agreement with</font> an <font color="blue">alternate provider on terms</font>     that we consider favorable or in a <font color="blue">timely manner without <font color="blue">disruption</font></font> of our     business</td>
+    </tr>
+    <tr>
+      <td>We may not be able to purchase charged-off <font color="blue">receivables</font> at sufficiently     favorable  prices  or terms for our <font color="blue">Jefferson Capital </font><font color="blue">operations</font> to be     successful</td>
+    </tr>
+    <tr>
+      <td>The charged-off <font color="blue">receivables</font> that are acquired and <font color="blue">serviced by</font>                                           24     ______________________________________________________________________    [73]Table of <font color="blue">Contents    </font>[74]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>Jefferson  Capital  or  sold to third parties pursuant to forward flow     contracts have been deemed <font color="blue">uncollectible</font> and written off by the <font color="blue">originator</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Jefferson Capital </font>seeks to purchase charged-off <font color="blue">receivables</font> portfolios where     our projected <font color="blue"><font color="blue">collection</font>s</font> or <font color="blue">purchase price</font> received for the sale of such     charged-off <font color="blue">receivables</font> will exceed our <font color="blue">acquisition</font> costs</td>
+    </tr>
+    <tr>
+      <td>Accordingly,     factors causing the <font color="blue">acquisition</font> price of <font color="blue">targeted portfolios</font> to increase     could  reduce the ratio of <font color="blue"><font color="blue">collection</font>s</font> (or <font color="blue">purchase price</font> received) to     <font color="blue"><font color="blue">acquisition</font>s</font> costs for a <font color="blue">given portfolio</font>, and <font color="blue">thereby <font color="blue">negatively</font> affect</font>     Jefferson  Capital’s  <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">availability</font> of charged-off     <font color="blue">receivables</font> portfolios at favorable prices and on favorable <font color="blue">terms depends on</font>     a number of factors, including the <font color="blue">continuation</font> of the <font color="blue">current growth</font> and     charge  off trends in consumer <font color="blue">receivables</font>, our ability to develop and     maintain long-term <font color="blue"><font color="blue">relationship</font>s with</font> key charged-off receivable sellers,     our  ability  to  obtain  adequate  data to <font color="blue">appropriately evaluate</font> the     <font color="blue">collectibility</font> of portfolios and <font color="blue">competitive factors affecting potential</font>     purchasers  and  sellers of charged-off <font color="blue">receivables</font>, including pricing     pressures, which may increase the cost to us of acquiring portfolios of     charged-off <font color="blue">receivables</font> and reduce our <font color="blue">return on such portfolios</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, sellers of charged-off <font color="blue">receivables</font> <font color="blue">generally</font> make numerous     attempts to <font color="blue">recover on</font> their non-performing <font color="blue">receivables</font>, often using a     <font color="blue">combination</font> of their in-house <font color="blue">collection</font> and <font color="blue">legal departments as well as</font>     third-party <font color="blue">collection</font> agencies</td>
+    </tr>
+    <tr>
+      <td>Charged-off <font color="blue">receivables</font> are <font color="blue">difficult</font> to     collect, and we may not be successful in <font color="blue">collecting amounts sufficient</font> to     cover the <font color="blue">costs associated with purchasing</font> the <font color="blue">receivables</font> and funding our     <font color="blue">Jefferson Capital </font><font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">analytical model</font> we use to project credit <font color="blue">quality may prove</font> to be     <font color="blue">inaccurate</font></td>
+    </tr>
+    <tr>
+      <td>We assess credit <font color="blue">quality using</font> an <font color="blue">analytical model</font> that we     believe predicts the likelihood of payment more <font color="blue">accurately than traditional</font>     credit <font color="blue">scoring models</font></td>
+    </tr>
+    <tr>
+      <td>For instance, we have identified factors (such as     <font color="blue">delinquencies</font>, defaults and <font color="blue">bankruptcies</font>) that under some <font color="blue">circumstances</font> we     weight <font color="blue">different</font>ly than do other credit providers</td>
+    </tr>
+    <tr>
+      <td>We believe our analysis     <font color="blue">enables us</font> to better identify <font color="blue">consumers within</font> the <font color="blue">underserved market</font> who     are likely to be better credit risks than <font color="blue">otherwise would</font> be expected</td>
+    </tr>
+    <tr>
+      <td>Similarly, we apply our <font color="blue">analytical model</font> to <font color="blue">entire portfolios</font> in order to     identify those that may be more valuable than the seller or other potential     <font color="blue">purchasers might</font> recognize</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance, however, that we will     be able to achieve the <font color="blue"><font color="blue">collection</font>s</font> forecasted by our <font color="blue">analytical model</font></td>
+    </tr>
+    <tr>
+      <td>If     any of our <font color="blue">assumptions underlying</font> our model proves <font color="blue">materially</font> <font color="blue">inaccurate</font> or     changes <font color="blue">unexpectedly</font>, we may not be able to achieve our expected levels of     <font color="blue">collection</font>,  and our <font color="blue">revenues will</font> be reduced, <font color="blue">which could</font> result in a     reduction of our earnings</td>
+    </tr>
+    <tr>
+      <td>Because we <font color="blue">outsource account</font>-processing functions that are integral to our     business, any <font color="blue">disruption</font> or <font color="blue">termination</font> of that outsourcing <font color="blue">relationship</font>     could  harm  our business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">outsource account</font> and <font color="blue">payment processing</font>     pursuant to <font color="blue">agreements</font> with CB&amp;T and its <font color="blue">affiliates</font></td>
+    </tr>
+    <tr>
+      <td>In 2005, we paid CB&amp;T     and its <font color="blue">affiliates</font> dlra32dtta0 million for these services</td>
+    </tr>
+    <tr>
+      <td>If these <font color="blue">agreements</font>     were not renewed or terminated or the <font color="blue">services provided</font> to us otherwise     disrupted,  we would have to obtain these <font color="blue">services from</font> an <font color="blue">alternative</font>     provider</td>
+    </tr>
+    <tr>
+      <td>There is a risk that we would not be able to <font color="blue">enter into</font> a similar     <font color="blue">agreement with</font> an <font color="blue">alternate provider on terms</font> that we consider favorable or     in a <font color="blue">timely manner without <font color="blue">disruption</font></font> of our business</td>
+    </tr>
+    <tr>
+      <td>We rely on Visionary Systems, Inc</td>
+    </tr>
+    <tr>
+      <td>for <font color="blue">software design</font> and support, and any     <font color="blue">disruption</font> of our <font color="blue">relationship</font> with <font color="blue">Visionary Systems </font><font color="blue">would <font color="blue">negatively</font></font>     impact our business</td>
+    </tr>
+    <tr>
+      <td>During 2005, we paid <font color="blue">Visionary Systems </font>dlra6dtta1 million for     software development, account <font color="blue">origination</font> and <font color="blue">consulting services</font></td>
+    </tr>
+    <tr>
+      <td>In the     event  that  <font color="blue">Visionary Systems </font>no longer provides us with software and     support,  our  business would be <font color="blue"><font color="blue">negatively</font> impacted</font> until we retained     <font color="blue">replacement</font> vendors</td>
+    </tr>
+    <tr>
+      <td>We believe that a number of vendors are qualified to     perform the services performed by <font color="blue">Visionary Systems </font>and believe that this     impact would be only temporary</td>
+    </tr>
+    <tr>
+      <td>If we obtain a <font color="blue">bank charter</font>, any changes in applicable state or <font color="blue">federal laws</font>     could <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>CardWorks, Inc</td>
+    </tr>
+    <tr>
+      <td>owns a bank, and as     part of our proposed <font color="blue">acquisition</font> of CardWorks, Inc</td>
+    </tr>
+    <tr>
+      <td>we have applied for     <font color="blue">permission</font> to acquire that bank</td>
+    </tr>
+    <tr>
+      <td>We may or may not receive <font color="blue">permission</font> to     acquire that bank, and in the future we may apply for other <font color="blue">charters as</font>     well</td>
+    </tr>
+    <tr>
+      <td>If we obtain a bank or credit card <font color="blue">bank charter</font>, we will be subject to     the various state and federal <font color="blue">regulations</font> <font color="blue">generally</font> applicable to similar     <font color="blue">institutions</font>,  including  <font color="blue">restrictions</font>  on  the ability of the banking     subsidiary to <font color="blue">pay dividends</font> to us</td>
+    </tr>
+    <tr>
+      <td>We are unable to predict the effect of     any future changes of applicable state and <font color="blue">federal laws</font> or <font color="blue">regulations</font>, but     such changes could <font color="blue">adversely</font> affect the bank’s business and <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>25     ______________________________________________________________________    [75]Table of <font color="blue">Contents    </font>[76]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>If we ever <font color="blue">consolidate</font> the entities that hold our <font color="blue">receivables</font>, the changes     to our <font color="blue">financial statements</font> are likely to be <font color="blue">significant</font></td>
+    </tr>
+    <tr>
+      <td>When we securitize     <font color="blue">receivables</font>,  they  are owned <font color="blue">by special purpose entities</font> that are not     <font color="blue">consolidate</font>d with us for financial reporting purposes</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">rules governing</font>     whether these entities are <font color="blue">consolidate</font>d are complex and evolving</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>rules  at  some point could be changed or interpreted in a manner that     requires us to <font color="blue">consolidate</font> these entities</td>
+    </tr>
+    <tr>
+      <td>In addition, we might at some     point <font color="blue">modify how</font> we securitize <font color="blue">receivables</font>, or <font color="blue">propose modifications</font> to     existing <font color="blue">securitization</font> <font color="blue">facilities</font>, such that the <font color="blue">consolidation</font> of these     entities  could  be  required</td>
+    </tr>
+    <tr>
+      <td>If this occurred, we would include the     <font color="blue">receivables</font> as assets on our <font color="blue">balance sheets</font> and also would include a loan     loss  reserve</td>
+    </tr>
+    <tr>
+      <td>Similarly, we <font color="blue">no longer would</font> include the <font color="blue">corresponding</font>     retained <font color="blue">interests as assets</font></td>
+    </tr>
+    <tr>
+      <td>There also would be <font color="blue">significant</font> changes to our     statements of <font color="blue">operations</font> and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>The net effect of <font color="blue">consolidation</font>     would be <font color="blue">dependent upon</font> the amount and nature of the <font color="blue">receivables</font> at the time     they were <font color="blue">consolidate</font>d, and although it is <font color="blue">difficult</font> to predict the net     effect of <font color="blue">consolidation</font>, it is likely to be material</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Internet  </font>security  <font color="blue">breaches could damage</font> our reputation and business</td>
+    </tr>
+    <tr>
+      <td>Internet security <font color="blue">breaches could damage</font> our reputation and business</td>
+    </tr>
+    <tr>
+      <td>As part     of  our  <font color="blue">growth strategy</font>, we may expand our <font color="blue">origination</font> of credit card     <font color="blue">accounts</font>  over  the  Internet</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">secure transmission</font> of <font color="blue">confidential</font>     information  over  the  <font color="blue">Internet  </font>is essential to maintaining consumer     confidence in our products and <font color="blue">services offered online</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Advances </font>in computer     <font color="blue">capabilities</font>,  new <font color="blue">discoveries</font> or other <font color="blue">developments could</font> result in a     compromise  or breach of the <font color="blue">technology used by us</font> to <font color="blue">protect customer</font>     <font color="blue">application</font> and <font color="blue">transaction data transmitted over</font> the Internet</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Security     </font><font color="blue">breaches could damage</font> our reputation and expose us to a risk of loss or     <font color="blue">litigation</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, consumers <font color="blue">generally</font> are <font color="blue">concerned with security</font> and     <font color="blue">privacy on</font> the Internet, and any <font color="blue">publicized security problems could inhibit</font>     the growth of the Internet as a means of conducting commercial <font color="blue">transactions</font></td>
+    </tr>
+    <tr>
+      <td>Our  ability to solicit new <font color="blue">account holders</font> over the Internet would be     <font color="blue">severely impeded</font> if <font color="blue">consumers become unwilling</font> to transmit <font color="blue">confidential</font>     information online</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">recently entered</font> the <font color="blue">automobile lending</font> business</td>
+    </tr>
+    <tr>
+      <td>On April 1, 2005, we     acquired Wells Fargo Financial’s CAR business unit</td>
+    </tr>
+    <tr>
+      <td>We are operating these     assets  in  forty-two  states  through twelve branches, three regional     <font color="blue">processing centers</font> and one national <font color="blue">collection</font> center based in Lake Mary,     Florida under the name CAR Financial Services, Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Automobile </font>lending is a     new business for us, and we expect to <font color="blue">expand further</font> in this business over     time</td>
+    </tr>
+    <tr>
+      <td>As a new business, we may not be able to integrate or manage the     business <font color="blue"><font color="blue">effective</font>ly</font></td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">automobile lending</font> exposes us to a range     of  risks  to which we <font color="blue">previously</font> have not <font color="blue">been exposed</font>, including the     <font color="blue">regulatory</font> scheme that governs installment loans and those attendant to     <font color="blue"><font color="blue">relying upon</font> automobiles</font> and their <font color="blue">liquidation value as collateral</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, this business acquires loans on a <font color="blue">wholesale basis from used car</font>     dealers, for which we will be <font color="blue">relying upon</font> the <font color="blue">legal compliance</font> and credit     de<font color="blue">termination</font>s by those dealers</td>
+    </tr>
+    <tr>
+      <td>Risks Relating to an Investment in Our Common Stock        The price of our <font color="blue">common stock</font> may fluctuate <font color="blue">significant</font>ly, and this may make     it <font color="blue">difficult</font> for you to resell your shares of our <font color="blue">common stock</font> when you want     or at prices you <font color="blue">find attractive</font></td>
+    </tr>
+    <tr>
+      <td>The price of our <font color="blue">common stock</font> on the     <font color="blue">NASDAQ Global Market </font><font color="blue">constantly</font> changes</td>
+    </tr>
+    <tr>
+      <td>We expect that the <font color="blue">market price</font> of     our <font color="blue">common stock</font> <font color="blue">will continue</font> to fluctuate</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our common     <font color="blue">stock may fluctuate</font> in response to <font color="blue">numerous factors</font>, many of which are     beyond our control</td>
+    </tr>
+    <tr>
+      <td>These factors include the following:           •   actual or anticipated <font color="blue">fluctuations</font> in our operating results;           •   changes in <font color="blue">expectations</font> as to our future <font color="blue">financial performance</font>,     including financial estimates <font color="blue">by securities analysts</font> and investors;           •   the operating and <font color="blue">stock performance</font> of our <font color="blue">competitors</font>;           •   <font color="blue">announcement</font>s by us or our <font color="blue">competitors</font> of <font color="blue">new products</font> or services or     <font color="blue">significant</font> contracts, <font color="blue"><font color="blue">acquisition</font>s</font>, strategic partnerships, joint ventures     or <font color="blue">capital commitments</font>;           •   changes in <font color="blue">interest rates</font>;           •   the <font color="blue">announcement</font> of <font color="blue">enforcement</font> actions or <font color="blue"><font color="blue">investigation</font>s</font> <font color="blue">against us</font>     or our <font color="blue">competitors</font> or other <font color="blue">negative publicity</font> relating to us or our     industry;                                           26     ______________________________________________________________________    [77]Table of <font color="blue">Contents    </font>[78]Index to <font color="blue"><font color="blue">Financial Statements</font>       </font>  •   changes in accounting principles <font color="blue">generally</font> accepted in the United     States of America (“GAAP”), laws, <font color="blue">regulations</font> or the <font color="blue">interpretation</font>s thereof     that affect our various business <font color="blue">activities</font> and segments;           •   <font color="blue">general domestic</font> or international economic, market and political     <font color="blue">conditions</font>;           •   <font color="blue">additions</font> or <font color="blue">departures</font> of <font color="blue">key personnel</font>; and           •   <font color="blue">future sales</font> of our <font color="blue">common stock</font> and the share <font color="blue">lending agreement</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">stock markets from</font> time to time experience <font color="blue">extreme price</font>     and volume <font color="blue">fluctuations</font> that may be unrelated or <font color="blue">disproportionate</font> to the     operating performance of companies</td>
+    </tr>
+    <tr>
+      <td>These broad <font color="blue">fluctuations</font> may <font color="blue">adversely</font>     affect the <font color="blue">trading price</font> of our <font color="blue">common stock</font>, regardless of our actual     operating performance</td>
+    </tr>
+    <tr>
+      <td>Future sales of our <font color="blue">common stock</font> or equity-related securities in the public     market,  including sales of our <font color="blue">common stock</font> pursuant to share lending     <font color="blue">agreements</font> or in short sales <font color="blue">transactions</font> by purchasers of convertible notes     securities, could <font color="blue">adversely</font> affect the <font color="blue">trading price</font> of our <font color="blue">common stock</font> and     our ability to <font color="blue">raise funds</font> in <font color="blue">new stock offerings</font></td>
+    </tr>
+    <tr>
+      <td>Sales of <font color="blue">significant</font>     amounts of our <font color="blue">common stock</font> or equity-related securities in the public     market,  including  <font color="blue">sales pursuant</font> to share lending <font color="blue">agreements</font>, or the     <font color="blue">perception</font> that <font color="blue">such sales will</font> occur, could <font color="blue">adversely</font> affect prevailing     <font color="blue">trading price</font>s of our <font color="blue">common stock</font> and <font color="blue">could impair</font> our ability to raise     <font color="blue">capital through future offerings</font> of equity or equity-related securities</td>
+    </tr>
+    <tr>
+      <td>No     prediction can be made as to the effect, if any, that <font color="blue">future sales</font> of shares     of <font color="blue">common stock</font> or the <font color="blue">availability</font> of shares of <font color="blue">common stock</font> for future     sale, including sales of our <font color="blue">common stock</font> in short sales <font color="blue">transactions</font> by     purchasers of the notes, will have on the <font color="blue">trading price</font> of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>We  have  the  ability  to  <font color="blue">issue preferred shares without <font color="blue">shareholder</font></font>     approval</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">common shares</font> may be subordinate to classes of preferred     shares  issued  in  the  future  in the payment of dividends and other     <font color="blue">distributions</font> made <font color="blue">with respect</font> to <font color="blue">common shares</font>, including <font color="blue">distributions</font>     <font color="blue">upon liquidation</font> or <font color="blue">dissolution</font></td>
+    </tr>
+    <tr>
+      <td>Our articles of <font color="blue">incorporation permit</font> our     board  of  <font color="blue">directors</font> to <font color="blue">issue preferred shares without first</font> obtaining     <font color="blue">shareholder</font>  approval</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">issued preferred shares</font>, these <font color="blue">additional</font>     <font color="blue">securities may</font> have dividend or <font color="blue">liquidation preferences senior</font> to the common     shares</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">issue convertible preferred shares</font>, a <font color="blue">subsequent conversion</font>     may dilute the current common <font color="blue">shareholder</font>s’ interest</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">executive officers</font>, <font color="blue">directors</font> and parties related to them, in the     aggregate, control a majority of our <font color="blue">voting stock</font> and may have the ability     to <font color="blue">control matters</font> requiring <font color="blue">shareholder</font> approval</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">executive officers</font>,     <font color="blue">directors</font> and parties related to them own a large <font color="blue">enough stake</font> in us to have     an <font color="blue">influence on</font>, if not control of, the <font color="blue">matters presented</font> to <font color="blue">shareholder</font>s</td>
+    </tr>
+    <tr>
+      <td>As a result, these <font color="blue">shareholder</font>s may have the ability to <font color="blue">control matters</font>     requiring  <font color="blue">shareholder</font> approval, including the election and removal of     <font color="blue">directors</font>, the approval of <font color="blue">significant</font> corporate <font color="blue">transactions</font>, such as any     merger, <font color="blue">consolidation</font> or sale of all or <font color="blue">substantially</font> all of our assets, and     the control of our <font color="blue">management</font> and affairs</td>
+    </tr>
+    <tr>
+      <td>Accordingly, this <font color="blue">concentration</font>     of <font color="blue">ownership may</font> have the effect of delaying, deferring or preventing a     change of control of us, impede a merger, <font color="blue">consolidation</font>, takeover or other     business <font color="blue">combination</font> involving us or discourage a <font color="blue">potential acquirer from</font>     making a <font color="blue">tender offer</font> or <font color="blue">otherwise attempting</font> to obtain control of us, which     in turn could have an adverse effect on the <font color="blue">market price</font> of our common     stock</td>
+    </tr>
+    <tr>
+      <td>Note Regarding Risk <font color="blue">Factors     </font>   The <font color="blue">risks factors presented</font> above are all of the ones that we currently     consider material</td>
+    </tr>
+    <tr>
+      <td>However, they are not the <font color="blue">only ones facing</font> our company</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>risks not <font color="blue">presently known</font> to us, or which we currently consider     immaterial,  may  also  <font color="blue">adversely</font> affect us</td>
+    </tr>
+    <tr>
+      <td>There may be risks that a     <font color="blue">particular investor</font> views <font color="blue">different</font>ly from us, and our <font color="blue">analysis might</font> be     wrong</td>
+    </tr>
+    <tr>
+      <td>If any of the risks that we <font color="blue">face actually</font> occur, our business,     <font color="blue">financial condition</font> and operating results could be <font color="blue">materially</font> <font color="blue">adversely</font>     affected and could differ <font color="blue">materially</font> from any possible results suggested by     any forward-looking statements that we have made or might make</td>
+    </tr>
+    <tr>
+      <td>In such     case, the <font color="blue">trading price</font> of our <font color="blue">common stock</font> could decline, and you could     lose part or all of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">expressly disclaim</font> any <font color="blue">obligation</font> to     update or revise any forward-looking statements, whether as a result of new     information, <font color="blue">future events</font> or otherwise, except as required by law</td>
+    </tr>
+    <tr>
+      <td>27     ______________________________________________________________________    [79]Table of <font color="blue">Contents    </font>[80]Index to <font color="blue">Financial Statements</font></td>
+    </tr>
+  </tbody>
+</table>

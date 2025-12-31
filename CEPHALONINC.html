@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: financial condition", fill: "#00308f"},
+{source: "2: financial condition", target: "2: operations", fill: "#00308f"},
+{source: "2: financial condition", target: "7: Specifically ", fill: "#ffe4c4"},
+{source: "7: Specifically ", target: "7: acceptance", fill: "#ffe4c4"},
+{source: "7: acceptance", target: "7: perception", fill: "#ffe4c4"},
+{source: "7: perception", target: "7: healthcare community", fill: "#ffe4c4"},
+{source: "7: healthcare community", target: "7: efficacy both", fill: "#ffe4c4"},
+{source: "7: efficacy both", target: "7: competing products", fill: "#ffe4c4"},
+{source: "7: competing products", target: "7: effectiveness", fill: "#ffe4c4"},
+{source: "7: effectiveness", target: "7: unfavorable publicity", fill: "#ffe4c4"},
+{source: "7: unfavorable publicity", target: "7: product relative", fill: "#ffe4c4"},
+{source: "7: product relative", target: "7: competing drugs", fill: "#ffe4c4"},
+{source: "7: competing drugs", target: "7: treatments", fill: "#ffe4c4"},
+{source: "7: treatments", target: "7: generic competition", fill: "#ffe4c4"},
+{source: "7: generic competition", target: "7: in the ACTIQ ", fill: "#ffe4c4"},
+{source: "7: in the ACTIQ ", target: "7: government", fill: "#ffe4c4"},
+{source: "7: government", target: "7: thirdparty", fill: "#ffe4c4"},
+{source: "7: thirdparty", target: "7: reimbursement", fill: "#ffe4c4"},
+{source: "7: reimbursement", target: "7: regulatory", fill: "#ffe4c4"},
+{source: "7: regulatory", target: "7: developments", fill: "#ffe4c4"},
+{source: "7: developments", target: "7: affecting", fill: "#ffe4c4"},
+{source: "7: affecting", target: "7: manufacture", fill: "#ffe4c4"},
+{source: "7: Specifically ", target: "13: regulations", fill: "#e0ffff"},
+{source: "13: regulations", target: "13: additional clinical studies", fill: "#e0ffff"},
+{source: "13: additional clinical studies", target: "13: physicians without first", fill: "#e0ffff"},
+{source: "13: physicians without first", target: "13: regulatory approval", fill: "#e0ffff"},
+{source: "13: regulatory approval", target: "13: expanded uses", fill: "#e0ffff"},
+{source: "13: regulations", target: "16: file applications", fill: "#2a52be"},
+{source: "16: file applications", target: "16: patents covering", fill: "#2a52be"},
+{source: "16: patents covering", target: "16: compositions", fill: "#2a52be"},
+{source: "16: compositions", target: "16: drug candidates", fill: "#2a52be"},
+{source: "16: drug candidates", target: "16: proprietary", fill: "#2a52be"},
+{source: "16: file applications", target: "17: pharmaceutical", fill: "#1c39bb"},
+{source: "17: pharmaceutical", target: "17: biotechnology companies", fill: "#1c39bb"},
+{source: "17: biotechnology companies", target: "17: highly uncertain", fill: "#1c39bb"},
+{source: "17: highly uncertain", target: "17: involve complex legal", fill: "#1c39bb"},
+{source: "17: pharmaceutical", target: "52: In February ", fill: "#ace5ee"},
+{source: "52: In February ", target: "52: settle with", fill: "#ace5ee"},
+{source: "52: settle with", target: "52: pending patent infringement dispute", fill: "#ace5ee"},
+{source: "52: pending patent infringement dispute", target: "52: United States ", fill: "#ace5ee"},
+{source: "52: United States ", target: "52: filed with", fill: "#ace5ee"},
+{source: "52: filed with", target: "52: of ACTIQ in the United States ", fill: "#ace5ee"},
+{source: "52: of ACTIQ in the United States ", target: "52: effective on", fill: "#ace5ee"},
+{source: "52: effective on", target: "52: December ", fill: "#ace5ee"},
+{source: "52: In February ", target: "START_HERE", fill: "#ace5ee"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Pharmaceuticals Biotechnology and Life Sciences</td>
+    </tr>
+    <tr>
+      <td>Biotechnology</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Pharmaceuticals</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Collaborate</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Codes,_Rules_and_Regulations">New York Codes, Rules and Regulations</a></td>
+      <td>The New York Codes, Rules and Regulations (NYCRR) contains New York state rules and regulations. The NYCRR is officially compiled by the New York State Department of State's Division of Administrative Rules.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medication">Medication</a></td>
+      <td>Meditation is a practice in which an individual uses a technique – such as mindfulness, or focusing the mind on a particular object, thought, or activity – to train attention and awareness, and achieve a mentally clear and emotionally calm and stable state.Meditation  is practiced in numerous religious traditions. The earliest records of meditation (dhyana) are found in the Upanishads of Hindu philosophy, and meditation plays a salient role in the contemplative repertoire of Buddhism and Hinduism.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pharmaceutics">Pharmaceutics</a></td>
+      <td>Pharmaceutics is the discipline of pharmacy that deals with the process of turning a new chemical entity (NCE) or old drugs into a medication to be used safely and effectively by patients.  It is also called the science of dosage form design.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pharmacy">Pharmacy</a></td>
+      <td>Pharmacy is the clinical health science that links medical science with chemistry and it is charged with the discovery, production, disposal, safe and effective use, and control of medications and drugs. The practice of pharmacy requires excellent knowledge of drugs, their mechanism of action, side effects, interactions, mobility and toxicity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Teva_Pharmaceuticals">Teva Pharmaceuticals</a></td>
+      <td>Teva Pharmaceutical Industries Ltd. (also known as Teva Pharmaceuticals) is an Israeli multinational pharmaceutical company with headquarters in Petah Tikva, Israel.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pharmaceutical_code">Pharmaceutical code</a></td>
+      <td>Pharmaceutical codes are used in medical classification to uniquely identify medication. They may uniquely identify an active ingredient, drug system (including inactive ingredients and time-release agents) in general, or a specific pharmaceutical product from a specific manufacturer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sun_Pharma">Sun Pharma</a></td>
+      <td>Sun Pharmaceutical Industries Limited (d/b/a Sun Pharma) is an Indian multinational pharmaceutical company headquartered in Mumbai, Maharashtra, that manufactures and sells pharmaceutical formulations and active pharmaceutical ingredients (APIs)  in more than 100 countries across the globe. It is largest pharma company in India and the fourth largest specialty generic pharmaceutical company in the world, with a total revenue of over US$4.5 billion as of June 2021.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Janssen_Pharmaceuticals">Janssen Pharmaceuticals</a></td>
+      <td>Janssen Pharmaceuticals is a pharmaceutical company headquartered in Beerse, Belgium, and wholly-owned by Johnson &amp; Johnson. It was founded in 1953 by Paul Janssen.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pharmaceutical_lobby">Pharmaceutical lobby</a></td>
+      <td>The pharmaceutical lobby refers to the representatives of pharmaceutical drug and biomedicine companies who engage in lobbying in favour of pharmaceutical companies and their products.\n\n\n== Political influence in the United States ==\nThe largest pharmaceutical companies and their two trade groups, Pharmaceutical Research and Manufacturers of America (PhRMA) and Biotechnology Innovation Organization, lobbied on at least 1,600 pieces of legislation between 1998 and 2004.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States">United States</a></td>
+      <td>The United States of America (U.S.A. or USA), commonly known as the United States (U.S. or US) or America, is a country primarily located in North America. It consists of 50 states, a federal district, five major unincorporated territories, 326 Indian reservations, and nine minor outlying islands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States">List of states and territories of the United States</a></td>
+      <td>The United States of America is a federal republic consisting of 50 states, a federal district (Washington, D.C., the capital city of the United States), five major territories, and various minor islands. The 48 contiguous states and Washington, D.C., are in North America between Canada and Mexico.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/President_of_the_United_States">President of the United States</a></td>
+      <td>The president of the United States (POTUS) is the head of state and head of government of the United States of America. The president directs the executive branch of the federal government and is the commander-in-chief of the United States Armed Forces.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Navy">United States Navy</a></td>
+      <td>The United States Navy (USN) is the maritime service branch of the United States Armed Forces and one of the eight uniformed services of the United States. It is the largest and most powerful navy in the world, with the estimated tonnage of its active battle fleet alone exceeding the next 13 navies combined, including 11 U.S. allies or partner nations as of 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Congress">United States Congress</a></td>
+      <td>The United States Congress is the legislature of the federal government of the United States. It is bicameral, being composed of a lower body, the House of Representatives, and an upper body, the Senate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_presidents_of_the_United_States">List of presidents of the United States</a></td>
+      <td>The president of the United States is the head of state and head of government of the United States, indirectly elected to a four-year term by the American people through the Electoral College. The office holder leads the executive branch of the federal government and is the commander-in-chief of the United States Armed Forces.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Republican_Party_(United_States)">Republican Party (United States)</a></td>
+      <td>The Republican Party, also referred to as the GOP ("Grand Old Party"), is one of the two major contemporary political parties in the United States, along with its main historic rival, the Democratic Party.\nThe GOP was founded in 1854 by anti-slavery activists who opposed the Kansas–Nebraska Act, which allowed for the potential expansion of chattel slavery into the western territories.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Marine_Corps">United States Marine Corps</a></td>
+      <td>The United States Marine Corps (USMC), also referred to as the United States Marines, is the maritime land force service branch of the United States Armed Forces responsible for conducting expeditionary and amphibious operations through combined arms, implementing its own infantry, artillery, aerial, and special operations forces. The U.S. Marine Corps is one of the eight uniformed services of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_dollar">United States dollar</a></td>
+      <td>The United States dollar (symbol: $; code: USD; also abbreviated US$ or U.S. Dollar, to distinguish it from other dollar-denominated currencies; referred to as the dollar, U.S. dollar, American dollar, or colloquially buck) is the official currency of the United States and several other countries. The Coinage Act of 1792 introduced the U.S. dollar at par with the Spanish silver dollar, divided it into 100 cents, and authorized the minting of coins denominated in dollars and cents.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Democratic_Party_(United_States)">Democratic Party (United States)</a></td>
+      <td>The Democratic Party is one of the two major contemporary political parties in the United States. It was founded in 1828 by supporters of Andrew Jackson, making it the world's oldest active political party.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CEPHALON INC      Item 1A   <font color="blue">Risk Factors   </font>27     ITEM 1A    RISK FACTORS                  You <font color="blue">should carefully</font> consider the <font color="blue">risks described</font> below, in addition     to  the  other  information contained in this report, before making an     <font color="blue">investment</font>  decision</td>
+    </tr>
+    <tr>
+      <td>Our business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font>  could  be  harmed  by  any  of  these risks</td>
+    </tr>
+    <tr>
+      <td>The risks and     <font color="blue">uncertainties described</font> below are not the only ones we face</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional     </font>risks not <font color="blue">presently known</font> to us or other factors not perceived by us to     <font color="blue">present <font color="blue">significant</font> risks</font> to our business at this time <font color="blue">also may impair</font> our     business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of our anticipated 2006 revenues is <font color="blue">derived from</font> our     US  products,  and  our  <font color="blue">future success will depend on</font> the continued     <font color="blue">acceptance</font> and growth of these products</td>
+    </tr>
+    <tr>
+      <td>For the year ended <font color="blue">December </font>31, 2005, approximately 86prca of our     <font color="blue">worldwide net sales</font> were <font color="blue">derived from</font> sales of PROVIGIL, ACTIQ and <font color="blue">GABITRIL  </font>   We cannot be certain that these <font color="blue">products will continue</font> to be accepted in     their markets</td>
+    </tr>
+    <tr>
+      <td>Specifically, the following factors, <font color="blue">among others</font>, could     affect the level of market <font color="blue">acceptance</font> of PROVIGIL, ACTIQ and GABITRIL:          •                 a change in the <font color="blue">perception</font> of the <font color="blue">healthcare <font color="blue">community</font></font> of their                 safety and efficacy, both in an absolute sense and relative to                 that of <font color="blue"><font color="blue">competing product</font>s</font>;          •                 the level and <font color="blue"><font color="blue">effective</font>ness</font> of our sales and <font color="blue">marketing efforts</font>;          •                 any <font color="blue">unfavorable publicity</font> regarding these products or similar                 products;          •                 the price of the <font color="blue">product relative</font> to other <font color="blue">competing drugs</font> or                 <font color="blue">treatments</font>;          •                 the entrance of <font color="blue">generic <font color="blue">competition</font></font> to ACTIQ in late 2006;          •                 any  changes  in  <font color="blue">government</font>  and  other third-party payer                 <font color="blue">reimbursement</font> policies and practices; and          •                 <font color="blue">regulatory</font> <font color="blue"><font color="blue">development</font>s</font> <font color="blue">affecting</font> the <font color="blue">manufacture</font>, marketing or                 use of these products</td>
+    </tr>
+    <tr>
+      <td>Any  adverse  <font color="blue"><font color="blue">development</font>s</font>  <font color="blue">with respect</font> to the sale or use of     PROVIGIL, ACTIQ and GABITRIL could <font color="blue">significant</font>ly reduce our <font color="blue">product revenues</font>     and have a material adverse effect on our ability to <font color="blue">generate net income</font> and     positive net cash flow from <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be <font color="blue">unsuccessful</font> in our efforts to obtain <font color="blue">regulatory</font> approval for new     products or for <font color="blue">new <font color="blue">formulation</font>s</font> or <font color="blue">indications</font> for our <font color="blue">existing products</font>,     which would <font color="blue">significant</font>ly hamper <font color="blue">future sales</font> and <font color="blue">earnings growth</font></td>
+    </tr>
+    <tr>
+      <td>Our long-term prospects, <font color="blue">particularly</font> <font color="blue">with respect</font> to the growth of     our <font color="blue">future sales</font> and earnings, depend to a large extent on our ability to     obtain FDA approval for our near-term product <font color="blue">candidates</font>: NUVIGIL, SPARLON,     FEBT, VIVITROL and GABITRIL for GAD We do not know whether we or, in the     case of VIVITROL, our partner, will succeed in obtaining final <font color="blue">regulatory</font>     approval to market any of these products or what level of market <font color="blue">acceptance</font>     these <font color="blue">products may</font> achieve</td>
+    </tr>
+    <tr>
+      <td>It is <font color="blue">also possible</font> that the sale of a generic     version of ACTIQ by Barr in late 2006 could negatively impact sales of FEBT     For GABITRIL, we have not yet completed Phase 3 studies of the product for     use in treating GAD If the results of some of these <font color="blue">additional</font> studies are     negative or adverse, this could undermine physician and patient comfort with     the  current  product,  limit its <font color="blue">commercial success</font>, and diminish its     <font color="blue">acceptance</font></td>
+    </tr>
+    <tr>
+      <td>Even if the results of these studies are positive, the <font color="blue">impact on</font>     sales of GABITRIL may be <font color="blue">minimal unless</font> we are able to obtain <font color="blue">regulatory</font>     approval to expand the <font color="blue">authorized uses</font> of this product</td>
+    </tr>
+    <tr>
+      <td>FDA <font color="blue">regulations</font>     limit our ability to communicate the results of <font color="blue">additional</font> <font color="blue">clinical studies</font>     to patients and <font color="blue">physicians without first</font> obtaining <font color="blue">regulatory</font> approval for     any <font color="blue">expanded uses</font></td>
+    </tr>
+    <tr>
+      <td>27       _________________________________________________________________       We may not be able to maintain <font color="blue">adequate protection</font> for our <font color="blue">intellectual</font>     property  or  market  <font color="blue">exclusivity</font> for our <font color="blue">key products</font> and, therefore,     <font color="blue"><font color="blue">competitors</font> may</font> develop <font color="blue"><font color="blue">competing product</font>s</font>, <font color="blue">which could</font> result in a decrease     in sales and market share, cause us to <font color="blue">reduce prices</font> to <font color="blue">compete <font color="blue">successfully</font></font>     and limit our <font color="blue">commercial success</font></td>
+    </tr>
+    <tr>
+      <td>We place considerable <font color="blue">importance on</font> obtaining <font color="blue">patent protection</font> for     new <font color="blue">technologies</font>, products and processes</td>
+    </tr>
+    <tr>
+      <td>To that end, we <font color="blue">file <font color="blue"><font color="blue">application</font>s</font></font>     for <font color="blue">patents covering</font> the <font color="blue"><font color="blue">composition</font>s</font> or uses of our <font color="blue">drug <font color="blue">candidates</font></font> or our     <font color="blue">proprietary</font>  processes</td>
+    </tr>
+    <tr>
+      <td>The  patent  positions  of <font color="blue">pharmaceutical</font> and     <font color="blue">bio<font color="blue">technology</font> companies</font> can be <font color="blue">highly uncertain</font> and <font color="blue">involve complex legal</font>,     scientific  and factual questions</td>
+    </tr>
+    <tr>
+      <td>Accordingly, the patents and patent     <font color="blue"><font color="blue">application</font>s</font> relating to our products, product <font color="blue">candidates</font> and <font color="blue">technologies</font>     may be challenged, invalidated or <font color="blue">circumvented</font> by <font color="blue">third parties</font> and might     not protect us against <font color="blue">competitors</font> with similar products or <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>Patent  disputes  in  our  industry  are  frequent  and  can  preclude     <font color="blue">commercialization</font> of products</td>
+    </tr>
+    <tr>
+      <td>If we ultimately engage in and lose any such     disputes, we could be subject to <font color="blue">competition</font> or <font color="blue">significant</font> liabilities, we     could be required to <font color="blue"><font color="blue">enter into</font> <font color="blue">third party</font> licenses</font> or we could be required     to <font color="blue">cease using</font> the <font color="blue">technology</font> or product in dispute</td>
+    </tr>
+    <tr>
+      <td>In addition, even if     <font color="blue">such licenses</font> are available, the terms of any <font color="blue">license requested by</font> a third     <font color="blue">party could</font> be unacceptable to us</td>
+    </tr>
+    <tr>
+      <td>PROVIGIL                The US <font color="blue">composition</font> of matter patent for <font color="blue">modafinil expired</font> in 2001</td>
+    </tr>
+    <tr>
+      <td>We own US and foreign patent rights that expire between 2014 and 2015 and     cover <font color="blue">pharmaceutical</font> <font color="blue"><font color="blue">composition</font>s</font> and uses of modafinil, <font color="blue">specifically</font>,     certain  particle  sizes  of <font color="blue">modafinil contained</font> in the <font color="blue">pharmaceutical</font>     <font color="blue">composition</font></td>
+    </tr>
+    <tr>
+      <td>Ultimately, these patents might be <font color="blue">found invalid as</font> the result     of a <font color="blue">challenge by</font> a <font color="blue">third party</font>, or a <font color="blue">potential competitor could</font> develop a     <font color="blue">competing product</font> or <font color="blue">product <font color="blue">formulation</font></font> that <font color="blue">avoids infringement</font> of these     patents</td>
+    </tr>
+    <tr>
+      <td>While we intend to <font color="blue">vigorously defend</font> the validity of these patents     and <font color="blue">prevent infringement</font>, these <font color="blue">efforts will</font> be <font color="blue">both expensive</font> and time     consuming  and,  ultimately, may not be successful</td>
+    </tr>
+    <tr>
+      <td>The loss of patent     protection for PROVIGIL would <font color="blue">significant</font>ly and <font color="blue">negatively impact future</font>     PROVIGIL sales</td>
+    </tr>
+    <tr>
+      <td>As of the <font color="blue">filing date</font> of this <font color="blue">Annual Report </font>on Form 10-K, we are     aware  of  six  ANDAs <font color="blue">on file with</font> the FDA for <font color="blue">pharmaceutical</font> products     containing  modafinil</td>
+    </tr>
+    <tr>
+      <td>Each  of  these  ANDAs contains a <font color="blue"><font color="blue">Paragraph IV </font>    </font><font color="blue">certification</font>  in  which  the  ANDA  <font color="blue">applicant certified</font> that the US     particle-size modafinil patent covering PROVIGIL either is invalid or will     not be <font color="blue">infringed by</font> the ANDA product</td>
+    </tr>
+    <tr>
+      <td>In March 2003, we filed a patent     infringement lawsuit in the <font color="blue">US District Court in New Jersey </font><font color="blue">against four</font>     companies—Teva Pharmaceuticals USA, Inc, Mylan Pharmaceuticals, Inc,     Ranbaxy Laboratories Limited and Barr Laboratories, Inc</td>
+    </tr>
+    <tr>
+      <td>—<font color="blue">based upon</font> the     ANDAs <font color="blue">filed by each</font> of these <font color="blue">companies with</font> the FDA <font color="blue">seeking approval</font> to     market a generic form of modafinil</td>
+    </tr>
+    <tr>
+      <td>The lawsuit claimed infringement of our     US Patent Nodtta RE37cmam516 ( &amp;quote the  &amp;quote 516 Patent &amp;quote ) which covers the <font color="blue">pharmaceutical</font>     <font color="blue"><font color="blue">composition</font>s</font> and methods of <font color="blue">treatment with</font> the form of <font color="blue">modafinil contained</font>     in PROVIGIL and which expires on October 6, 2014 (subject to a six-month     extension to April 6, 2015 upon <font color="blue">acceptance</font> by the FDA of the <font color="blue">pediatric study</font>     <font color="blue">data submitted by us on</font> <font color="blue">December </font>21, 2005)</td>
+    </tr>
+    <tr>
+      <td>We believe that these four     companies were the first to file ANDAs with <font color="blue">Paragraph IV </font><font color="blue">certification</font>s and     thus are eligible for the 180-day <font color="blue">exclusivity</font> provided by the provisions of     the Federal Food, Drug and Cosmetic Act</td>
+    </tr>
+    <tr>
+      <td>In late 2005 and early 2006, we announced that we had <font color="blue">entered into</font>     <font color="blue"><font color="blue">settlement <font color="blue">agreement</font>s</font> with each</font> of these <font color="blue">four defendants</font></td>
+    </tr>
+    <tr>
+      <td>As part of these     <font color="blue">separate <font color="blue">settlements</font></font>, we agreed to grant to each of Teva, Mylan, Ranbaxy and     Barr a non-exclusive royalty-bearing right to market and sell a generic     version  of  <font color="blue">PROVIGIL in the <font color="blue">United States</font></font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">licenses will become</font>     <font color="blue">effective</font>  in October 2011, unless we obtain a <font color="blue">pediatric extension</font> for     PROVIGIL, <font color="blue">which would permit entry by</font> these firms in April 2012</td>
+    </tr>
+    <tr>
+      <td>An earlier     entry may occur <font color="blue">based upon</font> the entry of another <font color="blue">generic version</font> of PROVIGIL     Each of these <font color="blue">settlements</font> has been <font color="blue">filed with</font> both the FTC and the Antitrust     Division of the DOJ as required by the <font color="blue">Medicare Modernization Act</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The FTC     </font>has <font color="blue">requested from us</font>, and we have provided,                                         28       _________________________________________________________________       certain information in <font color="blue"><font color="blue">connection</font> with</font> its review of the <font color="blue">settlements</font></td>
+    </tr>
+    <tr>
+      <td>The     FTC, the DOJ, or a private <font color="blue">party could</font> challenge in an <font color="blue">administrative</font> or     <font color="blue">judicial proceeding</font> any or all of the <font color="blue">settlements</font> if they believe that the     <font color="blue"><font color="blue">agreement</font>s violate</font> the <font color="blue">antitrust laws</font></td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">settlements</font> are challenged,     there  is  no assurance that we could <font color="blue">successfully</font> <font color="blue">defend against</font> such     challenge and, in that case, we could be subject to, among other things,     damages, fines and <font color="blue">possible invalidation</font> of the <font color="blue">settlement <font color="blue">agreement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In early 2005, we also filed a <font color="blue"><font color="blue">patent infringement</font> lawsuit</font> in the     <font color="blue">US District Court in New Jersey </font>against Carlsbad Technology, Inc</td>
+    </tr>
+    <tr>
+      <td>based     upon the <font color="blue">Paragraph IV </font>ANDA filed related to modafinil that Carlsbad filed     with the <font color="blue">FDA Carlsbad </font>has asserted <font color="blue"><font color="blue">counterclaim</font>s</font> for non-infringement of     the   &amp;quote 516  Patent and <font color="blue">invalidity</font> of the  &amp;quote 516 Patent</td>
+    </tr>
+    <tr>
+      <td>Carlsbad also has     asserted  a  <font color="blue">counterclaim</font>  for  non-infringement  of  our  US Patent     Nodtta 4cmam927cmam855 (which we have not asserted against Carlsbad)</td>
+    </tr>
+    <tr>
+      <td>We have moved     to dismiss all of Carlsbadapstas <font color="blue"><font color="blue">counterclaim</font>s</font>; Carlsbad has opposed the motion,     and  a decision is pending</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Discovery </font>in this action has only recently     commenced</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">ongoing <font color="blue">litigation</font> with</font> Carlsbad is <font color="blue">unaffected by each</font> of     the <font color="blue">settlement <font color="blue">agreement</font>s</font> we have <font color="blue">signed with</font> Teva, Mylan, Ranbaxy and Barr</td>
+    </tr>
+    <tr>
+      <td>also filed a <font color="blue">Paragraph IV </font>ANDA with the FDA seeking to     market a generic form of <font color="blue">PROVIGIL We </font>have not filed a <font color="blue">patent infringement</font>     <font color="blue">lawsuit against</font> Caraco to date</td>
+    </tr>
+    <tr>
+      <td><font color="blue">ACTIQ     </font>           With respect to ACTIQ, we hold an <font color="blue">exclusive license</font> to US patents     covering the currently marketed compressed powder <font color="blue">pharmaceutical</font> <font color="blue">composition</font>     and methods for <font color="blue">administering fentanyl via</font> this <font color="blue">composition</font> that are set to     expire in <font color="blue">September </font>2006</td>
+    </tr>
+    <tr>
+      <td>If we are successful in our efforts to complete a     <font color="blue">clinical study</font> of ACTIQ in pediatric patients prior to <font color="blue">September </font>2006, the     FDA <font color="blue">could grant us six months</font> of <font color="blue">exclusivity</font> beyond this <font color="blue">September </font>2006     <font color="blue">patent expiration</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Corresponding </font>patents in <font color="blue">foreign countries</font> are set to     expire between 2009 and 2010</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">patent protection</font> <font color="blue">with respect</font> to the     ACTIQ <font color="blue">formulation</font> we sold prior to June 2003 expired in May 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">In <font color="blue">February </font></font>2006, we announced that we had agreed to <font color="blue">settle with</font>     Barr our pending <font color="blue">patent infringement</font> dispute in the <font color="blue"><font color="blue">United States</font> </font>related to     Barrapstas ANDA <font color="blue">filed with</font> the FDA seeking to sell a <font color="blue">generic version</font> of <font color="blue">ACTIQ     </font>Under the settlement, we will grant Barr an exclusive royalty bearing right     to  market  and  sell a <font color="blue">generic version</font> of ACTIQ in the <font color="blue">United States</font>,     <font color="blue">effective</font> on <font color="blue">December </font>6, 2006</td>
+    </tr>
+    <tr>
+      <td>This license could become <font color="blue">effective</font> prior to     <font color="blue">December </font>6, 2006 if we receive final FDA approval of FEBT before this date     or if we have not received a <font color="blue">pediatric extension</font> of <font color="blue">exclusivity</font> for <font color="blue">ACTIQ     </font>The entry of Barr with a generic form of ACTIQ likely will <font color="blue">significant</font>ly and     <font color="blue">negatively impact future</font> ACTIQ sales</td>
+    </tr>
+    <tr>
+      <td><font color="blue">GABITRIL  </font>              With respect to GABITRIL, we hold an <font color="blue">exclusive sublicense</font> to four     US <font color="blue">composition</font>-of-matter <font color="blue">patents covering</font> the <font color="blue">currently <font color="blue">approved product</font></font>:     a  patent  claiming  tiagabine, the <font color="blue">active drug</font> substance contained in     GABITRIL; a patent claiming crystalline tiagabine <font color="blue">hydrochloride</font> <font color="blue">monohydrate</font>     and its use as an anti-epileptic agent; a patent claiming the <font color="blue">pharmaceutical</font>     <font color="blue">formulation</font>;  and  a  patent  claiming <font color="blue">anhydrous</font> crystalline tiagabine     <font color="blue">hydrochloride</font> and processes for its <font color="blue">preparation</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">patents currently</font> are     set to expire in 2011, 2012, 2016 and 2017, <font color="blue">respectively</font></td>
+    </tr>
+    <tr>
+      <td>Supplemental     Protection Certificates <font color="blue">based upon</font> corresponding foreign <font color="blue">patents covering</font>     this product are set to expire in 2011</td>
+    </tr>
+    <tr>
+      <td>We also rely on <font color="blue">trade secrets</font>, know-how and <font color="blue">continuing technological</font>     <font color="blue">advancements</font> to support our <font color="blue"><font color="blue">competitive</font> position</font></td>
+    </tr>
+    <tr>
+      <td>Although we have entered     <font color="blue">into confidentiality</font> and <font color="blue">invention rights <font color="blue">agreement</font>s with</font> our employees,     consultants, advisors and <font color="blue">collaborators</font>, these <font color="blue">parties could fail</font> to honor     <font color="blue">such <font color="blue">agreement</font>s</font> or we could be unable to <font color="blue">effective</font>ly protect our rights to     our  unpatented  trade  secrets  and  know-how</td>
+    </tr>
+    <tr>
+      <td>Moreover, <font color="blue">others could</font>     <font color="blue"><font color="blue">independent</font>ly</font> develop <font color="blue">substantially</font> equivalent <font color="blue">proprietary</font>                                         29       _________________________________________________________________       information and <font color="blue">techniques</font> or <font color="blue">otherwise gain access</font> to our <font color="blue">trade secrets</font> and     know-how</td>
+    </tr>
+    <tr>
+      <td>In addition, many of our scientific and <font color="blue"><font color="blue">management</font> personnel</font> have     <font color="blue">been recruited from</font> other bio<font color="blue">technology</font> and <font color="blue">pharmaceutical</font> companies where     they were <font color="blue">conducting research</font> in areas similar to those that we now pursue</td>
+    </tr>
+    <tr>
+      <td>As a result, we could be subject to <font color="blue">allegations</font> of trade secret violations     and other claims</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">activities</font>  and  products  are  subject to <font color="blue">significant</font> <font color="blue">government</font>     <font color="blue">regulations</font>  and approvals, which are <font color="blue">often costly</font> and could result in     <font color="blue">adverse consequences</font> to our business if we fail to comply</td>
+    </tr>
+    <tr>
+      <td>We currently have a number of products that have <font color="blue">been approved</font> for     sale in the <font color="blue">United States</font>, <font color="blue">foreign countries</font> or both</td>
+    </tr>
+    <tr>
+      <td>All of our approved     products are subject to extensive continuing <font color="blue">regulations</font> relating to, among     other  things,  testing, <font color="blue">manufacturing</font>, quality control, labeling, and     promotion</td>
+    </tr>
+    <tr>
+      <td>The failure to <font color="blue">comply with</font> any rules and <font color="blue">regulations</font> of the FDA     or  any  foreign  medical authority, or the post-approval <font color="blue">discovery</font> of     <font color="blue">previously unknown problems</font> relating to our products, could result in, among     other things:          •                 fines, recalls or seizures of products;          •                 total or <font color="blue">partial suspension</font> of <font color="blue">manufacturing</font> or commercial                 <font color="blue">activities</font>;          •                 non-approval of product license <font color="blue"><font color="blue">application</font>s</font>;          •                 <font color="blue">restrictions</font>  on  our  ability  to  enter  into  strategic                 <font color="blue">relationships</font>; and          •                 <font color="blue">criminal prosecution</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">September </font>2004, we announced that we had received <font color="blue">subpoenas from</font>     the US Attorneyapstas Office in Philadelphia</td>
+    </tr>
+    <tr>
+      <td>That <font color="blue">same month</font>, we received a     voluntary  request  for information from the Office of the Connecticut     Attorney  General</td>
+    </tr>
+    <tr>
+      <td>Both  the  subpoenas and the <font color="blue">voluntary request</font> for     information  appear  to be <font color="blue">focused on</font> Cephalonapstas sales and promotional     practices <font color="blue">with respect</font> to ACTIQ, GABITRIL and PROVIGIL, including the extent     of off-label prescribing of our <font color="blue">products by physicians</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">cooperating</font>     with the US Attorneyapstas Office and the Office of the Connecticut Attorney     General and are providing <font color="blue">documents</font> and other information to <font color="blue">both offices</font> in     response to these and <font color="blue">additional</font> requests</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">matters may involve</font> the     bringing of <font color="blue">criminal charges</font> and fines, and/or civil penalties</td>
+    </tr>
+    <tr>
+      <td>We cannot     predict or determine the outcome of these matters or <font color="blue">reasonably</font> estimate the     amount or range of amounts of any fines or penalties that might result from     an  <font color="blue">adverse outcome</font></td>
+    </tr>
+    <tr>
+      <td>However, an <font color="blue">adverse outcome</font> could have a material     adverse  effect  on  our  financial position, liquidity and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>It is <font color="blue">both costly</font> and time-consuming for us to <font color="blue">comply with</font> these     inquiries  and with the extensive <font color="blue">regulations</font> to which we are subject</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">incidents</font> of <font color="blue">adverse drug reaction</font>s, unintended side effects     or misuse relating to our <font color="blue">products could</font> result in <font color="blue">additional</font> <font color="blue">regulatory</font>     controls or <font color="blue">restrictions</font>, or even lead to withdrawal of a <font color="blue">product from</font> the     market</td>
+    </tr>
+    <tr>
+      <td>With  respect  to our product <font color="blue">candidates</font>, we <font color="blue">conduct research</font>,     <font color="blue">preclinical testing</font> and <font color="blue"><font color="blue">clinical trial</font>s</font>, each of which requires us to comply     with  extensive <font color="blue">government</font> <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot market</font> these product     <font color="blue">candidates</font> or these new <font color="blue">indications</font> in the <font color="blue"><font color="blue">United States</font> </font>or other countries     without receiving <font color="blue">approval from</font> the FDA or the <font color="blue"><font color="blue">appropriate</font> foreign medical</font>     authority</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">approval process</font> is <font color="blue">highly uncertain</font> and requires substantial     time,  effort and <font color="blue">financial resources</font></td>
+    </tr>
+    <tr>
+      <td>Ultimately, we may never obtain     approval in a <font color="blue">timely manner</font>, or at all</td>
+    </tr>
+    <tr>
+      <td>Without these required approvals,     our ability to <font color="blue"><font color="blue">substantially</font> grow revenues</font> in the <font color="blue">future could</font> be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>In addition, because our products <font color="blue">PROVIGIL and ACTIQ </font>and our product     <font color="blue">candidates</font> SPARLON, NUVIGIL and FEBT <font color="blue">contain active ingredients</font> that are     <font color="blue">controlled substances</font>, we are subject to <font color="blue">regulation by</font> the DEA and <font color="blue">analogous</font>     foreign <font color="blue">organizations</font> relating to the <font color="blue">manufacture</font>, shipment, sale and use of     the <font color="blue">applicable products</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">regulations</font> also are <font color="blue">imposed on prescribing</font>     physicians and other <font color="blue">third parties</font>, making the storage, transport and use of     <font color="blue"><font color="blue">such products</font> <font color="blue">relatively</font> complicated</font> and                                         30       _________________________________________________________________       expensive</td>
+    </tr>
+    <tr>
+      <td>With the increased concern for safety by <font color="blue">the FDA and the DEA </font>with     respect to products containing <font color="blue">controlled substances</font> and the heightened     level of <font color="blue">media attention given</font> to this issue, it is possible that these     <font color="blue">regulatory</font> agencies could impose <font color="blue">additional</font> <font color="blue">restrictions</font> on marketing or     even withdraw <font color="blue">regulatory</font> approval for <font color="blue">such products</font></td>
+    </tr>
+    <tr>
+      <td>In addition, adverse     publicity  may  bring  about a rejection of the <font color="blue">product by</font> the medical     <font color="blue">community</font></td>
+    </tr>
+    <tr>
+      <td>If the DEA, FDA or a <font color="blue">foreign medical authority withdrew</font> the     approval of, or placed <font color="blue">additional</font> <font color="blue">significant</font> <font color="blue">restrictions</font> on the marketing     of any of our products, our ability to promote our products and product     <font color="blue">sales could</font> be <font color="blue"><font color="blue">substantially</font> affected</font></td>
+    </tr>
+    <tr>
+      <td>We rely on <font color="blue">third parties</font> for the <font color="blue">timely supply</font> of <font color="blue">specified raw</font>     materials, equipment, contract <font color="blue">manufacturing</font>, <font color="blue">formulation</font> or packaging     services, product <font color="blue">distribution</font> services, customer service <font color="blue">activities</font> and     <font color="blue">product returns processing</font></td>
+    </tr>
+    <tr>
+      <td>Although we <font color="blue">actively manage</font> these <font color="blue">third party</font>     <font color="blue">relationships</font> to <font color="blue">ensure continuity</font> and quality, some <font color="blue">events beyond</font> our     <font color="blue">control could</font> result in the complete or <font color="blue">partial failure</font> of these goods and     services</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such failure could</font> have a material adverse effect on our     <font color="blue">financial condition</font> and result of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Manufacturing,  supply  and  <font color="blue">distribution</font>  problems  may create supply     <font color="blue"><font color="blue">disruption</font>s</font> that could result in a reduction of <font color="blue"><font color="blue">product sales</font> revenue</font> and an     increase  in  costs  of sales, and <font color="blue">damage <font color="blue">commercial prospects</font></font> for our     products</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">manufacture</font>, supply and <font color="blue">distribution</font> of <font color="blue">pharmaceutical</font> products,     both inside and outside the <font color="blue">United States</font>, is <font color="blue">highly regulated</font> and complex</td>
+    </tr>
+    <tr>
+      <td>We,  and  the  third  parties  we  rely upon for the <font color="blue">manufacturing</font> and     <font color="blue">distribution</font> of our products, must <font color="blue">comply with</font> all applicable <font color="blue">regulatory</font>     <font color="blue">requirements</font> of the FDA and foreign <font color="blue">authorities</font>, including cGMP <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we must <font color="blue">comply with</font> all applicable <font color="blue">regulatory</font> <font color="blue">requirements</font> of     the DEA and <font color="blue">analogous</font> foreign <font color="blue">authorities</font> for certain of our products that     contain <font color="blue">controlled substances</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">facilities</font> used</font> to <font color="blue">manufacture</font>, store and     distribute  our  <font color="blue">products also</font> are subject to inspection by <font color="blue">regulatory</font>     <font color="blue">authorities</font> at any time to determine compliance with <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">regulations</font> are complex, and any failure to <font color="blue">comply with</font> them could lead to     remedial action, civil and <font color="blue">criminal penalties</font> and delays in production or     <font color="blue">distribution</font> of material</td>
+    </tr>
+    <tr>
+      <td>For certain of our products and near-term product <font color="blue">candidates</font> in the     <font color="blue"><font color="blue">United States</font> </font>and abroad, we depend upon single sources for the <font color="blue">manufacture</font>     of  both  the <font color="blue">active drug</font> substances contained in our products and for     finished  commercial  supplies</td>
+    </tr>
+    <tr>
+      <td>The  process  of changing or adding a     <font color="blue">manufacture</font>r or changing a <font color="blue">formulation</font> requires prior FDA and/or <font color="blue">European     </font><font color="blue">medical authority approval</font> and is very time-consuming</td>
+    </tr>
+    <tr>
+      <td>If we are unable to     manage this process <font color="blue">effective</font>ly or if an <font color="blue">unforeseen event</font> occurs at any     <font color="blue">facility</font>, we could face supply <font color="blue"><font color="blue">disruption</font>s</font> that would result in <font color="blue">significant</font>     costs  and  delays, undermine goodwill established with physicians and     patients, <font color="blue">damage <font color="blue">commercial prospects</font></font> for our products and <font color="blue">adversely</font> affect     operating results</td>
+    </tr>
+    <tr>
+      <td>With respect to VIVITROL, <font color="blue">Alkermes </font>is obligated to provide to us     finished <font color="blue">commercial supplies</font> of the <font color="blue">product under</font> the terms of a supply     <font color="blue">agreement</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">While <font color="blue">Alkermes </font></font>has <font color="blue">manufacture</font>d VIVITROL in small quantities for     use  in  clinical  trials, we cannot be sure that they will be able to     <font color="blue">successfully</font> <font color="blue">manufacture</font> VIVITROL at a <font color="blue">commercial scale</font> in a timely or     <font color="blue">economical manner</font>, or at all, if the product is <font color="blue">approved by</font> the FDA If     <font color="blue">Alkermes </font>is unable to <font color="blue">successfully</font> increase its <font color="blue">manufacturing</font> scale or     <font color="blue">capacity</font>, the <font color="blue">commercial launch</font> of VIVITROL could be delayed or <font color="blue">there could</font>     be a shortage in supply of the product, either of <font color="blue"><font color="blue">which could</font> harm</font> the     <font color="blue">commercial prospects</font> for the product</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">Alkermes </font>is responsible     for the <font color="blue">entire supply chain</font> for VIVITROL, including the sourcing of raw     materials and active <font color="blue">pharmaceutical</font> agents from <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Alkermes </font>has     <font color="blue">no previous</font> experience in managing a complex, cGMP supply chain and issues     with its <font color="blue">supply sources could impair</font> its ability to supply VIVITROL under     the supply <font color="blue">agreement</font> and have a material adverse effect on our commercial     prospects for <font color="blue">VIVITROL                                         </font>31       _________________________________________________________________       As our products are used <font color="blue">commercially</font>, unintended side effects, adverse     reactions or <font color="blue">incidents</font> of <font color="blue">misuse may</font> occur that could result in <font color="blue">additional</font>     <font color="blue">regulatory</font> controls, <font color="blue">adverse publicity</font> and <font color="blue">reduced sales</font> of our products</td>
+    </tr>
+    <tr>
+      <td>During research and <font color="blue">development</font>, the use of <font color="blue">pharmaceutical</font> products,     such  as ours, is limited <font color="blue">principally</font> to <font color="blue"><font color="blue">clinical trial</font> patients under</font>     controlled  <font color="blue">conditions</font>  and  under  the care of <font color="blue">expert physicians</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">widespread <font color="blue">commercial use</font></font> of our <font color="blue">products could</font> identify undesirable or     unintended side effects that have not <font color="blue">been evident</font> in our <font color="blue"><font color="blue">clinical trial</font>s</font> or     the <font color="blue">relatively</font> limited <font color="blue">commercial use</font> to date</td>
+    </tr>
+    <tr>
+      <td>For example, in <font color="blue"><font color="blue">February </font>    </font>2005, working with the FDA, we updated our prescribing information for     <font color="blue">GABITRIL  </font>to include a bolded warning <font color="blue">describing</font> the risk of new onset     seizures in non-induced <font color="blue">patients with</font>out epilepsy</td>
+    </tr>
+    <tr>
+      <td>In addition, in patients     who take multiple medications, drug interactions could occur that can be     <font color="blue">difficult</font> to predict</td>
+    </tr>
+    <tr>
+      <td>Additionally, <font color="blue">incidents</font> of product misuse, product     diversion or theft may occur, <font color="blue">particularly</font> <font color="blue">with respect</font> to <font color="blue">products such as</font>     ACTIQ and PROVIGIL, which contain <font color="blue">controlled substances</font></td>
+    </tr>
+    <tr>
+      <td>These events, among     others,  could  result  in <font color="blue">adverse publicity</font> that harms the commercial     prospects of our products or lead to <font color="blue">additional</font> <font color="blue">regulatory</font> controls that     <font color="blue">could limit</font> the <font color="blue">circumstances under which</font> the product is prescribed or even     lead to the withdrawal of the <font color="blue">product from</font> the market</td>
+    </tr>
+    <tr>
+      <td>In particular, <font color="blue">ACTIQ     </font>has <font color="blue">been approved</font> under <font color="blue">regulations</font> concerning drugs with certain safety     profiles, under which the FDA has established special <font color="blue">restrictions</font> to ensure     safe use</td>
+    </tr>
+    <tr>
+      <td>Any violation of these special <font color="blue">restrictions</font> could lead to the     imposition of further <font color="blue">restrictions</font> or withdrawal of the <font color="blue">product from</font> the     market</td>
+    </tr>
+    <tr>
+      <td>We face <font color="blue">significant</font> <font color="blue">product <font color="blue">liability</font></font> risks, which may have a negative     effect on our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">administration</font> of drugs to humans, whether in <font color="blue"><font color="blue">clinical trial</font>s</font> or     <font color="blue">commercially</font>, can result in <font color="blue">product <font color="blue">liability</font></font> claims whether or not the     drugs are <font color="blue">actually at fault</font> for causing an injury</td>
+    </tr>
+    <tr>
+      <td>Furthermore, our products     may cause, or may appear to have caused, adverse side effects (including     death) or <font color="blue">potentially dangerous drug interactions</font> that we may not learn     about or understand <font color="blue">fully until</font> the drug has <font color="blue">been administered</font> to patients     for some time</td>
+    </tr>
+    <tr>
+      <td>As our products are used more widely and in <font color="blue">patients with</font>     varying medical <font color="blue">conditions</font>, the likelihood of an <font color="blue">adverse drug reaction</font>,     unintended  side  effect  or incidence of <font color="blue">misuse may</font> increase</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Product     </font><font color="blue">liability</font>  claims  can  be expensive to defend and may result in large     judgments or <font color="blue">settlements</font> against us, <font color="blue">which could</font> have a negative effect on     our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>The cost of <font color="blue">product <font color="blue">liability</font></font> insurance has     increased in <font color="blue">recent years</font>, and the <font color="blue">availability</font> of coverage has decreased</td>
+    </tr>
+    <tr>
+      <td>Nevertheless, we maintain <font color="blue">product <font color="blue">liability</font></font> insurance in amounts we believe     to be <font color="blue">commercially</font> reasonable but which would be unlikely to cover the     potential <font color="blue">liability</font> associated with a <font color="blue">significant</font> unforeseen safety issue</td>
+    </tr>
+    <tr>
+      <td>Any  claims <font color="blue">could easily exceed</font> our <font color="blue">current coverage limits</font></td>
+    </tr>
+    <tr>
+      <td>Even if a     <font color="blue">product <font color="blue">liability</font></font> claim is not successful, the <font color="blue">adverse publicity</font> and time     and expense of <font color="blue">defending such</font> a claim <font color="blue">may interfere with</font> our business</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">product sales</font> and related financial results <font color="blue">will fluctuate</font>, and these     <font color="blue"><font color="blue">fluctuations</font> may</font> cause our stock price to fall, especially if investors do     not anticipate them</td>
+    </tr>
+    <tr>
+      <td>A  number  of analysts and investors who follow our stock have     developed models to attempt to forecast future <font color="blue">product sales</font> and expenses,     and have established earnings <font color="blue">expectations</font> <font color="blue">based upon</font> those models</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>models, in turn, are based in part on estimates of projected revenue and     earnings  that  we  disclose  publicly</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Forecasting </font><font color="blue">future revenues</font> is     <font color="blue">difficult</font>, especially when we only have a few years of <font color="blue">commercial history</font>     and when the level of market <font color="blue">acceptance</font> of our products is changing rapidly</td>
+    </tr>
+    <tr>
+      <td>As a result, it is <font color="blue">reasonably</font> likely that our <font color="blue">product sales</font> <font color="blue">will fluctuate</font>     to an extent, which may not <font color="blue">meet with market <font color="blue">expectations</font></font> and <font color="blue">which also may</font>     <font color="blue">adversely</font> affect our stock price</td>
+    </tr>
+    <tr>
+      <td>There are a number of other factors that     could cause our financial results to <font color="blue">fluctuate unexpectedly</font>, including:          •                 cost of <font color="blue">product sales</font>;                                         32       _________________________________________________________________       •            <font color="blue">achievement</font> and timing of research and <font color="blue">development</font> milestones;     •            <font color="blue">collaboration revenues</font>;     •            cost and timing of <font color="blue"><font color="blue">clinical trial</font>s</font>, <font color="blue">regulatory</font> approvals and product            launches;     •            marketing and other expenses;     •            <font color="blue">manufacturing</font> or supply <font color="blue"><font color="blue">disruption</font>s</font>; and     •            <font color="blue">costs associated with</font> the <font color="blue">operations</font> of recently-acquired <font color="blue">businesses</font>            and <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>We  may  be  unable  to  repay  our substantial <font color="blue">indebtedness</font> and other     <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>During the fourth quarter of 2005, our 2dtta0prca Notes <font color="blue">became convertible</font>     and,  in January 2006, our 2008 and 2010 <font color="blue">Zero Coupon Notes </font>also became     convertible</td>
+    </tr>
+    <tr>
+      <td>As a result, the 2dtta0prca Notes have been classified as a current     <font color="blue">liability</font> on our <font color="blue">balance sheet as</font> of <font color="blue">December </font>31, 2005 (see Note 9 of our     <font color="blue">Consolidated Financial Statements </font>included in Part II, Item 8 of this Annual     Report on Form 10-K for summary of our <font color="blue">convertible debt</font>, note hedges and     <font color="blue">call warrants</font>) and, as of the <font color="blue">filing date</font> of this report, our Zero Coupon     Notes  are  now  also considered to be <font color="blue">current liabilities</font></td>
+    </tr>
+    <tr>
+      <td>All of our     convertible notes are presently convertible and, under the terms of the     indentures governing the notes, we are obligated to repay in cash and common     stock  the <font color="blue">aggregate <font color="blue">principal balance</font></font> of any such notes presented for     <font color="blue">conversion</font></td>
+    </tr>
+    <tr>
+      <td>As of the <font color="blue">filing date</font> of this report, we do not have available     cash,  <font color="blue">cash equivalents</font> and <font color="blue">investment</font>s sufficient to repay all of the     convertible notes, if presented</td>
+    </tr>
+    <tr>
+      <td>In addition, there are no <font color="blue">restrictions</font> on     our  use of this cash and the <font color="blue">cash available</font> to repay <font color="blue">indebtedness</font> may     <font color="blue">decline over</font> time</td>
+    </tr>
+    <tr>
+      <td>If we do not have <font color="blue">sufficient funds available</font> to repay the     <font color="blue">principal balance</font> of notes presented for <font color="blue">conversion</font>, we will be required to     raise <font color="blue">additional</font> funds</td>
+    </tr>
+    <tr>
+      <td>Because the financing markets may be unwilling to     provide funding to us or may only be willing to provide funding on terms     that we would consider unacceptable, we may not have <font color="blue">cash available</font> or be     able to obtain funding to permit us to meet our repayment <font color="blue">obligations</font>, thus     <font color="blue">adversely</font> <font color="blue">affecting</font> the <font color="blue">market price</font> for our securities</td>
+    </tr>
+    <tr>
+      <td>Our research and <font color="blue">development</font> and <font color="blue">marketing efforts</font> are <font color="blue">often dependent on</font>     corporate  <font color="blue">collaborators</font>  and  other  <font color="blue">third parties</font> who may not devote     sufficient time, resources and attention to our programs, which may limit     our efforts to develop and <font color="blue">market potential products</font></td>
+    </tr>
+    <tr>
+      <td>To maximize our <font color="blue">growth opportunities</font>, we have <font color="blue">entered into</font> a number     of collaboration <font color="blue">agreement</font>s with <font color="blue">third parties</font></td>
+    </tr>
+    <tr>
+      <td>For example, in the United     States,  we are party to an <font color="blue">agreement</font> with McNeil Consumer &amp; Specialty     Pharmaceuticals  Division  of McNeil-PPC, Inc</td>
+    </tr>
+    <tr>
+      <td>under which McNeil will     co-promote SPARLON, our <font color="blue">proprietary</font> pediatric <font color="blue">formulation</font> of modafinil for     ADHD, for up to <font color="blue">three years</font> following the <font color="blue">commercial launch</font> of the product,     if <font color="blue">approved by</font> FDA Our ability to <font color="blue">successfully</font> commercialize SPARLON will     depend to a <font color="blue">significant</font> degree on the efforts of our partner</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If McNeil     </font>fails  to  meet  its  <font color="blue">obligations</font> under the co-promotion <font color="blue">agreement</font>, is     in<font color="blue">effective</font> in its efforts, or determines to terminate the <font color="blue">agreement</font> prior     to the end of its term, the launch and <font color="blue">subsequent marketing</font> of SPARLON could     be <font color="blue">materially</font> and <font color="blue">negatively impacted</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, if McNeil elects to     terminate the <font color="blue">agreement</font> early as provided for by the <font color="blue">agreement</font>, we may be     <font color="blue">unsuccessful</font> in our efforts to hire the McNeil sales representatives, as     <font color="blue">permitted under</font> the <font color="blue">agreement</font>, or in our efforts to promote SPARLON on our     own</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">certain countries outside</font> the <font color="blue">United States</font>, we have <font color="blue">entered into</font>     <font color="blue">agreement</font>s  with a number of partners <font color="blue">with respect</font> to the <font color="blue">development</font>,     <font color="blue">manufacturing</font>  and  marketing  of  our  products</td>
+    </tr>
+    <tr>
+      <td>In  some cases, our     collaboration <font color="blue">agreement</font>s call for our partners to control:          •                 the supply of bulk or <font color="blue">formulated drugs</font> for use in clinical                 trials or for <font color="blue">commercial use</font>;          •                 the design and execution of <font color="blue">clinical studies</font>;                                         33       _________________________________________________________________       •            the process of obtaining <font color="blue">regulatory</font> approval to market the product;            and/or     •            marketing and selling of an <font color="blue">approved product</font></td>
+    </tr>
+    <tr>
+      <td>In each of these areas, our <font color="blue">partners may</font> not <font color="blue">support fully</font> our     research and <font color="blue">commercial interests</font> because our <font color="blue"><font color="blue">program may</font> compete</font> for time,     attention  and  resources  with the <font color="blue">internal programs</font> of our corporate     <font color="blue">collaborators</font></td>
+    </tr>
+    <tr>
+      <td>As such, our <font color="blue">program may</font> not move forward as <font color="blue">effective</font>ly, or     advance as rapidly, as it might if we had retained complete control of all     research, <font color="blue">development</font>, <font color="blue">regulatory</font> and <font color="blue">commercialization</font> <font color="blue">decisions</font></td>
+    </tr>
+    <tr>
+      <td>We also     rely  on  some  of these <font color="blue">collaborators</font> and other <font color="blue">third parties</font> for the     production of compounds and the <font color="blue">manufacture</font> and supply of <font color="blue">pharmaceutical</font>     products</td>
+    </tr>
+    <tr>
+      <td>Additionally, we may find it <font color="blue">necessary from</font> time to time to seek     new or <font color="blue">additional</font> partners to <font color="blue">assist us</font> in <font color="blue">commercializing</font> our products,     though we <font color="blue">ultimately might</font> not be successful in <font color="blue">establishing</font> any such new or     <font color="blue">additional</font> <font color="blue">relationships</font></td>
+    </tr>
+    <tr>
+      <td>The efforts of <font color="blue">government</font> entities and <font color="blue">third party</font> payers to contain or     reduce the costs of health care may <font color="blue">adversely</font> affect our sales and limit the     <font color="blue">commercial success</font> of our products</td>
+    </tr>
+    <tr>
+      <td>In  certain  foreign  markets,  pricing  or  <font color="blue">profitability</font>  of     <font color="blue">pharmaceutical</font> products is subject to <font color="blue">various forms</font> of direct and indirect     <font color="blue">government</font>al  control,  including  the  control  over  the  amount  of     <font color="blue">reimbursement</font>s  provided  to  the  patient  who is <font color="blue">prescribed specific</font>     <font color="blue">pharmaceutical</font> products</td>
+    </tr>
+    <tr>
+      <td>For example, we are aware of <font color="blue">government</font>al efforts     in France to limit or eliminate <font color="blue">reimbursement</font> for some of our products,     <font color="blue">particularly</font> SPASFON and FONZYLANE, <font color="blue"><font color="blue">which could</font> impact revenues from</font> our     French <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In the <font color="blue">United States</font>, there have been, and we expect <font color="blue">there will</font>     continue  to  be, <font color="blue">various proposals</font> to implement similar controls</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">commercial success</font> of our <font color="blue">products could</font> be limited if federal or state     <font color="blue">government</font>s adopt any <font color="blue">such proposals</font></td>
+    </tr>
+    <tr>
+      <td>In addition, in the <font color="blue"><font color="blue">United States</font> </font>and     elsewhere,  sales  of  <font color="blue">pharmaceutical</font>  products  depend in part on the     <font color="blue">availability</font> of <font color="blue">reimbursement</font> to the consumer from <font color="blue">third party</font> payers, such     as <font color="blue">government</font> and <font color="blue">private insurance</font> plans</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">third party</font> payers are     <font color="blue">increasingly utilizing</font> their <font color="blue">significant</font> purchasing power to challenge the     <font color="blue">prices charged</font> for <font color="blue">pharmaceutical</font> products and seek to limit <font color="blue">reimbursement</font>     <font color="blue">levels offered</font> to consumers for <font color="blue">such products</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, many <font color="blue">government</font>s     and <font color="blue">private insurance</font> plans have instituted <font color="blue">reimbursement</font> schemes that favor     the <font color="blue">substitution</font> of generic <font color="blue">pharmaceutical</font>s for more expensive brand-name     <font color="blue">pharmaceutical</font>s</td>
+    </tr>
+    <tr>
+      <td>In the <font color="blue"><font color="blue">United States</font> </font>in particular, generic <font color="blue">substitution</font>     statutes have been enacted in virtually all states and permit or require the     dispensing <font color="blue">pharmacist</font> to substitute a less expensive generic drug instead of     an original branded drug</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">third party</font> payers could focus their cost     <font color="blue">control efforts on</font> our products, especially <font color="blue">with respect</font> to prices of and     <font color="blue">reimbursement</font>  levels  for  products  <font color="blue">prescribed outside</font> their labeled     <font color="blue">indications</font></td>
+    </tr>
+    <tr>
+      <td>In these cases, their <font color="blue">efforts could negatively impact</font> our     <font color="blue">product sales</font> and <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On January </font>1, 2006, the US Department of Health &amp; Human Services     began  <font color="blue">implementing</font>  Medicare  Part D  in <font color="blue">accordance</font> with the Medicare     Modernization Act</td>
+    </tr>
+    <tr>
+      <td>Under this plan, <font color="blue">voluntary prescription drug coverage</font>,     <font color="blue">subsidized by</font> Medicare, is offered to over 40 million Medicare <font color="blue">beneficiaries</font>     through  <font color="blue">competing private prescription drug</font> plans (PDPs) and Medicare     Advantage (MA) plans</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font> the <font color="blue">potential impact</font> that this     <font color="blue">program will</font> have on our business, as it is not <font color="blue">clear how</font> the law will be     <font color="blue">implemented by regulators</font> or received <font color="blue">by consumers</font> and physicians</td>
+    </tr>
+    <tr>
+      <td>While the     overall usage of <font color="blue">pharmaceutical</font>s may <font color="blue">increase as</font> the result of the expanded     access to <font color="blue">prescription drugs afforded under</font> Medicare Part D, this may be     offset by reduced <font color="blue">pharmaceutical</font> prices resulting from limited coverage of     <font color="blue">particular products</font> in a <font color="blue">therapeutic</font> category and the <font color="blue">enhanced purchasing</font>     power <font color="blue">of the <font color="blue">Medicare Part D </font></font>plan sponsors</td>
+    </tr>
+    <tr>
+      <td>In addition, it is unclear what     impact this <font color="blue">legislation will</font> have on the pricing, rebates and <font color="blue">discounts</font> for     our products</td>
+    </tr>
+    <tr>
+      <td>34       _________________________________________________________________       We experience intense <font color="blue">competition</font> in our fields of interest, which may     <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>Large and small companies, academic institutions, <font color="blue">government</font>al     agencies  and  other public and private research <font color="blue">organizations</font> conduct     research, seek <font color="blue">patent protection</font> and establish <font color="blue">collaborative</font> <font color="blue">arrangements</font>     for product <font color="blue">development</font> in <font color="blue">competition</font> with us</td>
+    </tr>
+    <tr>
+      <td>Products developed by any of     these  <font color="blue">entities may compete directly with</font> those we develop or sell</td>
+    </tr>
+    <tr>
+      <td>In     addition, ACTIQ will face <font color="blue">generic <font color="blue">competition</font></font> in late 2006</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">conditions</font> that our <font color="blue">products treat</font>, and some of the other     disorders for which we are conducting <font color="blue">additional</font> studies, are currently     <font color="blue">treated with</font> many drugs, several of which have <font color="blue">been available</font> for a number     of years or are available in <font color="blue"><font color="blue">inexpensive generic</font> forms</font></td>
+    </tr>
+    <tr>
+      <td>With respect to     PROVIGIL, and, if approved, NUVIGIL, there are several other <font color="blue">products used</font>     for  the treatment of <font color="blue">excessive sleepiness</font> or <font color="blue">narcolepsy</font> in the United     States, including methylphenidate <font color="blue">products such as</font> RITALIN® by Novartis, and     in our other <font color="blue">territories</font>, many of which have <font color="blue">been available</font> for a number of     years and are available in <font color="blue"><font color="blue">inexpensive generic</font> forms</font></td>
+    </tr>
+    <tr>
+      <td>If we are successful     in obtaining final FDA approval of SPARLON, we <font color="blue">will face well established</font>     and  intense <font color="blue">competition</font> from stimulants such as RITALIN® by Novartis,     STRATERRA®  by  Eli  Lilly,  and  CONCERTA® by McNeil, <font color="blue">as well as from</font>     <font color="blue">amphetamines such as</font> DEXEDRINE® by GlaxoSmithKline and ADDERALL® by Shire</td>
+    </tr>
+    <tr>
+      <td>With respect to ACTIQ and, if approved, FEBT, we face <font color="blue">competition</font> from     numerous   short-and  long-acting  opioid  products,  including  three     products—Johnson &amp;  Johnsonapstas  DURAGESIC®  and Purdue Pharmaceuticalapstas     OXYCONTIN® and MS-CONTIN®—that dominate the market</td>
+    </tr>
+    <tr>
+      <td>In addition, we are     aware of numerous other companies developing other <font color="blue">technologies</font> for rapidly     delivering opioids to <font color="blue">treat breakthrough pain</font>, including <font color="blue">transmucosal</font>,     transdermal, nasal spray and inhaled delivery systems, <font color="blue">among others</font>, that     <font color="blue">will compete against</font> ACTIQ and, if approved, FEBT With respect to GABITRIL,     there are <font color="blue">several products</font>, including NEURONTIN® (gabapentin) by Pfizer,     <font color="blue">used as adjunctive therapy</font> for the <font color="blue">partial seizure market</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     several <font color="blue">treatments</font> for <font color="blue">partial seizures</font> are available in <font color="blue">inexpensive generic</font>     forms</td>
+    </tr>
+    <tr>
+      <td>If we are successful in our efforts to expand the label of <font color="blue">GABITRIL  </font>   to include anxiety disorders, we will face <font color="blue">significant</font> <font color="blue">competition</font> from     well-established <font color="blue">Selective Serotonin Reuptake Inhibitor </font><font color="blue">products such as</font>     Paxil®,  Effexor  XR®  and  Lexapro®</td>
+    </tr>
+    <tr>
+      <td>With  respect  to TRISENOX, the     <font color="blue">pharmaceutical</font>  market  for the treatment of <font color="blue">patients with</font> relapsed or     <font color="blue">refractory</font> APL is served by a number of available <font color="blue">therapeutic</font>s, <font color="blue">particularly</font>     those that are indicated for the treatment of hematologic cancers, such as     THALOMID® by Celgene and VELCADE® by <font color="blue">Millennium Pharmaceuticals</font></td>
+    </tr>
+    <tr>
+      <td>For all of     our products, we need to <font color="blue">demonstrate</font> to physicians, patients and <font color="blue">third party</font>     payers that the cost of our products is reasonable and <font color="blue">appropriate</font> in the     light of their safety and efficacy, the price of <font color="blue"><font color="blue">competing product</font>s</font> and the     related <font color="blue">health care benefits</font> to the patient</td>
+    </tr>
+    <tr>
+      <td>Many  of  our  <font color="blue">competitors</font>  have <font color="blue">substantially</font> greater capital     resources, research and <font color="blue">development</font> staffs and <font color="blue">facilities</font> than we have, and     <font color="blue">substantially</font> greater experience in conducting <font color="blue"><font color="blue">clinical trial</font>s</font>, obtaining     <font color="blue">regulatory</font>  approvals  and  <font color="blue">manufacturing</font> and marketing <font color="blue">pharmaceutical</font>     products</td>
+    </tr>
+    <tr>
+      <td>These entities represent <font color="blue">significant</font> <font color="blue">competition</font> for us</td>
+    </tr>
+    <tr>
+      <td>In     addition, <font color="blue">competitors</font> who are developing products for the treatment of     neurological  or  oncological  disorders  might  succeed in developing     <font color="blue">technologies</font> and products that are more <font color="blue">effective</font> than any that we develop     or  sell  or that would render our <font color="blue">technology</font> and <font color="blue">products obsolete</font> or     <font color="blue">non<font color="blue">competitive</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>and innovation from these or other sources,     including advances in current treatment methods, could potentially affect     sales of our <font color="blue">products negatively</font> or make our <font color="blue">products obsolete</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore,     we may be at a <font color="blue"><font color="blue">competitive</font> marketing disadvantage against companies</font> that     have <font color="blue">broader product lines</font> and <font color="blue">whose sales personnel</font> are able to offer more     <font color="blue">complementary products than</font> we can</td>
+    </tr>
+    <tr>
+      <td>Any failure to maintain our <font color="blue">competitive</font>     position could <font color="blue">adversely</font> affect our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>35       _________________________________________________________________       We plan to consider and, as <font color="blue">appropriate</font>, make <font color="blue"><font color="blue">acquisition</font>s</font> of <font color="blue">technologies</font>,     products and <font color="blue">businesses</font>, which may subject us to a number of risks and/or     result in us experiencing <font color="blue">significant</font> charges to earnings that may <font color="blue">adversely</font>     affect our stock price, operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>As part of our efforts to acquire <font color="blue">businesses</font> or to <font color="blue">enter into</font> other     <font color="blue">significant</font> <font color="blue">transaction</font>s, we conduct business, legal and <font color="blue">financial due</font>     diligence  with  the goal of identifying and evaluating material risks     involved in the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>Despite our efforts, we <font color="blue">ultimately may</font> be     <font color="blue">unsuccessful</font> in ascertaining or evaluating all such risks and, as a result,     we might not realize the <font color="blue">intended advantages</font> of the <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>If we fail     to realize the expected benefits from <font color="blue"><font color="blue">acquisition</font>s</font> we <font color="blue">may consummate</font> in the     future, whether as a result of unidentified risks, integration <font color="blue">difficult</font>ies,     <font color="blue">regulatory</font> setbacks or other events, our business, results of <font color="blue">operations</font> and     <font color="blue">financial condition</font> could be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>For example, in <font color="blue">connection</font>     with  our recent <font color="blue"><font color="blue">acquisition</font>s</font> of Zeneus, Salmedix and TRISENOX and the     license and collaboration <font color="blue">agreement</font> with Alkermes, we estimated the values     of these <font color="blue">transaction</font>s by making certain assumptions about, among other     things, likelihood of <font color="blue">regulatory</font> approval for un<font color="blue">approved product</font>s and the     market  potential  for  each  of the <font color="blue">marketed products</font> and the product     <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>Ultimately, our <font color="blue">assumptions may prove</font> to be incorrect, which     could  cause  us  to fail to realize the anticipated benefits of these     <font color="blue">transaction</font>s</td>
+    </tr>
+    <tr>
+      <td>In  addition, we have experienced, and <font color="blue">will likely continue</font> to     experience,  <font color="blue">significant</font> charges to earnings related to our efforts to     consummate  <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>For  <font color="blue">transaction</font>s  that  ultimately are not     consummated, these <font color="blue">charges may</font> include fees and expenses for <font color="blue">investment</font>     bankers, attorneys, accountants and other advisers in <font color="blue"><font color="blue">connection</font> with</font> our     efforts</td>
+    </tr>
+    <tr>
+      <td>Even if our efforts are successful, we <font color="blue">may incur as</font> part of a     <font color="blue">transaction</font>  substantial charges for closure <font color="blue">costs associated with</font> the     <font color="blue">elimination</font> of duplicate <font color="blue">operations</font> and <font color="blue">facilities</font> and acquired in-process     research and <font color="blue">development</font> charges</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">either case</font>, the incurrence of these     charges could <font color="blue">adversely</font> affect our results of <font color="blue">operations</font> for particular     quarterly or <font color="blue">annual periods</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">successfully</font> <font color="blue">consolidate</font> and integrate the <font color="blue">operations</font> of     <font color="blue">businesses</font> we acquire, which may <font color="blue">adversely</font> affect our stock price, operating     results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>We  must  <font color="blue">consolidate</font> and integrate the <font color="blue">operations</font> of acquired     <font color="blue">businesses</font>  with  our business</td>
+    </tr>
+    <tr>
+      <td>During the past year, we completed the     <font color="blue"><font color="blue">acquisition</font>s</font> of Zeneus and Salmedix, <font color="blue">purchased assets</font> related to TRISENOX,     <font color="blue">entered into</font> a license <font color="blue">agreement</font> with <font color="blue">Alkermes </font>for VIVITROL, and executed a     co-promotion <font color="blue">agreement</font> with McNeil for SPARLON Integration <font color="blue">efforts often</font>     take  a  <font color="blue">significant</font> amount of time, place a <font color="blue">significant</font> strain on our     managerial, operational and <font color="blue">financial resources</font> and <font color="blue">could prove</font> to be more     <font color="blue">difficult</font> and <font color="blue">expensive than</font> we predicted</td>
+    </tr>
+    <tr>
+      <td>The diversion of our <font color="blue">management</font>apstas     attention and any delays or <font color="blue">difficult</font>ies encountered in <font color="blue"><font color="blue">connection</font> with</font>     these recent <font color="blue"><font color="blue">acquisition</font>s</font>, any future <font color="blue"><font color="blue">acquisition</font>s</font> we <font color="blue">may consummate</font>, could     result in the <font color="blue">disruption</font> of our ongoing business or <font color="blue">inconsistencies</font> in     standards, controls, procedures and policies that <font color="blue">could negatively affect</font>     our ability to maintain <font color="blue">relationships</font> with customers, suppliers, employees     and <font color="blue">others with whom</font> we have business dealings</td>
+    </tr>
+    <tr>
+      <td>The results and timing of our research and <font color="blue">development</font> <font color="blue">activities</font>, including     future <font color="blue"><font color="blue">clinical trial</font>s</font>, are <font color="blue">difficult</font> to predict, subject to potential     <font color="blue">future setbacks</font> and, ultimately, may not result in viable <font color="blue">pharmaceutical</font>     products, which may <font color="blue">adversely</font> affect our business</td>
+    </tr>
+    <tr>
+      <td>In order to sustain our business, we focus substantial <font color="blue">resources on</font>     the  search  for new <font color="blue">pharmaceutical</font> products</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">activities</font> include     engaging  in  <font color="blue">discovery</font>  research  and process <font color="blue">development</font>, conducting     preclinical and <font color="blue">clinical studies</font> and seeking <font color="blue">regulatory</font> approval in the     <font color="blue"><font color="blue">United States</font> </font>and abroad</td>
+    </tr>
+    <tr>
+      <td>In all of these areas, we have <font color="blue">relatively</font> limited     resources  and  compete  against  larger, multinational <font color="blue">pharmaceutical</font>     companies</td>
+    </tr>
+    <tr>
+      <td>Moreover, even if we undertake these <font color="blue">activities</font> in an <font color="blue">effective</font>     and efficient manner, <font color="blue">regulatory</font> approval for the sale of new <font color="blue">pharmaceutical</font>     products  remains  highly  uncertain because the majority of compounds     discovered do not enter <font color="blue">clinical studies</font> and the                                         36       _________________________________________________________________       majority  of  <font color="blue">therapeutic</font> <font color="blue">candidates</font> fail to show the <font color="blue">human safety</font> and     <font color="blue">efficacy necessary</font> for <font color="blue">regulatory</font> approval and successful <font color="blue">commercialization</font></td>
+    </tr>
+    <tr>
+      <td>In the <font color="blue">pharmaceutical</font> business, the research and <font color="blue">development</font> process     can  take up to 12 years, or even longer, from <font color="blue">discovery</font> to commercial     product launch</td>
+    </tr>
+    <tr>
+      <td>During <font color="blue">each stage</font> of this process, there is a substantial     risk of failure</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Preclinical </font>testing and <font color="blue"><font color="blue">clinical trial</font>s</font> must <font color="blue">demonstrate</font>     that  a  product  candidate  is safe and <font color="blue">efficacious</font></td>
+    </tr>
+    <tr>
+      <td>The results from     <font color="blue">preclinical testing</font> and early <font color="blue"><font color="blue">clinical trial</font>s</font> may not be predictive of     results obtained in subsequent <font color="blue"><font color="blue">clinical trial</font>s</font>, and these <font color="blue"><font color="blue">clinical trial</font>s</font>     may not <font color="blue">demonstrate</font> the safety and <font color="blue">efficacy necessary</font> to obtain <font color="blue">regulatory</font>     approval  for  any  product  <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>A number of companies in the     bio<font color="blue">technology</font>  and <font color="blue">pharmaceutical</font> <font color="blue">industries</font> have suffered <font color="blue">significant</font>     setbacks in advanced <font color="blue"><font color="blue">clinical trial</font>s</font>, even after obtaining promising results     in  earlier  trials</td>
+    </tr>
+    <tr>
+      <td>For ethical reasons, certain <font color="blue"><font color="blue">clinical trial</font>s</font> are     <font color="blue">conducted with patients</font> having the <font color="blue">most advanced stages</font> of disease and who     have failed <font color="blue">treatment with</font> alternative therapies</td>
+    </tr>
+    <tr>
+      <td>During the course of     treatment, these patients often die or suffer other adverse medical effects     for  reasons that may not be related to the <font color="blue">pharmaceutical</font> agent being     tested</td>
+    </tr>
+    <tr>
+      <td>Such events can have a negative <font color="blue">impact on</font> the <font color="blue">statistical analysis</font>     of <font color="blue">clinical trial</font> results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">completion</font> of <font color="blue"><font color="blue">clinical trial</font>s</font> of our product <font color="blue">candidates</font> may be     <font color="blue">delayed by</font> many factors, including the rate of <font color="blue">enrollment</font> of patients</td>
+    </tr>
+    <tr>
+      <td>Neither we nor our <font color="blue">collaborators</font> can control the rate at which patients     <font color="blue">present themselves</font> for <font color="blue">enrollment</font>, and the rate of patient <font color="blue">enrollment</font> may     not be <font color="blue">consistent with</font> our <font color="blue">expectations</font> or sufficient to <font color="blue">enable clinical</font>     trials of our product <font color="blue">candidates</font> to be completed in a <font color="blue">timely manner</font> or at     all</td>
+    </tr>
+    <tr>
+      <td>In addition, we may not be permitted by <font color="blue">regulatory</font> <font color="blue">authorities</font> to     undertake  <font color="blue">additional</font>  clinical  trials for one or more of our product     <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>Even if such trials are conducted, our product <font color="blue">candidates</font> may     not prove to be safe and <font color="blue">efficacious</font> or receive <font color="blue">regulatory</font> approvals</td>
+    </tr>
+    <tr>
+      <td>Any     <font color="blue">significant</font> delays in, or <font color="blue">termination</font> of, <font color="blue"><font color="blue">clinical trial</font>s</font> of our product     <font color="blue">candidates</font> could impact our ability to generate <font color="blue">product sales</font> from these     product <font color="blue">candidates</font> in the future</td>
+    </tr>
+    <tr>
+      <td>The  price  of our <font color="blue">common stock</font> has been and <font color="blue">may continue</font> to be highly     volatile, which may make it <font color="blue">difficult</font> for <font color="blue">stockholders</font> to sell our common     stock when desired or <font color="blue">at attractive prices</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our <font color="blue">common stock</font> is <font color="blue">highly volatile</font>, and we     expect  it  to continue to be volatile for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>For     example, from January 1, 2005 through <font color="blue">February </font>28, 2006 our <font color="blue">common stock</font>     traded  at  a high price of dlra80dtta93 and a low price of dlra37dtta35</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Negative     </font><font color="blue">announcements</font>, including, <font color="blue">among others</font>:          •                 adverse <font color="blue">regulatory</font> <font color="blue">decisions</font>;          •                 disappointing <font color="blue">clinical trial</font> results;          •                 disputes and other <font color="blue"><font color="blue">development</font>s</font> concerning our patents or other                 <font color="blue">proprietary</font> products; or          •                 sales  or  operating  results that fall below the marketapstas                 <font color="blue">expectations</font>       could trigger <font color="blue">significant</font> declines in the price of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, external events, such as news concerning economic <font color="blue">conditions</font>, our     <font color="blue">competitors</font> or our customers, changes in <font color="blue">government</font> <font color="blue">regulations</font> impacting     the bio<font color="blue">technology</font> or <font color="blue">pharmaceutical</font> <font color="blue">industries</font> or the movement of capital     into or out of our industry, also are likely to affect the price of our     <font color="blue">common stock</font>, regardless of our operating performance</td>
+    </tr>
+    <tr>
+      <td>Our  internal  <font color="blue">controls <font color="blue">over financial</font></font> reporting may not be considered     <font color="blue">effective</font>, <font color="blue">which could</font> result in possible <font color="blue">regulatory</font> sanctions and a decline     in our stock price</td>
+    </tr>
+    <tr>
+      <td>Section 404 of the Sarbanes-Oxley Act of 2002 requires us to furnish     annually a report on our internal <font color="blue">controls <font color="blue">over financial</font></font> reporting</td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">internal control</font> report must contain an <font color="blue"><font color="blue">assessment</font> by</font> our <font color="blue">management</font> of the     <font color="blue"><font color="blue">effective</font>ness</font> of our <font color="blue">internal control</font> <font color="blue">over financial</font> reporting (including     the                                         37       _________________________________________________________________       <font color="blue">disclosure</font> of any material weakness) and a statement that our <font color="blue">independent</font>     auditors have attested to and reported on <font color="blue">management</font>apstas evaluation of such     <font color="blue">internal control</font>s</td>
+    </tr>
+    <tr>
+      <td>The Sarbanes-Oxley Act requires, among other things, that     we  maintain <font color="blue">effective</font> <font color="blue">disclosure</font> controls and procedures and internal     <font color="blue">controls <font color="blue">over financial</font></font> reporting</td>
+    </tr>
+    <tr>
+      <td>In order for <font color="blue">management</font> to evaluate our     internal  controls, we <font color="blue">must regularly review</font> and document our internal     <font color="blue">control processes</font> and procedures and <font color="blue">test such controls</font></td>
+    </tr>
+    <tr>
+      <td>Ultimately, we or     our <font color="blue">independent</font> auditors could conclude that our <font color="blue">internal control</font> over     financial reporting may not be <font color="blue">effective</font> if, <font color="blue">among others</font> things:          •                 any material weakness in our internal <font color="blue">controls <font color="blue">over financial</font></font>                 reporting exist; or          •                 we fail to <font color="blue">remediate assessed deficiencies</font></td>
+    </tr>
+    <tr>
+      <td>In early 2006, we implemented a <font color="blue">new worldwide financial</font> reporting     system that requires changes to <font color="blue">certain aspects</font> of our <font color="blue">existing system</font> of     <font color="blue">internal control</font> <font color="blue">over financial</font> reporting</td>
+    </tr>
+    <tr>
+      <td>Due to the number of controls to     be examined, both <font color="blue">with respect</font> to the new reporting system and our other     internal  controls  over  financial reporting, the <font color="blue">complexity</font> of these     projects, and the <font color="blue">subjectivity involved</font> in determining the <font color="blue"><font color="blue">effective</font>ness</font> of     controls, we cannot be certain that, in the future, all of our <font color="blue">controls will</font>     continue  to  be  considered <font color="blue">effective</font> by <font color="blue">management</font> or, if considered     <font color="blue">effective</font>  by  our  <font color="blue">management</font>, that our <font color="blue">auditors will agree with such</font>     <font color="blue">assessment</font></td>
+    </tr>
+    <tr>
+      <td>If, in the future, we are unable to assert that our <font color="blue">internal control</font>     <font color="blue">over financial</font> reporting is <font color="blue">effective</font>, or if our auditors are unable to     attest that our <font color="blue">management</font>apstas report is fairly stated or they are unable to     express an <font color="blue">opinion on</font> our <font color="blue">management</font>apstas evaluation, we could be subject to     <font color="blue">regulatory</font>  sanctions  or <font color="blue">lose investor confidence</font> in the accuracy and     <font color="blue">completeness</font> of our financial reports, either of <font color="blue">which could</font> have an adverse     effect on the <font color="blue">market price</font> for our securities</td>
+    </tr>
+    <tr>
+      <td>A  portion  of  our  revenues and expenses is subject to <font color="blue">exchange rate</font>     <font color="blue">fluctuations</font> in the <font color="blue">normal course</font> of business, <font color="blue">which could</font> <font color="blue">adversely</font> affect     our reported results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Historically, a portion of our revenues and expenses has been earned     and incurred, <font color="blue">respectively</font>, in currencies other than the US dollar</td>
+    </tr>
+    <tr>
+      <td>For     the year ended <font color="blue">December </font>31, 2005, approximately 14dtta7prca of our revenues were     <font color="blue">denominated</font> in currencies other than the US dollar</td>
+    </tr>
+    <tr>
+      <td>In 2006, we expect     this  percentage to <font color="blue">increase as</font> a result of the Zeneus <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">translate revenues earned</font> and <font color="blue">expenses incurred into</font> US <font color="blue">dollars at</font> the     average <font color="blue">exchange rate</font> applicable during the <font color="blue">relevant period</font></td>
+    </tr>
+    <tr>
+      <td>A weakening of     the US dollar would, therefore, increase both our revenues and expenses</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in the rate of <font color="blue">exchange between</font> the US dollar and the euro     and  other  currencies  may affect period-to-period comparisons of our     operating results</td>
+    </tr>
+    <tr>
+      <td>Historically, we have not hedged our exposure to these     <font color="blue">fluctuations</font> in <font color="blue">exchange rate</font>s</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">customer base</font> is <font color="blue">highly concentrated</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">principal customers</font> are <font color="blue">wholesale drug <font color="blue">distributors</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font>customers  comprise a <font color="blue">significant</font> part of the <font color="blue">distribution</font> network for     <font color="blue">pharmaceutical</font>  products  in  the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>Three large wholesale     <font color="blue">distributors</font>,   Cardinal   Health, Inc,   McKesson   Corporation  and     AmerisourceBergen Corporation, control a <font color="blue">significant</font> share of this network</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">three wholesaler customers</font>, in the aggregate, accounted for 86prca of our     <font color="blue">worldwide net sales</font> for the year ended <font color="blue">December </font>31, 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fluctuations </font>in     the buying patterns of these customers, which may result from <font color="blue">seasonality</font>,     wholesaler buying <font color="blue">decisions</font> or other <font color="blue">factors outside</font> of our control, could     <font color="blue">significant</font>ly affect the level of our <font color="blue">net sales on</font> a period to <font color="blue">period basis</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because  </font>of  this, the amounts purchased by these customers during any     quarterly or annual period may not correlate to the level of underlying     <font color="blue">demand evidenced by</font> the number of <font color="blue">prescriptions written</font> for <font color="blue">such products</font>,     as reported by IMS Health Incorporated</td>
+    </tr>
+    <tr>
+      <td>Furthermore, the loss or <font color="blue">bankruptcy</font>     of any of these customers could <font color="blue">materially</font> and <font color="blue">adversely</font> affect our results     of <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>38       _________________________________________________________________       We are involved, or <font color="blue">may become involved</font> in the future, in <font color="blue">legal proceedings</font>     that, if <font color="blue">adversely</font> adjudicated or settled, could <font color="blue">materially</font> impact our     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>As a bio<font color="blue">pharmaceutical</font> company, we are or may become a party to     <font color="blue">litigation</font> in the <font color="blue">ordinary course</font> of our business, including, <font color="blue">among others</font>,     matters alleging employment discrimination, <font color="blue">product <font color="blue">liability</font></font>, patent or     other <font color="blue">intellectual</font> property rights infringement, patent <font color="blue">invalidity</font> or breach     of <font color="blue">commercial contract</font></td>
+    </tr>
+    <tr>
+      <td>In general, <font color="blue">litigation</font> claims can be expensive and     time consuming to bring or <font color="blue">defend against</font> and could result in <font color="blue">settlements</font> or     damages that could <font color="blue">significant</font>ly impact results of <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>We currently are <font color="blue">vigorously defend</font>ing ourselves against certain     <font color="blue">litigation</font> matters in addition to those matters <font color="blue">specifically</font> described in     Note 12 of the <font color="blue">Consolidated Financial Statements </font>included in Part II, Item 8     of this <font color="blue">Annual Report </font>on Form 10-K While we currently do not believe that     the settlement or <font color="blue">adverse adjudication</font> of these other <font color="blue">litigation</font> matters     would <font color="blue">materially</font> impact our results of <font color="blue">operations</font> or <font color="blue">financial condition</font>,     the <font color="blue">final resolution</font> of these matters and the impact, if any, on our results     of <font color="blue">operations</font>, <font color="blue">financial condition</font> or <font color="blue">cash flows</font> is <font color="blue">unknown but could</font> be     material</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">dependence on key <font color="blue">executives</font></font> and <font color="blue">scientists could impact</font> the <font color="blue">development</font>     and <font color="blue">management</font> of our business</td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">highly dependent upon</font> our ability to attract and retain     qualified scientific, technical and <font color="blue">managerial personnel</font></td>
+    </tr>
+    <tr>
+      <td>There is intense     <font color="blue">competition</font> for <font color="blue">qualified personnel</font> in the <font color="blue">pharmaceutical</font> and bio<font color="blue">technology</font>     <font color="blue">industries</font>,  and we cannot be sure that we will be able to continue to     attract and retain the <font color="blue">qualified personnel</font> necessary for the <font color="blue">development</font> and     <font color="blue">management</font> of our business</td>
+    </tr>
+    <tr>
+      <td>Although we do not believe the loss of one     individual would <font color="blue">materially</font> harm our business, our business might be harmed     by the loss of the services of multiple existing personnel, as well as the     failure to recruit <font color="blue">additional</font> key scientific, technical and managerial     personnel in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Much of the know-how we have developed resides     in our scientific and <font color="blue">technical personnel</font> and is not <font color="blue">readily transferable</font> to     other  personnel</td>
+    </tr>
+    <tr>
+      <td>While  we  have  employment <font color="blue">agreement</font>s with our key     <font color="blue">executives</font>, we do not ordinarily <font color="blue">enter into</font> employment <font color="blue">agreement</font>s with our     other key scientific, technical and <font color="blue">managerial employees</font></td>
+    </tr>
+    <tr>
+      <td>We do not maintain      &amp;quote key man &amp;quote  <font color="blue">life insurance on</font> any of our employees</td>
+    </tr>
+    <tr>
+      <td>We may be required to incur <font color="blue">significant</font> costs to <font color="blue">comply with</font> <font color="blue">environment</font>al     laws  and <font color="blue">regulations</font>, and our related <font color="blue">compliance may limit</font> any future     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Our research and <font color="blue">development</font> <font color="blue">activities</font> involve the <font color="blue">controlled use</font>     of <font color="blue">hazardous</font>, infectious and <font color="blue">radioactive materials</font> that could be <font color="blue">hazardous</font>     to <font color="blue">human health</font> and safety or the <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>We store these materials, and     <font color="blue">various wastes</font> resulting from their use, at our <font color="blue">facilities</font> pending ultimate     use and disposal</td>
+    </tr>
+    <tr>
+      <td>We are subject to a variety of federal, state and local     laws and <font color="blue">regulations</font> governing the use, generation, <font color="blue">manufacture</font>, storage,     handling and disposal of these materials and wastes, and we may be required     to  incur <font color="blue">significant</font> costs to <font color="blue">comply with</font> related existing and future     <font color="blue">environment</font>al laws and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>While  we  believe that our <font color="blue">safety procedures</font> for handling and     disposing of these materials <font color="blue">comply with</font> foreign, federal, state and local     laws and <font color="blue">regulations</font>, we <font color="blue">cannot completely eliminate</font> the risk of <font color="blue"><font color="blue">accident</font>al</font>     injury or <font color="blue">contamination from</font> these materials</td>
+    </tr>
+    <tr>
+      <td>In the event of an <font color="blue">accident</font>,     we could be held liable for any resulting damages, <font color="blue">which could</font> include fines     and <font color="blue">remedial costs</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">damages could</font> require <font color="blue">payment by us</font> of <font color="blue">significant</font>     <font color="blue">amounts over</font> a number of years, <font color="blue">which could</font> <font color="blue">adversely</font> affect our results of     <font color="blue">operations</font> and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>39       _________________________________________________________________       Anti-takeover <font color="blue">provisions may delay</font> or prevent changes in control of our     <font color="blue">management</font>  or  deter  a  third  <font color="blue">party from</font> acquiring us, limiting our     <font color="blue">stockholders</font> &amp;apos  ability to <font color="blue">profit from such</font> a <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>Our board of <font color="blue">directors</font> has the authority to issue up to 5cmam000cmam000     shares of preferred stock, dlra0dtta01 par value, of which 1cmam000cmam000 have been     reserved for issuance in <font color="blue"><font color="blue">connection</font> with</font> our <font color="blue">stockholder rights</font> plan, and to     determine the price, rights, preferences and privileges of those shares     without any <font color="blue">further vote</font> or <font color="blue">action by</font> our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Our stockholder     rights plan could have the effect of making it more <font color="blue">difficult</font> for a third     party to acquire a majority of our <font color="blue">outstanding voting stock</font></td>
+    </tr>
+    <tr>
+      <td>We are subject to the anti-takeover provisions of Section 203 of the     <font color="blue">Delaware </font>General Corporation Law, which prohibits us from engaging in a      &amp;quote business <font color="blue">combination</font> &amp;quote  with an  &amp;quote interested stockholder &amp;quote  for a period of     <font color="blue">three years</font> after the date of the <font color="blue">transaction</font> in which the person becomes an     interested stockholder, unless the business <font color="blue">combination</font> is approved in a     <font color="blue">prescribed manner</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">application</font> of Section 203 could have the effect of     delaying or preventing a change of control of Cephalon</td>
+    </tr>
+    <tr>
+      <td>Section 203, the     rights plan, and <font color="blue">certain provisions</font> of our <font color="blue">certificate</font> of <font color="blue">incorporation</font>, our     bylaws and <font color="blue">Delaware </font>corporate law, may have the effect of <font color="blue">deterring hostile</font>     takeovers, or delaying or preventing changes in control of our <font color="blue">management</font>,     including <font color="blue">transaction</font>s in which <font color="blue">stockholders</font> might otherwise receive a     premium for their shares over then-current <font color="blue">market price</font>s</td>
+    </tr>
+  </tbody>
+</table>

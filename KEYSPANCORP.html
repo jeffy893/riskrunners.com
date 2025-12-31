@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "90: Analysis ", fill: "#fffdd0"},
+{source: "90: Analysis ", target: "90: Operations ", fill: "#fffdd0"},
+{source: "90: Operations ", target: "90: capital expenditures", fill: "#fffdd0"},
+{source: "90: capital expenditures", target: "90: cash flows", fill: "#fffdd0"},
+{source: "90: cash flows", target: "90: borrowings", fill: "#fffdd0"},
+{source: "90: borrowings", target: "90: acquisition", fill: "#fffdd0"},
+{source: "90: acquisition", target: "90: opportunities", fill: "#fffdd0"},
+{source: "90: opportunities", target: "90: forwardlooking", fill: "#fffdd0"},
+{source: "90: Analysis ", target: "93: operations", fill: "#006994"},
+{source: "93: operations", target: "93: subsidiaries", fill: "#006994"},
+{source: "93: subsidiaries", target: "93: depend on", fill: "#006994"},
+{source: "93: depend on", target: "93: cash flow", fill: "#006994"},
+{source: "93: cash flow", target: "93: distributions", fill: "#006994"},
+{source: "93: distributions", target: "93: funds necessary", fill: "#006994"},
+{source: "93: funds necessary", target: "93: contractual obligations", fill: "#006994"},
+{source: "93: contractual obligations", target: "93: pay dividends on", fill: "#006994"},
+{source: "93: pay dividends on", target: "93: common stock", fill: "#006994"},
+{source: "93: operations", target: "98: regulatory", fill: "#0ff"},
+{source: "98: regulatory", target: "98: environment", fill: "#0ff"},
+{source: "98: environment", target: "98: distribution", fill: "#0ff"},
+{source: "98: distribution", target: "98: electric services", fill: "#0ff"},
+{source: "98: electric services", target: "98: businesses", fill: "#0ff"},
+{source: "98: regulatory", target: "100: Moreover ", fill: "#614051"},
+{source: "100: Moreover ", target: "100: existing statutes", fill: "#614051"},
+{source: "100: existing statutes", target: "100: regulations", fill: "#614051"},
+{source: "100: regulations", target: "100: reinterpreted new laws", fill: "#614051"},
+{source: "100: reinterpreted new laws", target: "100: become applicable", fill: "#614051"},
+{source: "100: become applicable", target: "100: facilities", fill: "#614051"},
+{source: "100: facilities", target: "100: distribution", fill: "#614051"},
+{source: "100: distribution", target: "100: businesses", fill: "#614051"},
+{source: "100: businesses", target: "100: cannot predict", fill: "#614051"},
+{source: "100: Moreover ", target: "106: sell capacity", fill: "#9457eb"},
+{source: "106: sell capacity", target: "106: capacity", fill: "#9457eb"},
+{source: "106: capacity", target: "106: ancillary", fill: "#9457eb"},
+{source: "106: ancillary", target: "106: facility", fill: "#9457eb"},
+{source: "106: facility", target: "106: energy market at marketbased rates", fill: "#9457eb"},
+{source: "106: sell capacity", target: "131: Additionally ", fill: "#a7fc00"},
+{source: "131: Additionally ", target: "131: agreements", fill: "#a7fc00"},
+{source: "131: agreements", target: "131: extensions", fill: "#a7fc00"},
+{source: "131: extensions", target: "131: of the Agreements", fill: "#a7fc00"},
+{source: "131: Additionally ", target: "139: environmental", fill: "#00ff7f"},
+{source: "139: environmental", target: "139: regulations", fill: "#00ff7f"},
+{source: "139: regulations", target: "139: impact on", fill: "#00ff7f"},
+{source: "139: impact on", target: "139: and in Electric Services ", fill: "#00ff7f"},
+{source: "139: and in Electric Services ", target: "139: operations", fill: "#00ff7f"},
+{source: "139: operations", target: "139: especially", fill: "#00ff7f"},
+{source: "139: especially", target: "139: emission limits", fill: "#00ff7f"},
+{source: "139: emission limits", target: "139: requirements", fill: "#00ff7f"},
+{source: "139: requirements", target: "139: additional", fill: "#00ff7f"},
+{source: "139: additional", target: "139: substances become regulated", fill: "#00ff7f"},
+{source: "139: substances become regulated", target: "139: electric generating plants", fill: "#00ff7f"},
+{source: "139: environmental", target: "START_HERE", fill: "#00ff7f"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Food Distributors</td>
+    </tr>
+    <tr>
+      <td>Trading Companies and Distributors</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Storage and Transportation</td>
+    </tr>
+    <tr>
+      <td>Oil and Gas Refining and Marketing and Transportation</td>
+    </tr>
+    <tr>
+      <td>Transportation</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Comment</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Exponential_distribution">Exponential distribution</a></td>
+      <td>In probability theory and statistics, the exponential distribution is the probability distribution of the time between events in a Poisson point process, i.e., a process in which events occur continuously and independently at a constant average rate. It is a particular case of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gamma_distribution">Gamma distribution</a></td>
+      <td>In probability theory and statistics, the gamma distribution is a two-parameter family of continuous probability distributions.  The exponential distribution, Erlang distribution, and chi-square distribution are special cases of the gamma distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Binomial_distribution">Binomial distribution</a></td>
+      <td>In probability theory and statistics, the binomial distribution with parameters n and p is the discrete probability distribution of the number of successes in a sequence of n independent experiments, each asking a yes–no question, and each with its own Boolean-valued outcome: success (with probability p) or failure (with probability q = 1 − p). A single success/failure experiment is also called a Bernoulli trial or Bernoulli experiment, and a sequence of outcomes is called a Bernoulli process; for a single trial, i.e., n = 1, the binomial distribution is a Bernoulli distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Beta_distribution">Beta distribution</a></td>
+      <td>In probability theory and statistics, the beta distribution is a family of continuous probability distributions defined on the interval [0, 1] parameterized by two positive shape parameters, denoted by alpha (α) and beta (β), that appear as exponents of the random variable and control the shape of the distribution. The generalization to multiple variables is called a Dirichlet distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Laplace_distribution">Laplace distribution</a></td>
+      <td>In probability theory and statistics, the Laplace distribution is a continuous probability distribution named after Pierre-Simon Laplace.  It is also sometimes called the double exponential distribution, because it can be thought of as two exponential distributions (with an additional location parameter) spliced together back-to-back, although the term is also sometimes used to refer to the Gumbel distribution.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Flight_Facilities">Flight Facilities</a></td>
+      <td>Flight Facilities is an Australian electronic producer duo that also performs as Hugo &amp; Jimmy. In 2009, they began mixing songs by other artists before crafting their own original material.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NASA_facilities">NASA facilities</a></td>
+      <td>There are NASA facilities across the United States and around the world. NASA Headquarters in Washington, DC provides overall guidance and political leadership to the agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pedestrian_facilities">Pedestrian facilities</a></td>
+      <td>Pedestrian facilities include retail shops, museums, mass events (such as festivals or concert halls), hospitals, transport hubs (such as train stations or airports), sports infrastructure (such as stadiums) and religious infrastructures. The transport mode in such infrastructures is mostly walking, with rare exceptions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Attacks_on_U.S._diplomatic_facilities">Attacks on U.S. diplomatic facilities</a></td>
+      <td>The United States maintains numerous embassies and consulates around the world, many of which are in war-torn countries or other dangerous areas.\n\n\n== Diplomatic Security ==\nThe Regional Security Office is staffed by Special Agents of the Diplomatic Security Service (DSS), and is responsible for all security, protection, and law enforcement operations in the embassy or consulate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zubieta_Facilities">Zubieta Facilities</a></td>
+      <td>The Zubieta Facilities (Basque: Zubietako Kirol-instalakuntzak, Spanish: Instalaciones de Zubieta), is the training ground of the Primera Division club Real Sociedad. Located in Zubieta, an enclave of San Sebastian (adjacent to the San Sebastián Hippodrome), it was opened in 2004 in its modernised form, although was originally inaugurated in 1981.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Facilities_Society">The Facilities Society</a></td>
+      <td>The Facilities Society was founded in the UK on 9 December 2008 as a not-for-profit company limited by guarantee (registered in England nr. 6769050).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facilities_engineering">Facilities engineering</a></td>
+      <td>Facilities engineering evolved from "plant engineering" in the early 1990s as U.S. workplaces became more specialized. Practitioners preferred this term because it more accurately reflected the multidisciplinary demands for specialized conditions in a wider variety of indoor environments, not merely manufacturing plants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Nameplate_capacity">Nameplate capacity</a></td>
+      <td>Nameplate capacity, also known as the rated capacity, nominal capacity, installed capacity, or maximum effect, is the intended  full-load sustained output of a facility such as a power station, electric generator, a chemical plant, fuel plant, mine, metal refinery, and many others. \nNameplate capacity is the theoretical output registered with authorities for classifying the unit.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Seating_capacity">Seating capacity</a></td>
+      <td>Seating capacity is the number of people who can be seated in a specific space, in terms of both the physical space available, and limitations set by law. Seating capacity can be used in the description of anything ranging from an automobile that seats two to a stadium that seats hundreds of thousands of people.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heat_capacity">Heat capacity</a></td>
+      <td>Heat capacity or thermal capacity is a physical property of matter, defined as the amount of heat to be supplied to an object to produce a unit change in its temperature.    The SI unit of heat capacity is joule per kelvin (J/K).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Carrying_capacity">Carrying capacity</a></td>
+      <td>The carrying capacity of an environment is the maximum population size of a biological species that can be sustained by that specific environment, given the food, habitat, water, and other resources available. The carrying capacity is defined as the environment's maximal load, which in population ecology corresponds to the population equilibrium, when the number of deaths in a population equals the number of births (as well as immigration and emigration).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Capacity_planning">Capacity planning</a></td>
+      <td>Capacity planning is the process of determining the production capacity needed by an organization to meet changing demands for its products. In the context of capacity planning, design capacity is the maximum amount of work that an organization is capable of completing in a given period.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Channel_capacity">Channel capacity</a></td>
+      <td>Channel capacity, in electrical engineering, computer science, and information theory, is the tight upper bound on the rate at which information can be reliably transmitted over a communication channel.\nFollowing the terms of the noisy-channel coding theorem, the channel capacity of a given channel is the highest information rate (in units of information per unit time) that can be achieved with arbitrarily small error probability.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bearing_capacity">Bearing capacity</a></td>
+      <td>In geotechnical engineering, bearing capacity is the capacity of soil to support the loads applied to the ground. The bearing capacity of soil is the maximum average contact pressure between the foundation and the soil which should not produce shear failure in the soil.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_Mathematics">Additional Mathematics</a></td>
+      <td>Additional Mathematics is a qualification in mathematics, commonly taken by students in high-school (or GCSE exam takers in the United Kingdom). It is applied to a range of problems set out in a different format and wider content to the standard Mathematics at the same level.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additionality">Additionality</a></td>
+      <td>Additionality is the property of an activity being additional by adding something new to the context. It is a determination of whether an intervention has an effect when  compared to a baseline.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_director_general_of_police">Additional director general of police</a></td>
+      <td>Additional Director General of Police (ADGP) is an Indian Police Service rank. Though having the maximum possible 3-star police rank just like Director General of Police,  ADGP's are considered same to DGP's.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Superintendent_of_police_(India)">Superintendent of police (India)</a></td>
+      <td>Superintendent of police or SP is a senior rank in Indian Police Service or IPS. Superintendent of Police in Hindi means पुलिस अधीक्षक. They have one Star and one Ashoka emblem on their shoulders and below IPS is written.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Order_of_Australia">Order of Australia</a></td>
+      <td>The Order of Australia is an honour that recognises Australian citizens and other persons for outstanding achievement and service. It was established on 14 February 1975 by Elizabeth II, Queen of Australia, on the advice of the Australian Government.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_member_system">Additional member system</a></td>
+      <td>The additional member system (AMS) is a mixed electoral system under which most representatives are elected in single-member districts (SMDs), and the other "additional members" are elected to make the seat distribution in the chamber more proportional to the way votes are cast for party lists. It is distinct from parallel voting (also known as the supplementary member system) in that the "additional member" seats are awarded to parties taking into account seats won in SMDs (referred to as compensation or "top-up"), which is not done under parallel voting (a non-compensatory method).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Additional_insured">Additional insured</a></td>
+      <td>In insurance policies, an additional insured is a person or organization who enjoys the benefits of being insured under an insurance policy, in addition to whoever originally purchased the insurance policy. The term generally applies within liability insurance and property insurance, but is an element of other policies as well.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>KEYSPAN CORP    ITEM 1A       <font color="blue">RISK FACTORS</font></td>
+    </tr>
+    <tr>
+      <td>28  ITEM 1A <font color="blue">RISK FACTORS</font>    Certain  statements  contained  in this  Annual  Report on Form 10-K  <font color="blue">concerning</font>  <font color="blue">expectations</font>,  beliefs, plans, <font color="blue">objectives</font>,  goals, strategies,  <font color="blue">future events</font> or  performance and underlying  <font color="blue">assumptions</font> and other statements that are other than  statements of historical  facts,  are   &amp;quote forward-looking  statements &amp;quote   within the  meaning of <font color="blue">Section  </font>21E of the  Securities  Exchange  Act of 1934,  as  amended</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Without  </font>limiting the  foregoing,  all  statements  under the captions   &amp;quote Item 7</td>
+    </tr>
+    <tr>
+      <td>Managementapstas  Discussion  and  <font color="blue">Analysis </font>of  Financial  Condition  and Results of  <font color="blue">Operations </font>&amp;quote  and  &amp;quote Item 7A Quantitative and Qualitative  Disclosures About Market  Risk &amp;quote  relating to our future outlook,  anticipated <font color="blue">capital <font color="blue">expenditures</font></font>,  future  <font color="blue"><font color="blue">cash flow</font>s</font> and <font color="blue">borrowings</font>,  pursuit of potential  <font color="blue">acquisition</font>  <font color="blue">opportunities</font> and  sources  of  funding,  are  forward-looking   statements</td>
+    </tr>
+    <tr>
+      <td>Such  forward-looking  statements  reflect  numerous  <font color="blue">assumptions</font>  and  involve  a number  of risks and  <font color="blue">uncertainties</font>,  and actual results <font color="blue">may <font color="blue">differ <font color="blue">materially</font></font> from</font> those discussed in  <font color="blue">such statements</font></td>
+    </tr>
+    <tr>
+      <td>The risks,  <font color="blue">uncertainties</font>  and factors that could cause actual  results to <font color="blue">differ <font color="blue">materially</font></font> include but are not limited to the following:    We are a Holding  Company,  and Our Subsidiaries are Subject to State Regulation  Which Limits Their Ability to Pay Dividends and Make Distributions to Us         We are a holding  <font color="blue">company with no</font> business  <font color="blue">operations</font> or sources of income       of our own</td>
+    </tr>
+    <tr>
+      <td>We conduct all of our <font color="blue">operations</font>  through our  <font color="blue">subsidiaries</font> and       <font color="blue">depend on</font> the  earnings and <font color="blue">cash flow</font> of, and  dividends  or  <font color="blue"><font color="blue">distribution</font>s</font>       from, our  <font color="blue">subsidiaries</font> to provide the <font color="blue">funds necessary</font> to meet our debt and       <font color="blue"><font color="blue">contractual</font> <font color="blue">obligations</font></font> and to <font color="blue">pay dividends on</font> our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>28  <PAGE>           In addition, a substantial portion of our consolidated assets, earnings and       cash  flow  is  derived  from  the  operation  of  our  regulated   utility       <font color="blue">subsidiaries</font>,  whose  legal  authority  to  pay  dividends  or  make  other       <font color="blue"><font color="blue">distribution</font>s</font>  to us is subject to  regulation  by the  utility  <font color="blue">regulatory</font>       <font color="blue">commissions</font> of New York, Massachusetts and New Hampshire</td>
+    </tr>
+    <tr>
+      <td>Pursuant to NYPSC       orders,  the  ability  of  KEDNY  and  KEDLI  to  pay  dividends  to  us is       <font color="blue">conditioned</font> upon their maintenance of a <font color="blue">utility capital structure with debt</font>       not exceeding 55prca and 58prca, respectively,  of <font color="blue">total utility</font>  <font color="blue">capitalization</font></td>
+    </tr>
+    <tr>
+      <td>In  addition,  the level of  dividends  <font color="blue">paid by both</font>  utilities  may not be       <font color="blue">increased from current levels</font> if a 40 basis point penalty is <font color="blue">incurred under</font>       a <font color="blue">customer service</font>  performance  program</td>
+    </tr>
+    <tr>
+      <td>At the end of KEDNYapstas and KEDLIapstas       rate years (<font color="blue">September </font>30, 2005 and November 30, 2005, respectively),  their       ratios of debt to <font color="blue">total utility</font> <font color="blue">capitalization</font> were well in <font color="blue">compliance with</font>       the <font color="blue">ratios set forth</font>  above and we have  incurred  no  penalties  under the       outstanding <font color="blue">customer service</font> performance program</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">Gas Distribution </font>and Electric Services  Businesses May Be Adversely Affected  by Changes in Federal and State Regulation         The  <font color="blue">regulatory</font>  <font color="blue">environment</font>  applicable  to our gas  <font color="blue">distribution</font>  and our       <font color="blue">electric services</font>  <font color="blue">businesses</font> has undergone  substantial  changes in recent       years,   on  both  the  federal  and  state  levels</td>
+    </tr>
+    <tr>
+      <td>These  changes  have       <font color="blue"><font color="blue">significant</font>ly affected</font> the nature of the gas and <font color="blue">electric utility</font> and power       industries  and the  manner  in  which  their  <font color="blue">participants</font>  conduct  their       <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Moreover,  <font color="blue">existing statutes</font> and <font color="blue">regulations</font> may be revised or       reinterpreted, new laws and <font color="blue">regulations</font> may be adopted or <font color="blue">become applicable</font>       to us or our  <font color="blue">facilities</font>  and future  changes in laws and  <font color="blue">regulations</font>  may       affect our gas  <font color="blue">distribution</font> and our electric  services  <font color="blue">businesses</font> in ways       that we <font color="blue">cannot predict</font></td>
+    </tr>
+    <tr>
+      <td>In addition,  our <font color="blue">operations</font> are subject to extensive <font color="blue">government regulation</font>       and require  numerous  permits,  approvals  and  <font color="blue">certificates</font>  <font color="blue">from various</font>       federal,  state and <font color="blue">local governmental</font>  agencies</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font> portion of       our revenues in our Gas  Distribution  and Electric  Services  segments are       directly  <font color="blue">dependent</font>  on rates  established  by federal or state  <font color="blue">regulatory</font>       <font color="blue">authorities</font>,  and any change in these rates and <font color="blue">regulatory</font>  <font color="blue">structure could</font>       <font color="blue">significant</font>ly  impact our  financial  results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases </font>in utility  costs       other than gas, not otherwise offset by increases in revenues or <font color="blue">reductions</font>       in other expenses, could have an adverse effect <font color="blue">on earnings due</font> to the time       <font color="blue">lag associated with</font> obtaining <font color="blue">regulatory</font> approval to <font color="blue">recover such increased</font>       costs and expenses in rates</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Various  </font>rulemaking  proposals and market design  revisions  related to the       wholesale  power  market are being  reviewed  at the federal  level</td>
+    </tr>
+    <tr>
+      <td><font color="blue">These       </font>proposals, as well as legislative and other attention to the electric power       <font color="blue">industry could</font> have a material adverse effect on our strategies and results       of  <font color="blue">operations</font>  for  our  electric  services  business  and  our  financial       condition</td>
+    </tr>
+    <tr>
+      <td>In particular,  we <font color="blue">sell <font color="blue">capacity</font></font>,  energy and <font color="blue">ancillary</font> services       from  our  Ravenswood   Generating  Station  <font color="blue">facility</font>  into  the  New  York       In<font color="blue">dependent</font> System Operator, or NYISO, energy market at market-based rates,       subject to  mitigation  measures  approved  by the FERC  The  pricing  for       <font color="blue">capacity</font>,  energy  sales and  <font color="blue">ancillary</font>  services in to the NYISO market is       still  evolving</td>
+    </tr>
+    <tr>
+      <td>and some of the  FERCapstas  price  mitigation  measures  are       subject to rehearing and possible  <font color="blue">judicial review</font>,  <font color="blue">as well as revision</font> in       response to <font color="blue">market participant complaints</font> or NYISO requests</td>
+    </tr>
+    <tr>
+      <td>29  <PAGE>      Our Risk Mitigation Techniques Such as Hedging and Purchase of Insurance May Not  Adequately Provide Protection         To mitigate our <font color="blue">financial exposure</font> related to commodity <font color="blue">price <font color="blue">fluctuations</font></font>,       KeySpan  <font color="blue">routinely enters into contracts</font> to hedge a portion of our purchase       and sale <font color="blue">commitment</font>s, weather <font color="blue">fluctuations</font>,  <font color="blue">electricity</font> sales, <font color="blue">natural gas</font>       supply and other  <font color="blue">commodities</font></td>
+    </tr>
+    <tr>
+      <td>However,  we do not <font color="blue">always cover</font> the entire       exposure of our assets or our positions to <font color="blue">market price</font>  <font color="blue">volatility</font> and the       <font color="blue">coverage will vary over</font> time</td>
+    </tr>
+    <tr>
+      <td>To the extent we have unhedged  positions or       our hedging procedures do not work as planned, <font color="blue">fluctuating</font> commodity prices       could cause our sales and net income to be volatile</td>
+    </tr>
+    <tr>
+      <td>In  addition,  our  business  is  subject  to many  hazards  from which our       <font color="blue">insurance may</font> not <font color="blue">adequately <font color="blue">provide coverage</font></font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">unexpected outage at</font> our       <font color="blue">Ravenswood Generating Station</font>, <font color="blue">especially</font> in the <font color="blue">significant</font> summer period,       could  <font color="blue">materially</font>  impact  our  financial  results</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Damage  </font>to  pipelines,       equipment,  properties and people caused by natural  <font color="blue">disasters</font>,  <font color="blue">accidents</font>,       terrorism  or other  <font color="blue">damage by third</font>  parties  could  exceed our  insurance       coverage</td>
+    </tr>
+    <tr>
+      <td>Although we do have  insurance to protect  against many of these       <font color="blue">contingent</font>  <font color="blue">liabilities</font>,  this insurance is <font color="blue">capped at certain</font>  levels,  has       self-insured retentions and does not <font color="blue">provide coverage</font> for all <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>SEC Rules for Exploration and Production Companies May Require Us to Recognize a  Non-Cash Impairment Charge at the End of Our Reporting Periods         Our  <font color="blue">investments</font> in <font color="blue">natural gas</font> and <font color="blue">oil consist</font> of our ownership of KeySpan       Exploration and Production and  Seneca-Upshur</td>
+    </tr>
+    <tr>
+      <td>We use the full cost method       for KeySpan  Exploration and Production and  Seneca-Upshur</td>
+    </tr>
+    <tr>
+      <td>Under the full       cost method,  all costs of  <font color="blue">acquisition</font>,  <font color="blue">exploration</font>  and  <font color="blue">development</font>  of       natural  gas and oil  reserves  are  <font color="blue">capitalized</font>  into a full  cost pool as       incurred, and properties in the pool are depleted and charged to <font color="blue">operations</font>       using the unit-of-production  <font color="blue">method based on production</font> and <font color="blue">proved reserve</font>       quantities</td>
+    </tr>
+    <tr>
+      <td>To the extent that these <font color="blue">capitalized</font> costs, net of <font color="blue">accumulated</font>       depletion,  less  deferred  taxes  exceed the  present  value  (using a 10prca       discount  rate) of estimated  future net <font color="blue"><font color="blue">cash flow</font>s</font> from proved <font color="blue">natural gas</font>       and  oil  reserves  and  the  lower  of cost  or  fair  value  of  unproved       properties,  those excess costs are charged to <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>If a write-down       is required,  it would result in a charge to <font color="blue">earnings but would</font> not have an       <font color="blue">impact on</font> <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Once incurred, an <font color="blue">impairment</font> of <font color="blue">gas properties</font> is not       <font color="blue">reversible at</font> a later date, even if <font color="blue">gas prices increase</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Operating Results May Fluctuate </font>on a Seasonal and Quarterly Basis         Our gas  <font color="blue">distribution</font>  business  is a seasonal  business  and is subject to       <font color="blue">weather <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>We receive most of our gas <font color="blue">distribution</font> revenues in the       first and fourth  quarters,  when demand for <font color="blue">natural gas</font>  increases  due to       colder  weather  <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>As a  result,  we  are  subject  to  seasonal       <font color="blue">variations</font> in working capital because we purchase  <font color="blue">natural gas</font> supplies for       storage in the second and <font color="blue">third quarters</font> and must finance these  purchases</td>
+    </tr>
+    <tr>
+      <td>Accordingly,  our  results  of  <font color="blue">operations</font>  fluctuate  <font color="blue">substantially</font>  on  a       seasonal  basis</td>
+    </tr>
+    <tr>
+      <td>In  addition,  our  New  England-based  gas  <font color="blue">distribution</font>       <font color="blue">subsidiaries</font>  do not have weather  <font color="blue">normalization</font>  tariffs,  as we do in New       York,  and results  from our  Ravenswood  Generating  Station  <font color="blue">facility</font> are       directly  correlated  to the  weather  as the  demand  and  price  for  the       <font color="blue">electricity</font> it <font color="blue">generates increases during extreme</font>  <font color="blue">temperature</font>  <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>As a result,  <font color="blue">fluctuations</font>  in weather between years may have a <font color="blue">significant</font>       effect on our results of <font color="blue">operations</font> for these <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>We derive a  substantial  portion of our revenues in our electric  services       segment from a series of  <font color="blue">agreements</font>  with LIPA pursuant to which we manage       LIPAapstas  <font color="blue">transmission</font>  and  <font color="blue">distribution</font>  system and supply the  majority of       LIPAapstas customers &amp;apos   <font color="blue">electricity</font> needs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On February </font>1, 2006, KeySpan and <font color="blue">LIPA       </font><font color="blue"><font color="blue">entered into</font> amended</font> and restated  <font color="blue">agreements</font> whereby KeySpan <font color="blue">will continue</font>       to operate  and  maintain  the  electric  T&amp;D System  owned by LIPA on Long       Island</td>
+    </tr>
+    <tr>
+      <td>As part of the amended <font color="blue">agreements</font>, the GPRA, pursuant to which <font color="blue">LIPA       </font>had the option,  through <font color="blue">December </font>15, 2005, to acquire <font color="blue">substantially</font> all of       the  electric  <font color="blue">generating</font>  <font color="blue">facilities</font>  owned by KeySpan  on Long  Island is       replaced  with the 2006 Option  Agreement  where LIPA only has the right to       acquire  two of our  <font color="blue">facilities</font>,  our  Far  Rockaway  and/or  EF  Barrett       Generating Stations during the period January 1, 2006 to <font color="blue">December </font>31, 2006</td>
+    </tr>
+    <tr>
+      <td>Additionally,  the new <font color="blue">agreements</font>  resolve many outstanding  issues between       the parties  regarding the current LIPA  Agreements and provide new pricing       and  <font color="blue">extensions</font> of the  Agreements</td>
+    </tr>
+    <tr>
+      <td>There is a risk that these  <font color="blue">agreements</font>       will not receive the <font color="blue">necessary governmental</font>  approvals,  which are pending,       and the  <font color="blue">effective</font>ness  of each of the 2006 LIPA  Agreements is <font color="blue">conditioned</font>       upon all of the 2006 <font color="blue">LIPA Agreements </font>becoming  <font color="blue">effective</font></td>
+    </tr>
+    <tr>
+      <td>If the 2006 <font color="blue">LIPA       </font>Agreements do not become <font color="blue">effective</font>, there is <font color="blue">uncertainty as</font> to whether <font color="blue">LIPA       </font><font color="blue">will exercise</font>  their <font color="blue">option under</font> the GPRA and the status of the resolution       of the <font color="blue">various disputes between</font> KeySpan and LIPA    A Decline  or an  Otherwise  Negative  Change in the  Ratings  or Outlook on Our  Securities  Could  Have a  Materially  Adverse  Impact on Our  Ability to Secure  Additional Financing on Favorable Terms         The credit <font color="blue">rating agencies</font> that rate our <font color="blue">debt securities</font>  regularly  review       our  financial  condition  and  results of  <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We can  <font color="blue">provide no</font>       assurances  that the ratings or <font color="blue">outlook on</font> our debt  <font color="blue">securities will</font> not be       reduced or otherwise  <font color="blue">negatively</font>  changed</td>
+    </tr>
+    <tr>
+      <td>A negative change in the ratings       or <font color="blue">outlook on</font> our <font color="blue">debt securities</font> could have a <font color="blue">materially</font> adverse <font color="blue">impact on</font>       our ability to <font color="blue">secure <font color="blue">additional</font> financing on</font> favorable terms</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Costs of <font color="blue">Compliance </font></font>with <font color="blue">Environmental Laws </font>are Significant, and the Cost of  <font color="blue">Compliance </font>with Future <font color="blue">Environmental Laws </font>Could Adversely Affect Us         Our  <font color="blue">operations</font>  are  subject  to  extensive   federal,   state  and  local       <font color="blue">environment</font>al laws and <font color="blue">regulations</font> relating to <font color="blue">air quality</font>,  <font color="blue">water quality</font>,       waste  <font color="blue">management</font>,  natural  resources  and the  health  and  safety of our       employees</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">environment</font>al laws and <font color="blue">regulations</font> expose us to costs and       <font color="blue">liabilities</font>  relating to our  <font color="blue">operations</font> and our current and formerly owned       properties</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font>with these <font color="blue">legal <font color="blue">requirements</font></font> requires us to commit       <font color="blue">significant</font>  capital  toward  <font color="blue">environment</font>al  monitoring,   <font color="blue">installation</font>  of       pollution  control  equipment  and  permits  at our  <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Costs  of       compliance  with  <font color="blue">environment</font>al  <font color="blue">regulations</font>,  and in  particular  emission       <font color="blue">regulations</font>,  could have a material <font color="blue">impact on</font> our Electric Services segment       and our  results  of  <font color="blue">operations</font>  and  financial  position,  <font color="blue">especially</font>  if       <font color="blue">emission limits</font> are tightened,  more extensive permitting  <font color="blue">requirements</font> are       imposed,  <font color="blue">additional</font>  <font color="blue">substances become regulated</font> or the number and type of       electric <font color="blue">generating</font> plants we operate increase</td>
+    </tr>
+    <tr>
+      <td>In  addition,  we are  responsible  for the  clean-up of  <font color="blue">contamination</font>  at       certain MGP sites and at other sites and are aware of <font color="blue">additional</font>  MGP sites       where we may have  <font color="blue">responsibility</font> for clean-up costs</td>
+    </tr>
+    <tr>
+      <td>While our <font color="blue">gas utility</font>       <font color="blue">subsidiaries</font> &amp;apos  rate plans <font color="blue">generally allow</font> for the full recovery of the costs                                             31  <PAGE>           of  investigation  and  <font color="blue">remediation</font>  of most of our MGP  sites,  these rate       recovery  <font color="blue"><font color="blue">mechanisms</font> may</font> change in the future</td>
+    </tr>
+    <tr>
+      <td>To the extent rate recovery       <font color="blue">mechanisms</font>  change in the future,  or if <font color="blue">additional</font>  <font color="blue">environment</font>al  matters       arise in the future at our currently or <font color="blue">historically</font>  owned <font color="blue">facilities</font>,  at       sites we may acquire in the future or at third-party  <font color="blue">waste disposal sites</font>,       <font color="blue">costs associated with</font>  <font color="blue">investigating</font> and <font color="blue">remediating</font> these <font color="blue">sites could</font> have       a material adverse effect on our results of <font color="blue">operations</font>, financial condition       and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Our  Businesses  are  Subject to  <font color="blue">Competition  </font>and General  Economic  Conditions  Impacting Demand for Services         We recently  expanded the  Ravenswood  Facility,  our  merchant  <font color="blue">generation</font>       plant, in our Electric  Services segment with the Ravenswood  Expansion,  a       250 MW combined cycle <font color="blue">generating</font> unit</td>
+    </tr>
+    <tr>
+      <td>However, the Ravenswood Facility and       Ravenswood  Expansion  continue  to be  subject to  <font color="blue">competition</font>  that could       <font color="blue">adversely</font>  impact the <font color="blue">market price</font> for the  <font color="blue">capacity</font>,  energy and <font color="blue">ancillary</font>       services  they sell</td>
+    </tr>
+    <tr>
+      <td>In addition,  if new  <font color="blue">generation</font>  and/or  <font color="blue">transmission</font>       <font color="blue">facilities</font>  are  <font color="blue">constructed</font>,  and/or the  <font color="blue">availability</font>  of our  Ravenswood       Generating Station deteriorates, then the quantities of <font color="blue">capacity</font> and energy       sales  could be  <font color="blue">adversely</font>  affected</td>
+    </tr>
+    <tr>
+      <td>In  <font color="blue">December </font> 2005,  NYPA  completed       <font color="blue">construction</font> of a nominal 500 MW <font color="blue">generating</font>  <font color="blue">facility</font> in New York City, and       it began  selling  its  <font color="blue">capacity</font>  and  energy  into <font color="blue">the NYISO  </font>markets</td>
+    </tr>
+    <tr>
+      <td>In       addition,  another  nominal 500 MW <font color="blue">facility</font> is expected to come  on-line in       2006</td>
+    </tr>
+    <tr>
+      <td>We  cannot  predict,  however,  when  or  if  new  power  plants  or       <font color="blue">transmission</font>  <font color="blue">facilities</font> in addition to the  above-noted  <font color="blue">resources will</font> be       built or the  nature  of the  future  New York  City  <font color="blue">capacity</font>  and  energy       <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition  </font>facing our unregulated <font color="blue">Energy Services  </font><font color="blue">businesses</font>,  including       but not limited to  <font color="blue">competition</font>  from other  heating,  <font color="blue">ventilation</font>  and air       <font color="blue">conditioning</font>,  and <font color="blue">engineering</font>  companies,  as well as, other utilities and       utility holding  companies that are permitted to engage in <font color="blue">such activities</font>,       could  <font color="blue">adversely</font>  impact  our  financial  results  and the  value  of those       <font color="blue">businesses</font>,  resulting in decreased  earnings as well as write-downs of the       carrying value of those <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>Our  Gas  Distribution  segment  faces  <font color="blue">competition</font>  with  <font color="blue">distributors</font>  of       <font color="blue"><font color="blue">alternative</font> fuels</font> and forms of energy,  including fuel oil and propane</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our       </font>ability to continue to add new gas <font color="blue">distribution</font> customers may <font color="blue">significant</font>ly       <font color="blue">impact financial</font> results</td>
+    </tr>
+    <tr>
+      <td>The gas <font color="blue">distribution</font>  industry has experienced a       decrease in <font color="blue"><font color="blue">consumption</font> per customer over</font> time,  <font color="blue">partially due</font> to increased       <font color="blue">efficiency</font> of customers &amp;apos  appliances, economic factors and <font color="blue">price elasticity</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">Gas Distribution </font>segmentapstas future growth is <font color="blue">dependent</font> upon       the ability to <font color="blue">add new customers</font> to our system in a cost-<font color="blue">effective</font>  manner</td>
+    </tr>
+    <tr>
+      <td>While our <font color="blue">Long Island and New England  </font>utilities  have  <font color="blue">significant</font>  growth       potential,  we cannot be sure new  customers  will  continue  to offset the       decrease in <font color="blue">consumption</font> of our existing  <font color="blue">customer base</font></td>
+    </tr>
+    <tr>
+      <td>There are a number       of factors outside of our control that <font color="blue">impact customer</font>  <font color="blue">conversions from</font> an       <font color="blue">alternative</font>  fuel to gas,  including  general  economic  factors  impacting       customers &amp;apos  <font color="blue">willingness</font> to invest in <font color="blue">new gas equipment</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Risk Associated </font>with our Financial Swap Agreement for In-City Unforced Capacity         KeySpan believes that the <font color="blue">New York City </font><font color="blue">market represents</font> a strong <font color="blue">capacity</font>       <font color="blue">market due</font> to,  among other  things,  its local  <font color="blue">reliability</font>  rules  (which       recently  increased  to 83prca  from  80prca),  increasing  demand  and the  time       required for new  resources to be  <font color="blue">constructed</font></td>
+    </tr>
+    <tr>
+      <td>KeySpan  anticipates  that       <font color="blue">demand will</font>  increase and that the high cost to  construct  <font color="blue">capacity</font> in New       York City will  result  in  favorable  In-City  Unforced  Capacity  prices</td>
+    </tr>
+    <tr>
+      <td>Therefore,  KeySpan  <font color="blue">entered into</font> an ISDA Master  Agreement for a fixed for       floating  unforced  <font color="blue">capacity</font>  financial  swap for a  notional  quantity  of                                             32  <PAGE>           1cmam800cmam000kW  at the Fixed  Price is  dlra7dtta57/kW-month</td>
+    </tr>
+    <tr>
+      <td>If the demand is less       than KeySpanapstas  estimates,  <font color="blue">additional</font> resources enter the market, or costs       are less  than  forecast,  In-City  Unforced  Capacity  prices  could be on       average  less than the <font color="blue">Fixed Price  </font>resulting  in a loss to KeySpan,  which       <font color="blue">under certain circumstances could</font> be material</td>
+    </tr>
+    <tr>
+      <td>Labor  Disruptions  at Our  Facilities  Could  Adversely  Affect Our  Results of  <font color="blue">Operations </font>and Cash Flow         Approximately 6cmam154 employees, or 63prca of our employees,  are <font color="blue">represented by</font>       unions through various collective <font color="blue">bargaining</font> <font color="blue">agreements</font> that expire between       2006  and  2009</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">bargaining</font>   <font color="blue">agreements</font>   expiring  in  2006  affect       <font color="blue">approximately</font>  1cmam300  employees  who  primarily  work for  KEDNE and at our       <font color="blue">Ravenswood Generating Station</font></td>
+    </tr>
+    <tr>
+      <td>KeySpan is currently engaging in <font color="blue">discussions</font>       with these unions for new collective <font color="blue">bargaining</font> <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>It is possible       that our  employees  may seek an  increase  in wages  and  benefits  at the       expiration of these <font color="blue">agreements</font>,  and that we may be unable to <font color="blue">negotiate new</font>       <font color="blue">agreements</font> without labor <font color="blue">disruption</font></td>
+    </tr>
+    <tr>
+      <td>Counterparties to Our Transactions May Fail to Perform their Obligations,  Which  Could Harm Our Results of <font color="blue">Operations </font>        Our  <font color="blue">operations</font>  are  exposed  to  the  risk  that  <font color="blue">counterparties</font>  to  our       <font color="blue">transactions</font>  that  owe  us  money  or  supplies  will  not  perform  their       <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>Should the  <font color="blue">counterparties</font>  to  <font color="blue">arrangements</font>  with us fail to       perform, we might be forced to enter into <font color="blue">alternative</font> hedging  <font color="blue">arrangements</font>       or honor our underlying  <font color="blue">commitment</font> at then-current  <font color="blue">market price</font>s that may       exceed our <font color="blue">contractual</font>  prices</td>
+    </tr>
+    <tr>
+      <td>In such event,  we <font color="blue">might incur</font>  <font color="blue">additional</font>       losses to the extent of amounts,  if any,  <font color="blue">already paid</font> to  <font color="blue">counterparties</font></td>
+    </tr>
+    <tr>
+      <td>This risk is most <font color="blue">significant</font>  where we have  <font color="blue">concentrations</font> of <font color="blue">receivables</font>       from <font color="blue">natural gas</font> and electric  utilities and their  <font color="blue">affiliates</font>,  as well as       industrial  customers  and marketers  <font color="blue">throughout</font>  the  Northeastern  United       States</td>
+    </tr>
+    <tr>
+      <td>We Are Exposed to Risks That Are Beyond Our Control         The cost of <font color="blue">repairing damage</font> to our operating <font color="blue">subsidiaries</font> &amp;apos   <font color="blue">facilities</font> and       the potential  <font color="blue">disruption</font> of their <font color="blue">operations</font> or supplier <font color="blue">operations</font> due to       storms,  natural  <font color="blue">disasters</font>,  wars,  terrorist acts and other  <font color="blue">catastrophic</font>       <font color="blue">events could</font> be substantial</td>
+    </tr>
+    <tr>
+      <td>The occurrence or risk of occurrence of future       terrorist  attacks or related acts of war may lead to increased  political,       economic and  financial  market  <font color="blue">instability</font>  and  <font color="blue">volatility</font> in prices for       <font color="blue">natural gas</font> which could  <font color="blue">materially</font>  <font color="blue">adversely</font>  <font color="blue">affect us</font> in ways we cannot       <font color="blue">predict at</font> this time</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">lower level</font> of <font color="blue">economic activity</font> for these or other       reasons  could  result in a  decline  in energy  <font color="blue">consumption</font>,  which  could       <font color="blue">adversely</font> affect our <font color="blue">net revenues</font></td>
+    </tr>
+    <tr>
+      <td>The Long-Term  Financial  Condition of Our <font color="blue">Gas Distribution </font> Business Depends on  the Continued Availability of Natural Gas Reserves         The  <font color="blue">development</font> of <font color="blue">additional</font>  <font color="blue">natural gas</font> reserves  requires  <font color="blue">significant</font>       capital  <font color="blue">expenditures</font>  by others for  exploring,  drilling  and  installing       production,  gathering,  storage,  <font color="blue">transportation</font> and other <font color="blue">facilities</font> that       permit  natural  gas to be  produced  and  delivered  to  our  <font color="blue">distribution</font>       systems</td>
+    </tr>
+    <tr>
+      <td>Low prices for <font color="blue">natural gas</font>, <font color="blue">regulatory</font>  <font color="blue">restrictions</font>,  or the lack       of  available  capital  for  these  projects  could  <font color="blue">adversely</font>  affect  the                                             33  <PAGE>           <font color="blue">development</font>  of  <font color="blue">additional</font>  <font color="blue">natural gas</font> reserves</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional  </font><font color="blue">natural gas</font>       <font color="blue">reserves may</font> not be developed in sufficient  amounts to fill the <font color="blue">capacities</font>       of our  <font color="blue">distribution</font>  systems,  thus  limiting our  prospects for long-term       growth</td>
+    </tr>
+    <tr>
+      <td>Gathering,  Processing and Transporting  Activities  Involve Numerous Risks that  May Result in Accidents and Other Operating Risks and Costs         Our gas  <font color="blue">distribution</font>  <font color="blue">facilities</font>  pose a variety of hazards and  operating       risks, such as leaks,  <font color="blue">explosions</font> and <font color="blue">mechanical problems</font> caused by natural       <font color="blue">disasters</font>,  <font color="blue">accidents</font>,  terrorism or other <font color="blue">damage by third</font>  parties,  which       could cause  substantial  financial  losses</td>
+    </tr>
+    <tr>
+      <td>In addition to impairing  our       <font color="blue">operations</font>,  these  risks  could  also  result  in loss of  human  life and       <font color="blue">environment</font>al  pollution</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">accordance with</font> standard <font color="blue">industry practice</font>, we       maintain  <font color="blue">insurance against</font> some, but not all, of these <font color="blue">potential risks</font> and       losses</td>
+    </tr>
+    <tr>
+      <td>The  occurrence  of any of  these  events  not  fully  covered  by       <font color="blue">insurance could</font> have a material  adverse effect on our financial  position,       results of <font color="blue">operations</font> and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional  </font>risks,  <font color="blue">uncertainties</font> and factors that could cause actual results to  <font color="blue">differ <font color="blue">materially</font></font> include but are not limited to the following:         -    <font color="blue">volatility</font> of <font color="blue">fuel prices used</font> to generate <font color="blue">electricity</font>;         -    <font color="blue">fluctuations</font> in weather and in gas and <font color="blue">electric prices</font>;         -    our  ability to  successfully  manage our cost  structure  and operate            <font color="blue">efficiently</font>;         -    our ability to <font color="blue">successfully contract</font> for <font color="blue">natural gas</font> supplies required            to meet the needs of our customers;         -    <font color="blue">implementation</font>  of new  <font color="blue">accounting</font>  standards or changes in <font color="blue">accounting</font>            standards   or  GAAP  which  may  require   <font color="blue">adjustment</font>   to  financial            statements;         -    <font color="blue">inflationary trends</font> and <font color="blue">interest rates</font>;         -    the   ability   of  KeySpan  to   identify   and  make   <font color="blue">complementary</font>            <font color="blue">acquisition</font>s,   as  well  as  the   successful   <font color="blue">integration</font>  of  such            <font color="blue">acquisition</font>s;         -    retention of key personnel;         -    federal, state and local <font color="blue">regulatory</font> <font color="blue">initiatives</font> that threaten cost and            investment recovery,  and place limits on the type and manner in which            we invest in new <font color="blue">businesses</font> and conduct <font color="blue">operations</font>;         -    the impact of federal, state and local utility <font color="blue">regulatory</font> policies and            orders on our regulated and unregulated <font color="blue">businesses</font>;         -    the degree to which we develop unregulated business ventures,  as well            as federal  and state  <font color="blue">regulatory</font>  policies  <font color="blue">affecting</font>  our ability to            retain and operate such business ventures profitably;         -    a change in the <font color="blue">fair market value</font> of our <font color="blue">investments</font>  that could cause            a <font color="blue">significant</font>  change in the carrying value of such <font color="blue">investments</font> or the            carrying value of related goodwill;         -    timely  receipts of <font color="blue">payments from</font> LIPA and the NYISO,  our two largest            customers; and         -    other  risks  detailed  from time to time in other  reports  and other            <font color="blue">documents filed by</font> KeySpan with the <font color="blue">SEC                                             </font>34  <PAGE>      For any of these statements, KeySpan claims the protection of the <font color="blue">safe harbor</font>  for forward-looking information contained in the Private Securities Litigation  Reform Act of 1995, as amended</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue">additional</font> discussion on these risks,  <font color="blue">uncertainties</font> and <font color="blue">assumptions</font>, see Item 1</td>
+    </tr>
+    <tr>
+      <td>&amp;quote Description of the Business, &amp;quote  Item  2</td>
+    </tr>
+    <tr>
+      <td>&amp;quote Properties, &amp;quote  Item 7</td>
+    </tr>
+    <tr>
+      <td>&amp;quote Managementapstas Discussion and <font color="blue">Analysis </font>of Financial  Condition and Results of <font color="blue">Operations </font>&amp;quote  and Item 7A  &amp;quote Quantitative and Qualitative  Disclosures About Market Risk &amp;quote  <font color="blue">contained herein</font></td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: technology", fill: "#2a8000"},
+{source: "1: technology", target: "1: safe effective", fill: "#2a8000"},
+{source: "1: safe effective", target: "1: commercially", fill: "#2a8000"},
+{source: "1: commercially", target: "1: viable products", fill: "#2a8000"},
+{source: "1: viable products", target: "1: severely harmed", fill: "#2a8000"},
+{source: "1: technology", target: "3: product candidate", fill: "#7b68ee"},
+{source: "3: product candidate", target: "3: regulatory", fill: "#7b68ee"},
+{source: "3: regulatory", target: "3: early stages", fill: "#7b68ee"},
+{source: "3: early stages", target: "3: development", fill: "#7b68ee"},
+{source: "3: product candidate", target: "4: product candidates", fill: "#fc89ac"},
+{source: "4: product candidates", target: "4: Phase I or Phase III ", fill: "#fc89ac"},
+{source: "4: Phase I or Phase III ", target: "4: clinical trials", fill: "#fc89ac"},
+{source: "4: product candidates", target: "5: product candidates", fill: "#4682b4"},
+{source: "5: product candidates", target: "5: collaborators", fill: "#4682b4"},
+{source: "5: collaborators", target: "5: product candidates may", fill: "#4682b4"},
+{source: "5: product candidates may", target: "5: safe effective", fill: "#4682b4"},
+{source: "5: safe effective", target: "5: commercially", fill: "#4682b4"},
+{source: "5: commercially", target: "5: viable treatments", fill: "#4682b4"},
+{source: "5: viable treatments", target: "5: technology may", fill: "#4682b4"},
+{source: "5: technology may", target: "5: meaningful", fill: "#4682b4"},
+{source: "5: meaningful", target: "5: collaborative partners", fill: "#4682b4"},
+{source: "5: product candidates", target: "15: clinical trials may fail", fill: "#8878c3"},
+{source: "15: clinical trials may fail", target: "15: demonstrate", fill: "#8878c3"},
+{source: "15: demonstrate", target: "15: effectiveness", fill: "#8878c3"},
+{source: "15: effectiveness", target: "15: product candidates", fill: "#8878c3"},
+{source: "15: product candidates", target: "15: collaborators product", fill: "#8878c3"},
+{source: "15: collaborators product", target: "15: candidates", fill: "#8878c3"},
+{source: "15: candidates", target: "15: extent necessary", fill: "#8878c3"},
+{source: "15: extent necessary", target: "15: regulatory approval", fill: "#8878c3"},
+{source: "15: regulatory approval", target: "15: commercialization", fill: "#8878c3"},
+{source: "15: commercialization", target: "15: product worthwhile", fill: "#8878c3"},
+{source: "15: clinical trials may fail", target: "START_HERE", fill: "#8878c3"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Pharmaceuticals Biotechnology and Life Sciences</td>
+    </tr>
+    <tr>
+      <td>Biotechnology</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Riot</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Bombings</td>
+    </tr>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Psychological state</td>
+    </tr>
+    <tr>
+      <td>Rally support</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+    <tr>
+      <td>Formally complain</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Commercial_software">Commercial software</a></td>
+      <td>Commercial software, or seldom payware, is a computer software that is produced for sale or that serves commercial purposes. Commercial software can be proprietary software or free and open-source software.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Halozyme">Halozyme</a></td>
+      <td>Halozyme Therapeutics is an American biotechnology company that develops novel oncology therapies designed to target the tumor microenvironment and licenses a novel drug delivery technology through corporate partnerships.\nThe company was founded in 1998 and went public in 2004.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/MannKind_Corporation">MannKind Corporation</a></td>
+      <td>MannKind Corporation is a biopharmaceutical company focusing on the discovery, development, and commercialization of therapeutic products for diseases such as diabetes and pulmonary arterial hypertension. Based in Danbury, Connecticut, the company was founded in February 1991.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medicago_Inc.">Medicago Inc.</a></td>
+      <td>Medicago Inc. is a privately-owned Canadian biotechnology company focused on the discovery, development, and commercialization of virus-like particles using plants as "bioreactors" to produce proteins as candidate vaccines and medications.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Development/For!">Development/For!</a></td>
+      <td>Development/For! (Latvian: Attīstībai/Par!, AP!) is a liberal political alliance in Latvia.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Human_development">Human development</a></td>
+      <td>The Human Development Index (HDI) is a statistic composite index of life expectancy, education (mean years of schooling completed and expected years of schooling upon entering the education system), and per capita income indicators, which are used to rank countries into four tiers of human development. A country scores a higher level of HDI when the lifespan is higher, the education level is higher, and the gross national income GNI (PPP) per capita is higher.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Software_development">Software development</a></td>
+      <td>Software development is the process of conceiving, specifying, designing, programming, documenting, testing, and bug fixing involved in creating and maintaining applications, frameworks, or other software components. Software development involves writing and maintaining the source code, but in a broader sense, it includes all processes from the conception of the desired software through to the final manifestation of the software, typically in a planned and structured process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Child_development">Child development</a></td>
+      <td>Child development involves the biological, psychological and emotional changes that occur in human beings between birth and the conclusion of adolescence. Childhood is divided into 3 stages of life which include early childhood, middle childhood, late childhood ( preadolescence).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenatal_development">Prenatal development</a></td>
+      <td>Prenatal development (from Latin  natalis 'relating to birth') includes the development of the embryo and of the foetus during a viviparous animal's gestation. Prenatal development starts with fertilization, in the germinal stage of embryonic development, and continues in fetal development until birth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Aerie_Pharmaceuticals">Aerie Pharmaceuticals</a></td>
+      <td>Aerie Pharmaceuticals Inc. (Nasdaq: AERI) is a publicly traded, clinical-stage pharmaceutical company focused on the discovery, development and commercialization of first-in-class therapies for the treatment of patients with glaucoma and other diseases of the eye.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/MediGene">MediGene</a></td>
+      <td>Medigene AG (FSE: MDG1, ISIN DE000A1X3W00, Prime Standard) is a publicly listed biotechnology company headquartered in Martinsried near Munich, Germany. Medigene is working on the development of immunotherapies to enhance T cell activity against solid cancers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bavarian_Nordic">Bavarian Nordic</a></td>
+      <td>Bavarian Nordic A/S is a fully integrated biotechnology company focused on the development, manufacturing and commercialization of vaccines for infectious diseases and cancer immunotherapies. The company is headquartered in Hellerup, Denmark, with a manufacturing facility in Kvistgård, and an additional site in Hørsholm.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Takeda_Oncology">Takeda Oncology</a></td>
+      <td>Takeda Oncology (originally Millennium Pharmaceuticals) is a biopharmaceutical company based in Cambridge, Massachusetts. It is a fully owned subsidiary of Takeda Pharmaceutical.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Phases_of_clinical_research">Phases of clinical research</a></td>
+      <td>The phases of clinical research are the stages in which scientists conduct experiments with a health intervention to obtain sufficient evidence for a process considered effective as a medical treatment. For drug development, the clinical phases start with testing for safety in a few human subjects, then expand to many study participants (potentially tens of thousands) to determine if the treatment is effective.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Clinical_trial">Clinical trial</a></td>
+      <td>Clinical trials are experiments or observations done in clinical research. Such prospective biomedical or behavioral research studies on human participants are designed to answer specific questions about biomedical or behavioral interventions, including new treatments (such as novel vaccines, drugs, dietary choices, dietary supplements, and medical devices) and known interventions that warrant further study and comparison.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Unofficial_collaborator">Unofficial collaborator</a></td>
+      <td>An unofficial collaborator or IM (German: [iˈʔɛm] (listen); both from German inoffizieller Mitarbeiter), or euphemistically informal collaborator (informeller Mitarbeiter), was an informant in the German Democratic Republic (East Germany)  who delivered private information to the Ministry for State Security (MfS / Stasi). At the end of the East German government, there was a network of around 189,000 informants, working at every level of society.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pursuit_of_Nazi_collaborators">Pursuit of Nazi collaborators</a></td>
+      <td>The pursuit of Nazi collaborators refers to the post-World War II pursuit and apprehension of individuals who were not citizens of the Third Reich at the outbreak of World War II but collaborated with the Nazi regime during the war. Hence, this article does not cover former members of the NSDAP and their fates after the war.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collaboration">Collaboration</a></td>
+      <td>Collaboration (from Latin com- "with" + laborare "to labor", "to work") is the process of two or more people, entities or organizations working together to complete a task or achieve a goal. Collaboration is similar to cooperation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collaborative_engineering">Collaborative engineering</a></td>
+      <td>Collaborative engineering is defined by the International Journal of Collaborative Engineering as a discipline that "studies the interactive process of engineering collaboration, whereby multiple interested stakeholders resolve conflicts, bargain for individual or collective advantages, agree upon courses of action, and/or attempt to craft joint outcomes which serve their mutual interests."Collaborative engineering is quickly becoming a topic of great interest in recent years due to the explosion of internet technologies. This upsurge is partially due to the success of projects such as Wikipedia and Linux that have proven the efficacy of internet collaboration.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bleiburg_repatriations">Bleiburg repatriations</a></td>
+      <td>In May 1945, after the end of World War II in Europe, during which Yugoslavia had been occupied by the Axis powers, tens of thousands of soldiers and civilians associated with the Axis powers fled Yugoslavia to Austria as the Soviet Union (Red Army) and Yugoslav Partisans took control. When they reached Allied-occupied Austria, the British refused to accept their surrender and directed them to the Partisans instead despite knowing that they would be killed.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collaborators_(Battlestar_Galactica)">Collaborators (Battlestar Galactica)</a></td>
+      <td>"Collaborators"  is the fifth episode of the third season from the science fiction television series Battlestar Galactica.\nThis is the first episode of season 3 to include a survivor count, at 41,435, down considerably from the 49,550 shown in "Lay Down Your Burdens" (Part 2).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_law_to_redeem_pro-Japanese_collaborators'_property">Special law to redeem pro-Japanese collaborators' property</a></td>
+      <td>The special law to redeem pro-Japanese collaborators' property (Hanja: 親日反民族行為者財產의國家歸屬에關한特別法, literally "Special Law for the Nationalization of Pro-Japanese Race Traitors' Assets")  is a special South Korean law that passed the South Korean National Assembly on December 8, 2005, and was enacted on December 29, 2005. Under this law, the South Korean government is able to seize land and other properties owned by Korean collaborators (chinilpa), and their descendants, who supported the Japanese administration during the period between 1905 and 1945.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Chinilpa">Chinilpa</a></td>
+      <td>Chinilpa (Korean: 친일파, lit. "pro-Japan faction") is a derogatory Korean language term that denotes ethnic Koreans who collaborated with Imperial Japan during the protectorate period of the Korean Empire from 1905 and its colonial rule in Korea from 1910 to 1945.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Managed_Heart">The Managed Heart</a></td>
+      <td>The Managed Heart: Commercialization of Human Feeling, by Arlie Russell Hochschild, was first published in 1983. A 20th Anniversary edition with a new afterword added by the author was published in 2003.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Renewable_energy_commercialization">Renewable energy commercialization</a></td>
+      <td>Renewable energy commercialization involves the deployment of three generations of renewable energy technologies dating back more than 100 years. First-generation technologies, which are already mature and economically competitive, include biomass, hydroelectricity, geothermal power and heat.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Commercial_use_of_space">Commercial use of space</a></td>
+      <td>Commercial use of space is the provision of goods or services of commercial value by using equipment sent into Earth orbit or outer space.  This phenomenon – aka Space Economy (or New Space Economy) – is accelerating cross-sector innovation processes combining the most advanced space and digital technologies to develop a broad portfolio of space-based services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Commercialization_of_love">Commercialization of love</a></td>
+      <td>The notion of commercialization of love, that is not to be confused with prostitution (the commercialization of sexual activity), involves the definitions of romantic love and consumerism.\n\n\n== Sociological development ==\nThe commercialization of love is the ongoing process of infiltration of commercial and economical stimuli in the daily life of lovers and the association of monetary and non-monetary symbols and commodities in the love relationships.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>IMMUNOGEN INC      Item 1A    <font color="blue">Risk Factors </font>      THE RISKS AND UNCERTAINTIES DESCRIBED BELOW ARE THOSE THAT WE CURRENTLY     BELIEVE  MAY MATERIALLY  AFFECT  OUR  COMPANY  ADDITIONAL  RISKS  AND     UNCERTAINTIES THAT WE ARE UNAWARE OF OR THAT WE CURRENTLY DEEM IMMATERIAL     ALSO MAY BECOME IMPORTANT FACTORS THAT AFFECT OUR COMPANY       If our TAP <font color="blue">technology</font> does not produce safe, <font color="blue">effective</font> and <font color="blue">commercially</font>     <font color="blue">viable products</font>, our business will be <font color="blue">severely harmed</font></td>
+    </tr>
+    <tr>
+      <td>Our  TAP <font color="blue">technology</font> yields novel anticancer <font color="blue">product candidate</font>s for the     treatment  of cancer</td>
+    </tr>
+    <tr>
+      <td>No TAP <font color="blue">product candidate</font> has obtained <font color="blue">regulatory</font>     approval  and all of them are in <font color="blue">early stages</font> of <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>The most     advanced TAP <font color="blue">product candidate</font>s are only in the Phase I or Phase I/II stage     of <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>Our TAP <font color="blue">product candidate</font>s or our <font color="blue"><font color="blue">collaborator</font>s</font>’ TAP     <font color="blue">product candidate</font>s may not prove to be safe, <font color="blue">effective</font> or <font color="blue">commercially</font>     <font color="blue">viable <font color="blue">treatments</font></font> for cancer and our TAP <font color="blue">technology</font> may not result in any     future  <font color="blue">meaningful</font>  benefits  to  us  or  for our current or potential     <font color="blue"><font color="blue">collaborative</font> partners</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, we are aware of only one antibody-drug     conjugate that has obtained FDA approval and is based on <font color="blue">technology</font> similar     to our TAP <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>If our TAP <font color="blue">technology</font> fails to <font color="blue">generate product</font>     <font color="blue">candidates</font> that are safe, <font color="blue">effective</font> and <font color="blue">commercially</font> <font color="blue">viable <font color="blue">treatments</font></font> for     cancer, or fails to obtain FDA approval, our business will be severely     harmed</td>
+    </tr>
+    <tr>
+      <td>Clinical trials for our <font color="blue">product candidate</font>s will be lengthy and expensive and     their outcome is uncertain</td>
+    </tr>
+    <tr>
+      <td>Before obtaining <font color="blue">regulatory</font> approval for the <font color="blue">commercial sale</font> of any product     <font color="blue">candidates</font>, we and our <font color="blue"><font color="blue">collaborative</font> partners</font> must <font color="blue">demonstrate</font> through     <font color="blue">clinical testing</font> that our <font color="blue">product candidate</font>s are safe and <font color="blue">effective</font> for use     in humans</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Conducting </font><font color="blue">clinical trials</font> is a time-consuming, expensive and     uncertain  process  and typically requires years to complete</td>
+    </tr>
+    <tr>
+      <td>Our most     advanced <font color="blue">product candidate</font>s are only in the Phase I or Phase I/II stage of     <font color="blue">clinical trials</font></td>
+    </tr>
+    <tr>
+      <td>In our industry, the results from pre<font color="blue">clinical testing</font> and     early <font color="blue">clinical trials</font> often are not predictive of results obtained in later     clinical  trials</td>
+    </tr>
+    <tr>
+      <td>Some compounds that have <font color="blue">shown promising</font> results in     preclinical  or  early  <font color="blue">clinical trials</font> subsequently fail to establish     <font color="blue">sufficient safety</font> and <font color="blue">efficacy data <font color="blue">necessary</font></font> to obtain <font color="blue">regulatory</font> approval</td>
+    </tr>
+    <tr>
+      <td>At any time during the <font color="blue">clinical trials</font>, we, our <font color="blue"><font color="blue">collaborative</font> partners</font>, or     the FDA <font color="blue">might delay</font> or halt any <font color="blue">clinical trials</font> for our <font color="blue">product candidate</font>s     for <font color="blue">various reasons</font>, including:         §       occurrence of unacceptable toxicities or side effects;         §       in<font color="blue">effective</font>ness of the <font color="blue">product candidate</font>;         §       insufficient <font color="blue">drug supply</font>;         §       negative or <font color="blue">inconclusive</font> results from the <font color="blue">clinical trials</font>, or results that     <font color="blue">necessitate <font color="blue">additional</font> clinical studies</font>;         §       delays in obtaining or maintaining required <font color="blue">approvals from <font color="blue">institutions</font></font>,     <font color="blue">review boards</font> or other <font color="blue">reviewing entities at clinical sites</font>;         §       delays in <font color="blue">patient enrollment</font>; or                                         §       other reasons that are internal to the <font color="blue">businesses</font> of our <font color="blue">collaborative</font>     partners, which they may not share with us</td>
+    </tr>
+    <tr>
+      <td>The  results  of <font color="blue">clinical trials</font> may fail to <font color="blue">demonstrate</font> the safety or     <font color="blue">effective</font>ness  of our <font color="blue">product candidate</font>s or our <font color="blue"><font color="blue">collaborator</font>s</font>’ product     <font color="blue">candidates</font> to the <font color="blue">extent <font color="blue">necessary</font></font> to obtain <font color="blue">regulatory</font> approval or to make     the <font color="blue">commercialization</font> of the <font color="blue">product worthwhile</font></td>
+    </tr>
+    <tr>
+      <td>Any failure or substantial     delay in <font color="blue">successfully</font> completing <font color="blue">clinical trials</font> and obtaining <font color="blue">regulatory</font>     approval for our <font color="blue">product candidate</font>s or our <font color="blue"><font color="blue">collaborator</font>s</font>’ <font color="blue">product candidate</font>s     <font color="blue">could severely harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>15       _________________________________________________________________       If our <font color="blue"><font color="blue">collaborative</font> partners</font> fail to perform their <font color="blue"><font color="blue">obligations</font> under</font> our     <font color="blue"><font color="blue">agreement</font>s</font>, or determine not to continue with <font color="blue">clinical trials</font> for particular     <font color="blue">product candidate</font>s, our business could be <font color="blue">severely impacted</font></td>
+    </tr>
+    <tr>
+      <td>Our  strategy for the <font color="blue">development</font> and <font color="blue">commercialization</font> of our product     <font color="blue">candidates</font> depends, in large part, upon the formation and maintenance of     <font color="blue">collaborative</font> <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Collaborations </font>provide an <font color="blue">opportunity</font> for us to:         §       <font color="blue">generate cash flow</font> and revenue;         §       offset some of the <font color="blue">costs <font color="blue">associated with</font></font> our <font color="blue">internal research</font> and     <font color="blue">development</font>, pre<font color="blue">clinical testing</font>, <font color="blue">clinical trials</font> and <font color="blue">manufacturing</font>;         §       seek and obtain <font color="blue">regulatory</font> approvals faster than we could on our own;         §       <font color="blue">successfully</font> <font color="blue">commercialize</font> existing and future <font color="blue">product candidate</font>s;         §       gain use of our <font color="blue">technology</font> with antibodies that are <font color="blue">proprietary</font> to other     companies;         §       <font color="blue">secure access</font> to targets which, due to <font color="blue"><font color="blue">intellectual</font> property <font color="blue">restrictions</font></font>,     <font color="blue">would otherwise</font> be unavailable to our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to secure or maintain successful <font color="blue">collaborative</font> <font color="blue">arrangements</font>, the     <font color="blue">development</font>  and marketing of compounds that use our <font color="blue">technology</font> may be     delayed, scaled back, or <font color="blue">otherwise may</font> not occur</td>
+    </tr>
+    <tr>
+      <td>In addition, we may be     unable to negotiate other <font color="blue">collaborative</font> <font color="blue">arrangements</font> or, if <font color="blue">necessary</font>,     modify our <font color="blue">existing <font color="blue">arrangements</font> on</font> acceptable terms</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot control</font> the     amount and timing of resources our <font color="blue">partners may devote</font> to our products</td>
+    </tr>
+    <tr>
+      <td>Our     partners may separately pursue <font color="blue">competing products</font>, therapeutic approaches or     <font color="blue">technologies</font> to develop <font color="blue">treatments</font> for the <font color="blue">diseases targeted by us</font> or our     <font color="blue">collaborative</font>  efforts,  or  may decide for reasons not known to us to     <font color="blue">discontinue</font> <font color="blue">development</font> of <font color="blue">products under</font> our <font color="blue"><font color="blue">agreement</font>s</font> with them</td>
+    </tr>
+    <tr>
+      <td>Any of     our partners may slow or <font color="blue">discontinue</font> the <font color="blue">development</font> of a product <font color="blue">covered by</font>     a <font color="blue">collaborative</font> arrangement for reasons that can include:         §       a change in the partner’s strategic focus as a result of merger, <font color="blue">management</font>     changes, adverse business events, or other causes;         §       a change in the priority of the <font color="blue">product relative</font> to other programs in the     <font color="blue">collaborator</font>’s pipeline;         §       a <font color="blue">reassessment</font> of the patent situation related to the compound or its     target;         §       a change in the anticipated <font color="blue">competition</font> for the product;         §       <font color="blue">clinical study</font> results;         §       a reduction in the <font color="blue">financial resources</font> the <font color="blue">collaborator</font> can or is willing to     apply to the <font color="blue">development</font> of <font color="blue">new compounds</font> and         §       other factors</td>
+    </tr>
+    <tr>
+      <td>Even if our <font color="blue">partners continue</font> the <font color="blue">collaborative</font> <font color="blue">arrangements</font>, they may     <font color="blue">nevertheless</font>  determine  not  to  actively  pursue  the <font color="blue">development</font> or     <font color="blue">commercialization</font> of any resulting products</td>
+    </tr>
+    <tr>
+      <td>Also, our <font color="blue">partners may fail</font> to     perform their <font color="blue"><font color="blue">obligations</font> under</font> the <font color="blue">collaborative</font> <font color="blue"><font color="blue">agreement</font>s</font> or may be slow     in  performing  their  <font color="blue">obligations</font></td>
+    </tr>
+    <tr>
+      <td>Our  partners  can  terminate our     <font color="blue">collaborative</font> <font color="blue"><font color="blue">agreement</font>s</font> under certain <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>The decision to advance a     product that is <font color="blue">covered by</font> a <font color="blue">collaborative</font> <font color="blue">agreement</font> through <font color="blue">clinical trials</font>     and  ultimately  to  <font color="blue">commercialization</font>  is  in  the  <font color="blue">discretion</font> of our     <font color="blue"><font color="blue">collaborative</font> partners</font></td>
+    </tr>
+    <tr>
+      <td>If any <font color="blue">collaborative</font> partner were to terminate or     breach our <font color="blue"><font color="blue">agreement</font>s</font>, or fail to complete its <font color="blue">obligations</font> to us in a timely     manner, our anticipated <font color="blue">revenue from</font> the <font color="blue">agreement</font> and from the <font color="blue">development</font>     and <font color="blue">commercialization</font> of our <font color="blue">products would</font> be severely limited</td>
+    </tr>
+    <tr>
+      <td>If we are     not  able  to <font color="blue">establish <font color="blue">additional</font> <font color="blue">collaboration</font>s</font> or any or all of our     <font color="blue">existing <font color="blue">collaboration</font>s</font> are terminated and we are not able to <font color="blue">enter into</font>     <font color="blue"><font color="blue">alternative</font> <font color="blue">collaboration</font>s on</font> acceptable terms, our continued <font color="blue">development</font>,     <font color="blue">manufacture</font> and <font color="blue">commercialization</font> of our <font color="blue">product candidate</font>s could be delayed     or <font color="blue">scaled back as</font> we may not have the funds or <font color="blue">capability</font> to continue these     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>If  our  <font color="blue"><font color="blue">collaborator</font>s</font>  fail  to  <font color="blue">successfully</font> develop and     <font color="blue">commercialize</font> TAP compounds, our business would be <font color="blue">severely harmed</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> a small number of <font color="blue"><font color="blue">collaborator</font>s</font> for a substantial portion of     our revenue</td>
+    </tr>
+    <tr>
+      <td>The loss of, or a material reduction in <font color="blue">activity by</font>, any one of     these <font color="blue"><font color="blue">collaborator</font>s</font> could result in a substantial decline in our revenue</td>
+    </tr>
+    <tr>
+      <td>We have and <font color="blue">will continue</font> to have <font color="blue"><font color="blue">collaboration</font>s with</font> a limited number of     companies</td>
+    </tr>
+    <tr>
+      <td>Also, the failure of any one of our     <font color="blue"><font color="blue">collaborative</font> partners</font> to perform its <font color="blue"><font color="blue">obligations</font> under</font> its <font color="blue">agreement</font> with     us, including making any royalty, milestone or other payments to us, could     have a material adverse effect on our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Further, any     material reduction by any one of our <font color="blue"><font color="blue">collaborative</font> partners</font> in its level of     <font color="blue">commitment</font> of resources, funding, personnel, and interest in continued     <font color="blue">development</font> under its <font color="blue">agreement</font> with us could have a material adverse effect     on  our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">consolidation trends</font> in the healthcare     <font color="blue">industry continue</font>, the number of our potential <font color="blue"><font color="blue">collaborator</font>s</font> could decrease,     <font color="blue">which could</font> have an <font color="blue">adverse impact on</font> our <font color="blue">development</font> efforts</td>
+    </tr>
+    <tr>
+      <td>If a present     or  future  <font color="blue">collaborator</font>  of  ours  were  to be involved in a business     <font color="blue">combination</font>, its <font color="blue">continued pursuit</font> and <font color="blue">emphasis on</font> our product <font color="blue">development</font>     <font color="blue">program could</font> be delayed, diminished or terminated</td>
+    </tr>
+    <tr>
+      <td>16       _________________________________________________________________       If our <font color="blue"><font color="blue">collaborator</font>s</font>’ <font color="blue">requirements</font> for <font color="blue">clinical materials</font> to be <font color="blue">manufacture</font>d     by us are <font color="blue"><font color="blue"><font color="blue">significant</font>ly</font> lower than</font> we have estimated, our financial results     and <font color="blue">condition could</font> be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">procure certain <font color="blue">components</font></font> of finished conjugate, including <font color="blue">ansamitocin</font>     P3, DM1, DM4, and linker, on behalf of our <font color="blue"><font color="blue">collaborator</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In order to meet     our  <font color="blue">commitment</font>s  to  our <font color="blue"><font color="blue">collaborator</font>s</font>, we are required to <font color="blue">enter into</font>     <font color="blue"><font color="blue">agreement</font>s</font> with <font color="blue">third parties</font> to produce these <font color="blue"><font color="blue">components</font> well</font> in advance of     our production of <font color="blue">clinical materials</font> on behalf of our <font color="blue"><font color="blue">collaborator</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue"><font color="blue">collaborator</font>s</font> do not require as much clinical material as we have contracted     to produce, we may not be able to recover our <font color="blue">investment</font> in these <font color="blue">components</font>     and  we  <font color="blue">may suffer <font color="blue">significant</font> losses</font></td>
+    </tr>
+    <tr>
+      <td>For example, in <font color="blue">February </font>2005,     <font color="blue">Boehringer Ingelheim </font><font color="blue">discontinue</font>d <font color="blue">development</font> of <font color="blue"><font color="blue">bivatuzumab</font> mertansine</font> and     in January 2006, <font color="blue">Millennium </font><font color="blue">discontinue</font>d <font color="blue">development</font> of MLN2704</td>
+    </tr>
+    <tr>
+      <td>In the     periods  subsequent  to  <font color="blue">discontinuation</font>  of  <font color="blue">development</font>, we can have     <font color="blue"><font color="blue">significant</font>ly</font> reduced demand for conjugated material</td>
+    </tr>
+    <tr>
+      <td>Specifically, the     <font color="blue">discontinuation</font> of <font color="blue"><font color="blue">bivatuzumab</font> mertansine</font> has <font color="blue">contributed</font> to the decrease in     <font color="blue">clinical materials</font> <font color="blue">reimbursement</font> in the year ended June 30, 2006</td>
+    </tr>
+    <tr>
+      <td>In addition, we operate a conjugate <font color="blue">manufacturing</font> <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">significant</font>     portion  of the cost of operating this <font color="blue">facility</font>, including the cost of     <font color="blue">manufacturing</font>  personnel, is charged to the cost of producing clinical     <font color="blue">materials on behalf</font> of our <font color="blue"><font color="blue">collaborator</font>s</font></td>
+    </tr>
+    <tr>
+      <td>If we produce <font color="blue">fewer batches</font> of     <font color="blue">clinical materials</font> for our <font color="blue"><font color="blue">collaborator</font>s</font>, less of the cost of operating the     conjugate <font color="blue">manufacturing</font> <font color="blue">facility</font> will be charged to our <font color="blue"><font color="blue">collaborator</font>s</font> and     our <font color="blue">financial condition</font> could be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>We  have a history of operating losses and expect to incur <font color="blue">significant</font>     <font color="blue">additional</font> operating losses</td>
+    </tr>
+    <tr>
+      <td>We have generated operating <font color="blue">losses since</font> our inception</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of June </font>30, 2006,     we had an <font color="blue">accumulated deficit</font> of dlra238dtta6 million</td>
+    </tr>
+    <tr>
+      <td>For the years ended <font color="blue">June     </font>30,  2006, 2005, and 2004, we <font color="blue">generated losses</font> of dlra17dtta8 million, dlra11dtta0     million and dlra5dtta9 million, respectively</td>
+    </tr>
+    <tr>
+      <td>We     expect to incur substantial <font color="blue">additional</font> operating <font color="blue">expenses over</font> the next     <font color="blue"><font color="blue">several years</font> as</font> our research, <font color="blue">development</font>, pre<font color="blue">clinical testing</font>, clinical     studies and <font color="blue">collaborator</font> support <font color="blue">activities</font> increase</td>
+    </tr>
+    <tr>
+      <td>We intend to continue     to invest <font color="blue"><font color="blue">significant</font>ly</font> in our <font color="blue">product candidate</font>s</td>
+    </tr>
+    <tr>
+      <td>Further, we expect to     invest <font color="blue">significant</font> resources supporting our existing <font color="blue"><font color="blue">collaborator</font>s</font> as they     work to develop, test and <font color="blue">commercialize</font> TAP and other <font color="blue">antibody compounds</font>,     and  we or our <font color="blue"><font color="blue">collaborator</font>s</font> may encounter technological or <font color="blue">regulatory</font>     <font color="blue"><font color="blue"><font color="blue">difficult</font>ies</font> as</font> part of this <font color="blue">development</font> and <font color="blue">commercialization</font> process that     we <font color="blue">cannot overcome</font> or remedy</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may also incur</font> substantial marketing and     other costs in the future if we decide to <font color="blue">establish marketing</font> and sales     <font color="blue">capabilities</font> to <font color="blue">commercialize</font> our <font color="blue">product candidate</font>s</td>
+    </tr>
+    <tr>
+      <td>None of our product     <font color="blue">candidates</font> has generated any commercial revenue and our only revenues to     date have been primarily from upfront and milestone payments, research and     <font color="blue">development</font>  support  and  clinical  materials  <font color="blue">reimbursement</font> from our     <font color="blue"><font color="blue">collaborative</font> partners</font></td>
+    </tr>
+    <tr>
+      <td>We do not expect to <font color="blue">generate revenues from</font> the     <font color="blue">commercial sale</font> of our <font color="blue">product candidate</font>s for <font color="blue">several years</font>, and we may     never <font color="blue">generate revenues from</font> the <font color="blue">commercial sale</font> of products</td>
+    </tr>
+    <tr>
+      <td>Even if we do     <font color="blue">successfully</font> develop products that can be marketed and sold <font color="blue">commercially</font>, we     will need to generate <font color="blue">significant</font> revenues from those products to achieve     and maintain <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Even if we do become profitable, we may not be     able to sustain or increase <font color="blue">profitability</font> on a quarterly or <font color="blue">annual basis</font></td>
+    </tr>
+    <tr>
+      <td>We  and our <font color="blue"><font color="blue">collaborative</font> partners</font> are subject to extensive <font color="blue">government</font>     <font color="blue">regulations</font> and we and our <font color="blue"><font color="blue">collaborative</font> partners</font> may not be able to obtain     <font color="blue">necessary</font> <font color="blue">regulatory</font> approvals</td>
+    </tr>
+    <tr>
+      <td>We and our <font color="blue"><font color="blue">collaborative</font> partners</font> may not receive the <font color="blue">regulatory</font> approvals     <font color="blue">necessary</font> to <font color="blue">commercialize</font> our <font color="blue">product candidate</font>s, which would cause our     business to be <font color="blue">severely harmed</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Pharmaceutical </font><font color="blue">product candidate</font>s, including     those in <font color="blue">development</font> by us and our <font color="blue"><font color="blue">collaborative</font> partners</font>, are subject to     extensive and rigorous <font color="blue">government</font> regulation</td>
+    </tr>
+    <tr>
+      <td>The FDA regulates, among other     things, the <font color="blue">development</font>, testing, <font color="blue">manufacture</font>, safety, record-keeping,     labeling, storage, approval, advertising, promotion, sale and <font color="blue">distribution</font>     of   <font color="blue">pharmaceutical</font>   products</td>
+    </tr>
+    <tr>
+      <td>If  our  potential  products  or  our     <font color="blue"><font color="blue">collaborator</font>s</font>’ <font color="blue">potential products</font> are <font color="blue">marketed abroad</font>, they will also be     subject to extensive regulation by foreign <font color="blue">government</font>s</td>
+    </tr>
+    <tr>
+      <td>None of our product     <font color="blue">candidates</font> has been approved for sale <font color="blue">in the <font color="blue"><font color="blue">United States</font> </font></font>or any foreign     market</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">regulatory</font>  review  and <font color="blue">approval process</font>, which includes     preclinical  studies and <font color="blue">clinical trials</font> of each <font color="blue">product candidate</font>, is     lengthy, complex, expensive and uncertain</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Securing FDA </font>approval requires     the submission of extensive preclinical and <font color="blue">clinical data</font> and supporting     information  to  the  FDA for each <font color="blue">indication</font> to establish the product     candidate’s safety and efficacy</td>
+    </tr>
+    <tr>
+      <td>Data obtained <font color="blue">from preclinical</font> and clinical     trials are susceptible to varying interpretation, which may delay, limit or     prevent <font color="blue">regulatory</font> approval</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">approval process</font> may</font> take many years to     complete and <font color="blue">may involve ongoing <font color="blue">requirements</font></font> for post-marketing studies</td>
+    </tr>
+    <tr>
+      <td>In     light  of  the limited <font color="blue">regulatory</font> history of monoclonal antibody-based     <font color="blue">therapeutics</font>, <font color="blue">regulatory</font> approvals for our <font color="blue">products may</font> not be obtained     <font color="blue">without lengthy delays</font>, if at all</td>
+    </tr>
+    <tr>
+      <td>Any FDA or other <font color="blue">regulatory</font> approvals of     our <font color="blue">product candidate</font>s, once obtained, may be withdrawn</td>
+    </tr>
+    <tr>
+      <td>The effect of     <font color="blue">government</font> regulation may be to:       17       _________________________________________________________________                                         §       <font color="blue">delay marketing</font> of <font color="blue">potential products</font> for a considerable period of time;         §       limit the <font color="blue">indicated uses</font> for which potential <font color="blue">products may</font> be marketed;         §       <font color="blue">impose costly <font color="blue">requirements</font> on</font> our <font color="blue">activities</font>; and         §       place us at a <font color="blue"><font color="blue">competitive</font> disadvantage</font> to other <font color="blue">pharmaceutical</font> and     bio<font color="blue">technology</font> companies</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">may encounter delays</font> or <font color="blue">rejections</font> in the <font color="blue">regulatory</font> <font color="blue">approval process</font>     because of <font color="blue">additional</font> <font color="blue">government</font> regulation from future legislation or     <font color="blue"><font color="blue">administrative</font> action</font> or changes in FDA <font color="blue">policy during</font> the period of product     <font color="blue">development</font>, <font color="blue">clinical trials</font> and FDA <font color="blue">regulatory</font> review</td>
+    </tr>
+    <tr>
+      <td>Failure to comply     with FDA or other applicable <font color="blue">regulatory</font> <font color="blue">requirements</font> may result in criminal     <font color="blue">prosecution</font>,  civil penalties, recall or seizure of products, total or     <font color="blue">partial suspension</font> of production or injunction, as well as other <font color="blue">regulatory</font>     <font color="blue">action against</font> our <font color="blue">product candidate</font>s or us</td>
+    </tr>
+    <tr>
+      <td>Outside the <font color="blue">United States</font>, our     ability to market a product is <font color="blue">contingent upon</font> receiving <font color="blue">clearances from</font> the     appropriate <font color="blue">regulatory</font> <font color="blue">authorities</font></td>
+    </tr>
+    <tr>
+      <td>The foreign <font color="blue">regulatory</font> <font color="blue">approval process</font>     includes similar risks to those <font color="blue">associated with</font> the FDA <font color="blue">approval process</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, we are, or may become, subject to <font color="blue">various federal</font>, state and local     laws, <font color="blue">regulations</font> and <font color="blue">recommendations</font> relating to safe working <font color="blue">conditions</font>,     <font color="blue">laboratory</font> and <font color="blue">manufacturing</font> practices, the <font color="blue">experimental use</font> of animals and     the  use  and  disposal of <font color="blue">hazardous substances</font>, including <font color="blue">radioactive</font>     compounds  and  infectious disease agents, used in <font color="blue">connection with</font> our     research work</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> the laws and <font color="blue">regulations</font> pertaining     to our business, we may be subject to sanctions, including the temporary or     <font color="blue">permanent suspension</font> of <font color="blue">operations</font>, product recalls, marketing <font color="blue">restrictions</font>     and civil and <font color="blue">criminal penalties</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">product candidate</font>s and our <font color="blue"><font color="blue">collaborator</font>s</font>’ <font color="blue">product candidate</font>s will remain     subject  to  ongoing  <font color="blue">regulatory</font> review even if they receive marketing     approval</td>
+    </tr>
+    <tr>
+      <td>If  we  or our <font color="blue"><font color="blue">collaborator</font>s</font> fail to <font color="blue">comply with</font> continuing     <font color="blue">regulations</font>, we could lose these approvals and the sale of our products     could be suspended</td>
+    </tr>
+    <tr>
+      <td>Even  if we receive <font color="blue">regulatory</font> approval to market a <font color="blue">particular product</font>     candidate,  the  <font color="blue">approval could</font> be <font color="blue">conditioned on us conducting costly</font>     post-approval studies or <font color="blue">could limit</font> the <font color="blue">indicated uses</font> included in our     labeling</td>
+    </tr>
+    <tr>
+      <td>Moreover, the product may later cause adverse effects that limit     or prevent its widespread use, force us to withdraw it from the market or     impede or delay our ability to obtain <font color="blue">regulatory</font> approvals in <font color="blue">additional</font>     countries</td>
+    </tr>
+    <tr>
+      <td>In addition, the <font color="blue">manufacture</font>r of the product and its <font color="blue">facilities</font>     <font color="blue">will continue</font> to be subject to FDA review and <font color="blue">periodic inspections</font> to ensure     adherence to applicable <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>After receiving <font color="blue">marketing approval</font>, the     <font color="blue">manufacturing</font>,  labeling, packaging, adverse event reporting, storage,     advertising, promotion and record-keeping related to the <font color="blue">product remain</font>     subject to extensive <font color="blue">regulatory</font> <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>We may be slow to adapt, or we     <font color="blue">may never adapt</font>, to changes in existing <font color="blue">regulatory</font> <font color="blue">requirements</font> or adoption     of new <font color="blue">regulatory</font> <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> the <font color="blue">regulatory</font> <font color="blue">requirements</font> of the FDA and other     applicable  United  States  and  foreign <font color="blue">regulatory</font> <font color="blue">authorities</font>, or if     <font color="blue">previously</font>  unknown  problems  with  our  products,  <font color="blue">manufacture</font>rs  or     <font color="blue">manufacturing</font>  processes  are  discovered,  we  could  be  subject  to     <font color="blue">administrative</font> or <font color="blue">judicially</font> imposed sanctions, including:         §       <font color="blue">restrictions</font> on the products, <font color="blue">manufacture</font>rs or <font color="blue">manufacturing</font> processes;         §       warning letters;         §       civil or <font color="blue">criminal penalties</font>;         §       fines;         §       <font color="blue">injunctions</font>;         §       product seizures or <font color="blue">detentions</font>;         §       import bans;         §       voluntary or <font color="blue">mandatory</font> product recalls and publicity <font color="blue">requirements</font>;         §       suspension or withdrawal of <font color="blue">regulatory</font> approvals;         §       total or <font color="blue">partial suspension</font> of production; and         §       refusal to approve pending <font color="blue">applications</font> for <font color="blue">marketing approval</font> of new drugs     or <font color="blue">supplements</font> to approved <font color="blue">applications</font></td>
+    </tr>
+    <tr>
+      <td>We rely on two third-party <font color="blue">manufacture</font>rs to perform separate <font color="blue">activities</font> in     the process of producing supplies of our cell-killing agents, DM1 and DM4</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font><font color="blue">problems at either</font> of these <font color="blue">manufacture</font>rs could negatively     impact the <font color="blue">development</font> of our own compounds and those of our <font color="blue"><font color="blue">collaborator</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We rely on third-party suppliers to <font color="blue">manufacture</font> materials used to make TAP     compounds</td>
+    </tr>
+    <tr>
+      <td>Our cell-killing agents DM1 and DM4 (<font color="blue">collectively</font> “DMx”) are     <font color="blue">manufacture</font>d from a precursor, <font color="blue">ansamitocin</font> P3</td>
+    </tr>
+    <tr>
+      <td>As part of preparing to     produce TAP compounds for later-stage <font color="blue">clinical trials</font> and <font color="blue">commercialization</font>,     we  are  in the process of <font color="blue">transitioning from</font> our <font color="blue">original supplier</font> of     <font color="blue">ansamitocin</font>  P3  to  a  larger company with more <font color="blue">commercial production</font>     experience</td>
+    </tr>
+    <tr>
+      <td>We believe we have ample inventory of <font color="blue">ansamitocin</font> P3 in place to     meet the anticipated demands by us and our partners during the transition     period</td>
+    </tr>
+    <tr>
+      <td>Should there be a <font color="blue">serious problem with</font> the transition to the new     vendor, however, we would not be able to <font color="blue">immediately</font> obtain material from     our <font color="blue">original supplier</font> and our ability to produce TAP <font color="blue">compounds could</font> be     <font color="blue"><font color="blue">significant</font>ly</font> impacted, which may impact our and our <font color="blue"><font color="blue">collaborator</font>s</font>’ product     <font color="blue">development</font> <font color="blue">activities</font> including <font color="blue">clinical testing</font></td>
+    </tr>
+    <tr>
+      <td>Any problems experienced by this     vendor could result in a delay or <font color="blue">interruption</font> in the supply of DMx to us     until this vendor cures the problem or until we locate an <font color="blue">alternative</font> source     of supply</td>
+    </tr>
+    <tr>
+      <td>Any delay or <font color="blue">interruption</font> in our supply of DMx could lead to a     delay or <font color="blue">interruption</font> in our <font color="blue">manufacturing</font> <font color="blue">operations</font> and preclinical and     <font color="blue">clinical trials</font> of our <font color="blue">product candidate</font>s and our <font color="blue"><font color="blue">collaborator</font>s</font>’ product     <font color="blue">candidates</font>, <font color="blue">which could</font> negatively affect our business</td>
+    </tr>
+    <tr>
+      <td>We are currently     working with a potential <font color="blue">additional</font> supplier to develop the <font color="blue">capabilities</font> to     supply these materials</td>
+    </tr>
+    <tr>
+      <td>We cannot assume that we will be able to reach     <font color="blue">agreement</font> with this <font color="blue">supplier on</font> acceptable terms, or at all</td>
+    </tr>
+    <tr>
+      <td>18       _________________________________________________________________       <font color="blue">Unfavorable </font>pricing <font color="blue">regulations</font>, third-party <font color="blue">reimbursement</font> practices or     <font color="blue">healthcare reform initiatives applicable</font> to our <font color="blue">product candidate</font>s could     limit our <font color="blue">potential product revenue</font></td>
+    </tr>
+    <tr>
+      <td>Antibody-based <font color="blue">anticancer products</font> are often much more costly to produce     <font color="blue">than traditional chemo<font color="blue">therapeutics</font></font> and tend to have <font color="blue"><font color="blue">significant</font>ly</font> higher     prices</td>
+    </tr>
+    <tr>
+      <td>Factors that <font color="blue">help justify</font> the price include the <font color="blue">high mortality</font>     associated  with many types of cancer and the need for more and better     <font color="blue">treatment options</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regulations  </font><font color="blue">governing drug pricing</font> and <font color="blue">reimbursement</font> vary widely from     country to country</td>
+    </tr>
+    <tr>
+      <td>Some countries require approval of the <font color="blue">sales price</font> of a     drug before it can be marketed</td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">countries restrict</font> the physicians that     can  authorize  the  use of more <font color="blue">expensive medications</font></td>
+    </tr>
+    <tr>
+      <td>Some countries     <font color="blue">establish treatment guidelines</font> to <font color="blue">help limit</font> the use of more expensive     <font color="blue">therapeutics</font> and the pool of patients that receive them</td>
+    </tr>
+    <tr>
+      <td>In some countries,     including the <font color="blue">United States</font>, third-party payers frequently seek discounts     <font color="blue">from list prices</font> and are <font color="blue">increasingly challenging</font> the <font color="blue">prices charged</font> for     <font color="blue">medical products</font></td>
+    </tr>
+    <tr>
+      <td>Because our <font color="blue">product candidate</font>s are in the <font color="blue">development</font>     stage, we do not know the level of <font color="blue">reimbursement</font>, if any, we will receive     for  any  products  that  we  are able to <font color="blue">successfully</font> develop</td>
+    </tr>
+    <tr>
+      <td>If the     <font color="blue">reimbursement</font> for any of our <font color="blue">product candidate</font>s is inadequate in light of     our <font color="blue">development</font> and other costs, our ability to achieve <font color="blue">profitability</font> would     be affected</td>
+    </tr>
+    <tr>
+      <td>We believe that the efforts of <font color="blue">government</font>s and third-party payors to contain     or reduce the cost of healthcare <font color="blue">will continue</font> to affect the business and     <font color="blue">financial condition</font> of <font color="blue">pharmaceutical</font> and bio<font color="blue">pharmaceutical</font> companies</td>
+    </tr>
+    <tr>
+      <td>A     number of <font color="blue">legislative</font> and <font color="blue">regulatory</font> proposals to change the healthcare     system <font color="blue">in the <font color="blue"><font color="blue">United States</font> </font></font>and other <font color="blue">major healthcare markets</font> have been     proposed  and  adopted in <font color="blue">recent years</font></td>
+    </tr>
+    <tr>
+      <td>For example, the <font color="blue"><font color="blue">United States</font> </font>    Congress enacted a limited <font color="blue">prescription drug benefit</font> for Medicare <font color="blue">recipients</font>     as part of the Medicare Prescription Drug, Improvement and Modernization Act     of 2003</td>
+    </tr>
+    <tr>
+      <td>While the program established by this statute may increase demand     for any products that we are able to <font color="blue">successfully</font> develop, if we <font color="blue">participate</font>     in  this  program, our prices will be <font color="blue">negotiated with drug procurement</font>     <font color="blue">organizations</font> for Medicare <font color="blue">beneficiaries</font> and are likely to be lower than     prices we <font color="blue">might otherwise</font> obtain</td>
+    </tr>
+    <tr>
+      <td>Non-Medicare third-party drug procurement     <font color="blue">organizations</font> may also base the price they are willing to pay on the rate     paid  by drug procurement <font color="blue">organizations</font> for Medicare <font color="blue">beneficiaries</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, ongoing initiatives <font color="blue">in the <font color="blue"><font color="blue">United States</font> </font></font>have and <font color="blue">will continue</font> to     <font color="blue">increase pressure on drug pricing</font></td>
+    </tr>
+    <tr>
+      <td>The announcement or adoption of any such     <font color="blue">initiative could</font> have an adverse effect <font color="blue">on potential revenues from</font> any     <font color="blue">product candidate</font> that we may <font color="blue">successfully</font> develop</td>
+    </tr>
+    <tr>
+      <td>We may be unable to establish the <font color="blue">manufacturing</font> <font color="blue">capabilities</font> <font color="blue">necessary</font> to     develop and <font color="blue">commercialize</font> our <font color="blue">potential products</font></td>
+    </tr>
+    <tr>
+      <td>Currently, we have only a conjugate <font color="blue">manufacturing</font> <font color="blue">facility</font> that we use to     <font color="blue">manufacture</font>  conjugated  compounds  for  us  and our <font color="blue"><font color="blue">collaborator</font>s</font> for     preclinical and initial <font color="blue">clinical testing</font></td>
+    </tr>
+    <tr>
+      <td>We do not currently have the     <font color="blue">manufacturing</font> capacity needed to make our <font color="blue">product candidate</font>s for commercial     sale</td>
+    </tr>
+    <tr>
+      <td>In  addition, our <font color="blue">manufacturing</font> capacity may be insufficient to     complete all <font color="blue">clinical trials</font> contemplated by us and our <font color="blue"><font color="blue">collaborator</font>s</font> over     time</td>
+    </tr>
+    <tr>
+      <td>We intend to rely in part on third-party contract <font color="blue">manufacture</font>rs to     produce <font color="blue">sufficiently</font> large quantities of <font color="blue">drug materials</font> that are and will be     needed for <font color="blue">clinical trials</font> and <font color="blue">commercialization</font> of our <font color="blue">potential products</font>     and are putting in place these suppliers</td>
+    </tr>
+    <tr>
+      <td>Third-party <font color="blue">manufacture</font>rs may not     be able to meet our needs <font color="blue">with respect</font> to timing, quantity or quality of     materials</td>
+    </tr>
+    <tr>
+      <td>If we are unable to contract for a <font color="blue">sufficient supply</font> of needed     materials  on  acceptable  terms,  or if we <font color="blue">should encounter delays</font> or     <font color="blue"><font color="blue">difficult</font>ies</font> in our relationships with <font color="blue">manufacture</font>rs, our <font color="blue">clinical trials</font>     may be delayed, thereby delaying the submission of <font color="blue">product candidate</font>s for     <font color="blue">regulatory</font>   approval  and  the  market  <font color="blue">introduction</font>  and  subsequent     <font color="blue">commercialization</font> of our <font color="blue">potential products</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such delays may lower</font> our     revenues and potential <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>We may develop our <font color="blue">manufacturing</font> capacity in part by expanding our current     <font color="blue">facilities</font> or building new <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Either of these <font color="blue">activities</font> would     require substantial <font color="blue">additional</font> funds and we would need to hire and train     <font color="blue">significant</font> numbers of employees to staff these <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>We may not be     able to develop <font color="blue">manufacturing</font> <font color="blue">facilities</font> that are sufficient to produce drug     materials for <font color="blue">clinical trials</font> or <font color="blue">commercial use</font></td>
+    </tr>
+    <tr>
+      <td>We and any third-party     <font color="blue">manufacture</font>rs  that we <font color="blue">may use must continually adhere</font> to current Good     Manufacturing  Practice  <font color="blue">regulations</font>  enforced  by the FDA through its     <font color="blue">facilities</font>  <font color="blue">inspection program</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">facilities</font> or the <font color="blue">facilities</font> of     third-party <font color="blue">manufacture</font>rs cannot pass a pre-approval plant inspection, the     FDA will not <font color="blue">grant approval</font> to our <font color="blue">product candidate</font>s</td>
+    </tr>
+    <tr>
+      <td>In complying       with these <font color="blue">regulations</font> and foreign <font color="blue">regulatory</font> <font color="blue">requirements</font>, we and any of     our third-party <font color="blue">manufacture</font>rs will be obligated to expend time, money and     effort on production, record-keeping and <font color="blue">quality control</font> to assure that our     <font color="blue">potential products</font> meet applicable specifications and other <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>If     we  or  any third-party <font color="blue">manufacture</font>r with whom we <font color="blue">may contract fail</font> to     maintain <font color="blue">regulatory</font> compliance, we or the <font color="blue"><font color="blue">third party</font> may</font> be subject to     fines and/or <font color="blue">manufacturing</font> <font color="blue">operations</font> may be suspended</td>
+    </tr>
+    <tr>
+      <td>19       _________________________________________________________________       We have only one conjugate <font color="blue">manufacturing</font> <font color="blue">facility</font> and any prolonged and     <font color="blue">significant</font>  <font color="blue">disruption</font>  at  that <font color="blue">facility</font> could impair our ability to     <font color="blue">manufacture</font> products for <font color="blue">clinical testing</font></td>
+    </tr>
+    <tr>
+      <td>Currently,  we  are <font color="blue">contractually obligated</font> to <font color="blue">manufacture</font> Phase I and     non-pivotal <font color="blue">Phase II </font><font color="blue">clinical products</font> for <font color="blue">companies licensing</font> our TAP     <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We  <font color="blue">manufacture</font> this material in a conjugate <font color="blue">manufacturing</font>     <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>We only have one such <font color="blue">manufacturing</font> <font color="blue">facility</font> in which we can     <font color="blue">manufacture</font> <font color="blue">clinical products</font></td>
+    </tr>
+    <tr>
+      <td>Our current <font color="blue">manufacturing</font> <font color="blue">facility</font> contains     <font color="blue">highly specialized equipment</font> and <font color="blue">utilizes complicated production processes</font>     developed over a number of years that would be <font color="blue">difficult</font>, time-consuming and     costly to duplicate</td>
+    </tr>
+    <tr>
+      <td>Any prolonged <font color="blue">disruption</font> in the <font color="blue">operations</font> of our     <font color="blue">manufacturing</font> <font color="blue">facility</font> would have a <font color="blue">significant</font> negative impact on our     ability to <font color="blue">manufacture</font> products for <font color="blue">clinical testing</font> on our own and would     cause us to seek <font color="blue">additional</font> third-party <font color="blue">manufacturing</font> contracts, thereby     increasing our <font color="blue">development</font> costs</td>
+    </tr>
+    <tr>
+      <td>Even though we carry business <font color="blue">interruption</font>     insurance  policies,  we  may  suffer  losses  as a result of business     <font color="blue">interruption</font>s  that exceed the <font color="blue">coverage available</font> or any <font color="blue">losses may</font> be     <font color="blue">excluded under</font> our <font color="blue">insurance policies</font></td>
+    </tr>
+    <tr>
+      <td>Certain events, such as natural     disasters, fire, political disturbances, sabotage or business <font color="blue"><font color="blue">accident</font>s</font>,     which  could  impact  our  current  or future <font color="blue">facilities</font>, could have a     <font color="blue">significant</font> negative impact on our <font color="blue">operations</font> by disrupting our product     <font color="blue">development</font> efforts until such time as we are able to repair our <font color="blue">facility</font> or     put in place third-party contract <font color="blue">manufacture</font>rs to assume this <font color="blue">manufacturing</font>     role</td>
+    </tr>
+    <tr>
+      <td>Any inability to <font color="blue">license from <font color="blue">third parties</font></font> their <font color="blue">proprietary</font> <font color="blue">technologies</font>     or <font color="blue">processes which</font> we use in <font color="blue">connection with</font> the <font color="blue">development</font> and <font color="blue">manufacture</font>     of our <font color="blue">product candidate</font>s may impair our business</td>
+    </tr>
+    <tr>
+      <td>Other companies, universities and <font color="blue">research <font color="blue">institutions</font></font> have or may obtain     patents that <font color="blue">could limit</font> our ability to use, <font color="blue">manufacture</font>, market or sell our     <font color="blue">product candidate</font>s or impair our <font color="blue"><font color="blue">competitive</font> position</font></td>
+    </tr>
+    <tr>
+      <td>As a result, we would     have to obtain licenses from other parties before we could continue using,     <font color="blue">manufacturing</font>, marketing or selling our <font color="blue">potential products</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">necessary</font>     <font color="blue">licenses may</font> not be available on <font color="blue">commercially</font> acceptable terms, if at all</td>
+    </tr>
+    <tr>
+      <td>If we do not obtain required licenses, we may not be able to market our     <font color="blue">potential products</font> at all or we may encounter <font color="blue">significant</font> delays in product     <font color="blue">development</font> while we <font color="blue">redesign products</font> or methods that are found to infringe     on the patents held by others</td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">establish sales</font> and marketing <font color="blue">capabilities</font> <font color="blue">necessary</font> to     <font color="blue">successfully</font> <font color="blue">commercialize</font> our <font color="blue">potential products</font></td>
+    </tr>
+    <tr>
+      <td>We currently have <font color="blue">no direct sales</font> or marketing <font color="blue">capabilities</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate     <font color="blue">relying on <font color="blue">third parties</font></font> to market and sell most of our <font color="blue">primary product</font>     <font color="blue">candidates</font></td>
+    </tr>
+    <tr>
+      <td>If we decide to market our <font color="blue">potential products</font> through a direct     sales force, we would need either to hire a <font color="blue">sales force with expertise</font> in     <font color="blue">pharmaceutical</font> sales or to <font color="blue">contract with</font> a <font color="blue">third party</font> to provide a sales     <font color="blue">force which meets</font> our needs</td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">establish marketing</font>, sales     and <font color="blue">distribution</font> <font color="blue">capabilities</font> <font color="blue">necessary</font> to <font color="blue">commercialize</font> and <font color="blue">gain market</font>     <font color="blue">acceptance</font> for our <font color="blue">potential products</font> and be <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     co-promotion  or  other  marketing  <font color="blue"><font color="blue">arrangements</font> with <font color="blue">third parties</font></font> to     <font color="blue">commercialize</font> <font color="blue">potential products</font> could <font color="blue"><font color="blue">significant</font>ly</font> limit the revenues we     <font color="blue">derive from</font> these <font color="blue">potential products</font>, and these <font color="blue"><font color="blue">third <font color="blue">parties may</font></font> fail</font> to     <font color="blue">commercialize</font> our compounds <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">product candidate</font>s or those of our <font color="blue"><font color="blue">collaborator</font>s</font> do not <font color="blue">gain market</font>     <font color="blue">acceptance</font>, our business will suffer</td>
+    </tr>
+    <tr>
+      <td>Even if <font color="blue">clinical trials</font> <font color="blue">demonstrate</font> the safety and efficacy of our product     <font color="blue">candidates</font> and the <font color="blue">necessary</font> <font color="blue">regulatory</font> approvals are obtained, our product     <font color="blue">candidates</font>  may not <font color="blue">gain market</font> <font color="blue">acceptance</font> among physicians, patients,     <font color="blue">healthcare payors</font> and other members of the <font color="blue">medical community</font></td>
+    </tr>
+    <tr>
+      <td>The degree of     market <font color="blue">acceptance</font> of any <font color="blue">product candidate</font>s that we develop will <font color="blue">depend on</font> a     number of factors, including:         §       their degree of <font color="blue">clinical efficacy</font> and safety;         §       their advantage over <font color="blue">alternative</font> treatment methods;         §       our/the marketer’s ability to gain acceptable <font color="blue">reimbursement</font> and the     <font color="blue">reimbursement</font> policies of <font color="blue">government</font> and third-party payors; and         §       the quality of the <font color="blue">distribution</font> <font color="blue">capabilities</font> for <font color="blue">product candidate</font>s, both     ours and our <font color="blue"><font color="blue">collaborative</font> partners</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Physicians </font>may not prescribe any of our <font color="blue">future products until such</font> time as     <font color="blue">clinical data</font> or other factors <font color="blue">demonstrate</font> the safety and efficacy of those     <font color="blue">products as compared</font> to <font color="blue">conventional drug</font> and other <font color="blue">treatments</font></td>
+    </tr>
+    <tr>
+      <td>Even if the     <font color="blue">clinical safety</font> and efficacy of therapies using our products is established,     physicians may elect not to recommend the therapies for any number of other     reasons, including whether the mode of <font color="blue">administration</font> of our products is     <font color="blue">effective</font> for certain <font color="blue">conditions</font>, and whether the physicians are already     using  competing  products  that  satisfy  their <font color="blue">treatment objectives</font></td>
+    </tr>
+    <tr>
+      <td>Physicians, patients, third-party payors and the <font color="blue">medical community</font> may not     accept  and  use  any <font color="blue">product candidate</font>s that we, or our <font color="blue">collaborative</font>     partners,  develop</td>
+    </tr>
+    <tr>
+      <td>If our products do not achieve <font color="blue">significant</font> market     <font color="blue">acceptance</font>  and  use,  we  will not be able to recover the <font color="blue">significant</font>     <font color="blue">investment</font> we have made in developing <font color="blue">such products</font> and our business will be     <font color="blue">severely harmed</font></td>
+    </tr>
+    <tr>
+      <td>20       _________________________________________________________________       We may be unable to compete <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>The  markets  in  which  we compete are <font color="blue">well established</font> and intensely     <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to compete <font color="blue">successfully</font> against our current     and <font color="blue">future <font color="blue">competitors</font></font></td>
+    </tr>
+    <tr>
+      <td>Our failure to compete <font color="blue">successfully</font> may result in     pricing reductions, reduced gross margins and failure to achieve market     <font color="blue">acceptance</font>   for  our  potential  products</td>
+    </tr>
+    <tr>
+      <td>Our  <font color="blue">competitors</font>  include     <font color="blue">pharmaceutical</font>   companies,   bio<font color="blue">technology</font>  companies,  and  research     <font color="blue">institutions</font></td>
+    </tr>
+    <tr>
+      <td>Many of these <font color="blue">organizations</font> have <font color="blue">substantially</font> more experience     and more capital, research and <font color="blue">development</font>, <font color="blue">regulatory</font>, <font color="blue">manufacturing</font>,     sales, marketing, human and other <font color="blue">resources than</font> we do</td>
+    </tr>
+    <tr>
+      <td>As a result, they     may:         §       develop products that are safer or more <font color="blue">effective</font> than our product     <font color="blue">candidates</font>;         §       obtain FDA and other <font color="blue">regulatory</font> approvals or reach the market with their     products more <font color="blue">rapidly than</font> we can, reducing the <font color="blue">potential sales</font> of our     <font color="blue">product candidate</font>s;         §       <font color="blue">devote greater resources</font> to market or sell their products;         §       adapt more quickly to new <font color="blue">technologies</font> and <font color="blue">scientific advances</font>;         §       initiate or withstand substantial price <font color="blue">competition</font> more <font color="blue">successfully</font> than     we can;         §       have <font color="blue">greater success</font> in <font color="blue">recruiting skilled scientific workers from</font> the     limited pool of <font color="blue">available talent</font>;         §       more <font color="blue">effective</font>ly negotiate third-party licensing and <font color="blue">collaboration</font>     <font color="blue">arrangements</font>; and         §       take advantage of <font color="blue">acquisition</font> or other <font color="blue">opportunities</font> more <font color="blue">readily than</font> we     can</td>
+    </tr>
+    <tr>
+      <td>A  number  of <font color="blue">pharmaceutical</font> and bio<font color="blue">technology</font> companies are currently     developing <font color="blue">products targeting</font> the <font color="blue">same types</font> of cancer that we target, and     some of our <font color="blue">competitors</font>’ products have entered <font color="blue">clinical trials</font> or already     are <font color="blue">commercially</font> available</td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">product candidate</font>s, if approved     and  <font color="blue">commercialize</font>d,  will compete against well-established, existing,     <font color="blue">therapeutic products</font> that are       currently  reimbursed by <font color="blue">government</font> health <font color="blue">administration</font> <font color="blue">authorities</font>,     <font color="blue"><font color="blue">private health</font> insurers</font> and health maintenance <font color="blue">organizations</font></td>
+    </tr>
+    <tr>
+      <td>We face and     will  continue  to  face  intense <font color="blue">competition</font> from other companies for     <font color="blue">collaborative</font> <font color="blue">arrangements</font> with <font color="blue">pharmaceutical</font> and bio<font color="blue">technology</font> companies,     for <font color="blue">relationships with academic</font> and <font color="blue">research <font color="blue">institutions</font></font>, and for licenses     to <font color="blue">proprietary</font> <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we anticipate that we will face     increased <font color="blue">competition</font> in the <font color="blue">future as new companies enter</font> our markets and     as scientific <font color="blue">development</font>s surrounding antibody-based <font color="blue">therapeutics</font> for     cancer  continue  to  <font color="blue">accelerate</font></td>
+    </tr>
+    <tr>
+      <td>While  we  will  seek to expand our     technological <font color="blue">capabilities</font> to remain <font color="blue">competitive</font>, research and <font color="blue">development</font>     by  <font color="blue">others may</font> render our <font color="blue">technology</font> or <font color="blue">product candidate</font>s obsolete or     non<font color="blue">competitive</font> or result in <font color="blue">treatments</font> or cures superior to any therapy     developed by us</td>
+    </tr>
+    <tr>
+      <td>If we are unable to protect our <font color="blue"><font color="blue">intellectual</font> property rights adequately</font>, the     value of our <font color="blue">technology</font> and our <font color="blue">product candidate</font>s could be diminished</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">success depends</font> in part on obtaining, maintaining and enforcing our     patents and other <font color="blue">proprietary</font> rights and our ability to <font color="blue">avoid infringing</font> the     <font color="blue">proprietary</font> rights of others</td>
+    </tr>
+    <tr>
+      <td>Patent law relating to the scope of claims in     the bio<font color="blue">technology</font> field in which we operate is <font color="blue">still evolving</font>, is surrounded     by a great deal of <font color="blue">uncertainty</font> and involves complex legal, scientific and     factual questions</td>
+    </tr>
+    <tr>
+      <td>To date, no consistent policy has emerged regarding the     breadth of claims allowed in bio<font color="blue">technology</font> patents</td>
+    </tr>
+    <tr>
+      <td>Accordingly, our pending     patent  <font color="blue">applications</font> may not result in <font color="blue">issued patents</font></td>
+    </tr>
+    <tr>
+      <td>Although we own     several  patents, the issuance of a patent is not <font color="blue">conclusive as</font> to its     validity or <font color="blue">enforceability</font></td>
+    </tr>
+    <tr>
+      <td>Through <font color="blue">litigation</font>, a <font color="blue"><font color="blue">third party</font> may</font> challenge     the validity or <font color="blue">enforceability</font> of a patent after its issuance</td>
+    </tr>
+    <tr>
+      <td>Also,  patents and <font color="blue">applications</font> owned or <font color="blue"><font color="blue">licensed by us</font> may become</font> the     subject of <font color="blue">interference proceeding</font>s before the <font color="blue"><font color="blue">United States</font> </font>Patent and     <font color="blue">Trademark Office </font>to determine priority of invention that could result in     substantial cost to us</td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">adverse decision</font> in an <font color="blue">interference proceeding</font>     may result in our loss of <font color="blue">rights under</font> a patent or <font color="blue">patent application</font></td>
+    </tr>
+    <tr>
+      <td>It     is <font color="blue">unclear how</font> much protection, if any, will be given to our patents if we     attempt to <font color="blue">enforce them</font> or if they are challenged in court or in other     <font color="blue">proceedings</font></td>
+    </tr>
+    <tr>
+      <td>A competitor may <font color="blue">successfully</font> challenge our patents or a     <font color="blue">challenge could</font> result in <font color="blue">limitations</font> of the patents’ coverage</td>
+    </tr>
+    <tr>
+      <td>In addition,     the cost of <font color="blue">litigation</font> or <font color="blue">interference proceeding</font>s to uphold the validity of     patents can be substantial</td>
+    </tr>
+    <tr>
+      <td>If we are <font color="blue">unsuccessful</font> in these <font color="blue">proceedings</font>,     <font color="blue">third <font color="blue">parties may</font></font> be able to use our patented <font color="blue">technology</font> without paying us     <font color="blue">licensing fees</font> or royalties</td>
+    </tr>
+    <tr>
+      <td>Moreover, <font color="blue">competitors</font> may infringe our patents     or  <font color="blue">successfully</font>  avoid  them  through  design  innovation</td>
+    </tr>
+    <tr>
+      <td>To prevent     <font color="blue">infringement</font> or <font color="blue">unauthorized use</font>, we may need to file <font color="blue">infringement</font> claims,     which are expensive and time-consuming</td>
+    </tr>
+    <tr>
+      <td>In an <font color="blue">infringement</font> proceeding, a     court may decide that a patent of ours is not valid</td>
+    </tr>
+    <tr>
+      <td>Even if the validity of     our patents were upheld, a <font color="blue">court may refuse</font> to stop the other <font color="blue">party from</font>     using the <font color="blue">technology</font> at issue on the ground that its <font color="blue">activities</font> are not     covered  by our patents</td>
+    </tr>
+    <tr>
+      <td>Policing <font color="blue">unauthorized use</font> of our <font color="blue">intellectual</font>     property is <font color="blue">difficult</font>, and we may not be able to <font color="blue">prevent misappropriation</font> of     our <font color="blue">proprietary</font> rights, particularly in countries where the laws may not     <font color="blue">protect such rights as fully as</font> in the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>In addition to our <font color="blue">patent rights</font>, we also rely on unpatented <font color="blue">technology</font>,     trade secrets, know-how and <font color="blue">confidential</font> information</td>
+    </tr>
+    <tr>
+      <td>Third <font color="blue">parties may</font>     <font color="blue">independently</font> develop <font color="blue">substantially</font> equivalent information and <font color="blue">techniques</font> or     <font color="blue">otherwise gain access</font> to or disclose our <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to     <font color="blue">effective</font>ly protect our rights in unpatented <font color="blue">technology</font>, trade secrets,     know-how and <font color="blue">confidential</font> information</td>
+    </tr>
+    <tr>
+      <td>We require each of our employees,     <font color="blue">consultants</font> and <font color="blue">corporate partners</font> to execute a <font color="blue">confidential</font>ity <font color="blue">agreement</font> at     the <font color="blue">commencement</font> of an employment, consulting or <font color="blue">collaborative</font> relationship     with us</td>
+    </tr>
+    <tr>
+      <td>However, these <font color="blue"><font color="blue">agreement</font>s</font> may not provide <font color="blue">effective</font> protection of     our information or, in the event of <font color="blue">unauthorized use</font> or <font color="blue">disclosure</font>, they may     not <font color="blue">provide adequate remedies</font></td>
+    </tr>
+    <tr>
+      <td>21       _________________________________________________________________       If we are forced to litigate or undertake other <font color="blue">proceedings</font> in order to     enforce our <font color="blue">intellectual</font> property rights, we may be subject to substantial     costs and <font color="blue">liability</font> or be <font color="blue">prohibited from commercializing</font> our potential     products</td>
+    </tr>
+    <tr>
+      <td>Patent <font color="blue">litigation</font> is very common in the bio<font color="blue">technology</font> and <font color="blue">pharmaceutical</font>     <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>Third <font color="blue">parties may</font> assert patent or other <font color="blue">intellectual</font> property     <font color="blue">infringement</font> claims against us <font color="blue">with respect</font> to our <font color="blue">technologies</font>, products or     other matters</td>
+    </tr>
+    <tr>
+      <td>Any claims that might be <font color="blue">brought against us</font> alleging to     <font color="blue">infringement</font> of <font color="blue">patents may</font> cause us to incur <font color="blue">significant</font> expenses and, if     <font color="blue">successfully</font> asserted against us, may cause us to pay substantial damages     and limit our ability to use the <font color="blue">intellectual</font> property subject to these     claims</td>
+    </tr>
+    <tr>
+      <td>Even if we were to prevail, any <font color="blue">litigation</font> would be costly and     time-consuming and <font color="blue">could divert</font> the attention of our <font color="blue">management</font> and key     <font color="blue">personnel from</font> our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Furthermore, as a result of a patent     <font color="blue">infringement</font>  suit,  we  may  be  forced  to stop or delay developing,     <font color="blue">manufacturing</font> or selling <font color="blue">potential products</font> that <font color="blue">incorporate</font> the challenged     <font color="blue">intellectual</font> property unless we <font color="blue">enter into</font> royalty or license <font color="blue"><font color="blue">agreement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>There may be third-party patents, patent <font color="blue">applications</font> and other <font color="blue">intellectual</font>     <font color="blue">property relevant</font> to our <font color="blue">potential products</font> that may block or <font color="blue">compete with</font>     our products or processes</td>
+    </tr>
+    <tr>
+      <td>In addition, we sometimes undertake research and     <font color="blue">development</font> <font color="blue">with respect</font> to <font color="blue">potential products</font> even when we are aware of     third-party patents that may be relevant to our <font color="blue">potential products</font>, on the     basis  that  such  <font color="blue">patents may</font> be challenged or <font color="blue">licensed by us</font></td>
+    </tr>
+    <tr>
+      <td>If our     <font color="blue">subsequent challenge</font> to <font color="blue">such patents</font> were not to prevail, we may not be able     to  <font color="blue">commercialize</font> our <font color="blue">potential products</font> after having <font color="blue">already incurred</font>     <font color="blue">significant</font> expenditures unless we are able to license the <font color="blue">intellectual</font>     property on <font color="blue">commercially</font> reasonable terms</td>
+    </tr>
+    <tr>
+      <td>We may not be able to obtain     royalty or license <font color="blue"><font color="blue">agreement</font>s</font> on terms acceptable to us, if at all</td>
+    </tr>
+    <tr>
+      <td>Even if     we were able to obtain licenses to such <font color="blue">technology</font>, some <font color="blue">licenses may</font> be     non-exclusive,  thereby  giving  our  <font color="blue">competitors</font>  access  to the same     <font color="blue">technologies</font> licensed to us</td>
+    </tr>
+    <tr>
+      <td>Ultimately, we may be unable to <font color="blue">commercialize</font>     some of our <font color="blue">potential products</font> or may have to cease some of our business     <font color="blue">operations</font>, which <font color="blue">could severely harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">use hazardous materials</font> in our business, and any claims relating to     improper handling, storage or disposal of these <font color="blue">materials could harm</font> our     business</td>
+    </tr>
+    <tr>
+      <td>Our  research and <font color="blue">development</font> and <font color="blue">manufacturing</font> <font color="blue">activities</font> involve the     <font color="blue">controlled use</font> of hazardous materials, chemicals, biological materials and     <font color="blue">radioactive</font> compounds</td>
+    </tr>
+    <tr>
+      <td>We are subject to federal, state and <font color="blue">local laws</font> and     <font color="blue">regulations</font> governing the use, <font color="blue">manufacture</font>, storage, handling and disposal     of these materials and <font color="blue">certain waste products</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe that our     <font color="blue">safety procedures</font> for handling and disposing of these materials <font color="blue">comply with</font>     the <font color="blue">standards prescribed by applicable laws</font> and <font color="blue">regulations</font>, we cannot     <font color="blue">completely eliminate</font> the risk of <font color="blue"><font color="blue">accident</font>al contamination</font> or <font color="blue">injury from</font>     these materials</td>
+    </tr>
+    <tr>
+      <td>In the event of such an <font color="blue">accident</font>, we could be held liable     for any resulting damages, and any <font color="blue">liability</font> could exceed our resources</td>
+    </tr>
+    <tr>
+      <td>We     may be required to incur <font color="blue">significant</font> costs to <font color="blue">comply with</font> these laws in the     future</td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> these laws could result in fines and the     revocation of permits, <font color="blue">which could</font> prevent us from conducting our business</td>
+    </tr>
+    <tr>
+      <td>We face product <font color="blue">liability</font> risks and may not be able to obtain adequate     insurance</td>
+    </tr>
+    <tr>
+      <td>The use of our <font color="blue">product candidate</font>s during testing or after <font color="blue">approval entails</font>     an  <font color="blue">inherent risk</font> of adverse effects, <font color="blue">which could</font> expose us to product     <font color="blue">liability</font> claims</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Regardless </font>of their merit or eventual outcome, product     <font color="blue">liability</font> claims may result in:         §       decreased demand for our product;         §       injury to our reputation and <font color="blue">significant</font> negative media attention;         §       withdrawal of clinical trial volunteers;         §       costs of <font color="blue">litigation</font>;         §       <font color="blue">distraction</font> of <font color="blue">management</font>; and         §       substantial monetary awards to plaintiffs</td>
+    </tr>
+    <tr>
+      <td>We may not have <font color="blue">sufficient resources</font> to satisfy any <font color="blue">liability</font> resulting from     these claims</td>
+    </tr>
+    <tr>
+      <td>We currently have dlra5dtta0 million of product <font color="blue">liability</font> insurance     for  products  which are in <font color="blue">clinical testing</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">coverage may</font> not be     adequate  in  scope to <font color="blue">protect us</font> in the event of a <font color="blue">successful product</font>     <font color="blue">liability</font>  claim</td>
+    </tr>
+    <tr>
+      <td>Further, we may not be able to maintain our current     insurance or obtain general product <font color="blue">liability</font> insurance on reasonable terms     and  at  an  acceptable cost if we or our <font color="blue"><font color="blue">collaborative</font> partners</font> begin     <font color="blue">commercial production</font> of our proposed <font color="blue">product candidate</font>s</td>
+    </tr>
+    <tr>
+      <td>This insurance,     even if we can obtain and maintain it, may not be sufficient to <font color="blue">provide us</font>     <font color="blue">with adequate coverage against potential liabilities</font></td>
+    </tr>
+    <tr>
+      <td>22       _________________________________________________________________       We <font color="blue">depend on</font> our <font color="blue">key personnel</font> and we <font color="blue">must continue</font> to attract and retain     <font color="blue">key employees</font> and <font color="blue">consultants</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> our <font color="blue">key scientific</font> and <font color="blue">management</font> personnel</td>
+    </tr>
+    <tr>
+      <td>Our ability to     pursue the <font color="blue">development</font> of our current and future <font color="blue">product candidate</font>s depends     <font color="blue">largely on</font> retaining the services of our <font color="blue">existing personnel</font> and hiring     <font color="blue">additional</font>  qualified  scientific  personnel  to  perform research and     <font color="blue">development</font></td>
+    </tr>
+    <tr>
+      <td>We will also need to <font color="blue">hire personnel with expertise</font> in clinical     testing,  <font color="blue">government</font> regulation, <font color="blue">manufacturing</font>, marketing and finance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Attracting  </font>and  retaining qualified personnel will be critical to our     success</td>
+    </tr>
+    <tr>
+      <td>We may not be able to attract and retain <font color="blue">personnel on</font> acceptable     terms  given  the  <font color="blue">competition</font> for such personnel among bio<font color="blue">technology</font>,     <font color="blue">pharmaceutical</font>  and  healthcare companies, universities and non-profit     <font color="blue">research <font color="blue">institutions</font></font></td>
+    </tr>
+    <tr>
+      <td>Failure to retain our existing key <font color="blue">management</font> and     scientific personnel or to attract <font color="blue">additional</font> highly qualified personnel     <font color="blue">could delay</font> the <font color="blue">development</font> of our <font color="blue">product candidate</font>s and harm our business</td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain <font color="blue">additional</font> funding when needed, we may have to     delay or scale back some of our programs or <font color="blue">grant rights</font> to <font color="blue">third parties</font> to     develop and market our products</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">will continue</font> to expend substantial resources developing new and existing     product  <font color="blue">candidates</font>,  including  costs  associated  with  research and     <font color="blue">development</font>, acquiring new <font color="blue">technologies</font>, conducting preclinical and clinical     trials, obtaining <font color="blue">regulatory</font> approvals and <font color="blue">manufacturing</font> products as well as     <font color="blue">providing certain support</font> to our <font color="blue"><font color="blue">collaborator</font>s</font> in the <font color="blue">development</font> of their     products</td>
+    </tr>
+    <tr>
+      <td>We believe that our current working capital and <font color="blue">future payments</font>,     if any, from our <font color="blue">collaboration</font> <font color="blue">arrangements</font>, including <font color="blue">committed research</font>     funding that we expect to receive from sanofi-aventis pursuant to the terms     of our <font color="blue">collaboration</font> <font color="blue">agreement</font>, will be sufficient to meet our current and     projected operating and capital <font color="blue">requirements</font> for at least the next two to     <font color="blue">three years</font></td>
+    </tr>
+    <tr>
+      <td>However, we may need <font color="blue">additional</font> financing sooner due to a     number of factors including:         §       if either we or any of our <font color="blue"><font color="blue">collaborator</font>s</font> incur higher than expected costs or     experience <font color="blue">slower than</font> expected progress in developing <font color="blue">product candidate</font>s     and obtaining <font color="blue">regulatory</font> approvals;         §       <font color="blue">lower revenues than</font> expected under our <font color="blue">collaboration</font> <font color="blue"><font color="blue">agreement</font>s</font>; or         §       <font color="blue">acquisition</font> of <font color="blue">technologies</font> and other business <font color="blue">opportunities</font> that require     financial <font color="blue">commitment</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font><font color="blue">funding may</font> not be available to us on favorable terms, or at all</td>
+    </tr>
+    <tr>
+      <td>We  may  raise  <font color="blue">additional</font> funds through public or <font color="blue">private financings</font>,     <font color="blue">collaborative</font>  <font color="blue">arrangements</font>  or other <font color="blue">arrangements</font></td>
+    </tr>
+    <tr>
+      <td>Debt financing, if     available,  may  involve  covenants  that  <font color="blue">could restrict</font> our business     <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to raise <font color="blue">additional</font> funds through equity or     <font color="blue">debt financing</font> when needed, we may be required to delay, scale back or     <font color="blue">eliminate expenditures</font> for some of our <font color="blue">development</font> programs or <font color="blue">grant rights</font>     to develop and market <font color="blue">product candidate</font>s that we <font color="blue">would otherwise</font> prefer to     <font color="blue">internally</font> develop and market</td>
+    </tr>
+    <tr>
+      <td>If we are required to <font color="blue">grant such rights</font>, the     <font color="blue">ultimate value</font> of these <font color="blue">product candidate</font>s to us may be reduced</td>
+    </tr>
+    <tr>
+      <td>Our stock price can fluctuate <font color="blue"><font color="blue">significant</font>ly</font> and results announced by us and     our <font color="blue"><font color="blue">collaborator</font>s</font> can cause our stock price to decline</td>
+    </tr>
+    <tr>
+      <td>Our stock price can fluctuate <font color="blue"><font color="blue">significant</font>ly</font> due to business <font color="blue">development</font>s     announced by us and by our <font color="blue"><font color="blue">collaborator</font>s</font>, as a result of <font color="blue">market trends</font> and     as a result of our <font color="blue">low stock price</font></td>
+    </tr>
+    <tr>
+      <td>The business <font color="blue">development</font>s that could     impact our stock price include <font color="blue">disclosure</font>s related to <font color="blue">clinical findings with</font>     compounds  that  make use of our TAP <font color="blue">technology</font>, new partnerships, and     <font color="blue">clinical advancement</font> or <font color="blue">discontinuation</font> of <font color="blue">product candidate</font>s that make use     of our TAP <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>Our stock price can also fluctuate <font color="blue"><font color="blue">significant</font>ly</font> with     the level of overall <font color="blue">investment</font> interest in small-cap bio<font color="blue">technology</font> stocks</td>
+    </tr>
+    <tr>
+      <td>Our revenue is unpredictable and <font color="blue">may fluctuate due</font>     to  the  timing  of  non-recurring  licensing  fees,  <font color="blue">decisions</font> of our     <font color="blue">collaborative</font>  partners  with  respect  to  our  <font color="blue"><font color="blue">agreement</font>s</font> with them,     <font color="blue">reimbursement</font> for <font color="blue">manufacturing</font> services, the <font color="blue">achievement</font> of <font color="blue">milestones</font> and     our  receipt  of the related <font color="blue">milestone payments under new</font> and existing     licensing and <font color="blue">collaboration</font> <font color="blue"><font color="blue">agreement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Revenue <font color="blue">historically</font> recognized     under our prior <font color="blue">collaboration</font> <font color="blue"><font color="blue">agreement</font>s</font> may not be an indicator of revenue     from any future <font color="blue">collaboration</font>s</td>
+    </tr>
+    <tr>
+      <td>In addition, our expenses are unpredictable     and <font color="blue">may fluctuate from quarter</font> to <font color="blue">quarter due</font> to the timing of expenses,     which may include <font color="blue">obligations</font> to <font color="blue">manufacture</font> or <font color="blue">supply product</font> or payments     <font color="blue">owed by us under licensing</font> or <font color="blue">collaboration</font> <font color="blue"><font color="blue">agreement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>It is possible that     our quarterly operating results will not meet the <font color="blue">expectations</font> of securities     analysts or investors, causing the <font color="blue">market price</font> of our <font color="blue">common stock</font> to     decline</td>
+    </tr>
+    <tr>
+      <td>We believe that quarter to <font color="blue">quarter comparisons</font> of our operating     results are not good <font color="blue">indicators</font> of our <font color="blue">future performance</font> and should not be     <font color="blue">relied upon</font> to predict the <font color="blue">future performance</font> of our stock price</td>
+    </tr>
+    <tr>
+      <td>We do not intend to <font color="blue">pay <font color="blue">cash dividends</font> on</font> our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>We have not <font color="blue">paid <font color="blue">cash dividends</font> since</font> our inception and do not intend to pay     <font color="blue">cash dividends</font> in the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Therefore, <font color="blue">shareholders will</font> have     to <font color="blue">rely on appreciation</font> in our stock price, if any, in order to achieve a     gain on an <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>23       _________________________________________________________________                         A WARNING ABOUT FORWARD-LOOKING STATEMENTS       This report includes forward-looking statements within the meaning of the     <font color="blue">Private Securities Litigation Reform Act </font>of 1995</td>
+    </tr>
+    <tr>
+      <td>These statements relate to     analyses  and other information which are <font color="blue">based on forecasts</font> of future     results  and estimates of amounts that are not <font color="blue">yet determinable</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">These     </font><font color="blue">statements also</font> relate to our future prospects, <font color="blue">development</font>s and business     strategies</td>
+    </tr>
+    <tr>
+      <td>These forward-looking statements are identified by their use of terms and     phrases, such as “anticipate,” “believe,” “could,” “estimate,” “expect,”     “intend,” “may,” “plan,” “predict,” “project,” “will” and other similar     terms and phrases, including references to <font color="blue">assumptions</font></td>
+    </tr>
+    <tr>
+      <td>These statements are     contained in the “Business,” “Risk Factors,” and “Management’s Discussion     and Analysis of Financial Condition and Results of Operations” sections, as     well as other sections of this report</td>
+    </tr>
+    <tr>
+      <td>Forward-looking statements in this report include, but are not limited to:       §     <font color="blue">successfully</font> finding and managing the relationships with <font color="blue">collaborative</font>     partners;       §     the <font color="blue">uncertainty</font> as to whether our TAP compounds or those of our     <font color="blue"><font color="blue">collaborator</font>s</font> will succeed in entering human <font color="blue">clinical trials</font> and <font color="blue">uncertainty</font>     as to the results of such trials;       §     the risk that we and/or our <font color="blue"><font color="blue">collaborator</font>s</font> may not be able to obtain     <font color="blue">regulatory</font> approvals <font color="blue">necessary</font> to <font color="blue">commercialize</font> <font color="blue">product candidate</font>s;       §     the potential <font color="blue">development</font> by <font color="blue">competitors</font> of <font color="blue">competing products</font> and     <font color="blue">technologies</font>; <font color="blue">uncertainty</font> whether our TAP <font color="blue">technology</font> will produce safe,     <font color="blue">effective</font> and <font color="blue">commercially</font> <font color="blue">viable products</font>;       §     our ability to <font color="blue">successfully</font> protect our <font color="blue">intellectual</font> property;       §     our reliance on third-party <font color="blue">manufacture</font>rs to achieve supplies of our     cell-killing agents, DM1 and DM4;       §     the risk that we may be unable to establish the <font color="blue">manufacturing</font> <font color="blue">capabilities</font>     <font color="blue">necessary</font> to develop and <font color="blue">commercialize</font> our <font color="blue">potential products</font>;       §     the adequacy of our liquidity and capital resources;       §     <font color="blue">government</font>al regulation of our <font color="blue">activities</font>, <font color="blue">facilities</font>, products and     personnel; the dependence on <font color="blue">key personnel</font>;       §     <font color="blue">uncertainties</font> as to the extent of <font color="blue">reimbursement</font> for the costs of our     <font color="blue">potential products</font> and related <font color="blue">treatments</font> by <font color="blue">government</font> and <font color="blue">private health</font>     insurers and other <font color="blue">organizations</font>; the <font color="blue">potential adverse impact</font> of     <font color="blue">government</font>-directed health care reform; and       §     the risk of product <font color="blue">liability</font> claims; and economic <font color="blue">conditions</font>, both     <font color="blue">generally</font> and those <font color="blue">specifically</font> related to the bio<font color="blue">technology</font> industry</td>
+    </tr>
+    <tr>
+      <td>These  forward-looking  statements  involve  known  and <font color="blue">unknown risks</font>,     <font color="blue">uncertainties</font>  and  other  factors that may cause actual results to be     <font color="blue">materially</font>  <font color="blue">different</font>  from  those contemplated by our forward-looking     statements</td>
+    </tr>
+    <tr>
+      <td>These known and <font color="blue">unknown risks</font>, <font color="blue">uncertainties</font> and other factors     are described in detail in the “Risk Factors” section and in other sections     of this report</td>
+    </tr>
+  </tbody>
+</table>

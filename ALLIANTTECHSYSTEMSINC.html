@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: contractor", fill: "#9678b6"},
+{source: "1: contractor", target: "4: US Government ", fill: "#fff8dc"},
+{source: "4: US Government ", target: "4: contractors", fill: "#fff8dc"},
+{source: "4: contractors", target: "4: depends heavily on", fill: "#fff8dc"},
+{source: "4: depends heavily on", target: "4: contracts underlying", fill: "#fff8dc"},
+{source: "4: US Government ", target: "8: significant", fill: "#f4bbff"},
+{source: "8: significant", target: "8: participates could", fill: "#f4bbff"},
+{source: "8: participates could", target: "8: financial condition", fill: "#f4bbff"},
+{source: "8: financial condition", target: "8: cash flows", fill: "#f4bbff"},
+{source: "8: significant", target: "49: procurement", fill: "#efdecd"},
+{source: "49: procurement", target: "49: regulations", fill: "#efdecd"},
+{source: "49: regulations", target: "49: noncompliance with which may expose", fill: "#efdecd"},
+{source: "49: noncompliance with which may expose", target: "49: consequences", fill: "#efdecd"},
+{source: "49: procurement", target: "158: could incur", fill: "#000f89"},
+{source: "158: could incur", target: "158: remediation costs", fill: "#000f89"},
+{source: "158: remediation costs", target: "158: third party property damage", fill: "#000f89"},
+{source: "158: third party property damage", target: "158: personal injury", fill: "#000f89"},
+{source: "158: personal injury", target: "158: liabilities", fill: "#000f89"},
+{source: "158: liabilities", target: "158: environmental laws", fill: "#000f89"},
+{source: "158: environmental laws", target: "158: noncompliance with environmental permits", fill: "#000f89"},
+{source: "158: could incur", target: "159: environmental compliance", fill: "#b31b1b"},
+{source: "159: environmental compliance", target: "159: remediation", fill: "#b31b1b"},
+{source: "159: remediation", target: "159: costs will", fill: "#b31b1b"},
+{source: "159: costs will", target: "159: recoverable under", fill: "#b31b1b"},
+{source: "159: recoverable under", target: "159: US Government ", fill: "#b31b1b"},
+{source: "159: environmental compliance", target: "START_HERE", fill: "#b31b1b"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Oil and Gas Exploration and Production</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Apparel Accessories and Luxury Goods</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Fertilizers and Agricultural Chemicals</td>
+    </tr>
+    <tr>
+      <td>Diversified Chemicals</td>
+    </tr>
+    <tr>
+      <td>Specialty Chemicals</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Reduce routine activity</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contractor">Contractor</a></td>
+      <td>A contract is a legally enforceable agreement that creates, defines, and governs mutual rights and obligations among its parties. A contract typically involves the transfer of goods, services, money, or a promise to transfer any of those at a future date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Government_contractor">Government contractor</a></td>
+      <td>A government contractor is a company (privately owned, publicly traded or a state-owned enterprise) – either for profit or non-profit – that produces goods or services under contract for the government. Some communities are largely sustained by government contracting activity; for instance, much of the economy of Northern Virginia consists of government contractors employed directly or indirectly by the federal government of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/General_contractor">General contractor</a></td>
+      <td>A general contractor, main contractor or prime contractor is responsible for the day-to-day oversight of a construction site, management of vendors and trades, and the communication of information to all involved parties throughout the course of a building project.\n\n\n== Description ==\nA general contractor is a construction manager employed by a client, usually upon the advice of the project's architect or engineer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Hafeez_Contractor">Hafeez Contractor</a></td>
+      <td>Hafeez Sorab Contractor (born 1950) is an Indian architect. He has designed many skyscrapers in India, primarily in the city of Mumbai.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Independent_contracting_in_the_United_States">Independent contracting in the United States</a></td>
+      <td>An independent contractor is a person, business, or corporation that provides goods or services under a written contract or a verbal agreement. Unlike employees, independent contractors do not work regularly for an employer but work as required, when they may be subject to law of agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dinyar_Contractor">Dinyar Contractor</a></td>
+      <td>Dinyar Contractor (January 23, 1941 – 5 June 2019) was an Indian stage actor, comedian and Bollywood/Tollywood actor. He acted in Gujarati theatre and Hindi theatre, as well as Hindi movies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/U.S._government_response_to_the_September_11_attacks">U.S. government response to the September 11 attacks</a></td>
+      <td>After the September 11, 2001 attacks, the U.S. government responded with immediate action (including rescue operations at the site of the World Trade Center and grounding civilian aircraft), and long-term action, including investigations, legislative changes, military action and restoration projects. Investigations into the motivations and execution of the attacks led to the declaration of War on Terrorism that led to ongoing military engagements in Afghanistan and subsequently Iraq.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Copyright_status_of_works_by_the_federal_government_of_the_United_States">Copyright status of works by the federal government of the United States</a></td>
+      <td>A work of the United States government, is defined by the United States copyright law, as "a work prepared by an officer or employee of the United States Government as part of that person's official duties." Under section 105 of US copyright law, such works are not entitled to domestic copyright protection under U.S. law and are therefore in the public domain.\nThis act only applies to U.S. domestic copyright as that is the extent of U.S. federal law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Privacy_and_the_US_government">Privacy and the US government</a></td>
+      <td>Privacy and the United States government consists of enacted legislation, funding of regulatory agencies, enforcement of court precedents, creation of congressional committees, evaluation of judicial decisions, and implementation of executive orders in response to major court cases and technological change. Because the United States government is composed of three distinct branches governed by both the separation of powers and checks and balances, the change in privacy practice can be separated relative to the actions performed by the three branches.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/United_States_Government_Publishing_Office">United States Government Publishing Office</a></td>
+      <td>The United States Government Publishing Office (USGPO or GPO; formerly the United States Government Printing Office) is an agency of the legislative branch of the United States Federal government. The office produces and distributes information products and services for all three branches of the Federal Government, including U.S. passports for the Department of State as well as the official publications of the Supreme Court, the Congress, the Executive Office of the President, executive departments, and independent agencies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Zionist_Occupation_Government_conspiracy_theory">Zionist Occupation Government conspiracy theory</a></td>
+      <td>The Zionist occupation government, Zionist occupational government or Zionist-occupied government (ZOG), sometimes also referred to as the Jewish occupational government (JOG), is an antisemitic conspiracy theory claiming Jews secretly control the governments of Western states. According to believers, a secret Zionist organization controls international banks, and through them the governments, in order to collude against white, Christian, or Islamic interests.The expression is used by white supremacist, white nationalist, far-right, nativist or antisemitic groups in Europe and the United States, as well as by ultra-nationalists such as Pamyat in Russia and various far-right groups including the Freemen, Identity Christians and the Ku Klux Klan.The word Zionist in "Zionist occupation government" should not be confused with the ideology of Zionism, the movement for support of a Jewish state in the Land of Israel.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Contract">Contract</a></td>
+      <td>A contract is a legally enforceable agreement that creates, defines, and governs mutual rights and obligations among its parties. A contract typically involves the transfer of goods, services, money, or a promise to transfer any of those at a future date.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vehicle_emission_standard">Vehicle emission standard</a></td>
+      <td>Emission standards  are the legal requirements governing air pollutants released into the atmosphere. Emission standards set quantitative limits on the permissible amount of specific air pollutants that may be released from specific sources over specific timeframes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Environmental_remediation">Environmental remediation</a></td>
+      <td>Environmental remediation deals with the removal of pollution or contaminants from environmental media such as soil, groundwater, sediment, or surface water. Remedial action is generally subject to an array of regulatory requirements, and may also be based on assessments of human health and ecological risks where no legislative standards exist, or where standards are advisory.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Groundwater_remediation">Groundwater remediation</a></td>
+      <td>Groundwater remediation is the process that is used to treat polluted groundwater by removing the pollutants or converting them into harmless products. Groundwater is water present below the ground surface that saturates the pore space in the subsurface.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bioremediation">Bioremediation</a></td>
+      <td>Bioremediation broadly refers to any process wherein a biological system (typically bacteria, microalgae, fungi, and plants), living or dead, is employed for removing environmental pollutants from air, water, soil, flue gasses, industrial effluents etc, in natural or artificial settings. The natural ability of organisms to adsorb, accumulate, and degrade common and emerging pollutants has attracted the use of biological resources in treatment of contaminated environment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electrokinetic_remediation">Electrokinetic remediation</a></td>
+      <td>Electrokinetics remediation, also termed electrokinetics, is a technique of using direct electric current to remove organic, inorganic and heavy metal particles from the soil by electric potential. The use of this technique provides an approach with minimum disturbance to the surface while treating subsurface contaminants.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Carbon_dioxide_removal">Carbon dioxide removal</a></td>
+      <td>Carbon dioxide removal (CDR), also known as negative CO2 emissions, is a process in which carbon dioxide gas (CO2) is removed from the atmosphere and sequestered for long periods of time. Similarly, greenhouse gas removal (GGR) or negative greenhouse gas emissions is the removal of greenhouse gases (GHGs) from the atmosphere by deliberate human activities, i.e., in addition to the removal that would occur via natural carbon cycle or atmospheric chemistry processes.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electrical_resistance_heating">Electrical resistance heating</a></td>
+      <td>Electrical resistance heating (ERH) is an intensive in situ environmental remediation method that uses the flow of alternating current electricity to heat soil and groundwater and evaporate contaminants.  Electric current is passed through a targeted soil volume between subsurface electrode elements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/University_of_Edinburgh">University of Edinburgh</a></td>
+      <td>The University of Edinburgh (Scots: University o Edinburgh, Scottish Gaelic: Oilthigh Dhùn Èideann; abbreviated as Edin. in post-nominals) is a public research university in Edinburgh, Scotland.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ALLIANT TECHSYSTEMS INC      ITEM 1A        RISK FACTORS       ATK is subject to a number of risks, including those related to being a US     Government <font color="blue">contractor</font></td>
+    </tr>
+    <tr>
+      <td>Some of the <font color="blue">risks facing</font> ATK are discussed below</td>
+    </tr>
+    <tr>
+      <td>26     ______________________________________________________________________       ATK’s business could be <font color="blue"><font color="blue">adversely</font> impacted by reductions</font> or changes in NASA     or <font color="blue">US Government </font><font color="blue">military spending</font></td>
+    </tr>
+    <tr>
+      <td>As the majority of ATK’s sales are to the <font color="blue">US Government </font>and its prime     <font color="blue">contractor</font>s, ATK <font color="blue">depends heavily on</font> the <font color="blue">contracts underlying</font> these programs</td>
+    </tr>
+    <tr>
+      <td>Also,  <font color="blue"><font color="blue">significant</font> portions</font> of ATK’s <font color="blue">sales come from</font> a small number of     contracts</td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">top five contracts</font>, all of which are <font color="blue">contracts with</font> the     US Government, accounted for approximately 39prca of fiscal 2006 sales</td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">largest contract</font>, the military small-caliber <font color="blue">ammunition</font> contract,     <font color="blue">contributed</font> approximately 14prca of total fiscal 2006 sales, and ATK’s contract     with NASA for the Reusable Solid Rocket Motors (RSRM) for the <font color="blue">Space Shuttle </font>    represented 13prca of ATK’s total fiscal 2006 sales</td>
+    </tr>
+    <tr>
+      <td>The loss or <font color="blue">significant</font>     reduction of a material program in which ATK <font color="blue"><font color="blue">participates</font> could</font> have a     material adverse effect on ATK’s operating results, <font color="blue">financial condition</font>, or     <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s small-caliber <font color="blue">ammunition</font> <font color="blue">operations</font> for the US military and US     allies are <font color="blue">conducted at</font> the <font color="blue">Lake City </font>Army Ammunition Plant (Lake City) in     Independence, Missouri</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Lake City </font>is the Army’s principal small-caliber     <font color="blue"><font color="blue">ammunition</font> production <font color="blue">facility</font></font> and is the <font color="blue">primary supplier</font> of the US     military’s small-caliber <font color="blue">ammunition</font> needs</td>
+    </tr>
+    <tr>
+      <td>ATK took <font color="blue">over operation</font> of this     <font color="blue"><font color="blue">facility</font> on</font> April 1, 2000 and is responsible for managing it, including     <font color="blue">leasing excess space</font> to <font color="blue">third parties</font> in the private sector</td>
+    </tr>
+    <tr>
+      <td>ATK has a     10-year production contract to supply the Army’s small-caliber <font color="blue">ammunition</font>     needs that expires April 1, 2010</td>
+    </tr>
+    <tr>
+      <td>Although the <font color="blue">facilities</font>-use contract     expires  15 years  after  the  plant production contract, if the plant     production contract is not renewed, ATK believes the US Army <font color="blue">would relieve</font>     ATK of all of its <font color="blue">obligations</font> under the <font color="blue">facilities</font>-use contract</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Future ATK     </font><font color="blue">production under</font> this contract or levels of <font color="blue"><font color="blue">government</font> spending cannot</font> be     <font color="blue">predicted with certainty</font></td>
+    </tr>
+    <tr>
+      <td>In  January 2004,  President  Bush  announced  a  new vision for space     <font color="blue">exploration</font>,  <font color="blue">which commits</font> the <font color="blue">United States </font>to a long-term human and     <font color="blue">robotic program</font> to explore the solar system, starting with a return to the     Moon</td>
+    </tr>
+    <tr>
+      <td>The program anticipates the <font color="blue">Space Shuttle </font>will be <font color="blue">retired from service</font>     as  early  as  2010, to be <font color="blue">replaced by</font> a <font color="blue">new spacecraft</font> and supporting     <font color="blue">exploration</font>  <font color="blue">launch systems</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">On September </font>19, 2005, NASA announced the     results of its <font color="blue">architecture study from which</font> NASA chose the shuttle-derived     option for its <font color="blue">new launch system due</font> to its superior safety, cost and its     <font color="blue">availability</font></td>
+    </tr>
+    <tr>
+      <td>This option includes the current four-segment, or an upgraded     five-segment <font color="blue">Shuttle Solid Rocket Booster </font>as the <font color="blue">first stage</font> for its new     Apollo-style CLV and two five-segment <font color="blue">Shuttle Solid Rocket Boosters </font>as the     <font color="blue">initial thrust</font> for its HLLV for the future NASA <font color="blue">launch systems</font></td>
+    </tr>
+    <tr>
+      <td>A technical     <font color="blue">directive under</font> ATK’s current RSRM contract has been received from NASA for     ATK to begin studying and planning for the use <font color="blue">of the ATK </font>RSRM in these two     new systems</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although ATK </font>believes that its <font color="blue">RSRM and RSRM </font><font color="blue">derivatives will</font>     be important to achieving an affordable launch system, future programs and     levels of <font color="blue"><font color="blue">government</font> spending cannot</font> be <font color="blue">predicted with certainty</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">US Government </font>contracts are <font color="blue">also dependent on</font> the continuing <font color="blue">availability</font>     of <font color="blue">Congressional </font><font color="blue">appropriations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Congress </font><font color="blue">usually <font color="blue">appropriate</font>s funds</font> for a     <font color="blue">given program on</font> a fiscal year basis even though <font color="blue">contract performance</font> may     take more <font color="blue">than one year</font></td>
+    </tr>
+    <tr>
+      <td>As a result, at the outset of a <font color="blue">major program</font>, the     contract is <font color="blue">usually incrementally funded</font>, and <font color="blue"><font color="blue">additional</font> monies</font> are normally     committed to the <font color="blue">contract by</font> the <font color="blue">procuring agency only as</font> <font color="blue">Congress </font>makes     <font color="blue">appropriations</font> for <font color="blue">future fiscal years</font></td>
+    </tr>
+    <tr>
+      <td>In addition, most <font color="blue">US Government </font>    contracts are subject to <font color="blue">modification</font> if funding is changed</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">failure by</font>     <font color="blue">Congress </font> to  <font color="blue">appropriate</font> <font color="blue">additional</font> funds to any program in which ATK     <font color="blue">participates</font>, or any contract <font color="blue">modification</font> as a result of funding changes,     <font color="blue"><font color="blue">could materially</font> delay</font> or terminate the program</td>
+    </tr>
+    <tr>
+      <td>This could have a material     adverse effect on ATK’s operating results, <font color="blue">financial condition</font>, or cash     flows</td>
+    </tr>
+    <tr>
+      <td>27     ______________________________________________________________________       ATK may not be able to react to increases in its costs due to the nature of     its <font color="blue">US Government </font>contracts</td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">US Government </font>contracts can be categorized as either “cost-plus” or     “fixed-price</td>
+    </tr>
+    <tr>
+      <td>Cost-plus-fixed-fee <font color="blue">contracts allow</font> ATK to recover its approved costs plus a     fixed  fee</td>
+    </tr>
+    <tr>
+      <td>Cost-plus-incentive-fee contracts and cost-plus-award-fee     contracts  allow ATK to recover its approved costs plus a fee that can     fluctuate based on actual results as compared to <font color="blue">contractual</font> targets for     factors such as cost, quality, schedule, and performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under     </font>firm-fixed-price contracts, ATK agrees to perform certain work for a fixed     price and absorb any <font color="blue">cost underruns</font> or overruns</td>
+    </tr>
+    <tr>
+      <td>Fixed-price-incentive     contracts are fixed-price contracts under which the <font color="blue">final contract prices</font>     may be <font color="blue">adjusted based on total final costs compared</font> to <font color="blue">total target cost</font>,     and may be <font color="blue"><font color="blue">affected by</font> schedule</font> and performance</td>
+    </tr>
+    <tr>
+      <td>Fixed-price-level-of-effort     <font color="blue">contracts allow</font> for a fixed <font color="blue">price per labor hour</font>, subject to a <font color="blue">contract cap</font></td>
+    </tr>
+    <tr>
+      <td>All fixed-price contracts present the <font color="blue">inherent risk</font> of <font color="blue">unreimbursed cost</font>     overruns, which could have a material adverse effect on operating results,     <font color="blue">financial condition</font>, or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">US Government </font><font color="blue">also regulates</font> the     <font color="blue">accounting</font>  <font color="blue">methods under which costs</font> are allocated to <font color="blue">US Government </font>    contracts</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">following table summarizes how</font> much each of these types of contracts     <font color="blue">contributed</font> to ATK’s <font color="blue">US Government </font>business in fiscal 2006:                                Cost-plus contracts:                                      Cost-plus-fixed-fee                                  10       %       Cost-plus-incentive-fee/cost-plus-award-fee                                  30       %       Fixed-price contracts:                                      Firm-fixed-price                                  60       %       <font color="blue">Total                                  </font>100       %         ATK’s <font color="blue">US Government </font>contracts are subject to <font color="blue">termination</font></td>
+    </tr>
+    <tr>
+      <td>ATK  is subject to the risk that the <font color="blue">US Government </font><font color="blue">may terminate</font> its     <font color="blue">contracts with</font> its suppliers, either for its convenience or in the event of     a <font color="blue">default by</font> the <font color="blue">contractor</font></td>
+    </tr>
+    <tr>
+      <td>If a cost-plus contract is terminated, the     <font color="blue">contractor</font>  is entitled to <font color="blue">reimbursement</font> of its approved costs</td>
+    </tr>
+    <tr>
+      <td>If the     <font color="blue">contractor</font>  would  have  incurred  a loss had the entire contract been     performed,  then  no  profit is allowed by <font color="blue">the US Government</font></td>
+    </tr>
+    <tr>
+      <td>If the     <font color="blue">termination</font> is for convenience, the <font color="blue">contractor</font> is also entitled to receive     payment of a <font color="blue">total fee proportionate</font> to the percentage of the work completed     under the contract</td>
+    </tr>
+    <tr>
+      <td>If a fixed-price contract is terminated, the <font color="blue">contractor</font>     is entitled to receive payment for items delivered to and <font color="blue">accepted by</font> the     US Government</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">termination</font> is for convenience, the <font color="blue">contractor</font> is     also entitled to receive fair <font color="blue">compensation</font> for work performed plus the costs     of settling and paying claims by terminated sub<font color="blue">contractor</font>s, other settlement     expenses, and a <font color="blue">reasonable profit on</font> the <font color="blue">costs incurred</font> or committed</td>
+    </tr>
+    <tr>
+      <td>If a     contract <font color="blue">termination</font> is for default:       ·       the <font color="blue">contractor</font> is paid an amount agreed upon for completed and     partially completed products and services <font color="blue">accepted by</font> <font color="blue">the US Government</font>,       ·       the <font color="blue">US Government </font>is not liable for the <font color="blue">contractor</font>’s costs for     <font color="blue">unaccepted items</font>, and is entitled to repayment of any <font color="blue">advance payments</font> and     progress payments related to the <font color="blue">terminated portions</font> of the contract, and       ·       the <font color="blue">contractor</font> may be liable for excess <font color="blue">costs incurred</font> by the US     Government in procuring undelivered items from another source</td>
+    </tr>
+    <tr>
+      <td>28     ______________________________________________________________________       ATK  is subject to <font color="blue">procurement</font> and other related laws and <font color="blue">regulations</font>,     non-compliance with <font color="blue">which may expose</font> ATK to adverse <font color="blue">consequences</font></td>
+    </tr>
+    <tr>
+      <td>ATK is subject to extensive and complex <font color="blue">US Government </font><font color="blue">procurement</font> laws and     <font color="blue">regulations</font>,  <font color="blue">along with ongoing</font> <font color="blue">US Government </font>audits and reviews of     contract <font color="blue">procurement</font>, performance, and <font color="blue">administration</font></td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">could suffer</font>     adverse <font color="blue">consequences</font> if it were to fail to comply, even inadvertently, with     these laws and <font color="blue">regulations</font> or <font color="blue">with laws governing</font> the export of munitions     and other <font color="blue">controlled products</font> and <font color="blue">commodities</font>; or commit a <font color="blue">significant</font>     violation  of  any other <font color="blue">federal law</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">consequences</font> could include     contract <font color="blue">termination</font>; civil and <font color="blue">criminal penalties</font>; and, <font color="blue">under certain</font>     <font color="blue">circumstances</font>, ATK’s suspension and <font color="blue">debarment from future</font> <font color="blue">US Government </font>    contracts for a period of time</td>
+    </tr>
+    <tr>
+      <td>In addition, foreign sales are subject to     greater  <font color="blue">variability</font> and risk than ATK’s <font color="blue">domestic sales</font></td>
+    </tr>
+    <tr>
+      <td>Foreign sales     subject ATK to numerous stringent US and foreign laws and <font color="blue">regulations</font>,     including <font color="blue">regulations</font> relating to import-export control, exchange controls,     the Foreign Corrupt Practices Act, and the anti-boycott provisions of the     US  Export Administration Act</td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> these laws and     <font color="blue">regulations</font> could result in material adverse <font color="blue">consequences</font> to ATK       Novation of <font color="blue">US Government </font><font color="blue">contracts involves risk</font></td>
+    </tr>
+    <tr>
+      <td>When  <font color="blue">US Government </font>contracts are transferred from one <font color="blue">contractor</font> to     another,  such  as in <font color="blue">connection with</font> the sale of a business, the US     Government may require that the <font color="blue">parties enter into</font> a <font color="blue">novation <font color="blue">agreement</font></font></td>
+    </tr>
+    <tr>
+      <td>A     <font color="blue">novation <font color="blue">agreement</font></font> <font color="blue">generally</font> provides that:       ·        the  transferring  <font color="blue">contractor</font> guarantees or otherwise assumes     <font color="blue">liability</font> for the performance of the acquiring <font color="blue">contractor</font>’s <font color="blue">obligations</font>     under the contract,       ·       the acquiring <font color="blue">contractor</font> assumes all <font color="blue">obligations</font> under the contract,     and       ·       the <font color="blue">US Government </font>recognizes the transfer of the contract and     related assets</td>
+    </tr>
+    <tr>
+      <td>ATK has completed <font color="blue">novation <font color="blue">agreement</font></font>s covering <font color="blue">US Government </font>contracts     acquired in the <font color="blue">Boeing Ordnance </font>(now known as ATK Medium Caliber Systems)     and  <font color="blue">Science and Applied Technology </font>(now known as ATK Missile Systems)     <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">novation <font color="blue">agreement</font></font>s provide that ATK assumes all     <font color="blue">obligations</font>  under the acquired contracts and that the <font color="blue">US Government </font>    recognizes  the transfers to ATK of the acquired contracts and related     assets</td>
+    </tr>
+    <tr>
+      <td>Under each <font color="blue">novation <font color="blue">agreement</font></font>, the acquired contracts are scheduled     to be performed over time, and it is not expected that they will be fully     and finally discharged for <font color="blue">several years</font></td>
+    </tr>
+    <tr>
+      <td>Under each <font color="blue">novation <font color="blue">agreement</font></font>, the     seller of the respective assets has agreed to indemnify ATK against any     <font color="blue">liability</font> that ATK <font color="blue">may incur under</font> the <font color="blue">novation <font color="blue">agreement</font></font> caused by any     prior <font color="blue">failure by</font> the seller to perform its <font color="blue">obligations</font> under its respective     novated  contracts</td>
+    </tr>
+    <tr>
+      <td>ATK has agreed to indemnify the <font color="blue">seller against</font> any     <font color="blue">liability</font> that the seller <font color="blue">may incur under</font> the <font color="blue">novation <font color="blue">agreement</font></font> caused by     any <font color="blue">failure by</font> ATK to perform its <font color="blue">obligations</font> under the novated contracts</td>
+    </tr>
+    <tr>
+      <td>ATK was not required to novate the <font color="blue">US Government </font>contracts acquired in the     Thiokol <font color="blue">acquisition</font> because ATK acquired Cordant Technologies, Inc</td>
+    </tr>
+    <tr>
+      <td>’s (the     entity that owned the assets and <font color="blue">liabilities</font> of the Thiokol propulsion     business) stock, rather than the assets of the business</td>
+    </tr>
+    <tr>
+      <td>ATK has provided     the <font color="blue">US Government </font>with a <font color="blue">corporate guarantee</font> that its <font color="blue">obligations</font> under     the <font color="blue">contracts will</font> be fulfilled</td>
+    </tr>
+    <tr>
+      <td>ATK did not acquire any <font color="blue">US Government </font>    contracts that required novation in the <font color="blue"><font color="blue">acquisition</font>s</font> of the <font color="blue">civil <font color="blue">ammunition</font></font>     business  or  the  PSI  Group</td>
+    </tr>
+    <tr>
+      <td>ATK was not required to novate the US     Government contracts acquired in the <font color="blue"><font color="blue">acquisition</font>s</font> of Micro Craft Inc,     GASL, Inc</td>
+    </tr>
+    <tr>
+      <td>(<font color="blue">known together as</font> ATK GASL), Composite Optics, Inc</td>
+    </tr>
+    <tr>
+      <td>or Mission     Research  Corporation  (now known as ATK Mission Research) because ATK     acquired the stock, rather than the assets of the <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>29     ______________________________________________________________________       Other <font color="blue">risks <font color="blue">associated with</font></font> <font color="blue">US Government </font><font color="blue"><font color="blue">contracts may</font> expose</font> ATK to     adverse <font color="blue">consequences</font></td>
+    </tr>
+    <tr>
+      <td>In addition, like all <font color="blue">US Government </font><font color="blue">contractor</font>s, ATK is subject to risks     <font color="blue"><font color="blue">associated with</font> uncertain cost factors</font> related to:       ·       <font color="blue">scarce technological skills</font> and <font color="blue">components</font>,       ·        the  frequent  need  to  <font color="blue">bid on programs</font> in advance of design     completion, which may result in unforeseen technological <font color="blue">difficult</font>ies and/or     <font color="blue">cost overruns</font>,       ·       the substantial time and effort required for design and <font color="blue">development</font>,       ·       <font color="blue">design complexity</font>,       ·       <font color="blue">rapid obsolescence</font>, and       ·       the potential need for <font color="blue">design improvement</font></td>
+    </tr>
+    <tr>
+      <td>ATK  uses estimates in <font color="blue">accounting</font> for many of its programs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Contract  </font><font color="blue">accounting</font>  requires  judgment  relative to <font color="blue">assessing risks</font>,     estimating <font color="blue">contract revenues</font> and costs, and making <font color="blue">assumptions</font> for schedule     and <font color="blue">technical issues</font></td>
+    </tr>
+    <tr>
+      <td>Due to the size and nature of many of ATK’s contracts,     the estimation of <font color="blue">total revenues</font> and <font color="blue">cost at completion</font> is complex and     subject to many variables</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Assumptions </font>are made regarding the length of time     to complete the contract because <font color="blue">costs also</font> include expected increases in     wages and prices for materials</td>
+    </tr>
+    <tr>
+      <td>Similarly, <font color="blue">assumptions</font> are made regarding     the <font color="blue">future impacts</font> of <font color="blue">efficiency initiatives</font> and <font color="blue">cost reduction efforts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Incentives </font>or penalties related to performance on contracts are considered     in estimating revenue and profit rates, and are recorded when there is     sufficient information to assess anticipated performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Estimates </font>of award     and incentive fees are also used in estimating revenue and profit rates     based on actual and anticipated awards</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because  </font>of the significance of the judgments and <font color="blue">estimation processes</font>     described above, it is likely that <font color="blue">materially <font color="blue">different</font> amounts could</font> be     recorded  if  ATK  used  <font color="blue">different</font>  <font color="blue">assumptions</font>  or  if the underlying     <font color="blue">circumstances</font>  were  to  change</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes  </font>in  underlying <font color="blue">assumptions</font>,     <font color="blue">circumstances</font> or estimates may <font color="blue">adversely</font> affect future period financial     performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>information on ATK’s <font color="blue">accounting</font> policies for revenue     <font color="blue">recognition</font> can be <font color="blue">found under</font> “Management’s Discussion and Analysis of     Financial  Condition  and Results of Operations” in the section titled     “Critical Accounting Policies” in Item 7 of this report</td>
+    </tr>
+    <tr>
+      <td>ATK has a substantial amount of debt, and the cost of servicing that debt     could <font color="blue">adversely</font> affect ATK’s business and hinder ATK’s ability to make     <font color="blue">payments on</font> its debt</td>
+    </tr>
+    <tr>
+      <td>ATK has a substantial amount of <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of March </font>31, 2006, ATK had     total  debt  of  dlra1cmam126 million</td>
+    </tr>
+    <tr>
+      <td>In addition, ATK had dlra73dtta6 million of     <font color="blue">outstanding but undrawn letters</font> of credit and, taking <font color="blue">into account</font> these     letters of credit, an <font color="blue">additional</font> dlra226dtta4 million of <font color="blue">availability</font> under its     revolving credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>information on ATK’s debt can be found     under “Liquidity and Capital Resources” in Item 7 of this report</td>
+    </tr>
+    <tr>
+      <td>ATK has <font color="blue">demands on</font> its <font color="blue">cash resources</font> in addition to interest and principal     <font color="blue">payments on</font> its debt, including, <font color="blue">among others</font>, operating expenses</td>
+    </tr>
+    <tr>
+      <td>ATK’s     level of <font color="blue">indebtedness</font> and these <font color="blue">significant</font> <font color="blue">demands on</font> ATK’s <font color="blue">cash resources</font>     could:       ·       make it more <font color="blue">difficult</font> for ATK to satisfy its <font color="blue">obligations</font>,       30     ______________________________________________________________________       ·       require ATK to dedicate a substantial portion of its cash flow from     <font color="blue">operations</font> to <font color="blue">payments on</font> its debt, thereby reducing the amount of cash flow     available for working capital, capital <font color="blue">expenditures</font>, share <font color="blue">repurchases</font>,     <font color="blue"><font color="blue">acquisition</font>s</font>, and other <font color="blue">general corporate purposes</font>,       ·       limit ATK’s <font color="blue">flexibility</font> in planning for, or reacting to, changes in     the defense and <font color="blue">aerospace industries</font>,       ·       place ATK at a <font color="blue">competitive disadvantage compared</font> to <font color="blue">competitors</font> that     have lower debt service <font color="blue">obligations</font> and <font color="blue">significant</font>ly greater operating and     financing <font color="blue">flexibility</font>,       ·       limit, along with the financial and other <font color="blue">restrictive covenants</font>     applicable to ATK’s <font color="blue">indebtedness</font>, among other things, ATK’s ability to     borrow <font color="blue">additional</font> funds,       ·        increase  ATK’s <font color="blue">vulnerability</font> to <font color="blue">general adverse economic</font> and     <font color="blue">industry <font color="blue">conditions</font></font>, and       ·        result  in  an event of <font color="blue">default upon</font> a failure to <font color="blue">comply with</font>     <font color="blue">financial covenants contained</font> in ATK’s senior credit <font color="blue"><font color="blue">facilities</font> which</font>, if     not cured or waived, could have a material adverse effect on ATK’s business,     <font color="blue">financial condition</font>, or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s ability to <font color="blue">pay interest on</font> and repay its long-term debt and to satisfy     its other <font color="blue">liabilities</font> will depend upon future operating performance and     ATK’s  ability  to  refinance its debt as it <font color="blue">becomes due</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s future     operating  performance  and  ability  to <font color="blue">refinance will</font> be <font color="blue">affected by</font>     <font color="blue">prevailing economic <font color="blue">conditions</font> at</font> that time and financial, business and     other factors, many of which are beyond ATK’s control</td>
+    </tr>
+    <tr>
+      <td>If ATK is unable to service its <font color="blue">indebtedness</font> and fund operating costs, ATK     will be forced to <font color="blue">adopt alternative strategies</font> that may include:       ·       reducing or delaying <font color="blue">expenditures</font> for capital equipment and/or share     <font color="blue">repurchases</font>,       ·       seeking <font color="blue">additional</font> debt financing or <font color="blue">equity capital</font>,       ·       <font color="blue">selling assets</font>, or       ·       <font color="blue">restructuring</font> or <font color="blue">refinancing debt</font></td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that any <font color="blue">such strategies could</font> be <font color="blue">implemented on</font>     satisfactory terms, if at all</td>
+    </tr>
+    <tr>
+      <td>ATK is subject to <font color="blue">intense <font color="blue">competition</font></font> and <font color="blue">therefore may</font> not be able to     <font color="blue">compete successfully</font></td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">encounters <font color="blue">competition</font></font> for <font color="blue">most contracts</font></td>
+    </tr>
+    <tr>
+      <td>Some of these <font color="blue">competitors</font>     have <font color="blue">substantially</font> greater financial, technical, marketing, <font color="blue">manufacturing</font>,     <font color="blue">distribution</font>,  and other resources</td>
+    </tr>
+    <tr>
+      <td>ATK’s ability to compete for these     <font color="blue">contracts depends</font> to a large <font color="blue">extent upon</font>:       ·       its <font color="blue">effectiveness</font> and <font color="blue">innovativeness</font> of research and <font color="blue">development</font>     programs,       ·       its ability to <font color="blue">offer better program performance than</font> the <font color="blue">competitors</font>     at a <font color="blue">lower cost</font>,       ·       its <font color="blue">readiness <font color="blue">with respect</font></font> to <font color="blue">facilities</font>, equipment, and personnel     to undertake the programs for which it competes, and       ·       its <font color="blue">past performance</font> and <font color="blue">demonstrated <font color="blue">capabilities</font></font></td>
+    </tr>
+    <tr>
+      <td>In  some  instances, the <font color="blue">US Government </font>directs a program to a single     supplier</td>
+    </tr>
+    <tr>
+      <td>In  these  cases, there may be other suppliers who have the     <font color="blue">capability</font> to compete for the programs involved, but they can only enter or     reenter the market if the <font color="blue">US Government </font>chooses to open the particular     program to <font color="blue">competition</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s sole-source contracts accounted for 71prca of     <font color="blue">US Government </font>sales in fiscal 2006 and include the <font color="blue">following programs</font>:     <font color="blue">reusable solid rocket motor</font> (RSRM) <font color="blue">Space Shuttle </font>boosters, <font color="blue">Trident II       </font>31     ______________________________________________________________________       missiles, Minuteman III Propulsion Replacement Program, Titan IV solid     rocket  <font color="blue">motor upgrade space boosters</font>, Advanced Medium-Range Air-to-Air     Missile (AMRAAM), Hellfire, Sensor Fuzed Weapon <font color="blue">propulsion systems</font>, M830A1     multi-purpose <font color="blue">tank <font color="blue">ammunition</font></font> rounds, Mk-90 <font color="blue">propellant grains</font> for the <font color="blue">Hydra     </font>70 and APKWS unguided and <font color="blue">guided applications</font>, M789 Lightweight 30 High     Explosive Dual Purpose (HEDP) for medium-caliber <font color="blue">ammunition</font>, the AAR-47     <font color="blue">missile warning system</font>, Javelin <font color="blue">launch tubes</font>, M829A3 <font color="blue">tank <font color="blue">ammunition</font></font>, Solid     Divert  and  Attitude  Control  Systems  and Third Stage Rocket Motors     (SDACS/TSRM), STARTM Motors, the Nautilus program, Advanced Anti-Radiation     Guided Missile (AARGM), Mobile Ground-to-Air Radar Jamming System (MGARJS),     and the XM-8/XM-25 Family of Gun Systems</td>
+    </tr>
+    <tr>
+      <td>In the commercial <font color="blue">ammunition</font> and <font color="blue">accessories</font> markets, ATK <font color="blue">competes against</font>     <font color="blue">manufacturers</font> that have well-established brand names and <font color="blue">strong market</font>     positions</td>
+    </tr>
+    <tr>
+      <td>ATK  <font color="blue">generally</font>  faces <font color="blue">competition</font> from a number of <font color="blue">competitors</font> in each     business area, although no single competitor competes along all five of     ATK’s segments</td>
+    </tr>
+    <tr>
+      <td>ATK’s principal <font color="blue">competitors</font> in each of its segments are as     follows:       Ammunition:    General Dynamics Ordnance and Tactical Systems, Inc, a     subsidiary  of  General  Dynamics  Corporation; SNC Technologies Inc</td>
+    </tr>
+    <tr>
+      <td>;     Winchester Ammunition of Olin Corporation; Remington; and various smaller     <font color="blue">manufacturers</font> and importers, including Hornady, Black Hills Ammunition,     Wolf, Rio Ammunition, Fiocchi Ammunition, and Selliers &amp; Belloitt</td>
+    </tr>
+    <tr>
+      <td>ATK Thiokol:   Aerojet-General Corporation, a subsidiary <font color="blue">of <font color="blue">GenCorp Inc</font></font></td>
+    </tr>
+    <tr>
+      <td>Precision  Systems:    Aerojet-General  Corporation,  a  subsidiary of     <font color="blue">GenCorp Inc</font></td>
+    </tr>
+    <tr>
+      <td>Advanced Propulsion and Space Systems:   Pratt &amp; Whitney Space and Missile     Propulsion of United Technologies Corporation; Aerojet-General Corporation,     a  subsidiary  of  <font color="blue">GenCorp Inc</font></td>
+    </tr>
+    <tr>
+      <td>; Marion and Lincoln Composites, <font color="blue">both subsidiaries</font> of     General Dynamics Corporation; Vought Aircraft Industries, Inc</td>
+    </tr>
+    <tr>
+      <td>ATK Mission Research:   Science Applications <font color="blue">International </font>Corporation     (SAIC);  The  Titan  Corporation; L-3 Communications Corporation; Ball     Aerospace &amp; Technologies Corporation, a subsidiary of Ball Corporation; and     <font color="blue">Georgia University of Technology</font></td>
+    </tr>
+    <tr>
+      <td>The downsizing of the <font color="blue">munitions industrial base</font> has resulted in a reduction     in the number of <font color="blue">competitors</font> through consolidations and <font color="blue">departures from</font> the     industry</td>
+    </tr>
+    <tr>
+      <td>This has reduced the number of <font color="blue">competitors</font> for some programs, but     has strengthened the <font color="blue">capabilities</font> of some of the remaining <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, it is possible that there will be increasing <font color="blue">competition</font> from the     remaining <font color="blue">competitors</font> in business areas where they do not <font color="blue">currently compete</font>,     <font color="blue">particularly</font> in those business <font color="blue">areas dealing with <font color="blue">electronic</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Failure of ATK’s sub<font color="blue">contractor</font>s to perform their <font color="blue">contractual</font> <font color="blue">obligations</font>     <font color="blue">could materially</font> and <font color="blue">adversely</font> impact ATK’s prime <font color="blue">contract performance</font> and     ability to obtain future business</td>
+    </tr>
+    <tr>
+      <td>ATK relies on sub<font color="blue">contracts with</font> other companies to perform a portion of the     services ATK provides its <font color="blue">customers on</font> many of its contracts</td>
+    </tr>
+    <tr>
+      <td>There is a     risk that ATK may have disputes with its sub<font color="blue">contractor</font>s, including disputes     regarding the quality and <font color="blue">timeliness</font> of work performed by the sub<font color="blue">contractor</font>,     customer       32     ______________________________________________________________________       <font color="blue">concerns about</font> the subcontract, ATK’s failure to <font color="blue">extend existing task orders</font>     or <font color="blue">issue new task orders under</font> a subcontract, or ATK’s hiring of personnel     of a sub<font color="blue">contractor</font></td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">failure by</font> one or more of ATK’s sub<font color="blue">contractor</font>s to     <font color="blue">satisfactorily provide on</font> a <font color="blue">timely basis</font> the agreed-upon supplies or perform     the agreed-upon services may materially and <font color="blue">adversely</font> impact ATK’s ability     to  perform  its  <font color="blue">obligations</font>  as  the prime <font color="blue">contractor</font></td>
+    </tr>
+    <tr>
+      <td>Sub<font color="blue">contractor</font>     <font color="blue">performance deficiencies could</font> result in a <font color="blue">customer terminating</font> a contract     for default</td>
+    </tr>
+    <tr>
+      <td>A default <font color="blue">termination</font> could expose ATK to <font color="blue">liability</font> and have a     material adverse effect on the ability to compete for future contracts and     orders</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Disruptions </font>in the supply of <font color="blue">key <font color="blue">raw materials</font></font> and <font color="blue">difficult</font>ies in the     supplier  <font color="blue"><font color="blue">qualification</font> process</font>, as well as increases in prices of raw     materials, could <font color="blue">adversely</font> impact ATK       Key <font color="blue"><font color="blue">raw materials</font> used</font> in ATK’s <font color="blue">operations</font> include aluminum, steel, steel     alloys, copper, zinc, lead, graphite fiber, prepreg, hydroxy terminated     polybutadiene, epoxy resins and adhesives, ethylene propylene diene monomer     rubbers,  cotton fiber, wood pulp cellulose, diethylether, x-ray film,     <font color="blue">plasticizers</font> and nitrate esters, impregnated ablative materials, various     natural and synthetic rubber compounds, polybutadiene, acrylonitrile, and     ammonium   <font color="blue">perchlorate</font></td>
+    </tr>
+    <tr>
+      <td>ATK  also  purchases  <font color="blue">chemicals</font>;  <font color="blue">electronic</font>,     electro-mechanical and mechanical <font color="blue">components</font>; subassemblies; and subsystems     that are <font color="blue">integrated with</font> the <font color="blue">manufactured parts</font> for <font color="blue">final assembly into</font>     finished products and systems</td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">closely monitors sources</font> of supply to assure that <font color="blue">adequate <font color="blue">raw materials</font></font>     and other supplies needed in <font color="blue">manufacturing</font> processes are available</td>
+    </tr>
+    <tr>
+      <td>As a     <font color="blue">US Government </font><font color="blue">contractor</font>, ATK is <font color="blue">frequently</font> limited to <font color="blue">procuring materials</font>     and <font color="blue">components</font> from sources of <font color="blue">supply approved by</font> the <font color="blue">US Department </font>of     Defense (DoD)</td>
+    </tr>
+    <tr>
+      <td>In addition, as business <font color="blue">conditions</font>, the DoD budget, and     <font color="blue">Congressional </font><font color="blue">allocations</font> change, suppliers of specialty <font color="blue">chemicals</font> and     <font color="blue">materials sometimes</font> consider <font color="blue">dropping low volume items from</font> their product     lines,  which may require, as it has in the past, <font color="blue">qualification</font> of new     suppliers  for  raw  <font color="blue">materials on key programs</font></td>
+    </tr>
+    <tr>
+      <td>The supply of ammonium     <font color="blue">perchlorate</font>, a <font color="blue">principal raw</font> material used in ATK’s <font color="blue">operations</font>, is limited     to  a <font color="blue">single source</font> that supplies the <font color="blue">entire domestic solid propellant</font>     industry</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">single source</font>, however, maintains two separate <font color="blue">manufacturing</font>     lines a reasonable distance apart, which mitigates the likelihood of a fire,     explosion, or other <font color="blue">problem impacting</font> all production</td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">may also rely on</font>     one  primary  supplier  for other <font color="blue">production materials</font></td>
+    </tr>
+    <tr>
+      <td>Although other     suppliers of the <font color="blue">same materials may</font> exist, the addition of a new supplier     may require ATK to qualify the new source for use</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue"><font color="blue">qualification</font> process</font>     may impact ATK’s <font color="blue">profitability</font> or ability to <font color="blue">meet contract deliveries</font></td>
+    </tr>
+    <tr>
+      <td>Certain suppliers of materials used in the <font color="blue">manufacturing</font> of <font color="blue">rocket motors</font>     have <font color="blue">discontinued</font> the production of some materials</td>
+    </tr>
+    <tr>
+      <td>These materials include     <font color="blue">certain insulation</font> and <font color="blue">resin materials</font> for <font color="blue">rocket motor cases</font> and aerospace     <font color="blue">grade rayon</font> for nozzles</td>
+    </tr>
+    <tr>
+      <td>ATK has <font color="blue">qualified new <font color="blue">replacement materials</font></font> for     some  programs</td>
+    </tr>
+    <tr>
+      <td>For other programs, ATK or ATK’s customer has procured     <font color="blue">sufficient inventory</font> to <font color="blue">cover current program <font color="blue">requirements</font></font> and is in the     process of <font color="blue">qualifying new <font color="blue">replacement materials</font></font> to be qualified in time to     meet  future  production needs</td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">profitability</font> may be affected if     unforeseen <font color="blue">difficult</font>ies in developing and <font color="blue">qualifying <font color="blue">replacement materials</font></font>     occur</td>
+    </tr>
+    <tr>
+      <td>ATK is <font color="blue">also impacted by increases</font> in the prices of <font color="blue"><font color="blue">raw materials</font> used</font> in     <font color="blue">production on commercial</font> and fixed-price business</td>
+    </tr>
+    <tr>
+      <td>Most recently, ATK has     seen a <font color="blue">significant</font> increase in the price of commodity metals, primarily     <font color="blue">copper which</font> has reached record high prices, along with lead, steel, and     zinc</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">increased cost</font> of <font color="blue">natural gas</font> and <font color="blue">electricity also</font> has an impact     on the cost of operating ATK’s <font color="blue">factories</font></td>
+    </tr>
+    <tr>
+      <td>Prolonged <font color="blue">disruptions</font> in the supply of any of ATK’s <font color="blue">key <font color="blue">raw materials</font></font>,     <font color="blue">difficult</font>y completing <font color="blue">qualification</font> of new sources of supply, implementing     use of <font color="blue">replacement materials</font> or new sources of supply, or a continuing     increase in the prices of <font color="blue">raw materials</font> and <font color="blue">energy could</font> have a material     adverse effect on ATK’s operating results, <font color="blue">financial condition</font>, or cash     flows</td>
+    </tr>
+    <tr>
+      <td>33     ______________________________________________________________________       ATK’s <font color="blue">future success will depend</font>, in part, on its ability to develop new     <font color="blue">technologies</font> and maintain a <font color="blue">qualified workforce</font> to meet the needs of its     customers</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Virtually </font>all of the products produced and sold by ATK are <font color="blue">highly engineered</font>     and require sophisticated <font color="blue">manufacturing</font> and <font color="blue">system <font color="blue">integration</font> techniques</font>     and <font color="blue">capabilities</font></td>
+    </tr>
+    <tr>
+      <td>Both the commercial and <font color="blue">government</font> markets in which the     company operates are <font color="blue">characterized</font> by rapidly changing <font color="blue">technologies</font></td>
+    </tr>
+    <tr>
+      <td>The     product and program needs of ATK’s <font color="blue">government</font> and <font color="blue">commercial customers</font>     change and <font color="blue">evolve regularly</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, ATK’s <font color="blue">future performance</font> in part     <font color="blue">depends on</font> its ability to identify <font color="blue">emerging technological trends</font>, develop     and <font color="blue">manufacture competitive products</font>, and bring those products to market     quickly  at  cost-effective prices</td>
+    </tr>
+    <tr>
+      <td>In addition, because of the highly     specialized nature of its business, ATK must be able to hire and retain the     skilled and <font color="blue">appropriate</font>ly qualified personnel necessary to perform the     services  required  by  its customers</td>
+    </tr>
+    <tr>
+      <td>ATK’s sales and <font color="blue">earnings may</font> be     <font color="blue">adversely</font>  affected  if it is unable to develop <font color="blue">new products</font> that meet     customers’ changing needs or <font color="blue">successfully attract</font> and retain qualified     personnel</td>
+    </tr>
+    <tr>
+      <td>Due  to  the  volatile  and flammable nature of its products, fires or     <font color="blue">explosions</font> may disrupt ATK’s business</td>
+    </tr>
+    <tr>
+      <td>Many of ATK’s <font color="blue">products involve</font> the manufacture and/or handling of a variety     of explosive and <font color="blue">flammable materials</font></td>
+    </tr>
+    <tr>
+      <td>From time to time, these <font color="blue">activities</font>     have resulted in <font color="blue">incidents which</font> have <font color="blue">temporarily shut down</font> or otherwise     disrupted  some <font color="blue">manufacturing</font> processes, causing <font color="blue">production delays</font> and     resulting in <font color="blue">liability</font> for <font color="blue">workplace injuries</font> and <font color="blue">fatalities</font></td>
+    </tr>
+    <tr>
+      <td>ATK has safety     and <font color="blue">loss prevention programs which</font> require detailed pre-construction reviews     of process changes and new <font color="blue">operations</font>, along with routine safety audits of     <font color="blue">operations</font> involving explosive materials, to mitigate such incidents, as     well as a variety of <font color="blue">insurance policies</font></td>
+    </tr>
+    <tr>
+      <td>However, ATK <font color="blue">cannot ensure</font> that it     will not experience similar incidents in the future or that any similar     <font color="blue">incidents will</font> not result in <font color="blue">production delays</font> or otherwise have a material     adverse effect on its results of <font color="blue">operations</font>, <font color="blue">financial condition</font>, or cash     flows</td>
+    </tr>
+    <tr>
+      <td>ATK is subject to <font color="blue"><font color="blue">environmental</font> rules</font> and <font color="blue">regulations</font>, non-compliance with     <font color="blue">which may expose</font> ATK to adverse <font color="blue">consequences</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">operations</font> and ownership or use of <font color="blue">real property</font> are subject to a     number of federal, state, and <font color="blue">local <font color="blue"><font color="blue">environmental</font> laws</font></font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>At     <font color="blue">certain sites</font> that ATK owns or operates or formerly owned or operated, there     is known or <font color="blue">potential <font color="blue">contamination</font></font> that ATK is required to investigate or     remediate</td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">could incur</font> substantial costs, including <font color="blue"><font color="blue">remediation</font> costs</font>,     fines, and penalties, or <font color="blue">third party property damage</font> or <font color="blue">personal injury</font>     claims, as a result of violations or <font color="blue">liabilities</font> of <font color="blue"><font color="blue">environmental</font> laws</font> or     non-compliance with <font color="blue">environmental</font> permits</td>
+    </tr>
+    <tr>
+      <td>ATK expects that a portion of its <font color="blue"><font color="blue">environmental</font> compliance</font> and <font color="blue">remediation</font>     <font color="blue">costs will</font> be <font color="blue">recoverable under</font> <font color="blue">US Government </font>contracts</td>
+    </tr>
+    <tr>
+      <td>Some of the     <font color="blue"><font color="blue">remediation</font> costs</font> that are not <font color="blue">recoverable from</font> the <font color="blue">US Government </font>that are     associated  <font color="blue">with <font color="blue">facilities</font> purchased</font> in a business <font color="blue">acquisition</font> may be     <font color="blue">covered by</font> various <font color="blue">indemnification</font> <font color="blue"><font color="blue">agreement</font>s</font>, as described below</td>
+    </tr>
+    <tr>
+      <td>·       As part of its <font color="blue">acquisition</font> of the <font color="blue">Hercules Aerospace Company </font>in     fiscal 1995, ATK assumed <font color="blue">responsibility</font> for <font color="blue"><font color="blue">environmental</font> compliance</font> at the     <font color="blue">facilities</font> acquired from Hercules (the Hercules Facilities)</td>
+    </tr>
+    <tr>
+      <td>ATK believes     that a portion of the compliance and <font color="blue"><font color="blue">remediation</font> costs</font> <font color="blue">associated with</font> the     <font color="blue">Hercules Facilities </font>will be <font color="blue">recoverable under</font> <font color="blue">US Government </font>contracts, and     that those <font color="blue">environmental</font> <font color="blue"><font color="blue">remediation</font> costs</font> not <font color="blue">recoverable under</font> these     contracts  will  be  <font color="blue">covered by</font> Hercules Incorporated (Hercules) under     <font color="blue">environmental</font>  <font color="blue"><font color="blue"><font color="blue">agreement</font>s</font> <font color="blue">entered into</font></font> in <font color="blue">connection with</font> the <font color="blue"><font color="blue">Hercules  </font>   </font><font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>Under these <font color="blue"><font color="blue">agreement</font>s</font>, Hercules has agreed to indemnify ATK     for  <font color="blue">environmental</font>  <font color="blue">conditions</font> relating to releases or <font color="blue">hazardous</font> waste     <font color="blue">activities</font> occurring prior to ATK’s purchase of the Hercules Facilities;     fines   relating  to  pre-<font color="blue">acquisition</font>  <font color="blue">environmental</font>  compliance;  and     <font color="blue">environmental</font> claims arising out of breaches of Hercules’ <font color="blue">representations</font>     and warranties</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Hercules  </font>   </font>  34     ______________________________________________________________________       is not required to indemnify ATK for any individual claims below dlra50cmam000</td>
+    </tr>
+    <tr>
+      <td>Hercules is obligated to indemnify ATK for the <font color="blue">lowest cost response</font> of     <font color="blue">remediation</font> required at the <font color="blue">facility</font> that is acceptable to the applicable     <font color="blue">regulatory agencies</font></td>
+    </tr>
+    <tr>
+      <td>ATK is not responsible for conducting any remedial     <font color="blue">activities</font> <font color="blue">with respect</font> to the Kenvil, NJ <font color="blue">facility</font> or the Clearwater, FL     <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">accordance with</font> its <font color="blue"><font color="blue">agreement</font> with</font> Hercules, ATK notified     <font color="blue">Hercules  </font>of all known <font color="blue">contamination</font> on non-federal lands on or before     March 31, 2000, and <font color="blue">on federal lands on</font> or before March 31, 2005</td>
+    </tr>
+    <tr>
+      <td>·       ATK <font color="blue">generally</font> assumed <font color="blue">responsibility</font> for <font color="blue"><font color="blue">environmental</font> compliance</font> at     the <font color="blue">Thiokol Facilities </font>acquired from Alcoa Inc</td>
+    </tr>
+    <tr>
+      <td><font color="blue">While ATK     </font>expects that a portion of the compliance and <font color="blue"><font color="blue">remediation</font> costs</font> associated     with  the  acquired  <font color="blue">Thiokol Facilities </font>will be <font color="blue">recoverable under</font> US     Government  contracts,  ATK  has  recorded  an  accrual to cover those     <font color="blue">environmental</font>  <font color="blue">remediation</font>  costs at these <font color="blue">facilities</font> that will not be     recovered  through  US  Government contracts</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">accordance with</font> its     <font color="blue">agreement</font>  with  Alcoa,  ATK notified Alcoa of all known <font color="blue">environmental</font>     <font color="blue">remediation</font> issues as <font color="blue">of January </font>30, 2004</td>
+    </tr>
+    <tr>
+      <td>Of these <font color="blue">known issues</font>, ATK is     responsible for any costs not <font color="blue">recovered through</font> <font color="blue">US Government </font><font color="blue">contracts at</font>     <font color="blue">Thiokol Facilities </font>up to dlra29 million, <font color="blue">ATK and Alcoa </font>have agreed to split     evenly  any  amounts  between  dlra29 million and dlra49 million, and ATK is     responsible for any payments in excess of dlra49 million</td>
+    </tr>
+    <tr>
+      <td>·       With respect to the <font color="blue">civil <font color="blue">ammunition</font></font> business’ <font color="blue">facilities</font> purchased     from Blount in fiscal 2002, Blount has agreed to indemnify ATK for certain     compliance and <font color="blue">remediation</font> <font color="blue">liabilities</font>, to the extent those <font color="blue">liabilities</font> are     related to pre-closing <font color="blue">environmental</font> <font color="blue">conditions</font> at or related to these     <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td>Some other <font color="blue"><font color="blue">remediation</font> costs</font> are expected to be paid directly by     a third party pursuant to an existing <font color="blue">indemnification</font> <font color="blue"><font color="blue">agreement</font> with</font> Blount</td>
+    </tr>
+    <tr>
+      <td>Blount’s <font color="blue">indemnification</font> <font color="blue">obligations</font> relating to <font color="blue">environmental</font> matters,     <font color="blue">which extend through</font> <font color="blue">December </font>7, 2006, are capped at dlra30 million, less any     other <font color="blue"><font color="blue">indemnification</font> payments</font> made for breaches of <font color="blue">representations</font> and     warranties</td>
+    </tr>
+    <tr>
+      <td>The third party’s <font color="blue">obligations</font>, <font color="blue">which extend through</font> November 4,     2007, are capped at approximately dlra125 million, less payments <font color="blue">previously</font>     made</td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">cannot ensure</font> that <font color="blue">the US Government</font>, Hercules, Alcoa, Blount, or     other <font color="blue">third parties</font> will reimburse it for any particular <font color="blue">environmental</font> costs     or reimburse ATK in a <font color="blue">timely manner</font> or that any claims for <font color="blue">indemnification</font>     will  not be disputed</td>
+    </tr>
+    <tr>
+      <td><font color="blue">US Government </font><font color="blue">reimbursement</font>s for cleanups are     <font color="blue">financed out</font> of a particular agency’s operating budget and the ability of a     particular <font color="blue">government</font>al agency to make timely <font color="blue">reimbursement</font>s for cleanup     <font color="blue">costs will</font> be subject to <font color="blue">national budgetary constraints</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s failure to     obtain full or timely <font color="blue">reimbursement</font> from <font color="blue">the US Government</font>, Hercules,     Alcoa, Blount, or other <font color="blue">third parties</font> could have a material adverse effect     on its operating results, <font color="blue">financial condition</font>, or <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">December </font>2001, ATK received notice from the <font color="blue">State of Utah </font>of a potential     claim against ATK under Section 107(f) of the Comprehensive Environmental     Response, Compensation, and Liability Act (CERCLA) for natural resource     damages at Bacchus, one of the Hercules Facilities, in Magna, Utah</td>
+    </tr>
+    <tr>
+      <td>The     notice letter, which was issued to preserve the State’s <font color="blue">rights under</font> CERCLA,     <font color="blue">also expressly acknowledged</font> the State’s <font color="blue">willingness</font> to allow ATK to go     forward with its currently-planned monitoring and <font color="blue">remediation</font> program</td>
+    </tr>
+    <tr>
+      <td>The     State’s  <font color="blue">preliminary</font>  estimate  of <font color="blue">damages contained</font> in this claim was     dlra139 million, which is <font color="blue">based on known</font> and alleged groundwater <font color="blue">contamination</font>     at and near <font color="blue">Bacchus </font>and is related to Hercules’ <font color="blue">manufacturing</font> <font color="blue">operations</font> at     the site</td>
+    </tr>
+    <tr>
+      <td>ATK has had <font color="blue">discussions with</font> the State regarding this claim and     <font color="blue">entered into</font> a tolling <font color="blue"><font color="blue">agreement</font> with</font> the State in fiscal 2002</td>
+    </tr>
+    <tr>
+      <td>In fiscal     2003, ATK <font color="blue">entered into</font> a similar tolling <font color="blue"><font color="blue">agreement</font> with</font> the State regarding     the <font color="blue">Promontory </font><font color="blue">facility</font> that was acquired from Alcoa in the <font color="blue">acquisition</font> of     Thiokol</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">agreement</font>s</font> effectively defer the bringing of any potential     claim against ATK by the State for a period of at least 10 years</td>
+    </tr>
+    <tr>
+      <td>They allow     ATK time to continue to identify and address the <font color="blue">contamination</font> by the normal     and planned regulatory <font color="blue">remediation</font> processes in Utah</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although ATK </font>has     <font color="blue">previously</font>  made  accruals  for  its best estimate of the probable and     <font color="blue">reasonably estimable costs</font> related to the       35     ______________________________________________________________________       <font color="blue">remediation</font> <font color="blue">obligations</font> known to ATK <font color="blue">with respect</font> to the <font color="blue">affected areas</font>, ATK     cannot yet predict if or when a suit may be <font color="blue">filed against</font> it, nor can ATK     determine any <font color="blue">additional</font> costs that may be incurred in <font color="blue">connection with</font> this     matter</td>
+    </tr>
+    <tr>
+      <td>In  February 2005,  ATK <font color="blue">entered into</font> a <font color="blue">Consent Agreement </font>with the US     Environmental Protection Agency</td>
+    </tr>
+    <tr>
+      <td>Pursuant to the <font color="blue">agreement</font>, ATK was required     to pay a penalty of dlra675cmam000</td>
+    </tr>
+    <tr>
+      <td>The penalty related to ATK’s alleged failure     to  have  a  <font color="blue">financial assurance</font> mechanism in place that satisfied the     <font color="blue">requirements</font> of the federal Resource Conservation and Recovery Act (RCRA)</td>
+    </tr>
+    <tr>
+      <td>ATK  paid  the  penalty and believes that it has a <font color="blue">financial assurance</font>     mechanism in place that satisfies RCRA       While ATK has <font color="blue">environmental</font> management programs in place to <font color="blue">mitigate risks</font>,     and <font color="blue"><font color="blue">environmental</font> laws</font> and <font color="blue">regulations</font> have not had a material adverse     effect on ATK’s operating results, <font color="blue">financial condition</font>, or <font color="blue">cash flows</font> in the     past, it is <font color="blue">difficult</font> to <font color="blue">predict whether</font> they will have a material impact in     the future</td>
+    </tr>
+    <tr>
+      <td>The level of <font color="blue">returns on pension</font> and <font color="blue">postretirement</font> plan assets, changes in     <font color="blue">interest rates</font> and other <font color="blue">factors could affect</font> ATK’s earnings</td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">earnings may</font> be positively or <font color="blue">negatively impacted by</font> the amount of     expense  recorded for <font color="blue">employee benefit</font> plans, <font color="blue">primarily pension</font> plans</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Generally </font>accepted <font color="blue">accounting</font> principles (GAAP) in the <font color="blue">United States </font>of     America require ATK to calculate expense for the plans <font color="blue">using actuarial</font>     <font color="blue">valuations</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">valuations</font> are based on <font color="blue">assumptions</font> made relating to     <font color="blue">financial market</font> and other economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Changes in key economic     <font color="blue">indicators</font> can result in changes in these <font color="blue">assumptions</font></td>
+    </tr>
+    <tr>
+      <td>The key year-end     <font color="blue">assumptions</font> used to estimate <font color="blue">pension expense</font> for the <font color="blue">following year</font> are the     <font color="blue">discount rate</font>, the expected long-term rate of return on plan assets and the     rate of increase in future <font color="blue">compensation</font> levels</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Additional </font>information on     how ATK’s <font color="blue">financial statements</font> can be <font color="blue">affected by</font> pension plan <font color="blue">accounting</font>     policies  can  be <font color="blue">found under</font> “Management’s Discussion and Analysis of     Financial  Condition  and Results of Operations” in the section titled     “Critical Accounting Policies” in Item 7 of this report</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">International </font> </font>sales  are  subject to <font color="blue">greater risks</font> that sometimes are     <font color="blue">associated with</font> doing business in <font color="blue">foreign countries</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">international</font> business may pose <font color="blue">greater risks</font> than its business in the     <font color="blue">United States </font>because in some <font color="blue">countries there</font> is <font color="blue">increased potential</font> for     changes in economic, legal and <font color="blue">political environments</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s <font color="blue">international</font>     business is <font color="blue">also sensitive</font> to changes in a foreign <font color="blue">government</font>’s national     priorities  and budgets</td>
+    </tr>
+    <tr>
+      <td><font color="blue">International </font>transactions <font color="blue">frequently</font> involve     <font color="blue">increased financial</font> and <font color="blue">legal risks</font> arising <font color="blue">from foreign exchange rate</font>     <font color="blue">variability</font> and <font color="blue">differing legal systems</font> and customs in other countries</td>
+    </tr>
+    <tr>
+      <td>In     addition, some <font color="blue"><font color="blue">international</font> customers</font> require <font color="blue">contractor</font>s to agree to     <font color="blue">offset programs</font> that may require in-country purchases or <font color="blue">manufacturing</font> or     <font color="blue">financial support arrangements as</font> a condition to <font color="blue">awarding contracts</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">contracts may</font> include penalties in the event the <font color="blue">company fails</font> to perform in     <font color="blue">accordance with</font> the offset <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">unfavorable event</font> or trend in     any one or more of these factors could <font color="blue">adversely</font> affect ATK’s sales and     earnings <font color="blue">associated with</font> its <font color="blue">international</font> business</td>
+    </tr>
+    <tr>
+      <td>ATK may make <font color="blue"><font color="blue">acquisition</font>s</font> which represent <font color="blue">additional</font> risk and <font color="blue">could impact</font>     our <font color="blue">future financial</font> results</td>
+    </tr>
+    <tr>
+      <td>ATK’s business strategy includes the potential for future <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font>involve a number of risks including <font color="blue">integration</font> of the acquired     company with ATK’s <font color="blue">operations</font> and unanticipated <font color="blue">liabilities</font> or <font color="blue">contingencies</font>     related  to  the acquired company</td>
+    </tr>
+    <tr>
+      <td>ATK <font color="blue">cannot ensure</font> that the expected     benefits of any future <font color="blue"><font color="blue">acquisition</font>s</font> will be realized</td>
+    </tr>
+    <tr>
+      <td>36     ______________________________________________________________________       ATK’s <font color="blue">profitability</font> could be <font color="blue">impacted by unanticipated</font> changes in its tax     provisions or exposure to <font color="blue">additional</font> income tax <font color="blue">liabilities</font></td>
+    </tr>
+    <tr>
+      <td>ATK’s business operates in many locations under <font color="blue">government</font> jurisdictions     that <font color="blue">impose income taxes</font></td>
+    </tr>
+    <tr>
+      <td>Changes in domestic or foreign income tax laws and     <font color="blue">regulations</font>, or their <font color="blue">interpretation</font>, could result in higher or lower income     tax rates assessed or changes in the <font color="blue">taxability</font> of <font color="blue">certain revenues</font> or the     <font color="blue">deductibility</font> of certain expenses, thereby affecting <font color="blue">income tax expense</font> and     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>In addition, audits by income tax authorities could result in     <font color="blue">unanticipated increases</font> in <font color="blue">income tax expense</font></td>
+    </tr>
+  </tbody>
+</table>

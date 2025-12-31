@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "4: bankruptcy", fill: "#009e60"},
+{source: "4: bankruptcy", target: "4: insolvency", fill: "#009e60"},
+{source: "4: insolvency", target: "4: major tenants would", fill: "#009e60"},
+{source: "4: major tenants would", target: "4: Contents ", fill: "#009e60"},
+{source: "4: Contents ", target: "4: correspondingly", fill: "#009e60"},
+{source: "4: correspondingly", target: "4: distributions", fill: "#009e60"},
+{source: "4: bankruptcy", target: "14: development", fill: "#98777b"},
+{source: "14: development", target: "14: activities on net leased real estate", fill: "#98777b"},
+{source: "14: activities on net leased real estate", target: "14: interests therein", fill: "#98777b"},
+{source: "14: development", target: "15: generally leased", fill: "#c19a6b"},
+{source: "15: generally leased", target: "15: single tenants", fill: "#c19a6b"},
+{source: "15: single tenants", target: "15: financial failure", fill: "#c19a6b"},
+{source: "15: financial failure", target: "15: default by", fill: "#c19a6b"},
+{source: "15: default by", target: "15: termination", fill: "#c19a6b"},
+{source: "15: termination", target: "15: significant reduction", fill: "#c19a6b"},
+{source: "15: significant reduction", target: "15: cash flow", fill: "#c19a6b"},
+{source: "15: cash flow", target: "15: property leased", fill: "#c19a6b"},
+{source: "15: property leased", target: "15: such tenant", fill: "#c19a6b"},
+{source: "15: generally leased", target: "24: new development will", fill: "#004040"},
+{source: "24: new development will", target: "24: financed under lines", fill: "#004040"},
+{source: "24: financed under lines", target: "24: construction financing", fill: "#004040"},
+{source: "24: construction financing", target: "24: permanent financing on newly", fill: "#004040"},
+{source: "24: permanent financing on newly", target: "24: available only on disadvantageous terms", fill: "#004040"},
+{source: "24: new development will", target: "25: taxable income", fill: "#7d7"},
+{source: "25: taxable income", target: "25: qualification as", fill: "#7d7"},
+{source: "25: qualification as", target: "25: upon income from operations", fill: "#7d7"},
+{source: "25: upon income from operations", target: "25: cash flow from operations", fill: "#7d7"},
+{source: "25: cash flow from operations", target: "25: finance new", fill: "#7d7"},
+{source: "25: finance new", target: "25: development", fill: "#7d7"},
+{source: "25: development", target: "25: acquisitions", fill: "#7d7"},
+{source: "25: taxable income", target: "42: debt capitalization policy", fill: "#ffc40c"},
+{source: "42: debt capitalization policy", target: "42: highly leveraged", fill: "#ffc40c"},
+{source: "42: highly leveraged", target: "42: debt service", fill: "#ffc40c"},
+{source: "42: debt service", target: "42: adversely affect", fill: "#ffc40c"},
+{source: "42: adversely affect", target: "42: cash flow", fill: "#ffc40c"},
+{source: "42: cash flow", target: "42: distributions", fill: "#ffc40c"},
+{source: "42: distributions", target: "42: stockholders", fill: "#ffc40c"},
+{source: "42: stockholders", target: "42: increased risk", fill: "#ffc40c"},
+{source: "42: increased risk", target: "42: default on", fill: "#ffc40c"},
+{source: "42: default on", target: "42: obligations", fill: "#ffc40c"},
+{source: "42: debt capitalization policy", target: "91: increased taxation", fill: "#fffaf0"},
+{source: "91: increased taxation", target: "91: qualify as", fill: "#fffaf0"},
+{source: "91: increased taxation", target: "START_HERE", fill: "#fffaf0"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Censorship</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Empathize</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Normal_distribution">Normal distribution</a></td>
+      <td>In statistics, a normal distribution (also known as Gaussian, Gauss, or Laplace–Gauss distribution) is a type of continuous probability distribution for a real-valued random variable. The general form of its probability density function is\n\n  \n    \n      \n        f\n        (\n        x\n        )\n        =\n        \n          \n            1\n            \n              σ\n              \n                \n                  2\n                  π\n                \n              \n            \n          \n        \n        \n          e\n          \n            −\n            \n              \n                1\n                2\n              \n            \n            \n              \n                (\n                \n                  \n                    \n                      x\n                      −\n                      μ\n                    \n                    σ\n                  \n                \n                )\n              \n              \n                2\n              \n            \n          \n        \n      \n    \n    {\displaystyle f(x)={\frac {1}{\sigma {\sqrt {2\pi }}}}e^{-{\frac {1}{2}}\left({\frac {x-\mu }{\sigma }}\right)^{2}}}\n  The parameter \n  \n    \n      \n        μ\n      \n    \n    {\displaystyle \mu }\n   is the mean or expectation of the distribution (and also its median and mode), while the parameter \n  \n    \n      \n        σ\n      \n    \n    {\displaystyle \sigma }\n   is its standard deviation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Probability_distribution">Probability distribution</a></td>
+      <td>In probability theory and statistics, a probability distribution is the mathematical function that gives the probabilities of occurrence of different possible outcomes for an experiment. It is a mathematical description of a random phenomenon in terms of its sample space and the probabilities of events (subsets of the sample space).For instance, if X is used to denote the outcome of a coin toss ("the experiment"), then the probability distribution of X would take the value 0.5 (1 in 2 or 1/2) for X = heads, and 0.5 for X = tails (assuming that the coin is fair).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Linux_distribution">Linux distribution</a></td>
+      <td>A Linux distribution (often abbreviated as distro) is an operating system made from a software collection that includes the Linux kernel and, often, a package management system. Linux users usually obtain their operating system by downloading one of the Linux distributions, which are available for a wide variety of systems ranging from embedded devices (for example, OpenWrt) and personal computers (for example, Linux Mint) to powerful supercomputers (for example, Rocks Cluster Distribution).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_Linux_distributions">List of Linux distributions</a></td>
+      <td>This page provides general information about notable Linux distributions in the form of a categorized list. Distributions are organized into sections by the major distribution or package management system they are based on.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Pareto_distribution">Pareto distribution</a></td>
+      <td>The Pareto distribution, named after the Italian civil engineer, economist, and sociologist Vilfredo Pareto, (Italian: [paˈreːto] US:  pə-RAY-toh), is a power-law probability distribution that is used in description of social, quality control, scientific, geophysical, actuarial, and many other types of observable phenomena. Originally applied to describing the distribution of wealth in a society, fitting the trend that a large portion of wealth is held by a small fraction of the population.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heavy-tailed_distribution">Heavy-tailed distribution</a></td>
+      <td>In probability theory, heavy-tailed distributions are probability distributions whose tails are not exponentially bounded: that is, they have heavier tails than the exponential distribution.  In many applications it is the right tail of the distribution that is of interest, but a distribution may have a heavy left tail, or both tails may be heavy.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arrested_Development">Arrested Development</a></td>
+      <td>Arrested Development is an American television sitcom created by Mitchell Hurwitz, which originally aired on Fox for three seasons from  2003 to 2006, followed by a two-season revival on Netflix from 2013 to 2019. The show follows the Bluths, a formerly wealthy dysfunctional family.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Sustainable_development">Sustainable development</a></td>
+      <td>Sustainable development is an organizing principle for meeting human development goals while also sustaining the ability of natural systems to provide the natural resources and ecosystem services on which the economy and society depend. The desired result is a state of society where living conditions and resources are used to continue to meet human needs without undermining the integrity and stability of the natural system.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Research_and_development">Research and development</a></td>
+      <td>Research and development (R&amp;D or R+D), known in Europe as research and technological development (RTD), is the set of innovative activities undertaken by corporations or governments in developing new services or products, and improving existing ones. Research and development constitutes the first stage of development of a potential new service or the production process.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Prenatal_development">Prenatal development</a></td>
+      <td>Prenatal development (from Latin  natalis 'relating to birth') includes the development of the embryo and of the foetus during a viviparous animal's gestation. Prenatal development starts with fertilization, in the germinal stage of embryonic development, and continues in fetal development until birth.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Equity_(finance)">Equity (finance)</a></td>
+      <td>In finance, equity is ownership of assets that may have debts or other liabilities attached to them. Equity is measured for accounting purposes by subtracting liabilities from the value of the assets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Taxable_income">Taxable income</a></td>
+      <td>Taxable income refers to the base upon which an income tax system imposes tax.  In other words, the income over which the government imposed tax.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_tax">Income tax</a></td>
+      <td>An income tax is a tax imposed on individuals or entities (taxpayers) in respect of the income or profits earned by them (commonly called taxable income). Income tax generally is computed as the product of a tax rate times the taxable income.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_tax_in_the_United_States">Income tax in the United States</a></td>
+      <td>Income taxes in the United States are imposed by the federal government, and most states. The income taxes are determined by applying a tax rate, which may increase as income increases, to taxable income, which is the total income less allowable deductions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/State_income_tax">State income tax</a></td>
+      <td>In addition to federal income tax collected by the United States, most individual U.S. states collect a state income tax. Some local governments also impose an income tax, often based on state income tax calculations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_tax_in_Canada">Income tax in Canada</a></td>
+      <td>Income taxes in Canada\nconstitute the majority of the annual revenues of the Government of Canada, and of the governments of the Provinces of Canada. In the fiscal year ending 31 March 2018, the federal government collected just over three times more revenue from personal income taxes than it did from corporate income taxes.Tax collection agreements enable different governments to levy taxes through a single administration and collection agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Corporate_tax">Corporate tax</a></td>
+      <td>A corporate tax, also called corporation tax or company tax, is a direct tax imposed on the income or capital of corporations or analogous legal entities. Many countries impose such taxes at the national level, and a similar tax may be imposed at state or local levels.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Income_tax_in_Australia">Income tax in Australia</a></td>
+      <td>Income tax in Australia is imposed by the federal government on the taxable income of individuals and corporations.  State governments have not imposed income taxes since World War II. On individuals, income tax is levied at progressive rates, and at one of two rates for corporations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder">Shareholder</a></td>
+      <td>A shareholder (in the United States often referred to as stockholder) of a corporation is an individual or legal entity (such as another corporation, a body politic, a trust or partnership) that is registered by the corporation as the legal owner of shares of the share capital of a public or private corporation. Shareholders may be referred to as members of a corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stockholder_of_record">Stockholder of record</a></td>
+      <td>Stockholder of record is the name of an individual or entity shareholder that an issuer carries in its shareholder register as the registered holder (not necessarily the beneficial owner) of the issuer's securities. Dividends and other distributions are paid only to shareholders of record.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholders'_agreement">Shareholders' agreement</a></td>
+      <td>A shareholders' agreement (sometimes referred to in the U.S. as a stockholders' agreement) (SHA) is an agreement amongst the shareholders or members of a company. In practical effect, it is analogous to a partnership agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_company">Public company</a></td>
+      <td>A public company, publicly traded company, publicly held company, publicly listed company, or public limited company is a company whose ownership is organized via shares of stock which are intended to be freely traded on a stock exchange or in over-the-counter markets. A public (publicly traded) company can be listed on a stock exchange (listed company), which facilitates the trade of shares, or not (unlisted public company).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Jessica_Stockholder">Jessica Stockholder</a></td>
+      <td>Jessica Stockholder (born 1959) is a Canadian-American artist known for site-specific installation works and sculptures that are often described as "paintings in space." She came to prominence in the early 1990s with monumental works that challenged boundaries between artwork and display environment as well as between pictorial and physical experience. Her art often presents a "barrage" of bold colors, textures and everyday objects, incorporating floors, walls and ceilings and sometimes spilling out of exhibition sites.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Derivative_suit">Derivative suit</a></td>
+      <td>A shareholder derivative suit is a lawsuit brought by a shareholder on behalf of a corporation against a third party. Often, the third party is an insider of the corporation, such as an executive officer or director.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Friedman_doctrine">Friedman doctrine</a></td>
+      <td>The Friedman doctrine, also called shareholder theory or stockholder theory, is a normative theory of business ethics advanced by economist Milton Friedman which holds that the social responsibility of business is to increase its profits. This shareholder primacy approach views shareholders as the economic engine of the organization and the only group to which the firm is socially responsible.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Europa_Conference_League">2022–23 UEFA Europa Conference League</a></td>
+      <td>The 2022–23 UEFA Europa Conference League will be the second season of the UEFA Europa Conference League, Europe's tertiary club football tournament organised by UEFA.\nThe final will be played at Sinobo Stadium in Prague, Czech Republic. The winners of the 2022–23 UEFA Europa Conference League will automatically qualify for the 2023–24 UEFA Europa League group stage, unless they manage to qualify for the 2023–24 UEFA Champions League group stage.As the title holders of the Europa Conference League, Roma qualified for the 2022–23 UEFA Europa League.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Europa_League">2022–23 UEFA Europa League</a></td>
+      <td>The 2022–23 UEFA Europa League will be the 52nd season of Europe's secondary club football tournament organised by UEFA, and the 14th season since it was renamed from the UEFA Cup to the UEFA Europa League.\nThe final will be played at the Puskás Aréna in Budapest, Hungary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Champions_League">2022–23 UEFA Champions League</a></td>
+      <td>The 2022–23 UEFA Champions League will be the 68th season of Europe's premier club football tournament organised by UEFA, and the 31st season since it was renamed from the European Champion Clubs' Cup to the UEFA Champions League.\nThe final will be played at the Atatürk Olympic Stadium in Istanbul, Turkey.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/UEFA_Europa_Conference_League">UEFA Europa Conference League</a></td>
+      <td>The UEFA Europa Conference League (abbreviated as UECL), colloquially referred to as the UEFA Conference League, is an annual football club competition organised by the Union of European Football Associations (UEFA) for eligible European football clubs. Clubs qualify for the competition based on their performance in their national leagues and cup competitions.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2021–22_UEFA_Champions_League">2021–22 UEFA Champions League</a></td>
+      <td>The 2021–22 UEFA Champions League was the 67th season of Europe's premier club football tournament organised by UEFA, and the 30th season since it was renamed from the European Champion Clubs' Cup to the UEFA Champions League.\nReal Madrid defeated Liverpool 1–0 in the final, which was played at the Stade de France in Saint-Denis, France, for a record-extending 14th title, and their fifth in nine years.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2021–22_UEFA_Europa_Conference_League">2021–22 UEFA Europa Conference League</a></td>
+      <td>The 2021–22 UEFA Europa Conference League was the inaugural season of the UEFA Europa Conference League, Europe's tertiary club football tournament organised by UEFA.\nThe final was played at the Arena Kombëtare in Tirana, Albania, with Roma defeating Feyenoord 1–0. As winners, Roma automatically qualified for the 2022–23 UEFA Europa League group stage, although they had already done so through their league position.This season was the first since 1999–2000 (the first season after the dissolution of the UEFA Cup Winners' Cup) where three major European club competitions (UEFA Champions League, UEFA Europa League, and UEFA Europa Conference League) took place.On 24 June 2021, UEFA approved the proposal to abolish the away goals rule in all UEFA club competitions, which had been used since 1965.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>AGREE REALTY CORP      ITEM 1A   RISK FACTORS          General          We <font color="blue">rely significantly on three major tenants</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of December </font>31, 2005,     we derived approximately 67prca of our <font color="blue">annualized base rent from three major</font>     tenants, Borders, Walgreen and Kmart</td>
+    </tr>
+    <tr>
+      <td>In the event of a <font color="blue">default by</font> any of     these <font color="blue">tenants under</font> their leases, we may experience delays in enforcing our     rights  as  lessor  and  may incur substantial costs in protecting our     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">bankruptcy</font> or <font color="blue">insolvency</font> of any of the <font color="blue">major tenants would</font>     likely have a                                         6       _________________________________________________________________    [57]Table of <font color="blue">Contents       </font>material adverse effect on the properties affected and the income produced     by those properties and <font color="blue">correspondingly</font> our ability to make <font color="blue"><font color="blue">distribution</font>s</font></td>
+    </tr>
+    <tr>
+      <td>In the event that certain tenants cease to occupy a property, although     under most <font color="blue">circumstances</font> such a tenant would remain liable for its lease     payments, such an action may result in certain other tenants having the     right  to terminate their leases at the <font color="blue">affected property</font>, which could     <font color="blue">adversely</font> affect the future <font color="blue">income from</font> that property</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of December </font>31,     2005,  12 of our properties had <font color="blue">tenants with</font> those provisions in their     leases</td>
+    </tr>
+    <tr>
+      <td>We could be <font color="blue">adversely</font> affected by a tenant’s <font color="blue">bankruptcy</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to evict a <font color="blue">tenant solely</font>     because of its <font color="blue">bankruptcy</font></td>
+    </tr>
+    <tr>
+      <td>On the other hand, a <font color="blue">bankruptcy</font> court might     authorize the tenant to terminate its <font color="blue">leases with us</font></td>
+    </tr>
+    <tr>
+      <td>If that happens, our     claim against the <font color="blue">bankrupt tenant</font> for <font color="blue">unpaid future rent would</font> be subject to     <font color="blue">statutory limitations</font> that might be <font color="blue"><font color="blue">substantially</font> less than</font> the remaining     rent we are owed under the leases</td>
+    </tr>
+    <tr>
+      <td>In addition, any claim we have for unpaid     <font color="blue">past rent would likely</font> not be paid in full</td>
+    </tr>
+    <tr>
+      <td>Risks  involved in <font color="blue">single tenant leases</font></td>
+    </tr>
+    <tr>
+      <td>We focus our <font color="blue">development</font>     <font color="blue"><font color="blue">activities</font> on net leased <font color="blue">real estate</font></font> or <font color="blue">interests therein</font></td>
+    </tr>
+    <tr>
+      <td>Because our     properties are <font color="blue"><font color="blue">generally</font> leased</font> to <font color="blue">single tenants</font>, the <font color="blue">financial failure</font> of     or other <font color="blue">default by</font> a tenant resulting in the <font color="blue">termination</font> of a lease is     likely to cause a <font color="blue">significant reduction</font> in our operating <font color="blue">cash flow</font> and might     decrease the value of the <font color="blue">property leased</font> to <font color="blue">such tenant</font></td>
+    </tr>
+    <tr>
+      <td>Risks <font color="blue"><font color="blue">associated with</font> borrowing</font>, including loss of properties in the     event of a <font color="blue">foreclosure</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">At December </font>31, 2005, our ratio of <font color="blue">indebtedness</font> to     <font color="blue">market capitalization</font> was approximately 22dtta3prca</td>
+    </tr>
+    <tr>
+      <td>The use of <font color="blue">leverage presents</font>     an <font color="blue">additional</font> element of risk in the event that (1) the <font color="blue">cash flow</font> from lease     <font color="blue">payments on</font> our properties is insufficient to meet debt <font color="blue"><font color="blue">obligation</font>s</font>, (2) we     are unable to refinance our <font color="blue">debt <font color="blue"><font color="blue">obligation</font>s</font> as necessary</font> or on as favorable     terms  or (3) there is an increase in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>If a property is     mortgaged  to secure payment of <font color="blue">indebtedness</font> and we are unable to meet     mortgage payments, the property could be foreclosed upon with a <font color="blue">consequent</font>     loss of income and asset value to us</td>
+    </tr>
+    <tr>
+      <td>Under the “cross-default” provisions     contained in mortgages <font color="blue">encumbering</font> some of our properties, our default under     a mortgage with a lender would result in our default under mortgages held by     the same lender on other properties resulting in multiple <font color="blue">foreclosure</font>s</td>
+    </tr>
+    <tr>
+      <td>Risks <font color="blue">associated with</font> our <font color="blue">development</font> and <font color="blue"><font color="blue">acquisition</font> <font color="blue">activities</font></font></td>
+    </tr>
+    <tr>
+      <td>We     intend to continue <font color="blue">development</font> of <font color="blue">new properties</font> and to consider possible     <font color="blue"><font color="blue">acquisition</font>s</font> of <font color="blue">existing properties</font></td>
+    </tr>
+    <tr>
+      <td>New project <font color="blue">development</font> is subject to a     number of risks, including risks of <font color="blue"><font color="blue">construction</font> delays</font> or <font color="blue">cost overruns</font>     that may increase project costs, risks that the <font color="blue">properties will</font> not achieve     anticipated <font color="blue">occupancy levels</font> or sustain anticipated <font color="blue">rent levels</font>, and new     project <font color="blue">commencement risks such as receipt</font> of zoning, occupancy and other     required <font color="blue"><font color="blue">government</font>al permits</font> and <font color="blue">authorizations</font> and the incurrence of     <font color="blue">development</font>  costs in <font color="blue">connection with</font> projects that are not pursued to     <font color="blue">completion</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we anticipate that our new <font color="blue">development</font> will be     <font color="blue">financed under lines</font> of credit or other forms of <font color="blue"><font color="blue">construction</font> financing</font> that     will result in a risk that <font color="blue">permanent financing on newly</font> developed projects     might not be available or would be <font color="blue">available only on disadvantageous terms</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the fact that we must distribute 90prca of our <font color="blue">taxable income</font> in     order to maintain our <font color="blue">qualification as</font> a REIT will limit our ability to rely     <font color="blue">upon <font color="blue">income from</font> <font color="blue">operations</font></font> or <font color="blue">cash flow</font> from <font color="blue">operations</font> to <font color="blue">finance new</font>     <font color="blue">development</font>  or <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>As a result, if permanent debt or equity     financing was not available on acceptable terms to re<font color="blue">finance new</font> <font color="blue">development</font>     or <font color="blue"><font color="blue">acquisition</font>s</font> undertaken without permanent financing, further <font color="blue">development</font>     <font color="blue">activities</font>  or  <font color="blue"><font color="blue">acquisition</font>s</font>  might be curtailed or cash available for     <font color="blue">distribution</font> might be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions </font><font color="blue">entail risks</font> that     <font color="blue">investment</font>s will fail to perform in <font color="blue">accordance with expectations</font> and that     <font color="blue">judgments with respect</font> to the costs of <font color="blue">improvements</font> to bring an acquired     <font color="blue">property up</font> to <font color="blue">standards established</font> for the <font color="blue">market position intended</font> for     that property will prove inaccurate, as well as general <font color="blue">investment</font> risks     <font color="blue">associated with</font> any new <font color="blue">real estate</font> <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Our portfolio has limited <font color="blue">geographic diversification</font></td>
+    </tr>
+    <tr>
+      <td>Our properties     are <font color="blue">located primarily</font> in the <font color="blue">Midwestern United States and Florida</font></td>
+    </tr>
+    <tr>
+      <td>The     <font color="blue">concentration</font> of our properties in a limited number of <font color="blue">geographic regions</font>     creates the risk that, should these regions experience an <font color="blue">economic downturn</font>,     our <font color="blue"><font color="blue">operations</font> may</font> be <font color="blue">adversely</font> affected</td>
+    </tr>
+    <tr>
+      <td>Thirty-three of our properties are     located in Michigan</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Should Michigan </font>experience an <font color="blue">economic downturn</font>, our     <font color="blue">operations</font> and our <font color="blue">rentals from</font> our Michigan <font color="blue">properties could</font> be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Dependence </font><font color="blue">on key personnel</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">dependent on</font> the efforts of our     <font color="blue">executive officers</font></td>
+    </tr>
+    <tr>
+      <td>The loss of one or more of our <font color="blue">executive officers</font> would     likely have a material adverse effect on our future <font color="blue">development</font> or                                         7       _________________________________________________________________    [58]Table of <font color="blue">Contents       </font><font color="blue">acquisition</font> <font color="blue">operations</font>, which could <font color="blue">adversely</font> affect the <font color="blue">market price</font> of our     <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>We do not presently have key-man life insurance for any of our     employees</td>
+    </tr>
+    <tr>
+      <td>We are not limited by our <font color="blue">organization documents as</font> to the amount of     debt we may incur</td>
+    </tr>
+    <tr>
+      <td>We intend to maintain a ratio of total <font color="blue">indebtedness</font>     (including <font color="blue">construction</font> or <font color="blue"><font color="blue">acquisition</font> financing</font>) to <font color="blue">market capitalization</font>     of 65prca or less</td>
+    </tr>
+    <tr>
+      <td>Nevertheless, we may operate <font color="blue">with debt levels which</font> are in     excess of 65prca of <font color="blue">market capitalization</font> for <font color="blue">extended periods</font> of time</td>
+    </tr>
+    <tr>
+      <td>Our     organization documents contain no limitation on the amount or percentage of     <font color="blue">indebtedness</font> which we may incur</td>
+    </tr>
+    <tr>
+      <td>Therefore, our board of <font color="blue">directors</font>, without     a vote of the <font color="blue">stockholders</font>, could alter the <font color="blue">general policy on borrowings at</font>     any time</td>
+    </tr>
+    <tr>
+      <td>If our <font color="blue">debt capitalization policy</font> were changed, we could become     more <font color="blue">highly leveraged</font>, resulting in an increase in <font color="blue">debt service</font> that could     <font color="blue">adversely</font> affect our operating <font color="blue">cash flow</font> and our ability to make expected     <font color="blue"><font color="blue">distribution</font>s</font> to <font color="blue">stockholders</font>, and could result in an <font color="blue">increased risk</font> of     <font color="blue">default on</font> our <font color="blue"><font color="blue">obligation</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We can change our <font color="blue">investment</font> and <font color="blue"><font color="blue">financing policies</font> without stockholder</font>     approval</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">investment</font> and <font color="blue">financing policies</font>, and our <font color="blue">policies with</font>     respect  to  certain  other  <font color="blue">activities</font>,  including  our  growth, debt     capitalization, <font color="blue"><font color="blue">distribution</font>s</font>, REIT status and <font color="blue">investment</font> and operating     policies, are determined by our board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Although we have no     <font color="blue">present intention</font> to do so, these <font color="blue">policies may</font> be amended or <font color="blue">revised from</font>     time to time at the <font color="blue">discretion</font> of our board of <font color="blue"><font color="blue">directors</font> without</font> a vote of     our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face competition</font> in <font color="blue">seeking properties</font> for <font color="blue">acquisition</font>     and  tenants  who  <font color="blue">will lease space</font> in these <font color="blue">properties from insurance</font>     companies, credit companies, pension funds, private individuals, <font color="blue">investment</font>     companies and other REITs, many of which have <font color="blue">greater financial</font> and other     <font color="blue">resources than</font> we do</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that the Company will be     able  to  <font color="blue">successfully</font>  <font color="blue">compete with such entities</font> in its <font color="blue">development</font>,     <font color="blue">acquisition</font> and leasing <font color="blue">activities</font> in the future</td>
+    </tr>
+    <tr>
+      <td>Risks Associated With Investment In Real Estate          There  are  risks <font color="blue">associated with</font> owning and <font color="blue">leasing <font color="blue">real estate</font></font></td>
+    </tr>
+    <tr>
+      <td>Although our lease terms obligate the tenants to <font color="blue">bear <font color="blue">substantially</font></font> all of     the costs of operating our properties, investing in <font color="blue"><font color="blue">real estate</font> involves</font> a     number of risks, including:       •   The risk that <font color="blue">tenants will</font> not perform under their leases, reducing     our <font color="blue">income from</font> the leases or requiring us to assume the cost of performing     <font color="blue"><font color="blue">obligation</font>s</font> (such as taxes, insurance and maintenance) that are the     tenant’s responsibility under the lease</td>
+    </tr>
+    <tr>
+      <td>•   The risk that changes in <font color="blue">economic conditions</font> or <font color="blue"><font color="blue">real estate</font> markets</font>     may <font color="blue">adversely</font> affect the value of our properties</td>
+    </tr>
+    <tr>
+      <td>•     The risk that local conditions (such as oversupply of similar     properties) could <font color="blue">adversely</font> affect the value of our properties</td>
+    </tr>
+    <tr>
+      <td>•    The risk that we may not always be able to <font color="blue">lease properties at</font>     favorable <font color="blue">rental rates</font></td>
+    </tr>
+    <tr>
+      <td>•   The risk of changes in tax, zoning or other laws could make properties     <font color="blue">less attractive</font> or <font color="blue">less profitable</font></td>
+    </tr>
+    <tr>
+      <td>If a tenant fails to perform on its lease covenants, that would not excuse     us from meeting any mortgage debt <font color="blue">obligation</font> secured by the property and     could require us to fund reserves in favor of our mortgage lenders, thereby     reducing <font color="blue">funds available</font> for payment of dividends on our shares of common     stock</td>
+    </tr>
+    <tr>
+      <td>We cannot be assured that <font color="blue">tenants will</font> elect to renew their leases     when the terms expire</td>
+    </tr>
+    <tr>
+      <td>If a tenant does not renew its lease or if a tenant     <font color="blue">defaults</font> on its lease <font color="blue"><font color="blue">obligation</font>s</font>, there is no assurance we could obtain a     substitute tenant on acceptable terms</td>
+    </tr>
+    <tr>
+      <td>If we                                         8       _________________________________________________________________    [59]Table of <font color="blue">Contents       </font>cannot obtain another <font color="blue">tenant with comparable structural</font> needs, we may be     required to modify the property for a different use, which may involve a     <font color="blue">significant capital expenditure</font> and a delay in re-leasing the property</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Uncertainties </font>relating to <font color="blue">lease renewals</font> and re-letting of space</td>
+    </tr>
+    <tr>
+      <td>We     are subject to the risks that, <font color="blue">upon expiration</font> of leases for <font color="blue">space located</font>     in our properties, the <font color="blue">premises may</font> not be re-let or the terms of re-letting     (including the cost of <font color="blue">concessions</font> to tenants) may be less favorable than     current  lease  terms</td>
+    </tr>
+    <tr>
+      <td>If  we  are unable to re-let promptly all or a     substantial  portion of our retailers or if the <font color="blue">rental rates</font> upon such     re-letting were <font color="blue">significantly lower than</font> expected rates, our net income and     ability to make expected <font color="blue"><font color="blue">distribution</font>s</font> to <font color="blue">stockholders</font> would be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td>There can be no assurance that we will be able to retain tenants     in any of our <font color="blue">properties upon</font> the expiration of their leases</td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">potential losses</font> are not <font color="blue">covered by insurance</font></td>
+    </tr>
+    <tr>
+      <td>Our leases require     the  tenants  to  carry  <font color="blue">comprehensive</font>  <font color="blue">liability</font>,  casualty, workers’     compensation, extended coverage and <font color="blue">rental loss insurance on</font> our properties</td>
+    </tr>
+    <tr>
+      <td>However,  there  are  some  types of losses, such as terrorist acts or     <font color="blue">catastrophic</font> acts of nature, for which we or our <font color="blue">tenants cannot</font> obtain     <font color="blue">insurance at</font> an acceptable cost</td>
+    </tr>
+    <tr>
+      <td>If there is an <font color="blue">uninsured loss</font> or a loss in     excess of <font color="blue">insurance limits</font>, we <font color="blue">could lose both</font> the <font color="blue">revenues generated by</font> the     <font color="blue">affected property</font> and the capital we have invested in the property</td>
+    </tr>
+    <tr>
+      <td>We     believe  the required coverage is of the type, and amount, customarily     obtained by an owner of similar properties</td>
+    </tr>
+    <tr>
+      <td>We believe all of our properties     are <font color="blue">adequately insured</font></td>
+    </tr>
+    <tr>
+      <td>We would, however, remain obligated to repay any     mortgage <font color="blue">indebtedness</font> or other <font color="blue"><font color="blue">obligation</font>s</font> related to the property</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Potential </font><font color="blue">liability</font> for <font color="blue"><font color="blue">environmental</font> <font color="blue">contamination</font> could</font> result in     substantial costs</td>
+    </tr>
+    <tr>
+      <td>Under federal, state and <font color="blue">local <font color="blue"><font color="blue">environmental</font> laws</font></font>, we may     be required to investigate and <font color="blue">clean up</font> any release of <font color="blue">hazardous</font> or toxic     substances  or <font color="blue"><font color="blue">petroleum products</font> at</font> our properties, regardless of our     knowledge or actual responsibility, simply because of our current or past     ownership of the <font color="blue">real estate</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">unidentified <font color="blue">environmental</font> problems</font> arise,     we may have to make substantial payments, which could <font color="blue">adversely</font> affect our     <font color="blue">cash flow</font> and our ability to make <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">This     </font>potential <font color="blue">liability</font> results from the fact that:       •   As owner we may have to pay for <font color="blue">property damage</font> and for investigation     and clean-up costs incurred in <font color="blue">connection with</font> the <font color="blue">contamination</font></td>
+    </tr>
+    <tr>
+      <td>•   The law may impose clean-up responsibility and <font color="blue">liability</font> regardless of     whether the owner or operator knew of or caused the <font color="blue">contamination</font></td>
+    </tr>
+    <tr>
+      <td>•   Even if more than one person is responsible for the <font color="blue">contamination</font>,     each person who shares legal <font color="blue">liability</font> under <font color="blue"><font color="blue">environmental</font> laws</font> may be held     responsible for all of the clean-up costs</td>
+    </tr>
+    <tr>
+      <td>•   <font color="blue">Governmental </font>entities and <font color="blue">third parties may sue</font> the owner or operator     of a <font color="blue">contaminated site</font> for damages and costs</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">costs could</font> be substantial and in <font color="blue">extreme cases could exceed</font> the value     of  the <font color="blue">contaminated property</font></td>
+    </tr>
+    <tr>
+      <td>The presence of <font color="blue">hazardous</font> substances or     <font color="blue">petroleum products</font> or the failure to properly remediate <font color="blue">contamination</font> may     <font color="blue">adversely</font> affect our ability to borrow against, sell or lease an affected     property</td>
+    </tr>
+    <tr>
+      <td>In addition, some <font color="blue"><font color="blue">environmental</font> laws</font> create <font color="blue">liens on contaminated</font>     sites  in  favor  of the <font color="blue">government</font> for damages and costs it incurs in     <font color="blue">connection with</font> a <font color="blue">contamination</font></td>
+    </tr>
+    <tr>
+      <td>Our leases require our tenants to operate the properties in compliance     with <font color="blue"><font color="blue">environmental</font> laws</font> and to indemnify us against <font color="blue">environmental</font> <font color="blue">liability</font>     arising from the operation of the properties</td>
+    </tr>
+    <tr>
+      <td>However, we could be subject     to strict <font color="blue">liability</font> under <font color="blue"><font color="blue">environmental</font> laws</font> because we own the properties</td>
+    </tr>
+    <tr>
+      <td>There  is also a risk that <font color="blue">tenants may</font> not satisfy their <font color="blue">environmental</font>     compliance and indemnification <font color="blue"><font color="blue">obligation</font>s</font> under the leases</td>
+    </tr>
+    <tr>
+      <td>Any of these     events could <font color="blue">substantially</font> increase our cost of <font color="blue">operations</font>, require us to     fund <font color="blue">environmental</font> <font color="blue">indemnities</font> in favor of our secured lenders and reduce     our ability to service our secured debt and <font color="blue">pay dividends</font> to <font color="blue">stockholders</font>     and any <font color="blue">debt security interest payments</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental </font><font color="blue">problems at</font> any     properties  could  <font color="blue">also put us</font> in <font color="blue">default under loans secured by</font> those     properties, as well as loans secured by unaffected properties</td>
+    </tr>
+    <tr>
+      <td>9       _________________________________________________________________    [60]Table of <font color="blue">Contents       </font>     Real estate <font color="blue">investment</font>s are <font color="blue">relatively illiquid</font></td>
+    </tr>
+    <tr>
+      <td>We may desire to sell     a property in the future because of changes in <font color="blue">market conditions</font> or poor     <font color="blue">tenant performance</font> or to <font color="blue">avail ourselves</font> of other <font color="blue">opportunities</font></td>
+    </tr>
+    <tr>
+      <td>We may also     be  required  to  sell  a  property in the future to <font color="blue">meet secured debt</font>     <font color="blue"><font color="blue">obligation</font>s</font> or to avoid a <font color="blue">secured debt loan default</font></td>
+    </tr>
+    <tr>
+      <td>Real estate projects     <font color="blue">cannot always</font> be <font color="blue">sold quickly</font>, and we <font color="blue">cannot assure</font> you that we <font color="blue">could always</font>     obtain a favorable price</td>
+    </tr>
+    <tr>
+      <td>We may be required to invest in the <font color="blue">restoration</font> or     <font color="blue">modification</font> of a property before we can sell it</td>
+    </tr>
+    <tr>
+      <td>Tax Risks          We will be subject to <font color="blue">increased taxation</font> if we fail to <font color="blue">qualify as</font> a     REIT for <font color="blue">federal income tax</font> purposes</td>
+    </tr>
+    <tr>
+      <td>A REIT <font color="blue">generally</font> is not taxed at the     <font color="blue">corporate level on income</font> it <font color="blue">distributes</font> to its <font color="blue">stockholders</font>, as long as it     <font color="blue">distributes</font> annually at least 90prca of its <font color="blue">taxable income</font> to its <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>We have not requested and do not plan to request, a <font color="blue">ruling from</font> the Internal     Revenue Service that we <font color="blue">qualify as</font> a REIT          If we fail to <font color="blue">qualify as</font> a REIT, we <font color="blue">will face tax consequences</font> that     will <font color="blue">substantially</font> reduce the <font color="blue">funds available</font> for payment of dividends:       •   We would not be allowed a <font color="blue">deduction</font> for <font color="blue">dividends paid</font> to <font color="blue">stockholders</font>     in computing our <font color="blue">taxable income</font> and would be subject to <font color="blue">federal income tax</font>     <font color="blue">at regular corporate rates</font></td>
+    </tr>
+    <tr>
+      <td>•    We could be subject to the <font color="blue">federal alternative minimum tax</font> and     <font color="blue">possibly increased</font> state and <font color="blue">local taxes</font></td>
+    </tr>
+    <tr>
+      <td>•   Unless we are entitled to <font color="blue">relief under statutory provisions</font>, we could     not elect to be <font color="blue">treated as</font> a REIT for four taxable years following the year     in which we were disqualified</td>
+    </tr>
+    <tr>
+      <td>In addition, if we fail to <font color="blue">qualify as</font> a REIT, we <font color="blue">will no longer</font> be required     to <font color="blue">pay dividends</font> (other than any <font color="blue">mandatory dividends on</font> any <font color="blue">preferred shares</font>     we may offer)</td>
+    </tr>
+    <tr>
+      <td>As a result of these factors, our failure to <font color="blue">qualify as</font> a     REIT could <font color="blue">adversely</font> effect the <font color="blue">market price</font> for our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Excessive </font>non-<font color="blue">real estate</font> asset values may jeopardize our REIT status</td>
+    </tr>
+    <tr>
+      <td>In order to <font color="blue">qualify as</font> a REIT, at least 75prca of the value of our <font color="blue">assets must</font>     consist of <font color="blue">investment</font>s in <font color="blue">real estate</font>, <font color="blue">investment</font>s in other REITs, cash and     <font color="blue">cash equivalents</font>, and <font color="blue">government</font> securities</td>
+    </tr>
+    <tr>
+      <td>Therefore, the value of any     property that is not considered a <font color="blue">real estate</font> asset for <font color="blue">federal income tax</font>     <font color="blue">purposes must represent</font> in the aggregate less than 25prca of our <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>In addition, under <font color="blue">federal income tax</font> law, we may not own securities in any     one company (other than a REIT, a qualified REIT subsidiary or a taxable     REIT subsidiary) which represent in excess of 10prca of the <font color="blue">voting securities</font>     or 10prca of the value of all securities of any one company, or which have, in     the aggregate, a value in excess of 5prca of our <font color="blue">total assets</font>, and we may not     own securities of one or more taxable REIT <font color="blue">subsidiaries which</font> have, in the     aggregate, a value in excess of 20prca of our <font color="blue">total assets</font></td>
+    </tr>
+    <tr>
+      <td>We may invest in     securities of another REIT, and our <font color="blue">investment</font> may represent in excess of     10prca of the <font color="blue">voting securities</font> or 10prca of the value of the securities of the     other REIT If the other REIT were to lose its REIT status during a taxable     year in which our <font color="blue">investment</font> represented in excess of 10prca of the voting     securities or 10prca of the value of the securities of the other REIT as of the     close of a <font color="blue">calendar quarter</font>, we will lose our REIT status</td>
+    </tr>
+    <tr>
+      <td>If we fail to meet any <font color="blue">such test at</font> the end of any     <font color="blue">calendar quarter</font>, we will cease to <font color="blue">qualify as</font> a REIT          We may have to <font color="blue">borrow funds</font> or <font color="blue">sell assets</font> to meet our <font color="blue">distribution</font>     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Subject to some <font color="blue">adjustments</font> that are unique to REITs, a REIT     <font color="blue">generally</font> must distribute 90prca of its <font color="blue">taxable income</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we may be required not to <font color="blue">accrue as expenses</font> for tax     purposes some <font color="blue">items which actually</font> have been paid, including, for example,     payments  of <font color="blue">principal on</font> our debt, or some of our <font color="blue">deduction</font>s might be     <font color="blue">disallowed by</font> the <font color="blue">Internal Revenue Service</font></td>
+    </tr>
+    <tr>
+      <td>As a result, we could have     <font color="blue">taxable income</font> in excess of cash available for <font color="blue">distribution</font></td>
+    </tr>
+    <tr>
+      <td>If this occurs,     we may have to <font color="blue">borrow funds</font> or liquidate some of our assets in order to meet     the <font color="blue">distribution</font> requirement applicable to a <font color="blue">REIT                                         </font>10       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font>     We may be subject to other <font color="blue">tax liabilities</font></td>
+    </tr>
+    <tr>
+      <td>Even if we <font color="blue">qualify as</font> a     REIT, we may be subject to some federal, state and <font color="blue">local taxes</font> on our income     and property that <font color="blue">could reduce</font> operating <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>Changes in tax laws may prevent us from qualifying as <font color="blue">a REIT As </font>we     have <font color="blue">previously described</font>, we intend to <font color="blue">qualify as</font> a REIT for federal income     tax purposes</td>
+    </tr>
+    <tr>
+      <td>However, this intended qualification is <font color="blue">based on</font> the tax laws     that are currently in effect</td>
+    </tr>
+    <tr>
+      <td>We are unable to predict any future changes in     the tax laws that would <font color="blue">adversely</font> affect our status as a REIT If there is a     change in the tax laws that <font color="blue">prevents us from qualifying as</font> a REIT or that     requires REITs <font color="blue">generally</font> to <font color="blue">pay corporate level income taxes</font>, we may not be     able to make the same level of <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">stockholders</font></td>
+    </tr>
+  </tbody>
+</table>

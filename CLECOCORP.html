@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: Rodemacher Unit ", fill: "#b666d2"},
+{source: "1: Rodemacher Unit ", target: "1: certain risks", fill: "#b666d2"},
+{source: "1: certain risks", target: "1: design construction", fill: "#b666d2"},
+{source: "1: Rodemacher Unit ", target: "2: technology risk fuel", fill: "#355e3b"},
+{source: "2: technology risk fuel", target: "2: general contractor", fill: "#355e3b"},
+{source: "2: general contractor", target: "2: subcontractor", fill: "#355e3b"},
+{source: "2: subcontractor", target: "2: performance risk each", fill: "#355e3b"},
+{source: "2: performance risk each", target: "2: which could", fill: "#355e3b"},
+{source: "2: which could", target: "2: adverse impact on", fill: "#355e3b"},
+{source: "2: adverse impact on", target: "2: financial condition", fill: "#355e3b"},
+{source: "2: financial condition", target: "2: operations", fill: "#355e3b"},
+{source: "2: operations", target: "2: cash flows", fill: "#355e3b"},
+{source: "2: technology risk fuel", target: "4: Cleco Power ", fill: "#0095b6"},
+{source: "4: Cleco Power ", target: "4: Shaw Constructors Inc", fill: "#0095b6"},
+{source: "4: Cleco Power ", target: "7: obligations", fill: "#3c1414"},
+{source: "7: obligations", target: "7: contract could", fill: "#3c1414"},
+{source: "7: contract could", target: "7: adverse impact on", fill: "#3c1414"},
+{source: "7: adverse impact on", target: "7: final cost", fill: "#3c1414"},
+{source: "7: obligations", target: "49: power purchase agreements", fill: "#4166f5"},
+{source: "49: power purchase agreements", target: "49: transmission", fill: "#4166f5"},
+{source: "49: transmission", target: "49: constraints could", fill: "#4166f5"},
+{source: "49: constraints could", target: "49: adverse impact on", fill: "#4166f5"},
+{source: "49: adverse impact on", target: "49: operations financial condition", fill: "#4166f5"},
+{source: "49: operations financial condition", target: "49: cash flows", fill: "#4166f5"},
+{source: "49: power purchase agreements", target: "START_HERE", fill: "#4166f5"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Construction and Engineering</td>
+    </tr>
+    <tr>
+      <td>Construction Materials</td>
+    </tr>
+    <tr>
+      <td>Construction and Farm Machinery and Heavy Trucks</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Complain</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Endorse</td>
+    </tr>
+    <tr>
+      <td>Ask for protection</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Interstate_49_in_Louisiana">Interstate 49 in Louisiana</a></td>
+      <td>Interstate 49 (I-49) is an Interstate Highway that spans 243.36 miles (391.65 km) in a north–south direction in the US state of Louisiana. It runs from I-10 in Lafayette to the Arkansas state line north of Shreveport, largely paralleling the older U.S. Highway 71 (US 71) corridor, and connects the state's two east–west Interstates at two of its metropolitan centers.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Disparate_impact">Disparate impact</a></td>
+      <td>Disparate impact in United States labor law refers to practices in employment, housing, and other areas that adversely affect one group of people of a protected characteristic more than another, even though rules applied by employers or landlords are formally neutral. Although the protected classes vary by statute, most federal civil rights laws protect based on race, color, religion, national origin, and sex as protected traits, and some laws include disability status and other traits as well.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/The_Competition_Act,_2002">The Competition Act, 2002</a></td>
+      <td>The Competition Act, 2002 was enacted by the Parliament of India and governs Indian competition law. It replaced the archaic The Monopolies and Restrictive Trade Practices Act, 1969.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Effects_of_climate_change">Effects of climate change</a></td>
+      <td>The effects of climate change span the impacts on physical environment, ecosystems and human societies due to ongoing human-caused climate change. The future impact of climate change depends on how much nations reduce greenhouse gas emissions and adapt to climate change.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Gang_stalking">Gang stalking</a></td>
+      <td>Gang stalking or group-stalking is a set of persecutory beliefs in which those affected believe they are being followed, stalked, and harassed by a large number of people. The term is associated with the targeted individual (T.I.) virtual community formed by like-minded individuals who claim their lives are disrupted from being stalked by organized groups intent on causing them harm.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bramley-Moore_Dock_Stadium">Bramley-Moore Dock Stadium</a></td>
+      <td>Bramley-Moore Dock Stadium is an under construction football stadium that will become the home ground for Everton F.C.. Located on Bramley-Moore Dock in Vauxhall, Liverpool, England, it is due to open for the start of the 2024-25 season, replacing Goodison Park.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_law">Financial law</a></td>
+      <td>Financial law is the law and regulation of the insurance, derivatives, commercial banking, capital markets and investment management sectors. Understanding Financial law is crucial to appreciating the creation and formation of banking and financial regulation, as well as the legal framework for finance generally.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Free_cash_flow">Free cash flow</a></td>
+      <td>In corporate finance, free cash flow (FCF) or free cash flow to firm (FCFF) is the amount by which a business's operating cash flow exceeds its working capital needs and expenditures on fixed assets (known as capital expenditures). It is that portion of cash flow that can be extracted from a company and distributed to creditors and securities holders  without causing issues in its operations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Discounted_cash_flow">Discounted cash flow</a></td>
+      <td>In finance, discounted cash flow (DCF) analysis is a method of valuing a security, project, company, or asset using the concepts of the time value of money. \nDiscounted cash flow analysis is widely used in investment finance, real estate development, corporate financial management and patent valuation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operating_cash_flow">Operating cash flow</a></td>
+      <td>In financial accounting, operating cash flow (OCF), cash flow provided by operations, cash flow from operating activities (CFO) or free cash flow from operations (FCFO), refers to the amount of cash a company generates from the revenues it brings in, excluding costs associated with long-term investment on capital items or investment in securities. Operating activities include any spending or sources of cash that’s involved in a company’s day-to-day business activities.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Net_present_value">Net present value</a></td>
+      <td>The net present value (NPV) or net present worth (NPW) applies to a series of cash flows occurring at different times. The present value of a cash flow depends on the interval of time between now and the cash flow.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Free_cash_flow_to_equity">Free cash flow to equity</a></td>
+      <td>In corporate finance, free cash flow to equity (FCFE) is a metric of how much cash can be distributed to the equity shareholders of the company as dividends or stock buybacks—after all expenses, reinvestments, and debt repayments are taken care of. It is also referred to as the levered free cash flow or the flow to equity (FTE).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cash-flow_diagram">Cash-flow diagram</a></td>
+      <td>A cash-flow diagram  is a financial tool used to represent the cashflows associated with a security,  "project", or business.\nAs per the graphics, cash flow diagrams are widely used in structuring and analyzing securities, particularly swaps.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cleco_Holdings">Cleco Holdings</a></td>
+      <td>Cleco Corporate Holdings LLC (formerly the Central Louisiana Electric Company) is an electric power company headquartered in the Central Louisiana city Pineville. It operates a regulated electric utility company, Cleco Power, that serves approximately 290,000 retail customers in Louisiana.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Dolet_Hills_Power_Station">Dolet Hills Power Station</a></td>
+      <td>Dolet Hills Power Station  is a coal-fired power plant that was closed at the end of 2021. The plant had previously been proposed for a 2026 closure.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/American_Electric_Power">American Electric Power</a></td>
+      <td>American Electric Power (AEP), (railcar reporting mark: AEPX) is a major investor-owned electric utility in the United States, delivering electricity to more than five million customers in 11 states.AEP ranks among the nation's largest generators of electricity, owning nearly 38,000 megawatts of generating capacity in the U.S. AEP also owns the nation's largest electricity transmission system, a nearly 39,000-mile (63,000 km) network that includes 765 kilovolt ultra-high voltage transmission lines, more than all other U.S. transmission systems combined. AEP's transmission system directly or indirectly serves about 10 percent of the electricity demand in the Eastern Interconnection, the interconnected transmission system that covers 38 eastern and central U.S. states and eastern Canada, and approximately 11 percent of the electricity demand in the Electric Reliability Council of Texas, the transmission system that covers much of Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Evergy">Evergy</a></td>
+      <td>Entergy Corporation is a Fortune 500 integrated energy company engaged primarily in electric power production and retail distribution operations in the Deep South of the United States. Entergy is headquartered in New Orleans, Louisiana, and generates and distributes electric power to 3 million customers in Arkansas, Louisiana, Mississippi and Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Apex_Tool_Group">Apex Tool Group</a></td>
+      <td>Apex Tool Group is an American supplier of hand tools and power tools. It was formed as a joint venture of Cooper Industries and Danaher by the merger of Cooper Tools and Danaher's Tools and Components segment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/NRG_Energy">NRG Energy</a></td>
+      <td>NRG Energy, Inc. is a large American energy company, headquartered in Houston, Texas.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Obligation">Obligation</a></td>
+      <td>An obligation is a course of action that someone is required to take, whether legal or moral.  Obligations are constraints; they limit freedom.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Political_obligation">Political obligation</a></td>
+      <td>Political obligation refers to a moral requirement to obey national laws. Its origins are unclear, however it traces to the Ancient Greeks.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Law_of_obligations">Law of obligations</a></td>
+      <td>The law of obligations is one branch of private law under the civil law legal system and so-called "mixed" legal systems. It is the body of rules that organizes and regulates the rights and duties arising between individuals.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Deontology">Deontology</a></td>
+      <td>In moral philosophy, deontological ethics or deontology (from Greek: δέον, 'obligation, duty' + λόγος, 'study') is the normative ethical theory that the morality of an action should be based on whether that action itself is right or wrong under a series of rules, rather than based on the consequences of the action. It is sometimes described as duty-, obligation-, or rule-based ethics.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Positive_obligations">Positive obligations</a></td>
+      <td>Positive obligations in human rights law denote a State's obligation to engage in an activity to secure the effective enjoyment of a fundamental right, as opposed to the classical negative obligation to merely abstain from human rights violations.\nClassical human rights, such as the right to life or freedom of expression, are formulated or understood as prohibitions for the State to act in a way that would violate these rights.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Collateralized_loan_obligation">Collateralized loan obligation</a></td>
+      <td>Collateralized loan obligations (CLOs) are a form of securitization where payments from multiple middle sized and large business loans are pooled together and passed on to different classes of owners in various tranches. A CLO is a type of collateralized debt obligation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Propulsion_transmission">Propulsion transmission</a></td>
+      <td>Propulsion transmission is the mode of transmitting and controlling propulsion power of a machine. The term transmission properly refers to the whole drivetrain, including clutch, gearbox, prop shaft (for rear-wheel drive vehicles), differential, and final drive shafts.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Automatic_transmission">Automatic transmission</a></td>
+      <td>An automatic transmission (sometimes abbreviated to auto or AT) is a multi-speed transmission used in internal combustion engine-based motor vehicles that does not require any driver input to change forward gears under normal driving conditions. It typically includes a transmission, axle, and differential in one integrated assembly, thus technically becoming a transaxle.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Signal_transmission">Signal transmission</a></td>
+      <td>In telecommunications, transmission is the process of sending or propagating an analog or digital signal via a medium that is wired, wireless, or fiber-optic.Transmission technologies typically refer to physical layer protocol duties such as modulation, demodulation, line coding, equalization, error control, bit synchronization and multiplexing, but it may also involve higher-layer protocol duties, for example, digitizing an analog signal, and data compression.\nTransmission of a digital message, or of a digitized analog signal, is known as data transmission.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Electric_power_transmission">Electric power transmission</a></td>
+      <td>Electric power transmission is the bulk movement of electrical energy from a generating site, such as a power plant, to an electrical substation. The interconnected lines which facilitate this movement are known as a transmission network.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Burst_transmission">Burst transmission</a></td>
+      <td>In telecommunication, a burst transmission or data burst is the broadcast of a relatively high-bandwidth transmission over a short period. \nBurst transmission can be intentional, broadcasting a compressed message at a very high data signaling rate within a very short transmission time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Transmission_medium">Transmission medium</a></td>
+      <td>A transmission medium is a system or substance that can mediate the propagation of signals for the purposes of telecommunication. Signals are typically imposed on a wave of some kind suitable for the chosen medium.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CLECO CORP      ITEM 1A     RISK FACTORS         <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 Construction       <font color="blue"><font color="blue">Cleco Power</font> </font>is exposed to <font color="blue">certain risks</font> related to the design, <font color="blue">construction</font>     and operation of <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3</td>
+    </tr>
+    <tr>
+      <td>This project has technology risk, fuel     supply  risk and <font color="blue">general contractor</font> and certain material <font color="blue">subcontractor</font>     performance risk, each of <font color="blue">which could</font> have a material <font color="blue">adverse impact on</font>     <font color="blue">Cleco Power</font>apstas <font color="blue">financial condition</font>, results of <font color="blue">operations</font> and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 is designed to utilize circulating fluidized-bed (CFB)     <font color="blue">generating technology</font> and will be 10prca larger than any other CFB unit in     <font color="blue">operation today</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Power</font> </font>engaged Shaw Constructors, Inc</td>
+    </tr>
+    <tr>
+      <td>(Shaw) under     an engineering, procurement and <font color="blue">construction</font> (EPC) contract</td>
+    </tr>
+    <tr>
+      <td>Shaw is liable     for <font color="blue">liquidated damages due</font> to their non-performance in the EPC; however,     <font color="blue">Cleco Power</font>apstas ability to collect these damages for breach is <font color="blue">contingent on</font>     the  <font color="blue">demonstration</font>  of such damages and on Shawapstas <font color="blue">financial abilities</font></td>
+    </tr>
+    <tr>
+      <td>Failure by Shaw to perform its <font color="blue">obligations</font> under the EPC <font color="blue">contract could</font> have     a material <font color="blue">adverse impact on</font> the plantapstas <font color="blue">efficiency</font>, in-service date, and     <font color="blue">final cost</font></td>
+    </tr>
+    <tr>
+      <td>The EPC does not protect <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">against potential force</font>     majeure  events  or design/specification oversight which may result in     increased and <font color="blue"><font color="blue">potentially</font> unrecoverable costs</font> to <font color="blue">Cleco Power</font></td>
+    </tr>
+    <tr>
+      <td>Although     <font color="blue"><font color="blue">Cleco Power</font> </font>currently delivers <font color="blue">coal via rail</font> to the <font color="blue">Rodemacher </font><font color="blue">facility</font>,     plans are for <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 to primarily use petroleum coke, which can     be <font color="blue">most economically</font> delivered <font color="blue">via barges on</font> the Mississippi and Red Rivers,     requiring a <font color="blue">conveyor system which</font> has to cross a <font color="blue">major interstate highway</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Power</font> </font>does not have experience <font color="blue">transporting fuel by barge</font></td>
+    </tr>
+    <tr>
+      <td>Calpine Bankruptcy       CESapstas <font color="blue">bankruptcy</font> and failure to perform its <font color="blue">obligations</font> under the Calpine     Tolling Agreements <font color="blue">will likely</font> have a material <font color="blue">adverse impact on</font> Clecoapstas     results of <font color="blue">operations</font> and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>A substantial portion of Midstreamapstas earnings and <font color="blue">cash flow</font> is <font color="blue">derived from</font>     the <font color="blue"><font color="blue">Calpine Tolling Agreements</font> </font>with <font color="blue">CES On <font color="blue">December </font></font>20, 2005, the Calpine     Debtors filed for <font color="blue">protection under</font> Chapter 11 of the <font color="blue">US Bankruptcy Code </font>in     the Calpine Debtors Bankruptcy Court, and on <font color="blue">December </font>21, 2005, the Calpine     Debtors filed a <font color="blue">motion with</font> the <font color="blue">court seeking</font> to reject the Calpine Tolling     Agreements</td>
+    </tr>
+    <tr>
+      <td>The issue was referred to the <font color="blue">US District Court </font>for the     <font color="blue">Southern District of New York </font>where on January 27, 2006, a federal judge     dismissed  the  Calpine  Debtors &amp;apos   motion to <font color="blue">reject eight power supply</font>     contracts, including the <font color="blue">Calpine Tolling Agreements</font></td>
+    </tr>
+    <tr>
+      <td>The federal judge     ruled that the FERC, not the <font color="blue">bankruptcy</font> court, has <font color="blue">exclusive jurisdiction</font>     over the <font color="blue">disposition</font> of the <font color="blue">energy contracts</font></td>
+    </tr>
+    <tr>
+      <td>Calpine has appealed this     ruling to the <font color="blue">US Court of Appeals for the Second Circuit</font></td>
+    </tr>
+    <tr>
+      <td>CES has failed     to pay pre-petition (dlra3dtta5 million) and post-petition (dlra2dtta0 million and dlra5dtta4     <font color="blue">million as</font> of <font color="blue">December </font>31, 2005, and January 31, 2006, respectively) amounts     under the <font color="blue">Calpine Tolling Agreements</font></td>
+    </tr>
+    <tr>
+      <td>Payments by CES under the Calpine     Tolling  Agreements are Acadiaapstas sole source of revenue, and continued     <font color="blue">failure by</font> CES to pay the amounts due under the <font color="blue"><font color="blue">Calpine Tolling Agreements</font> </font>    will result in operating losses and reduced <font color="blue">cash flow</font></td>
+    </tr>
+    <tr>
+      <td>If the Calpine     Tolling  Agreements  are  rejected,  <font color="blue">Acadia  </font>would need to arrange for     <font color="blue"><font color="blue">replacement</font> customers</font> for its <font color="blue">capacity</font> in order to <font color="blue">generate revenue</font>, and     there is no assurance that any <font color="blue">such customers could</font> be obtained</td>
+    </tr>
+    <tr>
+      <td>Moreover,     <font color="blue">since current market <font color="blue">conditions</font></font> are not as favorable as the terms of the     <font color="blue">Calpine Tolling Agreements</font>, Acadiaapstas results of <font color="blue">operations</font> and <font color="blue"><font color="blue">cash flow</font>s</font>     <font color="blue">likely would</font> be <font color="blue"><font color="blue">significant</font>ly reduced</font></td>
+    </tr>
+    <tr>
+      <td>A  dlra14dtta0 million priority distribution to APH was established when CES     <font color="blue">entered into</font> the second Acadia <font color="blue">tolling <font color="blue">agreement</font></font> in May 2003</td>
+    </tr>
+    <tr>
+      <td>As part of     the August 2005 restructuring of the <font color="blue">Calpine Tolling Agreements</font>, APH is     entitled to receive <font color="blue">guaranteed cash payments from</font> CES through 2022</td>
+    </tr>
+    <tr>
+      <td>In the     event <font color="blue">of a CES </font>default, these payments are <font color="blue">guaranteed by</font> Calpine <font color="blue">Acadia  </font>   Holdings  (CAH)  and Acadia</td>
+    </tr>
+    <tr>
+      <td>In the event CES <font color="blue">defaults</font> in making such     payments and CAH <font color="blue">defaults</font> under its guarantee, APH will receive guaranteed     and <font color="blue">priority <font color="blue">annual cash payments</font> from</font> Acadia totaling dlra19dtta0 million through     2011 and dlra21dtta0 million thereafter through 2022</td>
+    </tr>
+    <tr>
+      <td>Acadia will make these     <font color="blue">annual cash payments</font> to APH only when cash is available, and any unpaid     <font color="blue">amounts will accumulate</font> to APH  Regardless of whether the payments are made     to APH, Acadia <font color="blue">must continue</font> to perform its operational <font color="blue">obligations</font> under     the <font color="blue"><font color="blue">Calpine Tolling Agreements</font> </font>until the <font color="blue">bankruptcy</font> or other <font color="blue">litigation</font>     <font color="blue">process allows</font> CES to reject the <font color="blue">Calpine Tolling Agreements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Although Cleco </font>has not been required to record an <font color="blue">impairment with respect</font> to     Acadia as a result of the Calpine <font color="blue">bankruptcy</font> proceedings, future events such     as  a decline in the anticipated market value of energy in relation to     <font color="blue"><font color="blue">natural gas</font> values could</font> cause Acadiaapstas carrying value to exceed its market     value, requiring an <font color="blue">impairment charge</font></td>
+    </tr>
+    <tr>
+      <td>Such a charge could adversely affect     Clecoapstas <font color="blue">financial condition</font> by reducing consolidated common shareholders &amp;apos      equity, could cause Cleco to incur increased interest cost on future debt     issuances, and could cause an adverse change in Clecoapstas credit ratings</td>
+    </tr>
+    <tr>
+      <td>Storm Damage Costs       The LPSC may reduce the <font color="blue">amount recoverable by</font> <font color="blue"><font color="blue">Cleco Power</font> </font>in respect of     storm <font color="blue">restoration</font> costs</td>
+    </tr>
+    <tr>
+      <td>The LPSC has <font color="blue">approved interim revenue relief <font color="blue">associated with</font></font> the recovery of     storm <font color="blue">restoration</font> costs from <font color="blue">Hurricanes Katrina and Rita</font></td>
+    </tr>
+    <tr>
+      <td>The interim rate     <font color="blue">increase becomes effective upon</font> the beginning of physical <font color="blue">construction</font> for     <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 (Phase I) and remains in effect until <font color="blue">the LPSC </font>completes a     review to verify and approve the <font color="blue">total amount</font> of storm <font color="blue">restoration</font> costs to     be recovered (Phase II)</td>
+    </tr>
+    <tr>
+      <td>The LPSCapstas decision to <font color="blue">grant revenue relief</font> to     <font color="blue"><font color="blue">Cleco Power</font> </font>for storm <font color="blue">restoration</font> costs becomes final and non-appealable 45     days after the issuance of the executed order from <font color="blue">the LPSC </font>      Based upon the results of the <font color="blue">Phase II </font>review of storm <font color="blue">restoration</font> costs,     expected to be completed in late 2006, the                                         16       _________________________________________________________________       LPSC <font color="blue">could decrease</font> the amount <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">could recover</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     someone could request a rehearing of or appeal the <font color="blue">interim relief</font> or the     <font color="blue">final relief approved by</font> <font color="blue">the LPSC </font> A change made in <font color="blue">Phase II </font>by <font color="blue">the LPSC </font>    resulting  in  a  delay  in receipt of or timing of any revenue relief     <font color="blue">associated with</font> the recovery of the storm <font color="blue">restoration</font> costs from Hurricanes     Katrina and Rita or any request for rehearing or appeal of any revenue     <font color="blue">relief could</font> have a material <font color="blue">adverse impact on</font> Cleco and <font color="blue">Cleco Power</font>apstas     results of <font color="blue">operations</font>, <font color="blue">financial condition</font>, and <font color="blue"><font color="blue">cash flow</font>s</font> compared to the     <font color="blue">recovery amounts authorized by</font> <font color="blue">the LPSC </font>in Phase I       LPSC Regulation       If <font color="blue"><font color="blue">Cleco Power</font> </font>is unable to extend the current RSP or if <font color="blue">the LPSC </font>makes     <font color="blue">modifications</font> to <font color="blue">Cleco Power</font>apstas <font color="blue"><font color="blue">retail rates</font> subsequent</font> to <font color="blue">September </font>2006,     the earnings of <font color="blue"><font color="blue">Cleco Power</font> </font>could be reduced</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Cleco Power</font>apstas <font color="blue">retail rates</font> for residential, commercial, and industrial     customers and other <font color="blue">retail sales</font> are <font color="blue">regulated by</font> <font color="blue">the LPSC </font> <font color="blue">On February </font>22,     2006, <font color="blue">the LPSC </font>required that <font color="blue">effective immediately</font>, any <font color="blue"><font color="blue">Cleco Power</font> </font>earnings     above  the current 12dtta25prca <font color="blue">allowed <font color="blue">return on equity</font></font> be credited against     outstanding <font color="blue">Hurricanes Katrina and Rita</font> storm <font color="blue">restoration</font> costs, rather than     being shared 50/50 between shareholders and customers</td>
+    </tr>
+    <tr>
+      <td>Previously, Cleco     Power was allowed to realize a <font color="blue">regulatory <font color="blue">return on equity</font></font> of up to 12dtta625prca     through <font color="blue">September </font>30, 2006, with returns above that level being refunded to     customers in the form of billing credits</td>
+    </tr>
+    <tr>
+      <td>On <font color="blue">December </font>19, 2005, <font color="blue"><font color="blue">Cleco Power</font> </font>    filed an <font color="blue">application with</font> <font color="blue">the LPSC </font>to extend the current RSP through the     expected <font color="blue">fourth quarter</font> of 2009 in-service date of the proposed <font color="blue">Rodemacher </font>    Unit 3 power plant</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Preliminary </font><font color="blue">testimony filed by</font> the LPSCapstas <font color="blue">independent</font>     <font color="blue">consultant recommended</font> that <font color="blue">the LPSC </font>modify the current RSP beginning on     October 1, 2006 decreasing the <font color="blue">allowed <font color="blue">return on equity</font></font> that can be realized     by <font color="blue"><font color="blue">Cleco Power</font> </font>to 11dtta65prca</td>
+    </tr>
+    <tr>
+      <td>This assumes a <font color="blue">return on equity</font> of 11dtta25prca, with     any earnings between 11dtta25prca and 12dtta25prca shared between shareholders and     customers in a 40/60 ratio, respectively, and all earnings over 12dtta25prca     returned to customers</td>
+    </tr>
+    <tr>
+      <td>There is no assurance that <font color="blue">the LPSC </font><font color="blue">will approve</font>     this <font color="blue">recommendation</font> and grant <font color="blue"><font color="blue">Cleco Power</font> </font>this extension</td>
+    </tr>
+    <tr>
+      <td>Upon expiration     of the current RSP, <font color="blue">the LPSC </font>could choose to approve a lower rate of return     for  Cleco  Power,  which  would reduce <font color="blue">Cleco Power</font>apstas <font color="blue">base revenue</font> and     <font color="blue">profitability</font> and could have a material <font color="blue">adverse impact on</font> <font color="blue">Cleco Power</font>apstas     results of <font color="blue">operations</font>, <font color="blue">financial condition</font>, and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Fuel Costs       The  LPSC <font color="blue">conducts fuel audits</font> that could result in <font color="blue"><font color="blue">Cleco Power</font> </font>making     substantial refunds of <font color="blue"><font color="blue">previously recorded</font> revenue</font></td>
+    </tr>
+    <tr>
+      <td>Generally, fuel and <font color="blue"><font color="blue">purchased power</font> expenses</font> are <font color="blue">recovered through</font> the     LPSC-established fuel <font color="blue">adjustment</font> clause, which enables <font color="blue"><font color="blue">Cleco Power</font> </font>to pass     on  to its customers <font color="blue">substantially</font> all such charges</td>
+    </tr>
+    <tr>
+      <td>Recovery of fuel     <font color="blue">adjustment</font> clause costs is subject to refund until monthly approval is     received from the LPSC; however, all amounts are subject to a <font color="blue">periodic fuel</font>     audit by <font color="blue">the LPSC </font> The <font color="blue">most recent audit by</font> <font color="blue">the LPSC </font>covered 2001 and 2002     and  resulted  in  a  refund  of dlra16dtta0 million to <font color="blue">Cleco Power</font>apstas retail     customers</td>
+    </tr>
+    <tr>
+      <td>This refund was credited <font color="blue">against customer bills</font> in the first     quarter of 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">In November </font>2005, due to the <font color="blue">increased price</font> of <font color="blue">natural gas</font> and its effect     on the cost of <font color="blue">generating fuel</font> and <font color="blue">purchased power</font>, <font color="blue">the LPSC </font>ordered a     review of each investor-owned utilityapstas fuel and <font color="blue">purchased power</font> costs     <font color="blue">incurred during</font> the period January 1, 2005, through October 31, 2005</td>
+    </tr>
+    <tr>
+      <td>Cleco     Power could be required to make a substantial refund of <font color="blue">previously recorded</font>     <font color="blue">revenue as</font> a result of this review or any future LPSC audits</td>
+    </tr>
+    <tr>
+      <td>Furthermore,     Clecoapstas <font color="blue"><font color="blue">cash flow</font>s</font> can be <font color="blue">impacted by differences between</font> the time period     when gas is purchased and the <font color="blue">ultimate recovery from customers</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 CCN       A <font color="blue">successful request</font> for rehearing or appeal of <font color="blue">Cleco Power</font>apstas CCN could have     a material <font color="blue">adverse impact on</font> <font color="blue">Cleco Power</font>apstas <font color="blue">financial condition</font> and cash     flows</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On February </font>22, 2006, <font color="blue">the LPSC </font>approved <font color="blue">Cleco Power</font>apstas CCN to construct, own,     and operate <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3</td>
+    </tr>
+    <tr>
+      <td>The LPSCapstas decision to grant Clecoapstas CCN     <font color="blue">request will become final</font> and non-appealable 45 days after the issuance of     the executed order from <font color="blue">the LPSC </font> Without <font color="blue">adequate ratemaking treatment</font> and     assurances of recovery for <font color="blue"><font color="blue">Rodemacher </font>Unit </font>3 from the LPSC, <font color="blue">management</font>     believes it would be <font color="blue">difficult</font> for <font color="blue"><font color="blue">Cleco Power</font> </font>to construct the plant while     maintaining its credit rating</td>
+    </tr>
+    <tr>
+      <td>Purchased Power       Nonperformance of <font color="blue">Cleco Power</font>apstas <font color="blue">power purchase <font color="blue">agreement</font>s</font> and <font color="blue">transmission</font>     <font color="blue"><font color="blue">constraints</font> could</font> have a material <font color="blue">adverse impact on</font> <font color="blue">Cleco Power</font>apstas results of     <font color="blue">operations</font>, <font color="blue">financial condition</font>, and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Power</font> </font>does not supply all of its customers &amp;apos  <font color="blue">power <font color="blue">requirements</font> from</font>     the <font color="blue"><font color="blue">generation</font> <font color="blue">facilities</font></font> it owns and <font color="blue">must purchase additional energy</font> and     <font color="blue">capacity</font> from the <font color="blue"><font color="blue">wholesale power</font> market</font></td>
+    </tr>
+    <tr>
+      <td>During 2005, <font color="blue"><font color="blue">Cleco Power</font> </font>met     approximately 49prca of its energy needs with <font color="blue">purchased power</font></td>
+    </tr>
+    <tr>
+      <td>Two power     <font color="blue">purchase <font color="blue">agreement</font>s with</font> <font color="blue">Williams and CES </font>provided approximately 29dtta6prca of     <font color="blue">Cleco Power</font>apstas <font color="blue">capacity</font> needs in 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">On January </font>1, 2006, <font color="blue"><font color="blue">Cleco Power</font> </font>began     its  four-year, 500-MW contract with Williams and its one-year, 200-MW     contract  with  CES   If  <font color="blue">Williams and CES </font>do not perform under their     <font color="blue">respective contracts</font>, <font color="blue"><font color="blue">Cleco Power</font> </font>would have to replace these <font color="blue">supply sources</font>     with alternate market options, which may not be on as favorable terms and     <font color="blue">conditions</font> and <font color="blue">could increase</font> the <font color="blue">ultimate cost</font> of power to its customers</td>
+    </tr>
+    <tr>
+      <td>Because of <font color="blue">Cleco Power</font>apstas <font color="blue">location on</font> the <font color="blue">transmission</font> grid, <font color="blue"><font color="blue">Cleco Power</font> </font>    relies  on  <font color="blue">two main suppliers</font> of electric <font color="blue">transmission</font> when <font color="blue">accessing</font>     <font color="blue">external power markets</font></td>
+    </tr>
+    <tr>
+      <td>At times, <font color="blue">constraints</font> limit the amount of purchased     power these <font color="blue">transmission</font> providers can deliver into <font color="blue">Cleco Power</font>apstas service     territory</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">Williams and CES </font>contracts, as well as spot <font color="blue">market power</font>     purchases, may be <font color="blue">affected by</font> these                                         17       _________________________________________________________________       <font color="blue">transmission</font>  <font color="blue">constraints</font></td>
+    </tr>
+    <tr>
+      <td>If the amount of <font color="blue">purchased power</font> actually     delivered into Cleco were less than the amount of <font color="blue">power contracted</font> for     delivery, <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">may rely on</font> its own <font color="blue"><font color="blue">generation</font> <font color="blue">facilities</font></font> to meet     <font color="blue">customer demand</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Cleco Power</font>apstas <font color="blue">incremental</font> <font color="blue">generation</font> cost, at that time,     may be <font color="blue">higher than</font> the cost to <font color="blue">purchase power from</font> the <font color="blue">wholesale power</font>     market, therefore increasing its customers &amp;apos  <font color="blue">ultimate cost</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the     LPSC may not allow <font color="blue"><font color="blue">Cleco Power</font> </font>to recover its <font color="blue">incremental</font> <font color="blue">generation</font> cost</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">unrecovered costs could</font> be substantial</td>
+    </tr>
+    <tr>
+      <td>Cleco Credit Rating       A downgrade in <font color="blue">Cleco Corporation</font>apstas or <font color="blue">Cleco Power</font>apstas credit <font color="blue">rating could</font>     result in an increase in their <font color="blue">respective <font color="blue">borrowing cost</font>s</font> and a <font color="blue">reduced pool</font>     of <font color="blue">potential investors</font> and <font color="blue">funding sources</font></td>
+    </tr>
+    <tr>
+      <td>While the <font color="blue">senior unsecured debt</font> ratings of <font color="blue"><font color="blue">Cleco Corporation</font> </font>and <font color="blue"><font color="blue">Cleco Power</font> </font>    are  &amp;quote <font color="blue">investment grade</font>, &amp;quote  in <font color="blue">recent years such ratings</font> have <font color="blue">been downgraded</font> or     <font color="blue">put on negative</font> watch by Standard &amp; Poorapstas and Moodyapstas</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Corporation</font> </font>or     <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">cannot assure</font> that its <font color="blue">debt ratings will</font> remain in effect for     any <font color="blue">given period</font> of time or that one or more of its <font color="blue">debt ratings will</font> not be     lowered or <font color="blue">withdrawn entirely by</font> a <font color="blue">rating agency</font></td>
+    </tr>
+    <tr>
+      <td>Credit ratings are not     <font color="blue">recommendation</font>s to buy, sell, or hold securities</td>
+    </tr>
+    <tr>
+      <td>Each rating should be     evaluated <font color="blue">independent</font>ly of any other rating</td>
+    </tr>
+    <tr>
+      <td>If Moodyapstas or Standard &amp;     Poorapstas  was to downgrade <font color="blue">Cleco Corporation</font>apstas long-term rating or Cleco     Powerapstas long-term rating, particularly below <font color="blue">investment grade</font>, the value of     any of its <font color="blue">debt securities <font color="blue">would likely</font></font> be <font color="blue">adversely affected</font>, and the     <font color="blue">borrowing cost</font> of <font color="blue"><font color="blue">Cleco Corporation</font> </font>or <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">would increase</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, <font color="blue"><font color="blue">Cleco Corporation</font> </font>or <font color="blue"><font color="blue">Cleco Power</font> </font><font color="blue">would likely</font> be required to pay     <font color="blue">higher interest rates</font> in <font color="blue">future debt financings</font>, and its pool of potential     investors and <font color="blue">funding sources</font> <font color="blue">could decrease</font></td>
+    </tr>
+    <tr>
+      <td>Regulatory Compliance       Clecoapstas costs of compliance with <font color="blue">environmental</font> laws, <font color="blue">regulations</font> and permits     are <font color="blue">significant</font>, and the costs of <font color="blue">compliance with new <font color="blue">environmental</font> laws</font>,     <font color="blue">regulations</font>  and  permits  could  be  <font color="blue">significant</font>  and  reduce Clecoapstas     <font color="blue">profitability</font></td>
+    </tr>
+    <tr>
+      <td>Cleco is subject to extensive <font color="blue"><font color="blue">environmental</font> <font color="blue">regulation by</font> federal</font>, state and     <font color="blue">local authorities</font> and is required to <font color="blue"><font color="blue">comply with</font> numerous <font color="blue">environmental</font> laws</font>     and  <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>Cleco is also required to obtain and to <font color="blue">comply with</font>     numerous  <font color="blue">governmental</font>  permits in operating its <font color="blue">facilities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Existing     </font><font color="blue">environmental</font>  laws,  <font color="blue">regulations</font>  and  permits  could  be  revised or     <font color="blue">reinterpreted</font>,  new  laws  and  <font color="blue">regulations</font> could be adopted or become     applicable  to  Cleco,  and  future  changes in <font color="blue">environmental</font> laws and     <font color="blue">regulations</font> could occur</td>
+    </tr>
+    <tr>
+      <td>Cleco may incur <font color="blue">significant</font> additional costs to     <font color="blue">comply with</font> these revisions, reinterpretations and <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">If Cleco     </font>fails to <font color="blue">comply with</font> these revisions, reinterpretations and <font color="blue">requirements</font>, it     could be subject to civil or <font color="blue">criminal liabilities</font> and fines</td>
+    </tr>
+    <tr>
+      <td>Midstream Plant <font color="blue">Performance </font>      <font color="blue"><font color="blue">Evangeline </font>and Acadia </font>have certain plant performance <font color="blue">obligations</font> under their     respective <font color="blue">tolling <font color="blue">agreement</font></font>s</td>
+    </tr>
+    <tr>
+      <td>Failure to perform these <font color="blue">obligations</font> could     expose each entity to adverse financial penalties</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Performance </font><font color="blue">requirements</font> include, but are not limited to, maintaining plant     <font color="blue">performance characteristics such as heat rate</font> and demonstrated <font color="blue">generation</font>     <font color="blue">capacity</font> and maintaining <font color="blue">specified <font color="blue">availability</font> levels with</font> a <font color="blue">combination</font> of     <font color="blue">plant <font color="blue">availability</font></font> and <font color="blue"><font color="blue">replacement</font> power</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Obligations </font>under the respective     <font color="blue">tolling <font color="blue">agreement</font></font>s include, but are not limited to, maintaining various     types of insurance, maintaining power and <font color="blue">natural gas</font> metering equipment,     and <font color="blue">paying scheduled interest</font> and <font color="blue">principal payments on debt</font></td>
+    </tr>
+    <tr>
+      <td>In addition     to the performance <font color="blue">obligations</font> by <font color="blue">Evangeline </font>and Acadia, there are various     <font color="blue">guarantees</font> and <font color="blue">commitments</font> required by <font color="blue">Cleco Corporation</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">If <font color="blue"><font color="blue">Evangeline </font>or Acadia </font></font>fails to operate within specified <font color="blue">requirements</font>, the     respective <font color="blue">facilities</font> may purchase <font color="blue"><font color="blue">replacement</font> power</font> on the <font color="blue">open market</font> and     provide  it to the <font color="blue">tolling counterparties</font> in order to <font color="blue">meet contractual</font>     performance  <font color="blue">specifications</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Providing  </font><font color="blue">replacement</font>  power maintains     <font color="blue">availability</font> levels, but exposes <font color="blue"><font color="blue">Evangeline </font>or Acadia </font>to power commodity     price <font color="blue">volatility</font> and <font color="blue">transmission</font> <font color="blue">constraints</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue"><font color="blue">availability</font> targets</font>     under the <font color="blue">tolling <font color="blue">agreement</font></font>s are not met and economical <font color="blue">purchased power</font> and     <font color="blue">transmission</font> are not available, <font color="blue">Evangeline </font>and Acadiaapstas <font color="blue">financial condition</font>     and results of <font color="blue">operations</font> could be materially <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>Williams       Failure by Williams to perform its <font color="blue">obligations</font> under the <font color="blue">Evangeline </font>Tolling     Agreement <font color="blue">would likely</font> have a material <font color="blue">adverse impact on</font> Clecoapstas results of     <font color="blue">operations</font>, <font color="blue">financial condition</font>, and <font color="blue"><font color="blue">cash flow</font>s</font></td>
+    </tr>
+    <tr>
+      <td>The credit ratings of the <font color="blue">senior unsecured debt</font> of The Williams Companies,     Inc</td>
+    </tr>
+    <tr>
+      <td>(Moodyapstas - B1; Standard &amp; Poorapstas - B+), the parent company <font color="blue">of Williams     </font>under the <font color="blue">Evangeline </font>Tolling Agreement, remain below  &amp;quote <font color="blue">investment grade</font> &amp;quote</td>
+    </tr>
+    <tr>
+      <td>If     Williams  were to fail to perform its <font color="blue">obligations</font> under the <font color="blue">Evangeline </font>    Tolling Agreement, <font color="blue">such failure would</font> have a material <font color="blue">adverse impact on</font>     Clecoapstas results of <font color="blue">operations</font>, <font color="blue">financial condition</font> and <font color="blue">cash flow</font> for the     following reasons, among others:       * <font color="blue">If Williams </font>&amp;apos  failure to perform <font color="blue">constituted</font> a <font color="blue">default under</font> the tolling         <font color="blue">agreement</font>, the holders of the <font color="blue">Evangeline </font>bonds would have the right to         declare the entire outstanding principal amount (dlra191dtta8 million at         <font color="blue">December </font>31, 2005) and interest to be <font color="blue">immediately due</font> and payable, which         could result in:       * Cleco seeking to refinance the bonds, the terms of which may be less         favorable <font color="blue">than existing terms</font>;       * Cleco causing <font color="blue">Evangeline </font>to seek <font color="blue">protection under</font> federal <font color="blue">bankruptcy</font>         laws; or       * the  trustee of the <font color="blue">bonds foreclosing on</font> the mortgage and assuming         ownership of the <font color="blue">Evangeline </font>plant;                                         18       _________________________________________________________________         * Cleco may not be able to enter into <font color="blue">agreement</font>s in <font color="blue">replacement</font> of the         <font color="blue"><font color="blue">Evangeline </font>Tolling Agreement </font><font color="blue">on terms as</font> favorable as that <font color="blue">agreement</font> or         at all;       * Clecoapstas <font color="blue">equity investment</font> in <font color="blue">Evangeline </font>may be impaired, requiring a         write-down to its fair market value, <font color="blue">which could</font> be substantial; and       * Clecoapstas  credit  <font color="blue">ratings could</font> be downgraded, which <font color="blue">would increase</font>         <font color="blue">borrowing cost</font>s and <font color="blue">limit sources</font> of financing</td>
+    </tr>
+    <tr>
+      <td>Energy Sales       <font color="blue">Cleco Power</font>apstas <font color="blue">future electricity sales could</font> be <font color="blue">adversely impacted by high</font>     <font color="blue">energy prices</font> and other <font color="blue">economic factors affecting</font> its customers</td>
+    </tr>
+    <tr>
+      <td>Within the past several years, <font color="blue">Cleco Power</font>apstas customers have experienced a     substantial  increase  in  their utility bills, largely as a result of     substantial increases in the cost of <font color="blue">natural gas</font></td>
+    </tr>
+    <tr>
+      <td>These increases may also     cause  Cleco  Powerapstas  customers  to  more  <font color="blue">aggressively pursue energy</font>     <font color="blue"><font color="blue">conservation</font> efforts</font> or could result in increased bad <font color="blue">debt expense due</font> to     the non-payment of bills</td>
+    </tr>
+    <tr>
+      <td>In addition, the high cost of energy, in general,     has <font color="blue">become problematic</font> in many <font color="blue">industries</font> and has <font color="blue">increased interest by</font>     <font color="blue">industrial customers</font> in on-site <font color="blue">generation</font> of their own power</td>
+    </tr>
+    <tr>
+      <td>Recently,     four of <font color="blue">Cleco Power</font>apstas <font color="blue">largest customers</font> who <font color="blue">manufacture paper products</font> have     experienced a downturn in their markets, and <font color="blue">decreased crop yields from</font>     hurricane  damage  in  2005 have resulted in economic <font color="blue">difficult</font>ies for     customers in the <font color="blue">agricultural industry</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">four manufactures</font> of paper     products customers generated <font color="blue">base revenue</font>s of approximately dlra21dtta0 million     for 2005</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Developments </font>in <font color="blue"><font color="blue">conservation</font> efforts</font> or on-site <font color="blue">generation</font> could     have a further negative impact on <font color="blue">Cleco Power</font>apstas long-term electricity sales     and <font color="blue">base revenue</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Power</font> </font>Generation Facilities       <font color="blue">Cleco Power</font>apstas <font color="blue"><font color="blue">generation</font> <font color="blue">facilities</font></font> are subject to <font color="blue">unplanned outages</font> and     <font color="blue">significant</font> maintenance <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>The operation of power <font color="blue"><font color="blue">generation</font> <font color="blue">facilities</font></font> involves many risks, including     the  risk  of <font color="blue">breakdown</font> or failure of equipment, fuel interruption and     performance below expected levels of output or <font color="blue">efficiency</font></td>
+    </tr>
+    <tr>
+      <td>Some of Cleco     Powerapstas  <font color="blue">facilities</font>  were <font color="blue">originally constructed</font> many years ago</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Older     </font>equipment, even if maintained in <font color="blue">accordance with</font> good <font color="blue">engineering practices</font>,     may  require <font color="blue">significant</font> expenditures to operate at peak <font color="blue">efficiency</font> or     <font color="blue">availability</font></td>
+    </tr>
+    <tr>
+      <td>If <font color="blue"><font color="blue">Cleco Power</font> </font>fails to make <font color="blue">adequate expenditures</font> for     equipment  maintenance,  Cleco <font color="blue">risks incurring</font> more <font color="blue">frequent unplanned</font>     outages, <font color="blue">higher than</font> anticipated operating and <font color="blue">maintenance expenditures</font>,     <font color="blue">increased fuel</font> or <font color="blue">power purchase costs</font> and <font color="blue">potentially</font> the loss of revenues     related to <font color="blue">competitive opportunities</font></td>
+    </tr>
+    <tr>
+      <td>Holding Company       <font color="blue"><font color="blue">Cleco Corporation</font> </font>is a holding company, and its ability to meet its debt     <font color="blue">obligations</font> and <font color="blue">pay dividends on</font> its <font color="blue">common stock</font> is <font color="blue">dependent on</font> the cash     <font color="blue">generated by</font> its <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">Cleco Corporation</font> </font>is a holding company and conducts its <font color="blue">operations</font> primarily     through its <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Substantially </font>all of Clecoapstas <font color="blue">consolidated assets</font>     are held by its <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, Clecoapstas ability to meet its debt     <font color="blue">obligations</font> and <font color="blue">pay dividends on</font> its <font color="blue">common stock</font> is <font color="blue">largely dependent upon</font>     the cash <font color="blue">generated by</font> these <font color="blue">subsidiaries</font></td>
+    </tr>
+    <tr>
+      <td>Clecoapstas <font color="blue">subsidiaries</font> are separate     and <font color="blue">distinct entities</font> and have <font color="blue">no obligation</font> to pay any <font color="blue">amounts due on</font>     Clecoapstas debt or to make any <font color="blue">funds available</font> for <font color="blue">such payment</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     Clecoapstas  <font color="blue">subsidiaries</font> &amp;apos   ability  to  make  dividend  payments or other     <font color="blue">distributions</font> to Cleco may be <font color="blue">restricted by</font> their <font color="blue">obligations</font> to holders of     their  <font color="blue">outstanding securities</font> and to other general business <font color="blue">creditors</font></td>
+    </tr>
+    <tr>
+      <td>Moreover,  Cleco  Power,  Clecoapstas  <font color="blue">principal subsidiary</font>, is subject to     <font color="blue">regulation by</font> the LPSC, <font color="blue">which may impose limits on</font> the amount of dividends     that <font color="blue"><font color="blue">Cleco Power</font> </font>may pay Cleco</td>
+    </tr>
+    <tr>
+      <td>FERC Regulation       The FERC regulates <font color="blue">Cleco Power</font>apstas <font color="blue">transmission</font> service and other wholesale     rates</td>
+    </tr>
+    <tr>
+      <td><font color="blue">If the FERC </font>were to <font color="blue">substantially</font> change <font color="blue">Cleco Power</font>apstas rates for     these services, the results of <font color="blue">operations</font> and <font color="blue"><font color="blue">cash flow</font>s</font> of <font color="blue"><font color="blue">Cleco Power</font> </font>    could be <font color="blue">adversely affected</font></td>
+    </tr>
+    <tr>
+      <td>On <font color="blue">September </font>16, 2005, the FERC issued a <font color="blue">Notice of Inquiry </font><font color="blue">inviting comments</font>     on reforming FERCapstas pro forma OATT to ensure the provision of <font color="blue">transmission</font>     service is reasonable and not unduly <font color="blue">discriminatory</font> or <font color="blue">preferential</font></td>
+    </tr>
+    <tr>
+      <td>The     FERC is <font color="blue">seeking responses</font> to a series of specific questions <font color="blue">which could</font> be     <font color="blue">incorporated into</font> the revised OATT  The FERCapstas potential changes to the     OATT  could  have  a material effect on the revenue and <font color="blue">methodology</font> of     implementing <font color="blue">transmission</font> service offered to Clecoapstas retail and wholesale     <font color="blue">transmission</font> and <font color="blue">energy customers</font></td>
+    </tr>
+    <tr>
+      <td>The magnitude of the <font color="blue">impact on revenue</font>     will not be <font color="blue">known until</font> the FERC issues a final order, which is expected in     2006</td>
+    </tr>
+  </tbody>
+</table>

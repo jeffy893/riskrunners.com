@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "1: indebtedness may affect", fill: "#c74375"},
+{source: "1: indebtedness may affect", target: "1: may restrict", fill: "#c74375"},
+{source: "1: may restrict", target: "1: flexibility", fill: "#c74375"},
+{source: "1: indebtedness may affect", target: "2: December ", fill: "#c23b22"},
+{source: "2: December ", target: "2: consolidated indebtedness", fill: "#c23b22"},
+{source: "2: December ", target: "3: undrawn availability under", fill: "#0067a5"},
+{source: "3: undrawn availability under", target: "3: senior secured", fill: "#0067a5"},
+{source: "3: senior secured", target: "3: facility", fill: "#0067a5"},
+{source: "3: undrawn availability under", target: "5: restrictions", fill: "#3d2b1f"},
+{source: "5: restrictions", target: "5: facility", fill: "#3d2b1f"},
+{source: "5: facility", target: "5: debt agreements", fill: "#3d2b1f"},
+{source: "5: debt agreements", target: "5: may incur additional indebtedness", fill: "#3d2b1f"},
+{source: "5: may incur additional indebtedness", target: "5: indebtedness incurred", fill: "#3d2b1f"},
+{source: "5: indebtedness incurred", target: "5: connection with acquisitions", fill: "#3d2b1f"},
+{source: "5: restrictions", target: "6: indebtedness", fill: "#ff0090"},
+{source: "6: indebtedness", target: "6: debt servicing costs associated with", fill: "#ff0090"},
+{source: "6: debt servicing costs associated with", target: "6: indebtedness could", fill: "#ff0090"},
+{source: "6: indebtedness could", target: "6: important effects on", fill: "#ff0090"},
+{source: "6: important effects on", target: "6: operations", fill: "#ff0090"},
+{source: "6: indebtedness", target: "7: flexibility", fill: "#ff6700"},
+{source: "7: flexibility", target: "7: industries", fill: "#ff6700"},
+{source: "7: industries", target: "7: competitive disadvantage relative", fill: "#ff6700"},
+{source: "7: competitive disadvantage relative", target: "7: competitors", fill: "#ff6700"},
+{source: "7: competitors", target: "7: lower debt service obligations", fill: "#ff6700"},
+{source: "7: lower debt service obligations", target: "7: greater financial", fill: "#ff6700"},
+{source: "7: greater financial", target: "7: resources than us", fill: "#ff6700"},
+{source: "7: resources than us", target: "7: borrow additional funds", fill: "#ff6700"},
+{source: "7: borrow additional funds", target: "7: future acquisitions", fill: "#ff6700"},
+{source: "7: future acquisitions", target: "7: pay dividends", fill: "#ff6700"},
+{source: "7: pay dividends", target: "7: capital expenditures", fill: "#ff6700"},
+{source: "7: capital expenditures", target: "7: vulnerability", fill: "#ff6700"},
+{source: "7: vulnerability", target: "7: general adverse economic", fill: "#ff6700"},
+{source: "7: general adverse economic", target: "7: conditions", fill: "#ff6700"},
+{source: "7: flexibility", target: "10: indebtedness", fill: "#fbcce7"},
+{source: "10: indebtedness", target: "10: financial condition", fill: "#fbcce7"},
+{source: "10: financial condition", target: "10: operations would", fill: "#fbcce7"},
+{source: "10: operations would", target: "10: materially adversely affected", fill: "#fbcce7"},
+{source: "10: indebtedness", target: "22: significant", fill: "#059033"},
+{source: "22: significant", target: "32: growth strategy", fill: "#d8bfd8"},
+{source: "32: growth strategy", target: "32: acquisitions", fill: "#d8bfd8"},
+{source: "32: growth strategy", target: "72: operations", fill: "#8f00ff"},
+{source: "72: operations", target: "72: increasingly stringent laws", fill: "#8f00ff"},
+{source: "72: increasingly stringent laws", target: "72: regulations", fill: "#8f00ff"},
+{source: "72: regulations", target: "72: environmental protection", fill: "#8f00ff"},
+{source: "72: environmental protection", target: "72: regulations governing air emissions water", fill: "#8f00ff"},
+{source: "72: regulations governing air emissions water", target: "72: waste management", fill: "#8f00ff"},
+{source: "72: waste management", target: "72: workplace safety", fill: "#8f00ff"},
+{source: "72: operations", target: "START_HERE", fill: "#8f00ff"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Automobiles and Components</td>
+    </tr>
+    <tr>
+      <td>Electrical Components and Equipment</td>
+    </tr>
+    <tr>
+      <td>Environmental Services</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Economic</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Yield position</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Decline comment</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bond_(finance)">Bond (finance)</a></td>
+      <td>In finance, a bond is a type of security under which the issuer (debtor) owes the holder (creditor) a debt, and is obliged – depending on the terms – to repay the principal (i.e. amount borrowed) of the bond at the maturity date as well as interest (called the coupon) over a specified amount of time.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Loan">Loan</a></td>
+      <td>A man is an adult male human. Prior to adulthood, a male human is referred to as a boy (a male child or adolescent).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Senior_debt">Senior debt</a></td>
+      <td>In finance, senior debt, frequently issued in the form of senior notes or referred to as senior loans, is debt that takes priority over other unsecured or otherwise more "junior" debt owed by the issuer. Senior debt has greater seniority in the issuer's capital structure than subordinated debt.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Secured_loan">Secured loan</a></td>
+      <td>A secured loan is a loan in which the borrower pledges some asset (e.g. a car or property) as collateral for the loan, which then becomes a secured debt owed to the creditor who gives the loan.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Second_lien_loan">Second lien loan</a></td>
+      <td>The vast majority of all second lien loans are senior secured obligations of the borrower.  Second lien loans differ from both unsecured debt and subordinated debt.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Advance_Publications">Advance Publications</a></td>
+      <td>Advance Publications, Inc., branded as Advance, is an American media company owned by the descendants of S.I. Newhouse Sr., Donald Newhouse and S.I. Newhouse Jr. It owns a large number of subsidiary companies, including Condé Nast, and is a major shareholder in Reddit.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mezzanine_capital">Mezzanine capital</a></td>
+      <td>In finance, mezzanine capital is any subordinated debt or preferred equity instrument that represents a claim on a company's assets which is senior only to that of the common shares. Mezzanine financings can be structured either as debt (typically an unsecured and subordinated note) or preferred stock.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/H.I.G._Capital">H.I.G. Capital</a></td>
+      <td>H.I.G. Capital is a Miami, Florida–based private equity and alternative assets investment firm with $49 billion of equity capital under management. The firm operates a family of private equity, growth equity, credit/special situation, primary lending, syndicated credit, and real estate funds.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_management">Facility management</a></td>
+      <td>Facility management, or facilities management, (FM) is a professional management discipline focused on the efficient and effective delivery of logistics and other support services related to real property, it encompasses multiple disciplines to ensure functionality, comfort, safety and efficiency of the built environment by integrating people, place, process and technology, as defined by the International Organization for Standardization (ISO). The profession is certified through Global Facility Management Association (Global FM) member organizations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_ID">Facility ID</a></td>
+      <td>The facility ID number, also called a FIN or facility identifier, is a unique integer number of one to six digits, assigned by the U.S. Federal Communications Commission (FCC) Media Bureau to each broadcast station in the FCC Consolidated Database System (CDBS) and Licensing and Management System (LMS) databases, among others.\nBecause CDBS includes information about foreign stations which are notified to the U.S. under the terms of international frequency coordination agreements, FINs are also assigned to affected foreign stations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Facility_location">Facility location</a></td>
+      <td>The study of facility location problems (FLP), also known as location analysis, is a branch of operations research and computational geometry concerned with the optimal placement of facilities to minimize transportation costs while considering factors like avoiding placing hazardous materials near housing, and competitors' facilities. The techniques also apply to cluster analysis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Cancellation_of_Debt_Income">Cancellation of Debt Income</a></td>
+      <td>Taxpayers in the United States may have tax consequences when debt is cancelled. This is commonly known as COD (Cancellation of Debt) Income.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Indebted">Indebted</a></td>
+      <td>Indebted is an American television sitcom that aired on NBC from February 6 to April 16, 2020. The series was created by Dan Levy and co-executive produced with Doug Robinson, Andy Ackerman and David Guarascio for Sony Pictures Television.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Heavily_indebted_poor_countries">Heavily indebted poor countries</a></td>
+      <td>The heavily indebted poor countries (HIPC) are a group of 39 developing countries with high levels of poverty and debt overhang which are eligible for special assistance from the International Monetary Fund (IMF) and the World Bank.\n\n\n== HIPC Initiative ==\nThe HIPC Initiative was initiated by the International Monetary Fund and the World Bank in 1996, following extensive lobbying by NGOs and other bodies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_figures">Significant figures</a></td>
+      <td>Significant figures (also known as the significant digits, precision or resolution) of a number in positional notation are digits in the number that are reliable and necessary to indicate the quantity of something.\nIf a number expressing the result of a measurement (e.g., length, pressure, volume, or mass) has more digits than the number of digits allowed by the measurement resolution, then only as many digits as allowed by the measurement resolution are reliable, and so only these can be significant figures.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_other">Significant other</a></td>
+      <td>The term significant other (SO) has different uses in psychology and in colloquial language. Colloquially "significant other" is used as a gender-neutral term for a person's partner in an intimate relationship without disclosing or presuming anything about marital status, relationship status, gender identity, or sexual orientation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bit_numbering">Bit numbering</a></td>
+      <td>In computing, bit numbering is the convention used to identify the bit positions in a binary number.\n\n\n== Bit significance and indexing ==\n\nIn computing, the least significant bit (LSB) is the bit position in a binary integer representing the binary 1s place of the integer.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Significant_form">Significant form</a></td>
+      <td>Significant form refers to an aesthetic theory developed by English art critic Clive Bell which specified a set of criteria for what qualified as a work of art.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Statistical_significance">Statistical significance</a></td>
+      <td>In statistical hypothesis testing, a result has statistical significance when it is very unlikely to have occurred given the null hypothesis. More precisely, a study's defined significance level, denoted by \n  \n    \n      \n        α\n      \n    \n    {\displaystyle \alpha }\n  , is the probability of the study rejecting the null hypothesis, given that the null hypothesis is true; and the p-value of a result, \n  \n    \n      \n        p\n      \n    \n    {\displaystyle p}\n  , is the probability of obtaining a result at least as extreme, given that the null hypothesis is true.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Knowledge_acquisition">Knowledge acquisition</a></td>
+      <td>Knowledge acquisition is the process used to define the rules and ontologies required for a knowledge-based system. The phrase was first used in conjunction with expert systems to describe the initial tasks associated with developing an expert system, namely finding and interviewing domain experts and capturing their knowledge via rules, objects, and frame-based ontologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_mergers_and_acquisitions_by_Alphabet">List of mergers and acquisitions by Alphabet</a></td>
+      <td>Google is a computer software and a web search engine company that acquired, on average, more than one company per week in 2010 and 2011. The table below is an incomplete list of acquisitions, with each acquisition listed being for the respective company in its entirety, unless otherwise specified.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Ben_Ashkenazy">Ben Ashkenazy</a></td>
+      <td>Ben Ashkenazy (born 1968/69) is an American billionaire real estate developer. He is the founder, CEO, and majority owner of Ashkenazy Acquisition Corporation, which has a $12 billion property portfolio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Formula_One_regulations">Formula One regulations</a></td>
+      <td>The numerous Formula One regulations, made and enforced by the FIA and later the FISA, have changed dramatically since the first Formula One World Championship in 1950. This article covers the current state of F1 technical and sporting regulations, as well as the history of the technical regulations since 1950.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ROPER INDUSTRIES INC /DE/      Item 1A     Risk Factors                                              10  ITEM 1A RISK FACTORS    Risks Relating to Our Business       Our <font color="blue"><font color="blue">indebtedness</font> may affect</font> our business and <font color="blue">may restrict</font> our operating     <font color="blue">flexibility</font></td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue"><font color="blue">December </font> </font>31, 2005, we had <font color="blue">approximately</font> dlra894 million in total     <font color="blue">consolidated <font color="blue">indebtedness</font></font></td>
+    </tr>
+    <tr>
+      <td>In addition, we had <font color="blue">approximately</font> dlra315 million     <font color="blue">undrawn <font color="blue">availability</font> under</font> our <font color="blue">senior secured</font> credit <font color="blue">facility</font></td>
+    </tr>
+    <tr>
+      <td>Our total     <font color="blue">consolidated debt could increase using</font> this <font color="blue">additional borrowing capacity</font></td>
+    </tr>
+    <tr>
+      <td>Subject to certain <font color="blue">restrictions</font> contained in our <font color="blue">senior secured</font> credit     <font color="blue">facility</font> and other <font color="blue">debt agreements</font>, we <font color="blue">may incur additional <font color="blue">indebtedness</font></font> in     the future, including <font color="blue"><font color="blue">indebtedness</font> incurred</font> to finance, or which is assumed     in <font color="blue">connection with</font>, <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Our level of <font color="blue">indebtedness</font> and the <font color="blue">debt servicing costs associated with</font> that     <font color="blue">indebtedness</font> could have <font color="blue">important effects on</font> our <font color="blue">operations</font> and business     strategy</td>
+    </tr>
+    <tr>
+      <td>For example, our <font color="blue">indebtedness</font> could:       * limit our <font color="blue">flexibility</font> in planning for, or reacting to, changes in the         <font color="blue">industries</font> in which we compete;       * place us at a <font color="blue"><font color="blue">competitive disadvantage</font> relative</font> to our <font color="blue">competitors</font>, some         of which have <font color="blue">lower debt service obligations</font> and <font color="blue">greater financial</font>         <font color="blue">resources than us</font>;       * limit our ability to <font color="blue">borrow additional funds</font>;       * limit our ability to complete <font color="blue">future <font color="blue"><font color="blue">acquisition</font>s</font></font>;       * limit our ability to <font color="blue">pay dividends</font>;       * limit our ability to make <font color="blue">capital expenditures</font>; and       * increase our <font color="blue">vulnerability</font> to <font color="blue">general adverse economic</font> and industry         <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to make <font color="blue">scheduled payments</font> of principal of, to <font color="blue">pay interest on</font>,     or to refinance our <font color="blue">indebtedness</font> and to satisfy our other <font color="blue">debt obligations</font>     <font color="blue">will depend upon</font> our future operating performance, which may be <font color="blue">affected by</font>     <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>In addition, there can be no assurance that     <font color="blue">future borrowings</font> or <font color="blue">equity financing will</font> be available to us on favorable     terms for the payment or <font color="blue">refinancing</font> of our <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable     to service our <font color="blue">indebtedness</font>, our business, <font color="blue">financial condition</font> and results     of <font color="blue">operations</font> would be <font color="blue"><font color="blue">materially</font> <font color="blue">adversely affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>In addition, our <font color="blue">senior secured</font> credit <font color="blue">facility</font> contains <font color="blue">financial covenants</font>     requiring us to achieve <font color="blue">certain financial</font> and operating results and maintain     compliance  with  specified  <font color="blue">financial ratios</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to meet the     <font color="blue">financial covenants</font> or <font color="blue">requirements</font> in our <font color="blue">senior secured</font> credit <font color="blue">facility</font>     may be <font color="blue">affected by</font> events beyond our control, and we may not be able to     <font color="blue">satisfy such covenants</font> and <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>A breach of these covenants or our     inability to <font color="blue">comply with</font> the <font color="blue">financial ratios</font>, tests or other <font color="blue">restrictions</font>     contained in our <font color="blue">senior secured</font> credit <font color="blue">facility</font> could result in an event of     <font color="blue">default under</font> this <font color="blue">facility</font>, which in turn could result in an event of     <font color="blue">default under</font> the terms of our other <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>Upon the occurrence of an     event  of  default  under  our <font color="blue">senior secured</font> credit <font color="blue">facility</font>, and the     expiration of any <font color="blue">grace periods</font>, the <font color="blue">lenders could elect</font> to declare all     <font color="blue">amounts outstanding under</font> the <font color="blue">facility</font>, together with accrued interest, to     be <font color="blue">immediately due</font> and payable</td>
+    </tr>
+    <tr>
+      <td>If this were to occur, our <font color="blue">assets may</font> not be     sufficient to <font color="blue">fully repay</font> the <font color="blue">amounts due under</font> this <font color="blue">facility</font> or our other     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font>changes in <font color="blue">foreign <font color="blue">exchange rates</font> may <font color="blue">significant</font>ly harm</font> our     business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Several  </font>of  our  operating  companies  have <font color="blue">transactions</font> and balances     <font color="blue">denominated</font>  in  currencies  other than the US dollar</td>
+    </tr>
+    <tr>
+      <td>Most of these     <font color="blue">transactions</font>  and balances are <font color="blue">denominated</font> in euros, <font color="blue">Canadian </font>dollars,     <font color="blue">British  </font>pounds, Danish krone and Japanese yen</td>
+    </tr>
+    <tr>
+      <td>Sales by our operating     <font color="blue">companies whose functional currency</font> is not the US <font color="blue">dollar represented</font>     <font color="blue">approximately</font> 25prca of our total net sales for the year ended <font color="blue">December </font>31,     2005 compared to 31prca for the year ended <font color="blue">December </font>31, 2004</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Unfavorable </font>    changes in <font color="blue"><font color="blue">exchange rates</font> between</font> the US dollar and those <font color="blue">currencies could</font>     <font color="blue"><font color="blue">significant</font>ly reduce</font> our reported sales and earnings</td>
+    </tr>
+    <tr>
+      <td>At present, we do not     <font color="blue">hedge against foreign currency risks</font></td>
+    </tr>
+    <tr>
+      <td>We export a <font color="blue">significant</font> portion of our products</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Difficulties </font>associated     with the export of our <font color="blue">products could harm</font> our business</td>
+    </tr>
+    <tr>
+      <td>Sales to customers outside the US by our <font color="blue"><font color="blue">businesses</font> located</font> in the US     account for a <font color="blue">significant</font> portion of our net sales</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">sales accounted</font>     for <font color="blue">approximately</font> 16prca and 19prca of our net sales for the years ended <font color="blue"><font color="blue">December </font> </font>   31, 2005 and <font color="blue">December </font>31, 2004, respectively</td>
+    </tr>
+    <tr>
+      <td>We are subject to risks that     <font color="blue">could limit</font> our ability to export our products or <font color="blue">otherwise reduce</font> the     demand  for these products in our <font color="blue">foreign markets</font></td>
+    </tr>
+    <tr>
+      <td>Such risks include,     <font color="blue">without limitation</font>, the following:       * unfavorable  changes  in  or  <font color="blue">noncompliance</font>  with  US  and other         jurisdictions &amp;apos  export <font color="blue">requirements</font>;       * <font color="blue">restrictions</font> on the export of <font color="blue">technology</font> and related products;       * unfavorable  changes  in  or  <font color="blue">noncompliance</font>  with  US  and other         jurisdictions &amp;apos  <font color="blue">export policies</font> to <font color="blue">certain countries</font>;       * unfavorable changes in the <font color="blue">import policies</font> of our <font color="blue">foreign markets</font>; and       * a <font color="blue">general economic downturn</font> in our <font color="blue">foreign markets</font></td>
+    </tr>
+    <tr>
+      <td>The occurrence of any of these <font color="blue">events could reduce</font> the <font color="blue">foreign demand</font> for     our  products  or  <font color="blue">could limit</font> our ability to export our products and,     therefore, could <font color="blue">materially</font> <font color="blue">negatively affect</font> our <font color="blue">future sales</font> and earnings</td>
+    </tr>
+    <tr>
+      <td>Economic,  political and other <font color="blue">risks associated with</font> our <font color="blue">international</font>     <font color="blue">operations</font> could <font color="blue">adversely affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>As  of  <font color="blue">December </font>31, 2005, <font color="blue">approximately</font> 16prca of our long-lived assets,     <font color="blue">excluding goodwill</font> and <font color="blue">intangibles</font> were <font color="blue">attributable</font> to <font color="blue">operations</font> outside     the US We expect our <font color="blue">international</font> <font color="blue">operations</font> to continue to contribute     <font color="blue">materially</font> to our business for the <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">international</font>     <font color="blue">operations</font> are subject to <font color="blue">varying degrees</font> of <font color="blue">risk inherent</font> in doing business     outside the US including, <font color="blue">without limitation</font>, the following:       * adverse  changes  in a specific country’s or region’s political or         economic <font color="blue">conditions</font>, particularly in <font color="blue">emerging markets</font>;       * <font color="blue">trade protection measures</font> and import or export <font color="blue">requirements</font>;       * <font color="blue">trade liberalization measures <font color="blue">which could</font> expose</font> our <font color="blue">international</font>         <font color="blue">operations</font> to <font color="blue">increased competition</font>;       * subsidies or <font color="blue">increased access</font> to capital for firms who are currently, or         may emerge, as <font color="blue">competitors</font> in countries in which we have <font color="blue">operations</font>;       * partial or <font color="blue">total expropriation</font>;       * <font color="blue"><font color="blue">potentially</font> negative consequences from</font> changes in tax laws;       * <font color="blue">difficulty</font> in staffing and managing widespread <font color="blue">operations</font>;       * <font color="blue">differing labor <font color="blue">regulations</font></font>;       * <font color="blue">differing protection</font> of <font color="blue">intellectual property</font>;       * unexpected changes in regulatory <font color="blue">requirements</font>;       * <font color="blue">longer payment cycles</font> of <font color="blue">foreign customers</font> and <font color="blue">difficulty</font> in collecting         <font color="blue">receivables</font> in <font color="blue">foreign jurisdictions</font>; and       * <font color="blue">international</font> sentiment towards the US       The occurrence of any of these events could <font color="blue">materially</font> harm our business</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">growth strategy</font> includes <font color="blue"><font color="blue">acquisition</font>s</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to identify     suitable  <font color="blue">acquisition</font>  <font color="blue">candidates</font>,  complete <font color="blue"><font color="blue">acquisition</font>s</font> or integrate     <font color="blue"><font color="blue">acquisition</font>s</font> <font color="blue">successfully</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">historical growth</font> has depended, and our <font color="blue">future growth</font> is likely to     continue to depend, to some <font color="blue">degree on</font> our ability to make <font color="blue"><font color="blue">acquisition</font>s</font> and     to <font color="blue"><font color="blue">successfully</font> integrate</font> acquired <font color="blue">businesses</font></td>
+    </tr>
+    <tr>
+      <td>We intend to continue to seek     additional <font color="blue">acquisition</font> opportunities both to <font color="blue">expand into new markets</font> and to     enhance our position in <font color="blue">existing markets globally</font></td>
+    </tr>
+    <tr>
+      <td>There are <font color="blue">no assurances</font>,     however, that we will be able to <font color="blue">successfully</font> identify suitable <font color="blue">candidates</font>,     negotiate appropriate <font color="blue">acquisition</font> terms, obtain <font color="blue">necessary financing on</font>     acceptable terms, complete proposed <font color="blue"><font color="blue">acquisition</font>s</font>, <font color="blue"><font color="blue">successfully</font> integrate</font>     acquired <font color="blue">businesses</font> into our existing <font color="blue">operations</font> or <font color="blue">expand into new markets</font></td>
+    </tr>
+    <tr>
+      <td>Once integrated, acquired <font color="blue">operations</font> may not achieve levels of revenues,     <font color="blue">profitability</font> or <font color="blue">productivity comparable with</font> those achieved by our existing     <font color="blue">operations</font>, or otherwise perform as expected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Acquisitions  </font>involve  numerous  risks,  including <font color="blue">difficulties</font> in the     <font color="blue">integration</font> of the <font color="blue">operations</font>, technologies, services and products of the     acquired companies and the diversion of management’s attention from other     business concerns</td>
+    </tr>
+    <tr>
+      <td>Although our <font color="blue">management will endeavor</font> to evaluate the     <font color="blue">risks inherent</font> in any particular transaction, there are <font color="blue">no assurances</font> that     we <font color="blue">will properly ascertain</font> all such risks</td>
+    </tr>
+    <tr>
+      <td>In addition, prior <font color="blue"><font color="blue">acquisition</font>s</font>     have resulted, and <font color="blue">future <font color="blue"><font color="blue">acquisition</font>s</font></font> could result, in the incurrence of     substantial additional <font color="blue">indebtedness</font> and other expenses</td>
+    </tr>
+    <tr>
+      <td>Future <font color="blue"><font color="blue">acquisition</font>s</font>     may also result in <font color="blue"><font color="blue">potentially</font> dilutive issuances</font> of <font color="blue">equity securities</font></td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot assure</font> you that <font color="blue">difficulties</font> encountered with <font color="blue"><font color="blue">acquisition</font>s</font> will not     have a material adverse effect on our business, <font color="blue">financial condition</font> and     results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Product <font color="blue">liability</font>, insurance risks and <font color="blue">increased <font color="blue">insurance costs could</font> harm</font>     our operating results</td>
+    </tr>
+    <tr>
+      <td>Our  business <font color="blue">exposes us</font> to <font color="blue">potential <font color="blue">product <font color="blue">liability</font></font> risks</font> that are     inherent in the design, manufacturing and <font color="blue">distribution</font> of our products</td>
+    </tr>
+    <tr>
+      <td>In     addition,  certain  of  our products are used in <font color="blue"><font color="blue">potentially</font> <font color="blue">hazardous</font></font>     <font color="blue">environments</font></td>
+    </tr>
+    <tr>
+      <td>We currently have <font color="blue">product <font color="blue">liability</font></font> insurance; however, we may     not be able to maintain our <font color="blue">insurance at</font> a <font color="blue">reasonable cost</font> or in sufficient     amounts to <font color="blue">protect us against potential losses</font></td>
+    </tr>
+    <tr>
+      <td>We also maintain other     <font color="blue">insurance policies</font>, including <font color="blue">directors</font> and officers’ <font color="blue">liability</font> insurance</td>
+    </tr>
+    <tr>
+      <td>Our insurance costs increased in <font color="blue">recent periods</font> and <font color="blue">may continue</font> to increase     in the future</td>
+    </tr>
+    <tr>
+      <td>We believe that we have <font color="blue">adequately accrued</font> estimated losses,     <font color="blue">principally</font> related to <font color="blue">deductible amounts under</font> our <font color="blue">insurance policies</font>, with     respect to all <font color="blue">product <font color="blue">liability</font></font> and other claims, <font color="blue">based upon</font> our past     experience and <font color="blue">available facts</font></td>
+    </tr>
+    <tr>
+      <td>However, a successful <font color="blue">product <font color="blue">liability</font></font> or     other claim or series of claims brought against us could have a material     adverse  effect  on  our  business, <font color="blue">financial condition</font> and results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a <font color="blue">significant</font> increase in our <font color="blue">insurance costs could</font>     have an <font color="blue">adverse impact on</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>Our operating results could be adversely <font color="blue">affected by</font> a reduction of business     with our large customers</td>
+    </tr>
+    <tr>
+      <td>We derive a <font color="blue">significant</font> amount of <font color="blue">revenue from larger customers</font></td>
+    </tr>
+    <tr>
+      <td>The loss or     reduction of any <font color="blue">significant</font> contracts with any of these <font color="blue">customers could</font>     <font color="blue">materially</font> reduce our revenue and <font color="blue">cash flows</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, many of our     customers are <font color="blue">government entities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Government </font>entities can <font color="blue">unilaterally</font>     terminate or modify our <font color="blue">existing contracts without</font> cause and <font color="blue">without penalty</font>     to the <font color="blue">government agency</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face intense competition</font></td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">compete effectively</font>, our business     may suffer</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face intense competition</font> from numerous <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">products compete</font>     primarily  on  the  basis of product quality, performance, innovation,     <font color="blue">technology</font>, price, applications expertise, system and service <font color="blue">flexibility</font>     and established customer service cap<font color="blue">abilities</font> with existing customers</td>
+    </tr>
+    <tr>
+      <td>We     may not be able to <font color="blue">compete effectively</font> on all of these fronts or with all of     our <font color="blue">competitors</font></td>
+    </tr>
+    <tr>
+      <td>In addition, new <font color="blue">competitors</font> may emerge, and <font color="blue">product lines</font>     may be <font color="blue">threatened by <font color="blue">new technologies</font></font> or <font color="blue">market trends</font> that reduce the value     of these <font color="blue">product lines</font></td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">remain competitive</font>, we must develop <font color="blue">new products</font>,     respond to <font color="blue">new technologies</font> and <font color="blue">periodically enhance</font> our <font color="blue">existing products</font>     in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>We anticipate that we may have to <font color="blue">adjust prices</font> of many     of our products to <font color="blue">stay competitive</font></td>
+    </tr>
+    <tr>
+      <td>Changes in the supply of, or price for, parts and <font color="blue"><font color="blue">components</font> used</font> in our     <font color="blue">products could affect</font> our business</td>
+    </tr>
+    <tr>
+      <td>We purchase many parts and <font color="blue"><font color="blue">components</font> from suppliers</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">availability</font> and     prices of parts and <font color="blue">components</font> are subject to <font color="blue">curtailment</font> or change due to,     among  other  things,  suppliers’  <font color="blue">allocations</font>  to  other  purchasers,     <font color="blue">interruptions</font> in <font color="blue">production by suppliers</font>, changes in <font color="blue">exchange rates</font> and     prevailing  <font color="blue">price levels</font></td>
+    </tr>
+    <tr>
+      <td>Some high-performance <font color="blue">components</font> for digital     <font color="blue">imaging products may</font> be in short supply and/or suppliers may have <font color="blue">occasional</font>     <font color="blue">difficulty</font> manufacturing these <font color="blue">components</font> to meet our <font color="blue">specifications</font></td>
+    </tr>
+    <tr>
+      <td>In     addition, some of our products are <font color="blue">provided by sole source suppliers</font></td>
+    </tr>
+    <tr>
+      <td>Any     change in the supply of, or price for, these parts and <font color="blue">components</font> could     affect our business, <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental </font><font color="blue">compliance costs</font> and <font color="blue"><font color="blue">li<font color="blue">abilities</font></font> could increase</font> our expenses     and <font color="blue">adversely affect</font> our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">operations</font> and properties are subject to <font color="blue">increasingly stringent laws</font> and     <font color="blue">regulations</font>  relating  to <font color="blue">environmental protection</font>, including laws and     <font color="blue">regulations</font> governing air emissions, water discharges, <font color="blue">waste management</font> and     <font color="blue">workplace safety</font></td>
+    </tr>
+    <tr>
+      <td>These laws and <font color="blue">regulations</font> can result in the imposition of     substantial  fines  and sanctions for violations and could require the     <font color="blue">installation</font> of <font color="blue">costly pollution control equipment</font> or operational changes to     limit pollution emissions and/or decrease the likelihood of <font color="blue">accidental</font>     <font color="blue">hazardous</font> substance releases</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">must conform</font> our <font color="blue">operations</font> and properties     to these laws and adapt to regulatory <font color="blue">requirements</font> in the countries in which     we operate as these <font color="blue">requirements</font> change</td>
+    </tr>
+    <tr>
+      <td>We use and generate <font color="blue">hazardous</font> substances and wastes in our <font color="blue">operations</font> and,     as a result, could be subject to <font color="blue">potentially</font> material <font color="blue">li<font color="blue">abilities</font></font> relating     to the <font color="blue">investigation</font> and clean-up of <font color="blue">contaminated properties</font> and to claims     alleging <font color="blue">personal injury</font></td>
+    </tr>
+    <tr>
+      <td>We have experienced, and expect to continue to     experience,  costs  relating to <font color="blue">compliance with environmental laws</font> and     <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font> our <font color="blue"><font color="blue">acquisition</font>s</font>, we may assume <font color="blue">significant</font>     environmental <font color="blue">li<font color="blue">abilities</font></font>, some of which we may not be aware of at the time     of <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>In addition, new laws and <font color="blue">regulations</font>, stricter enforcement     of  <font color="blue">existing laws</font> and <font color="blue">regulations</font>, the <font color="blue">discovery</font> of <font color="blue">previously unknown</font>     <font color="blue">contamination</font> or the imposition of new clean-up <font color="blue">requirements</font> could require     us to <font color="blue">incur costs</font> or become the basis for new or increased <font color="blue">li<font color="blue">abilities</font></font> that     could have a material adverse effect on our business, <font color="blue">financial condition</font>     and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Some of the <font color="blue">industries</font> in which we operate are cyclical, and, <font color="blue">accordingly</font>,     our business is subject to changes in the economy</td>
+    </tr>
+    <tr>
+      <td>Some of the business areas in which we operate are subject to specific     industry and <font color="blue">general economic cycles</font></td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">businesses</font> are subject to     industry  cycles,  including  but  not  limited to, the industrial and     <font color="blue">semiconductor markets</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, any downturn in these or other markets     in which we participate could <font color="blue">materially</font> <font color="blue">adversely affect</font> us</td>
+    </tr>
+    <tr>
+      <td>If demand     changes and we fail to respond <font color="blue">accordingly</font>, our results of <font color="blue">operations</font> could     be <font color="blue"><font color="blue">materially</font> <font color="blue">adversely affect</font>ed</font> in any <font color="blue">given quarter</font></td>
+    </tr>
+    <tr>
+      <td>The business cycles     of our different <font color="blue">operations</font> may occur <font color="blue">contemporaneously</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, the     effect of an <font color="blue">economic downturn may</font> have a <font color="blue">magnified negative</font> effect on our     business</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">intangible assets</font> are valued at an amount that is <font color="blue">high relative</font> to our     <font color="blue">total assets</font>, and a write-off of our <font color="blue">intangible assets</font> would negatively     affect our results of <font color="blue">operations</font> and <font color="blue">total capitalization</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">total assets</font> reflect substantial <font color="blue">intangible assets</font>, primarily goodwill</td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, goodwill totaled <font color="blue">approximately</font> dlra1dtta35 billion compared     to  <font color="blue">approximately</font>  dlra1dtta25  billion  of  stockholders’ equity, which was     <font color="blue">approximately</font> 54prca of our <font color="blue">total assets</font> of <font color="blue">approximately</font> dlra2dtta52 billion</td>
+    </tr>
+    <tr>
+      <td>The     goodwill results from our <font color="blue"><font color="blue">acquisition</font>s</font>, representing the excess of cost over     the  <font color="blue">fair value</font> of the net assets we have acquired</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">assess at least</font>     annually whether there has been an <font color="blue">impairment</font> in the value of our intangible     assets</td>
+    </tr>
+    <tr>
+      <td>If future operating <font color="blue">performance at one</font> or more of our business units     were to fall <font color="blue">significant</font>ly below <font color="blue">current levels</font>, if competing or <font color="blue">alternative</font>     <font color="blue">technologies emerge</font> or if business <font color="blue">valuations become</font> more <font color="blue">conservative</font>, we     could incur, under current applicable accounting rules, a non-cash charge to     operating earnings for goodwill <font color="blue">impairment</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">determination</font> requiring the     write-off of a <font color="blue">significant</font> portion of unamortized <font color="blue">intangible assets</font> would     <font color="blue">negatively affect</font> our results of <font color="blue">operations</font> and <font color="blue">total capitalization</font>, the     effect of <font color="blue">which could</font> be material</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend on</font> our <font color="blue">abilities</font> to develop <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">future success</font> of our business will depend, in part, on our ability to     design and <font color="blue">manufacture new competitive products</font> and to <font color="blue">enhance existing</font>     products so that our products can be <font color="blue">sold with high margins</font></td>
+    </tr>
+    <tr>
+      <td>This product     <font color="blue">development</font>  may require substantial <font color="blue">investment by us</font></td>
+    </tr>
+    <tr>
+      <td>There can be no     assurance  that <font color="blue">unforeseen problems will</font> not occur <font color="blue">with respect</font> to the     <font color="blue">development</font>,  performance  or <font color="blue">market <font color="blue">acceptance</font></font> of <font color="blue">new technologies</font> or     products or that we <font color="blue">will otherwise</font> be able to <font color="blue">successfully</font> develop and     market <font color="blue">new products</font></td>
+    </tr>
+    <tr>
+      <td>Failure of our products to gain <font color="blue">market <font color="blue">acceptance</font></font> or     our failure to <font color="blue">successfully</font> develop and market <font color="blue">new products</font> could reduce our     margins, which would have an adverse effect on our business, financial     condition and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">technology</font> is important to our success and our failure to protect this     <font color="blue">technology</font> could put us at a <font color="blue">competitive disadvantage</font></td>
+    </tr>
+    <tr>
+      <td>Because many of our products rely on proprietary <font color="blue">technology</font>, we believe that     the <font color="blue">development</font> and protection of <font color="blue">intellectual property</font> rights through     patents, copyrights, trade secrets, trademarks, confidentiality agreements     and other <font color="blue">contractual provisions</font> is important to the <font color="blue">future success</font> of our     business</td>
+    </tr>
+    <tr>
+      <td>Despite our efforts to protect proprietary rights, unauthorized     parties or <font color="blue">competitors</font> may copy or otherwise obtain and use our products or     <font color="blue">technology</font></td>
+    </tr>
+    <tr>
+      <td>The steps we have taken may not <font color="blue">prevent unauthorized use</font> of our     <font color="blue">technology</font>, particularly in <font color="blue">foreign countries</font> where the laws may not protect     our <font color="blue">proprietary rights as fully as</font> in the US Current and future actions to     enforce  these rights may result in substantial costs and diversion of     resources  and  we  make  no  assurances that any such actions will be     successful</td>
+    </tr>
+    <tr>
+      <td>Any business <font color="blue">disruptions due</font> to political instability, armed hostilities,     <font color="blue">incidents</font> of terrorism or natural <font color="blue">disasters</font> couldadversely     impact our <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>If terrorist activity, armed conflict, political instability or natural     <font color="blue">disasters</font> occur in the US or other locations, such events may negatively     impact our <font color="blue">operations</font>, cause general economic <font color="blue">conditions</font> in the US and     abroad  to <font color="blue">deteriorate</font> or cause world-wide demand for US products to     decline</td>
+    </tr>
+    <tr>
+      <td>A <font color="blue">prolonged economic slowdown</font> or recession in the US or in other     areas of the <font color="blue">world could reduce</font> the demand for our products, and therefore,     <font color="blue">negatively affect</font> our <font color="blue">future sales</font> and profits</td>
+    </tr>
+    <tr>
+      <td>Any of these events could     have a <font color="blue">significant</font> impact on our business, <font color="blue">financial condition</font> or results of     <font color="blue">operations</font> and may result in the <font color="blue">volatility</font> of the <font color="blue">market price</font> of our     <font color="blue">common stock</font></td>
+    </tr>
+  </tbody>
+</table>

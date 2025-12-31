@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "3: risks actually", fill: "#e0115f"},
+{source: "3: risks actually", target: "3: financial condition", fill: "#e0115f"},
+{source: "3: financial condition", target: "3: operations will likely suffer", fill: "#e0115f"},
+{source: "3: risks actually", target: "5: thirdparty reimbursements", fill: "#98777b"},
+{source: "5: thirdparty reimbursements", target: "5: diagnostic", fill: "#98777b"},
+{source: "5: diagnostic", target: "5: imaging services could", fill: "#98777b"},
+{source: "5: imaging services could", target: "5: reduced demand", fill: "#98777b"},
+{source: "5: reduced demand", target: "5: downward pricing pressure which would", fill: "#98777b"},
+{source: "5: downward pricing pressure which would", target: "5: financial position", fill: "#98777b"},
+{source: "5: thirdparty reimbursements", target: "59: weather conditions", fill: "#8e4585"},
+{source: "59: weather conditions", target: "59: adversely impact", fill: "#8e4585"},
+{source: "59: adversely impact", target: "59: operations", fill: "#8e4585"},
+{source: "59: weather conditions", target: "140: arrangements described", fill: "#f0f"},
+{source: "140: arrangements described", target: "140: of the KKR ", fill: "#f0f"},
+{source: "140: of the KKR ", target: "140: controls us", fill: "#f0f"},
+{source: "140: controls us", target: "140: directors appoint new management", fill: "#f0f"},
+{source: "140: directors appoint new management", target: "140: common stock", fill: "#f0f"},
+{source: "140: common stock", target: "140: adopting amendments", fill: "#f0f"},
+{source: "140: adopting amendments", target: "140: certificate", fill: "#f0f"},
+{source: "140: certificate", target: "140: incorporation", fill: "#f0f"},
+{source: "140: incorporation", target: "140: approving mergers consolidations", fill: "#f0f"},
+{source: "140: approving mergers consolidations", target: "140: substantially", fill: "#f0f"},
+{source: "140: arrangements described", target: "151: could incur significant costs", fill: "#009000"},
+{source: "151: could incur significant costs", target: "151: managements", fill: "#009000"},
+{source: "151: managements", target: "151: with current", fill: "#009000"},
+{source: "151: with current", target: "151: environmental health", fill: "#009000"},
+{source: "151: environmental health", target: "151: safety laws", fill: "#009000"},
+{source: "151: safety laws", target: "151: regulations", fill: "#009000"},
+{source: "151: could incur significant costs", target: "START_HERE", fill: "#009000"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Health Care Supplies</td>
+    </tr>
+    <tr>
+      <td>Health Care</td>
+    </tr>
+    <tr>
+      <td>Health Care Equipment and Services</td>
+    </tr>
+    <tr>
+      <td>Managed Health Care</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Automobile Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Motorcycle Manufacturers</td>
+    </tr>
+    <tr>
+      <td>Commercial and Professional Services</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Diversified Financial Services</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Crime</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Leadership</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Force</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Consult</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Natural disaster</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Propose</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Accident</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Collaborate</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_analysis">Financial analysis</a></td>
+      <td>Financial analysis (also referred to as financial statement analysis or accounting analysis or Analysis of finance) refers to an assessment of the viability, stability, and profitability of a business, sub-business or project. \nIt is performed by professionals who prepare reports using ratios and other techniques, that make use of information taken from financial statements and other reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medical_imaging">Medical imaging</a></td>
+      <td>Medical imaging is the technique and process of imaging the interior of a body for clinical analysis and medical intervention, as well as visual representation of the function of some organs or tissues (physiology). Medical imaging seeks to reveal internal structures hidden by the skin and bones, as well as to diagnose and treat disease.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_operations">Special operations</a></td>
+      <td>Special operations (S.O.) are military activities conducted, according to NATO, by "specially designated, organized, selected, trained, and equipped forces using unconventional techniques and modes of employment". Special operations may include reconnaissance, unconventional warfare, and counter-terrorism actions, and are typically conducted by small groups of highly-trained personnel, emphasizing sufficiency, stealth, speed, and tactical coordination, commonly known as "special forces".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Certificate_authority">Certificate authority</a></td>
+      <td>In cryptography, a certificate authority or certification authority (CA) is an entity that stores, signs, and issues digital certificates.  A digital certificate certifies the ownership of a public key by the named subject of the certificate.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Certification">Certification</a></td>
+      <td>Certification is the provision by an independent body of written assurance (a certificate) that the product, service or system in question meets specific requirements. It is the formal attestation or confirmation of certain characteristics of an object, person, or organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_key_certificate">Public key certificate</a></td>
+      <td>In cryptography, a public key certificate, also known as a digital certificate or identity certificate, is an electronic document used to prove the validity of a public key. The certificate includes information about the key, information about the identity of its owner (called the subject), and the digital signature of an entity that has verified the certificate's contents (called the issuer).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/RIAA_certification">RIAA certification</a></td>
+      <td>In the United States, the Recording Industry Association of America (RIAA) awards certification based on the number of albums and singles sold through retail and other ancillary markets. Other countries have similar awards (see music recording certification).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Airworthiness_certificate">Airworthiness certificate</a></td>
+      <td>A standard certificate of airworthiness is a permit for commercial passenger or cargo  operation, issued for an aircraft by the civil aviation authority in the state/nation in which the aircraft is registered. For other aircraft such as crop-sprayers, a Special Airworthiness Certificate (not for commercial passenger or cargo operations) must be issued.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Green_certificate">Green certificate</a></td>
+      <td>A green certificate are a tradable commodity proving that certain electricity is generated using renewable energy sources. Typically one certificate represents the generation of one Megawatthour of electricity.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Professional_certification">Professional certification</a></td>
+      <td>Professional certification, trade certification, or professional designation, often called simply certification or qualification, is a designation earned by a person to assure qualification to perform a job or task. Not all certifications that use post-nominal letters are an acknowledgement of educational achievement, or an agency appointed to safeguard the public interest.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Root_certificate">Root certificate</a></td>
+      <td>In cryptography and computer security, a root certificate is a public key certificate that identifies a root certificate authority (CA). Root certificates are self-signed (and it is possible for a certificate to have multiple trust paths, say if the certificate was issued by a root that was cross-signed) and form the basis of an X.509-based public key infrastructure (PKI).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Certificate_"A"">Certificate "A"</a></td>
+      <td>Hypertext Transfer Protocol Secure (HTTPS) is an extension of the Hypertext Transfer Protocol (HTTP). It is used for secure communication over a computer network, and is widely used on the Internet.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation">Regulation</a></td>
+      <td>Regulation is the management of complex systems according to a set of rules and trends. In systems theory, these types of rules exist in various fields of biology and society, but the term has slightly different meanings according to context.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_A">Regulation A</a></td>
+      <td>In the United States under the Securities Act of 1933, any offer to sell securities must either be registered with the United States Securities and Exchange Commission (SEC) or meet certain qualifications to exempt it from such registration. Regulation A (or Reg A) contains rules providing exemptions from the registration requirements, allowing some companies to use equity crowdfunding to offer and sell their securities without having to register the securities with the SEC. Regulation A offerings are intended to make access to capital possible for small and medium-sized companies that could not otherwise bear the costs of a normal SEC registration and to allow nonaccredited investors to participate in the offering.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_(European_Union)">Regulation (European Union)</a></td>
+      <td>A regulation is a legal act of the European Union that becomes immediately enforceable as law in all member states simultaneously. Regulations can be distinguished from directives which, at least in principle, need to be transposed into national law.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Regulation_of_therapeutic_goods">Regulation of therapeutic goods</a></td>
+      <td>The regulation of therapeutic goods, defined as drugs and therapeutic devices, varies by jurisdiction. In some countries, such as the United States, they are regulated at the national level by a single agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Radio_regulation">Radio regulation</a></td>
+      <td>Radio regulation refers to the regulation and licensing of radio in international law, by individual governments, and by municipalities.\n\n\n== International regulation ==\nThe International Telecommunication Union (ITU) is a specialized agency of the United Nations (UN) that is responsible for issues that concern information and communication technologies.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Vehicle_emission_standard">Vehicle emission standard</a></td>
+      <td>Emission standards  are the legal requirements governing air pollutants released into the atmosphere. Emission standards set quantitative limits on the permissible amount of specific air pollutants that may be released from specific sources over specific timeframes.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>ALLIANCE IMAGING INC /DE/      Item 1A                <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>You <font color="blue">should carefully</font> consider the <font color="blue">risks described</font> below before investing in     our publicly-traded securities</td>
+    </tr>
+    <tr>
+      <td>If any of these <font color="blue">risks actually</font> occurs, our     business, <font color="blue">financial condition</font> or results of <font color="blue"><font color="blue">operations</font> will likely suffer</font></td>
+    </tr>
+    <tr>
+      <td>In that event, the <font color="blue">trading price</font> of our <font color="blue"><font color="blue">common stock</font> could decline</font>, and you     may lose all or part of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>17     ______________________________________________________________________       Risks Related to Our Business and Our Common Stock       Changes in the rates or methods of third-party <font color="blue">reimbursement</font>s for <font color="blue">diagnostic</font>     <font color="blue"><font color="blue">imaging services</font> could</font> result in <font color="blue">reduced demand</font> for our services or create     downward pricing pressure, <font color="blue">which would</font> result in a decline in our revenues     and harm to our <font color="blue">financial position</font></td>
+    </tr>
+    <tr>
+      <td>We derive approximately 13prca of our revenues from direct billings to patients     and  third-party  payors  such as Medicare, Medicaid or private health     insurance companies, and changes in the rates or methods of <font color="blue">reimbursement</font>     for the services we <font color="blue">provide could</font> have a <font color="blue"><font color="blue">significant</font> negative impact on</font>     those revenues</td>
+    </tr>
+    <tr>
+      <td>Moreover, our <font color="blue">healthcare provider clients on whom</font> we depend     for  the majority of our revenues generally rely on <font color="blue">reimbursement</font> from     third-party payors</td>
+    </tr>
+    <tr>
+      <td>From time to time, <font color="blue">initiatives</font> have <font color="blue">been proposed which</font>,     if  implemented, would have had the effect of <font color="blue"><font color="blue">substantially</font> decreasing</font>     <font color="blue">reimbursement</font> rates for <font color="blue">diagnostic</font> <font color="blue">imaging services</font></td>
+    </tr>
+    <tr>
+      <td>For example, on <font color="blue">February </font>8, 2006, the <font color="blue">Deficit Reduction Act </font>of 2005 (“DRA”)     was <font color="blue">signed into law by</font> <font color="blue">President George W Bush</font></td>
+    </tr>
+    <tr>
+      <td>The DRA <font color="blue">imposes caps on</font>     Medicare <font color="blue">payment rates</font> for <font color="blue">certain <font color="blue">imaging services</font></font>, including MRI and PET,     furnished in physician’s offices and other non-hospital based settings</td>
+    </tr>
+    <tr>
+      <td>This change is to     apply to <font color="blue">services furnished on</font> or after January 1, 2007</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">limitation</font> is     applicable to the technical component of the services only (which is the     payment we receive for the services for which we <font color="blue">bill directly under</font> the     <font color="blue">Medicare Physician Fee Schedule</font>)</td>
+    </tr>
+    <tr>
+      <td>If the technical component of the service     <font color="blue">established under</font> the Physician Fee Schedule (without including geographic     adjustments) exceeds the <font color="blue">hospital outpatient payment amount</font> for the service     (<font color="blue">also without</font> including geographic adjustments), then the payment is to be     reduced</td>
+    </tr>
+    <tr>
+      <td>In other words, in those instances where the technical component     for the <font color="blue">particular service</font> is greater, the DRA directs that the hospital     outpatient  payment  rate  be substituted for the <font color="blue">otherwise applicable</font>     Physician  Fee  Schedule  payment  rates</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">implementation</font> of this     <font color="blue">reimbursement</font> reduction contained in the DRA will have a <font color="blue">significant</font> effect     on our <font color="blue">financial condition</font> and results of <font color="blue"><font color="blue">operations</font> beginning</font> in 2007</td>
+    </tr>
+    <tr>
+      <td>For     full year 2005, approximately 4prca of our revenue was <font color="blue">billed directly</font> to     Medicare <font color="blue">contractors</font></td>
+    </tr>
+    <tr>
+      <td>Basing our <font color="blue">calculation on</font> our 2005 revenues, if the     provisions  were in effect for 2005, we estimate that the reduction in     Medicare <font color="blue">revenue due</font> to the DRA <font color="blue">payment rate decreases would</font> have totaled     approximately dlra6dtta0 million</td>
+    </tr>
+    <tr>
+      <td>Because a <font color="blue">high percentage</font> of our expenses are     fixed,  we expect a <font color="blue">significant</font> portion of this decrease in revenue to     directly effect earnings</td>
+    </tr>
+    <tr>
+      <td>Our  revenues  <font color="blue">may fluctuate</font> or be unpredictable and this may harm our     financial results</td>
+    </tr>
+    <tr>
+      <td>The amount and timing of revenues that we <font color="blue">may derive from</font> our business will     <font color="blue">fluctuate based on</font>:       ·       <font color="blue">variations</font> in the <font color="blue">rate at which clients renew</font> their contracts;       ·        the  extent to which our mobile shared-service clients become     full-time clients;       ·       changes in the number of days of service we can <font color="blue">offer with respect</font>     to a given <font color="blue">diagnostic</font> imaging system due to <font color="blue">equipment malfunctions</font> or the     <font color="blue">seasonal factors discussed</font> below; and       ·       the mix of wholesale and <font color="blue">retail billing</font> for our services</td>
+    </tr>
+    <tr>
+      <td>In addition, we experience <font color="blue">seasonality</font> in the sale of our services</td>
+    </tr>
+    <tr>
+      <td>For     example, our <font color="blue">revenues typically decline from</font> our <font color="blue">third fiscal quarter</font> to our     <font color="blue">fourth fiscal quarter</font></td>
+    </tr>
+    <tr>
+      <td>First <font color="blue">quarter revenue</font> is     <font color="blue">affected primarily by fewer calendar days</font> and <font color="blue">inclement weather</font>, the results     of which are <font color="blue">fewer patient scans during</font> the period</td>
+    </tr>
+    <tr>
+      <td>Fourth <font color="blue">quarter revenue</font>     is <font color="blue">affected primarily by holiday</font> and client and <font color="blue">patient vacation schedules</font>     and <font color="blue">inclement weather</font>, the results of which are <font color="blue">fewer patient scans during</font>     the period</td>
+    </tr>
+    <tr>
+      <td>As a result, our revenues may <font color="blue">significant</font>ly vary from quarter to     quarter, and our quarterly results may be below market <font color="blue">expectations</font></td>
+    </tr>
+    <tr>
+      <td>We may     not be able to reduce our expenses, including our <font color="blue"><font color="blue">debt service</font> <font color="blue">obligations</font></font>,     <font color="blue">quickly enough</font> to       18     ______________________________________________________________________       respond  to  these  declines in revenue, <font color="blue">which would</font> make our business     <font color="blue">difficult</font> to operate and would harm our financial results</td>
+    </tr>
+    <tr>
+      <td>If this happens,     the price of our <font color="blue"><font color="blue">common stock</font> may decline</font></td>
+    </tr>
+    <tr>
+      <td>We may experience <font color="blue"><font color="blue">competition</font> from</font> other medical <font color="blue">diagnostic</font> companies and     <font color="blue">equipment <font color="blue">manufacturers</font></font> and this <font color="blue"><font color="blue">competition</font> could <font color="blue">adversely</font> affect</font> our     revenues and our business</td>
+    </tr>
+    <tr>
+      <td>The market for <font color="blue">diagnostic</font> <font color="blue">imaging services</font> and systems is <font color="blue">competitive</font></td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">major <font color="blue">competitors</font></font> include InSight Health Services Corp, Medquest, Inc,     Radiologix, Inc, Medical Resources, Inc, Shared Medical Services, Kings     Medical Company Inc</td>
+    </tr>
+    <tr>
+      <td>and <font color="blue">Otter Tail Power Company</font></td>
+    </tr>
+    <tr>
+      <td>In addition to direct     <font color="blue"><font color="blue">competition</font> from</font> other <font color="blue">mobile providers</font>, we <font color="blue">compete with <font color="blue">independent</font> imaging</font>     centers and referring physicians with <font color="blue">diagnostic</font> <font color="blue">imaging systems</font> in their     own offices, as well as with original <font color="blue">equipment <font color="blue">manufacturers</font></font>, or OEM’s,     that <font color="blue">aggressively sell</font> or <font color="blue">lease <font color="blue">imaging systems</font></font> to <font color="blue">health<font color="blue">care providers</font></font> for     full-time installation</td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">recent years</font> we have seen an increase in activity     by OEM’s <font color="blue">selling systems directly</font> to certain of our clients</td>
+    </tr>
+    <tr>
+      <td>Typically,     OEM’s target our <font color="blue"><font color="blue">higher scan volume</font> clients</font></td>
+    </tr>
+    <tr>
+      <td>This increase in <font color="blue">activity by</font>     OEM’s has resulted in <font color="blue">overcapacity</font> of systems in the marketplace, especially     related to <font color="blue">medical groups adding <font color="blue">imaging capacity</font> within</font> their practice     setting</td>
+    </tr>
+    <tr>
+      <td>This has caused an increase in the number of our <font color="blue">higher scan volume</font>     <font color="blue">clients deciding</font> not to renew their contracts</td>
+    </tr>
+    <tr>
+      <td>During 2005, our     MRI <font color="blue">revenues <font color="blue">modestly decline</font>d compared</font> to 2004 levels and we believe that     MRI <font color="blue">revenues will continue</font> to <font color="blue">modestly decline</font> in <font color="blue">future years</font></td>
+    </tr>
+    <tr>
+      <td>While we believe that we had a greater number of <font color="blue">diagnostic</font> <font color="blue">imaging systems</font>     <font color="blue">deployed at</font> the end of 2005 than our <font color="blue">principal <font color="blue">competitors</font></font> and also had     greater revenue from <font color="blue">diagnostic</font> <font color="blue">imaging services</font> during our 2005 fiscal year     than they did, some of our direct <font color="blue">competitors</font> which provide <font color="blue">diagnostic</font>     <font color="blue"><font color="blue">imaging services</font> may</font> now or in the future have access to <font color="blue">greater financial</font>     <font color="blue">resources than</font> we do and may have access to newer, more <font color="blue">advanced equipment</font></td>
+    </tr>
+    <tr>
+      <td>In  addition, some clients have in the past elected to <font color="blue">provide imaging</font>     services to their <font color="blue">patients directly rather than renewing</font> their contracts     with  us</td>
+    </tr>
+    <tr>
+      <td>Finally,  we  face  <font color="blue"><font color="blue">competition</font> from</font> providers of competing     <font color="blue"><font color="blue">technologies</font> such as ultrasound</font> and may face <font color="blue"><font color="blue">competition</font> from</font> providers of     <font color="blue">new <font color="blue">technologies</font></font> in the future</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">successfully compete</font>,     our <font color="blue">client base would decline</font> and our business and <font color="blue">financial condition</font> would     be harmed</td>
+    </tr>
+    <tr>
+      <td>Managed care <font color="blue">organization</font>s <font color="blue">may prevent</font> <font color="blue">health<font color="blue">care providers</font></font> from using our     <font color="blue">services <font color="blue">which would</font></font> cause us to <font color="blue">lose current</font> and <font color="blue">prospective clients</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Healthcare </font>providers participating as providers under <font color="blue">managed care</font> plans may     be required to refer <font color="blue">diagnostic</font> imaging tests to <font color="blue">specific imaging service</font>     <font color="blue">providers depending on</font> the plan in <font color="blue">which each covered patient</font> is enrolled</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">requirements</font> currently inhibit <font color="blue">health<font color="blue">care providers</font></font> from using our     <font color="blue">diagnostic</font> <font color="blue">imaging services</font> in some cases</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">proliferation</font> of <font color="blue">managed care</font>     <font color="blue">may prevent</font> an increasing number of <font color="blue">health<font color="blue">care providers</font></font> from using our     services in the <font color="blue">future <font color="blue">which would</font></font> cause our revenues to decline</td>
+    </tr>
+    <tr>
+      <td>We may be unable to <font color="blue">effectively</font> maintain our <font color="blue">imaging systems</font> or generate     revenue when our systems are not working</td>
+    </tr>
+    <tr>
+      <td>Timely, <font color="blue">effective service</font> is essential to maintaining our reputation and     <font color="blue">high <font color="blue">utilization</font> rates on</font> our <font color="blue">imaging systems</font></td>
+    </tr>
+    <tr>
+      <td>Our warranties and     <font color="blue">maintenance contracts</font> do not <font color="blue">fully compensate us</font> for loss of revenue when     our systems are not working</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">principal components</font> of our operating costs     include depreciation, salaries paid to <font color="blue">technologists</font> and drivers, annual     system maintenance costs, insurance and <font color="blue">transportation costs</font></td>
+    </tr>
+    <tr>
+      <td>Because the     majority of these expenses are fixed, a reduction in the number of scans     performed due to out-of-service equipment will result in <font color="blue">lower revenues</font> and     margins</td>
+    </tr>
+    <tr>
+      <td>Repairs of our equipment are performed for us by the equipment     <font color="blue">manufacturers</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">manufacturers</font> may not be able to perform repairs or     supply needed parts in a <font color="blue">timely manner</font></td>
+    </tr>
+    <tr>
+      <td>Thus, if we experience <font color="blue">greater than</font>     anticipated <font color="blue">system malfunctions</font> or if       19     ______________________________________________________________________       we are unable to promptly obtain the <font color="blue">service <font color="blue">necessary</font></font> to keep our systems     functioning <font color="blue">effectively</font>, our <font color="blue"><font color="blue">revenues could</font> decline</font> and our ability to     <font color="blue">provide services would</font> be harmed</td>
+    </tr>
+    <tr>
+      <td>Our ability to maximize the <font color="blue">utilization</font> of our <font color="blue">diagnostic</font> imaging equipment     may be <font color="blue"><font color="blue">adversely</font> impact</font>ed by harsh <font color="blue">weather <font color="blue">conditions</font></font> which may affect our     ability to <font color="blue">generate revenue</font></td>
+    </tr>
+    <tr>
+      <td>Harsh <font color="blue">weather <font color="blue">conditions</font></font> can <font color="blue"><font color="blue">adversely</font> impact</font> our <font color="blue">operations</font> and financial     condition</td>
+    </tr>
+    <tr>
+      <td>To the extent severe weather patterns affect the regions in which     we  operate, potential patients may find it <font color="blue">difficult</font> to travel to our     centers and we may have <font color="blue">difficult</font>y moving our mobile systems along their     scheduled routes</td>
+    </tr>
+    <tr>
+      <td>Our equipment <font color="blue">utilization</font>, scan volume or <font color="blue">revenues could</font>     be <font color="blue"><font color="blue">adversely</font> affected by</font> similar <font color="blue">conditions</font> in the future</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Technological  </font>change  in our <font color="blue">industry could reduce</font> the demand for our     services and require us to incur <font color="blue">significant</font> costs to upgrade our equipment</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">development</font> of <font color="blue">new <font color="blue">technologies</font></font> or <font color="blue">refinements</font> of <font color="blue">existing ones might</font>     make our <font color="blue">existing systems technologically</font> or <font color="blue">economically obsolete</font>, or     reduce the need for our systems</td>
+    </tr>
+    <tr>
+      <td>MRI, PET and PET/CT,  and other <font color="blue">diagnostic</font>     imaging  systems  are  currently  <font color="blue">manufactured</font>  <font color="blue">by numerous companies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font>among <font color="blue">manufacturers</font> for a greater share of the MRI, PET and     PET/CT and other <font color="blue">diagnostic</font> <font color="blue">imaging systems</font> market has resulted in and     <font color="blue">likely will continue</font> to result in <font color="blue">technological advances</font> in the speed and     <font color="blue">imaging capacity</font> of these <font color="blue">new systems</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, the obsolescence of our     systems may be <font color="blue">accelerated</font></td>
+    </tr>
+    <tr>
+      <td>Should new <font color="blue">technological advances</font> occur, we may     not be able to acquire the new or <font color="blue">improved systems</font></td>
+    </tr>
+    <tr>
+      <td>In the future, to the     extent we are unable to <font color="blue">generate sufficient cash from</font> our <font color="blue">operations</font> or     obtain <font color="blue"><font color="blue">additional</font> funds through bank financing</font> or the issuance of equity or     <font color="blue">debt securities</font>, we may be unable to maintain a <font color="blue">competitive</font> equipment base</td>
+    </tr>
+    <tr>
+      <td>In addition, advancing technology may enable hospitals, physicians or other     <font color="blue">diagnostic</font> service providers to perform <font color="blue">procedures without</font> the assistance of     <font color="blue">diagnostic</font> service providers such as ourselves</td>
+    </tr>
+    <tr>
+      <td>As a result, we may not be     able to maintain our <font color="blue">competitive</font> position in our targeted regions or expand     our business</td>
+    </tr>
+    <tr>
+      <td>20     ______________________________________________________________________       Natural <font color="blue"><font color="blue">disasters</font> could <font color="blue">adversely</font> affect</font> our business and <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">corporate headquarters</font> is located in <font color="blue">California </font>and we currently operate     in 44 states, located in various geographic regions across the country,     subject to varying risks for natural disaster, including but not limited to,     hurricanes, blizzards, floods, <font color="blue">earthquakes</font> and tornados</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Depending </font>upon     their severity, these <font color="blue">natural <font color="blue">disasters</font> could damage</font> our <font color="blue">facilities</font> and     <font color="blue">imaging systems</font> or <font color="blue">prevent potential patients from traveling</font> to our centers</td>
+    </tr>
+    <tr>
+      <td>Damage to our equipment or any <font color="blue">interruption</font> in our business <font color="blue">would <font color="blue">adversely</font></font>     affect  our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>While we presently carry insurance in     amounts we believe are <font color="blue">appropriate</font> in light of the risks, the amount of our     <font color="blue">insurance coverage may</font> not be sufficient to <font color="blue">cover losses from</font> these natural     <font color="blue">disasters</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">may discontinue <font color="blue">insurance on</font></font> some or all of our     <font color="blue">facilities</font> or <font color="blue">imaging systems</font> in the future if the cost of premiums for this     <font color="blue">insurance exceeds</font> the value of the <font color="blue">coverage discounted</font> for the risk of loss</td>
+    </tr>
+    <tr>
+      <td>If we experience a loss which is uninsured or <font color="blue">which exceeds policy limits</font>,     we <font color="blue">could lose</font> the <font color="blue">capital invested</font> in the damaged <font color="blue">facilities</font> or imaging     <font color="blue">systems as well as</font> the anticipated <font color="blue">future <font color="blue">cash flow</font>s from</font> those <font color="blue">facilities</font>     or <font color="blue">imaging systems</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Continued </font><font color="blue">high <font color="blue">fuel costs</font> would harm</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Fuel  costs  <font color="blue">constitute</font>  a <font color="blue">significant</font> portion of our mobile operating     expenses</td>
+    </tr>
+    <tr>
+      <td>Historically,  fuel  costs  have been subject to wide price     <font color="blue">fluctuations</font>  <font color="blue">based on geopolitical issues</font> and supply and demand</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Fuel     </font><font color="blue">availability</font>  is <font color="blue">also affected by demand</font> for home heating oil, diesel,     gasoline and other <font color="blue">petroleum products</font></td>
+    </tr>
+    <tr>
+      <td>Because of the effect of these events     on the price and <font color="blue">availability</font> of fuel, the cost and future <font color="blue">availability</font> of     <font color="blue">fuel cannot</font> be <font color="blue">predicted with</font> any degree of <font color="blue">certainty</font></td>
+    </tr>
+    <tr>
+      <td>In the event of a     <font color="blue">fuel supply shortage</font> or <font color="blue">further increases</font> in <font color="blue">fuel prices</font>, a <font color="blue">curtailment</font> of     <font color="blue">scheduled mobile service could</font> result</td>
+    </tr>
+    <tr>
+      <td>There have been <font color="blue">significant</font> increases     in <font color="blue">fuel costs</font> and continued high <font color="blue">fuel costs</font> or <font color="blue">further increases</font> would harm     our <font color="blue">financial condition</font> and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be unable to renew or maintain our <font color="blue">client contracts <font color="blue">which would</font> harm</font>     our business and financial results</td>
+    </tr>
+    <tr>
+      <td>Upon expiration of our clients’ contracts, we are subject to the risk that     <font color="blue">clients will cease using</font> our <font color="blue">imaging services</font> and purchase or lease their     own <font color="blue">imaging systems</font> or use our <font color="blue">competitors</font>’ <font color="blue">imaging systems</font></td>
+    </tr>
+    <tr>
+      <td>During the year     ended <font color="blue">December </font>31, 2005, we continued to experience a high rate of contract     <font color="blue">terminations primarily due</font> to stepped up marketing, sales and attractive     <font color="blue">financing alternatives</font> being offered by original <font color="blue">equipment <font color="blue">manufacturers</font></font> to     our clients</td>
+    </tr>
+    <tr>
+      <td>A portion of our clients can execute their <font color="blue">early termination</font>     clause and <font color="blue">discontinue service prior</font> to maturity</td>
+    </tr>
+    <tr>
+      <td>As a result, our 2005 MRI     revenues declined compared to 2004 levels and we believe that MRI revenues     from  our shared service <font color="blue">operations</font> will continue to decline in future     periods</td>
+    </tr>
+    <tr>
+      <td>If  these  contracts  are  not renewed, it could result in a     <font color="blue"><font color="blue">significant</font> negative impact on</font> our business</td>
+    </tr>
+    <tr>
+      <td>It is not <font color="blue">always possible</font> to     <font color="blue">immediately</font> obtain <font color="blue">replacement</font> clients, and <font color="blue">historically</font> many <font color="blue">replacement</font>     clients have been smaller <font color="blue">facilities</font> which have a lower number of <font color="blue">scans than</font>     <font color="blue">lost clients</font></td>
+    </tr>
+    <tr>
+      <td>Because a <font color="blue">high percentage</font> of our operating expenses are fixed, a <font color="blue">relatively</font>     small decrease in <font color="blue">revenues could</font> have a <font color="blue"><font color="blue">significant</font> negative impact on</font> our     financial results</td>
+    </tr>
+    <tr>
+      <td>A  <font color="blue">high percentage</font> of our expenses are fixed, meaning they do not vary     <font color="blue">significant</font>ly with the increase or decrease in revenues</td>
+    </tr>
+    <tr>
+      <td>Such expenses     include, but are not limited to, <font color="blue">debt service</font> and <font color="blue">capital lease payments</font>,     rent and operating lease payments, salaries, maintenance, insurance and     <font color="blue">vehicle operation costs</font></td>
+    </tr>
+    <tr>
+      <td>As a result, a <font color="blue">relatively</font> small reduction in the     prices  we  charge  for  our services or <font color="blue">procedure volume could</font> have a     <font color="blue">disproportionate negative</font> effect on our financial results</td>
+    </tr>
+    <tr>
+      <td>21     ______________________________________________________________________       We may be subject to <font color="blue"><font color="blue"><font color="blue">professional</font> <font color="blue">liability</font></font> risks <font color="blue">which could</font></font> be costly and     <font color="blue"><font color="blue">negatively</font> impact</font> our business and financial results</td>
+    </tr>
+    <tr>
+      <td>We may be subject to <font color="blue"><font color="blue">professional</font> <font color="blue">liability</font></font> claims</td>
+    </tr>
+    <tr>
+      <td>Although there currently     are <font color="blue">no known hazards associated with</font> MRI or our other scanning <font color="blue">technologies</font>     when used properly, hazards may be discovered in the future</td>
+    </tr>
+    <tr>
+      <td>Furthermore,     there  is a risk of harm to a patient during an MRI if the patient has     <font color="blue">certain types</font> of <font color="blue">metal implants</font> or <font color="blue">cardiac pacemakers within</font> his or her     body</td>
+    </tr>
+    <tr>
+      <td>Patients are <font color="blue">carefully screened</font> to <font color="blue">safeguard against</font> this risk, but     <font color="blue">screening may nevertheless fail</font> to identify the hazard</td>
+    </tr>
+    <tr>
+      <td>To <font color="blue">protect against</font>     possible  <font color="blue">professional</font>  <font color="blue">liability</font>,  we maintain <font color="blue"><font color="blue">professional</font> <font color="blue">liability</font></font>     <font color="blue">insurance <font color="blue">with coverage</font></font> that we believe is <font color="blue">consistent with industry practice</font>     and <font color="blue">appropriate</font> in light of the <font color="blue">risks attendant</font> to our business</td>
+    </tr>
+    <tr>
+      <td>However, if     we are unable to maintain insurance in the future at an acceptable cost or     at all or if our insurance does not <font color="blue">fully cover us</font>, and a successful claim     was made <font color="blue">against us</font>, we could be exposed</td>
+    </tr>
+    <tr>
+      <td>Any claim made <font color="blue">against us</font> not     <font color="blue">fully <font color="blue">covered by</font> insurance could</font> be costly to <font color="blue">defend against</font>, result in a     substantial  damage  award  <font color="blue">against us</font> and divert the attention of our     <font color="blue"><font color="blue">management</font> from</font> our <font color="blue">operations</font>, <font color="blue">which could</font> have an adverse effect on our     <font color="blue">financial performance</font></td>
+    </tr>
+    <tr>
+      <td>Loss of key <font color="blue">executives</font> and failure to attract qualified managers and sales     persons <font color="blue">could limit</font> our growth and <font color="blue"><font color="blue">negatively</font> impact</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">depend upon</font> our <font color="blue"><font color="blue">management</font> team</font> to a substantial extent</td>
+    </tr>
+    <tr>
+      <td>In particular,     we <font color="blue">depend upon</font> Mr</td>
+    </tr>
+    <tr>
+      <td>Viviano, our <font color="blue">Chief Executive Officer and the Chairman </font>of     our <font color="blue">Board of Directors and Mr</font></td>
+    </tr>
+    <tr>
+      <td>Hayek, our President and Chief Operating     Officer, for their skills, experience, and knowledge of the company and     <font color="blue">industry contacts</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Effective May </font>9, 2005 Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Viviano and Mr</font></td>
+    </tr>
+    <tr>
+      <td>Hayek entered     into  <font color="blue">employment <font color="blue">agreements</font> which</font> end on the <font color="blue">second anniversary</font> of the     <font color="blue">effective date</font></td>
+    </tr>
+    <tr>
+      <td>The terms of these <font color="blue">agreements</font> are subject to automatic     <font color="blue">extensions on</font> a <font color="blue">quarterly basis</font> after the <font color="blue">initial term</font> has been completed</td>
+    </tr>
+    <tr>
+      <td>Hayek can prevent a <font color="blue">quarterly extension by giving</font> notice     of a desire to modify or terminate their <font color="blue">agreements</font> at least thirty days     prior to the <font color="blue">quarterly extension date</font></td>
+    </tr>
+    <tr>
+      <td>In addition, we do not have key     <font color="blue">employee insurance policies covering</font> any of our <font color="blue"><font color="blue">management</font> team</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Viviano or Mr</font></td>
+    </tr>
+    <tr>
+      <td>Hayek, or other members of our <font color="blue"><font color="blue">management</font> team</font>, could     have a material adverse effect on our business, results of <font color="blue">operations</font> or     <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>As we grow, we <font color="blue">will increasingly</font> require <font color="blue">field managers</font> and <font color="blue">sales persons</font>     with experience in our industry to operate our <font color="blue">diagnostic</font> equipment</td>
+    </tr>
+    <tr>
+      <td>It is     impossible to predict the <font color="blue">availability</font> of qualified <font color="blue">field managers</font> and sales     persons or the <font color="blue">compensation levels</font> that will be required to hire them</td>
+    </tr>
+    <tr>
+      <td>The     loss of the services of any member of our <font color="blue">senior <font color="blue">management</font></font> or our <font color="blue">inability</font>     to  hire  qualified  field  managers and <font color="blue">sales persons</font> at economically     reasonable <font color="blue">compensation levels</font> could <font color="blue">adversely</font> affect our ability to operate     and grow our business</td>
+    </tr>
+    <tr>
+      <td>Loss of, and failure to attract, qualified employees and <font color="blue">technologists</font>,     <font color="blue">could limit</font> our growth and <font color="blue"><font color="blue">negatively</font> impact</font> our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">future success depends on</font> our <font color="blue">continuing ability</font> to identify, hire,     develop, motivate and retain <font color="blue">highly skilled personnel</font> for all areas of our     <font color="blue">organization</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition </font> in our industry for qualified employees is     intense</td>
+    </tr>
+    <tr>
+      <td>In  particular,  there  is  a very high demand for qualified     <font color="blue">technologists</font> who are <font color="blue">necessary</font> to operate our systems, particularly PET and     PET/CT <font color="blue">technologists</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to hire and retain a sufficient     number of <font color="blue">technologists</font>, and we expect that our costs for the salaries and     benefits of <font color="blue">technologists</font> will continue to increase for the foreseeable     future because of the industry’s <font color="blue">competitive</font> demand for their services</td>
+    </tr>
+    <tr>
+      <td>Our     <font color="blue">continued ability</font> to compete <font color="blue">effectively</font> depends on our ability to attract     <font color="blue">new employees</font> and to retain and motivate our <font color="blue">existing employees</font></td>
+    </tr>
+    <tr>
+      <td>22     ______________________________________________________________________       We  are  controlled  by a <font color="blue">single stockholder</font> who will be able to exert     <font color="blue">significant</font> influence over matters requiring <font color="blue">stockholder approval</font>, including     change of <font color="blue">control transactions</font></td>
+    </tr>
+    <tr>
+      <td>Viewer  Holdings  LLC, an affiliate of Kohlberg Kravis Roberts &amp; Co     (“KKR”), owns approximately 71prca of our <font color="blue">common equity without giving</font> effect     to <font color="blue">phantom shares</font> held <font color="blue">by four members</font> of KKR’s <font color="blue">management</font> who are on our     board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">directors</font> in the aggregate hold 52cmam641 phantom     shares, which gives them the right to receive an equivalent number of shares     of our <font color="blue">common stock</font>, or cash, upon their retirement or <font color="blue">separation from</font> the     board of <font color="blue">directors</font> or upon the occurrence of a change of control</td>
+    </tr>
+    <tr>
+      <td>KKR 1996     GP LLC is the <font color="blue">sole general partner</font> of <font color="blue">KKR Associates </font>1996 LP, which is     the <font color="blue">sole general partner</font> of KKR 1996 Fund LP As of the <font color="blue">date hereof</font>, KKR     1996 Fund LP is the senior member of Viewer Holdings LLC Michael W     <font color="blue">Michelson </font>and James H Greene, two of the members of our board of <font color="blue">directors</font>,     are  among the members of KKR 1996 GP LLC Mr</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Michelson </font>is also the     <font color="blue">Chairperson </font>of our <font color="blue">Compensation Committee </font>and a member of our Executive     Committee</td>
+    </tr>
+    <tr>
+      <td>James C Momtazee and Kenneth W Freeman, who are also <font color="blue">executives</font>     of KKR and limited partners of <font color="blue">KKR Associates </font>1996 LP, are <font color="blue">also members</font> of     our board of <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td>Momtazee is also a member of our Compensation     Committee and our <font color="blue">Executive Committee</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">sometimes refer</font> to KKR 1996 GP     LLC, <font color="blue">KKR Associates </font>1996 LP, KKR 1996 Fund LP and various <font color="blue">affiliated</font>     entities as KKR KKR provides <font color="blue">management</font>, consulting and <font color="blue">financial services</font>     to  us  and we paid KKR an annual fee of dlra650cmam000 in 2005 in quarterly     <font color="blue">installments</font>  in arrears at the end of each calendar quarter for those     services</td>
+    </tr>
+    <tr>
+      <td>As a result of the <font color="blue">arrangements described</font> above, KKR <font color="blue">controls us</font> and has the     power to elect all of our <font color="blue">directors</font>, appoint new <font color="blue">management</font> and approve any     action requiring the approval of the holders of shares of our <font color="blue">common stock</font>,     including  <font color="blue">adopting amendments</font> to our <font color="blue">certificate</font> of <font color="blue">incorporation</font> and     approving mergers, consolidations or sales of all or <font color="blue">substantially</font> all of     our assets</td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">concentration</font> of <font color="blue">ownership may also delay</font> or prevent a     change of control of our company or reduce the <font color="blue">price investors might</font> be     willing to pay for our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>The interests of KKR <font color="blue">may conflict with</font>     the interests of other holders of our <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">positron emission tomography</font> and <font color="blue">positron emission tomography</font>/computed     tomography,  or  PET and PET/CT services and some of our other imaging     services require the use of <font color="blue">radioactive</font> materials, <font color="blue">which could</font> subject us to     regulation related costs and delays and <font color="blue">potential liabilities</font> for injuries     or violations of environmental, health and <font color="blue">safety laws</font></td>
+    </tr>
+    <tr>
+      <td>Our PET and PET/CT service and some of our other <font color="blue">imaging services</font> require     <font color="blue">radioactive</font>  materials</td>
+    </tr>
+    <tr>
+      <td>While  this  <font color="blue">radioactive</font> material has a short     half-life, meaning it <font color="blue">quickly breaks down into inert</font>, or non-<font color="blue">radioactive</font>     substances, storage, use and disposal of these <font color="blue">materials presents</font> the risk     of  <font color="blue"><font color="blue">accident</font>al environmental contamination</font> and <font color="blue">physical injury</font></td>
+    </tr>
+    <tr>
+      <td>We are     subject to federal, state and local <font color="blue">regulations</font> governing storage, handling     and disposal of these materials and <font color="blue">waste products</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe that     our <font color="blue">safety procedures</font> for storing, handling and disposing of these <font color="blue">hazardous</font>     <font color="blue">materials <font color="blue">comply with</font></font> the <font color="blue">standards prescribed by law</font> and regulation, we     <font color="blue">cannot completely eliminate</font> the risk of <font color="blue"><font color="blue">accident</font>al contamination</font> or injury     from those <font color="blue">hazardous</font> materials</td>
+    </tr>
+    <tr>
+      <td>We maintain <font color="blue"><font color="blue">professional</font> <font color="blue">liability</font></font> insurance     <font color="blue">with coverage</font> that we believe is <font color="blue">consistent with industry practice</font> and     <font color="blue">appropriate</font> in light of the <font color="blue">risks attendant</font> to our business</td>
+    </tr>
+    <tr>
+      <td>However, in the     event of an <font color="blue">accident</font>, we could be held liable for any damages that result,     and any <font color="blue">liability</font> could exceed the limits or <font color="blue">fall outside</font> the coverage of     our insurance</td>
+    </tr>
+    <tr>
+      <td>We may not be able to maintain <font color="blue">insurance on</font> acceptable terms,     or  at  all</td>
+    </tr>
+    <tr>
+      <td>We could incur <font color="blue">significant</font> costs and the diversion of our     <font color="blue">management</font>’s  attention  in  order  to  comply  <font color="blue">with current</font> or future     environmental, health and <font color="blue">safety laws</font> and <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>23     ______________________________________________________________________       We may not be able to achieve the expected <font color="blue">benefits from future <font color="blue">acquisition</font>s</font>     which <font color="blue">would <font color="blue">adversely</font></font> affect our <font color="blue">financial condition</font> and results</td>
+    </tr>
+    <tr>
+      <td>We have <font color="blue">historically</font> relied on <font color="blue">acquisition</font>s as a method of expanding our     business</td>
+    </tr>
+    <tr>
+      <td>In addition, we will consider <font color="blue">future <font color="blue">acquisition</font>s as <font color="blue">opportunities</font></font>     arise</td>
+    </tr>
+    <tr>
+      <td>If we do not <font color="blue">successfully integrate <font color="blue">acquisition</font>s</font>, we may not realize     anticipated  operating <font color="blue">advantages</font> and <font color="blue">cost savings</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">integration</font> of     companies that have <font color="blue">previously</font> operated <font color="blue"><font color="blue">separately</font> involves</font> a number of     risks, including:       ·       demands on <font color="blue">management</font> related to the increase in our size after an     <font color="blue">acquisition</font>;       ·       the diversion of our <font color="blue">management</font>’s attention from the <font color="blue">management</font> of     daily <font color="blue">operations</font> to the <font color="blue">integration</font> of <font color="blue">operations</font>;       ·       <font color="blue">difficult</font>ies in the <font color="blue">assimilation</font> and retention of employees;       ·       <font color="blue">potential adverse effects on</font> operating results; and       ·       <font color="blue">challenges</font> in retaining clients</td>
+    </tr>
+    <tr>
+      <td>We may not be able to maintain the levels of operating <font color="blue">efficiency</font> acquired     companies  will  have achieved or might achieve <font color="blue">separately</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Successful     </font><font color="blue">integration</font> of each of their <font color="blue">operations</font> will <font color="blue">depend upon</font> our ability to     manage those <font color="blue">operations</font> and to <font color="blue">eliminate redundant</font> and <font color="blue">excess costs</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Because     </font>of <font color="blue">difficult</font>ies in combining <font color="blue">operations</font>, we may not be able to achieve the     <font color="blue">cost savings</font> and other size related benefits that we hoped to achieve after     these <font color="blue">acquisition</font>s <font color="blue">which would</font> harm our <font color="blue">financial condition</font> and operating     results</td>
+    </tr>
+    <tr>
+      <td>Possible <font color="blue">volatility</font> in our stock price could <font color="blue">negatively</font> affect us and our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">trading price</font> of our <font color="blue">common stock</font> on the <font color="blue">New York Stock Exchange </font>has     fluctuated <font color="blue">significant</font>ly in the past</td>
+    </tr>
+    <tr>
+      <td>During the period from January 1, 2004     though <font color="blue">December </font>31, 2005, the <font color="blue">trading price</font> of our <font color="blue">common stock</font> fluctuated     from a high of dlra14dtta15 per share to a low of dlra3dtta38 per share</td>
+    </tr>
+    <tr>
+      <td>In the past, we     have  experienced  a  drop in stock price following an <font color="blue">announcement</font> of     <font color="blue">disappointing</font> earnings or earnings guidance</td>
+    </tr>
+    <tr>
+      <td>Any such <font color="blue">announcement</font> in the     <font color="blue">future could lead</font> to a similar drop in stock price</td>
+    </tr>
+    <tr>
+      <td>The price of our common     <font color="blue">stock could also</font> be subject to wide <font color="blue">fluctuations</font> in the future as a result     of a number of other factors, including the following:       ·        changes in <font color="blue">expectations</font> as to future <font color="blue">financial performance</font> or     buy/sell recommendations of <font color="blue">securities analysts</font>;       ·       our, or a competitor’s, <font color="blue">announcement</font> of <font color="blue">new products</font> or services, or     <font color="blue">significant</font> <font color="blue">acquisition</font>s, strategic partnerships, joint ventures or capital     <font color="blue">commitments</font>; and       ·        the operating and <font color="blue">stock price performance</font> of other comparable     companies</td>
+    </tr>
+    <tr>
+      <td>In addition, the US <font color="blue">securities markets</font> have experienced <font color="blue">significant</font> price     and volume <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">fluctuations</font> often have <font color="blue">been unrelated</font> to the     operating  performance of companies in these markets</td>
+    </tr>
+    <tr>
+      <td>Broad market and     industry factors may lead to <font color="blue">volatility</font> in the price of our <font color="blue">common stock</font>,     <font color="blue">regardless</font> of our operating performance</td>
+    </tr>
+    <tr>
+      <td>Moreover, our stock has limited     <font color="blue">trading volume</font>, and this <font color="blue">illiquidity may increase</font> the <font color="blue">volatility</font> of our     stock price</td>
+    </tr>
+    <tr>
+      <td>In the past, following periods of <font color="blue">volatility</font> in the <font color="blue">market price</font> of an     individual company’s securities, securities class <font color="blue">action litigation often</font>     has  been  <font color="blue">instituted against</font> that company</td>
+    </tr>
+    <tr>
+      <td>The institution of similar     litigation <font color="blue">against us</font> could result in substantial costs and a diversion of     our <font color="blue">management</font>’s attention and resources, <font color="blue">which could</font> <font color="blue">negatively</font> affect our     business, results of <font color="blue">operations</font> or <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>24     ______________________________________________________________________       Risks Related to Government Regulation of Our Business       Complying  with  federal  and  state  <font color="blue">regulations</font>  is an expensive and     time-consuming  process,  and  any  failure  to <font color="blue">comply could</font> result in     substantial penalties</td>
+    </tr>
+    <tr>
+      <td>We are directly or indirectly through our clients subject to extensive     <font color="blue">regulation by both</font> the federal government and the states in which we conduct     our business, including the federal Anti-Kickback Law and similar state     anti-kickback laws, <font color="blue">the <font color="blue">Stark Law </font></font>and similar state laws <font color="blue">affecting</font> physician     referrals, the federal False Claims Act, the Health Insurance Portability     and Accountability Act of 1996 and similar state laws <font color="blue">addressing</font> privacy and     security, state unlawful practice of medicine and fee splitting laws, state     <font color="blue">certificate</font>  of  need laws, <font color="blue">the Medicare and Medicaid </font><font color="blue">regulations</font>, the     Medicare Prescription Drug, Improvement and Modernization Act of 2003, and     <font color="blue">requirements</font> for handling bio<font color="blue">hazardous</font> and <font color="blue">radioactive</font> materials and wastes</td>
+    </tr>
+    <tr>
+      <td>If  our <font color="blue">operations</font> are found to be in violation of any of the laws and     <font color="blue">regulations</font> to which we or our clients are subject, we may be subject to the     applicable  <font color="blue">penalty associated with</font> the violation, including civil and     criminal penalties, damages, fines and the <font color="blue">curtailment</font> of our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Any penalties, damages, fines or <font color="blue">curtailment</font> of our <font color="blue">operations</font>, individually     or in the aggregate, could <font color="blue">adversely</font> affect our ability to operate our     business and our financial results</td>
+    </tr>
+    <tr>
+      <td>The risk of our being found in violation     of these laws and <font color="blue">regulations</font> is <font color="blue">increased by</font> the fact that many of them     have not <font color="blue">been fully interpreted by</font> the <font color="blue">regulatory authorities</font> or the courts,     and their provisions are open to a variety of <font color="blue">interpretations</font></td>
+    </tr>
+    <tr>
+      <td>Any action     against  us  for  violation  of  these laws or <font color="blue">regulations</font>, even if we     successfully <font color="blue">defend against</font> it, could cause us to incur <font color="blue">significant</font> legal     expenses and divert our <font color="blue">management</font>’s attention from the operation of our     business</td>
+    </tr>
+    <tr>
+      <td>For a more detailed discussion of the various state and federal     <font color="blue">regulations</font>   to  which  we  are  subject  see  “Business—Regulation,”     “Business—Reimbursement,” and “Business—Environmental, Health and Safety     Laws</td>
+    </tr>
+    <tr>
+      <td>”       Federal and state anti-kickback and anti-self-referral laws may <font color="blue">adversely</font>     affect our <font color="blue">operations</font> and income</td>
+    </tr>
+    <tr>
+      <td>Various federal and state <font color="blue">laws govern financial arrangements among health</font>     <font color="blue">care providers</font></td>
+    </tr>
+    <tr>
+      <td>The federal Anti-Kickback Law prohibits the knowing and     willful offer, payment, solicitation or receipt of any form of <font color="blue">remuneration</font>     in return for, or to induce, the referral of Medicare, Medicaid or other     <font color="blue">federal healthcare program patients</font>, or in return for, or to induce, the     purchase, lease or order of items or services that are <font color="blue">covered by</font> Medicare,     Medicaid,  or  other federal healthcare programs</td>
+    </tr>
+    <tr>
+      <td>Many state laws also     prohibit the solicitation, payment or receipt of <font color="blue">remuneration</font> in return for,     or to induce the referral of patients in <font color="blue">private as well as government</font>     programs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Violation  </font>of these laws may result in substantial civil or     criminal penalties and/or exclusion from <font color="blue">participation</font> in federal or state     healthcare programs</td>
+    </tr>
+    <tr>
+      <td>We believe that we are operating in <font color="blue">compliance with</font>     <font color="blue">applicable law</font> and believe that our <font color="blue">arrangements with providers would</font> not be     found to violate the federal and state anti-kickback laws</td>
+    </tr>
+    <tr>
+      <td>However, these     laws could be interpreted in a <font color="blue">manner inconsistent with</font>, and that could have     an adverse effect on, our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">The <font color="blue">Stark Law </font></font>prohibits a physician from referring <font color="blue">Medicare or Medicaid     </font>patients to any entity for <font color="blue">certain designated health services</font> (including MRI     and other <font color="blue">diagnostic</font> <font color="blue">imaging services</font>) if the physician has a prohibited     financial  <font color="blue">relationship with</font> that entity, unless an <font color="blue">exception applies</font></td>
+    </tr>
+    <tr>
+      <td>Although we believe that our <font color="blue">operations</font> do not violate the Stark Law, our     <font color="blue">activities</font>  may  be  challenged</td>
+    </tr>
+    <tr>
+      <td>If  a challenge to our <font color="blue">activities</font> is     successful, it could have an adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     <font color="blue">legislation may</font> be enacted in the future that <font color="blue">further addresses</font> Medicare and     Medicaid fraud and abuse or that imposes <font color="blue">additional</font> <font color="blue">requirements</font> or burdens     on us</td>
+    </tr>
+    <tr>
+      <td>A number of states in which our <font color="blue">diagnostic</font> imaging centers are located have     adopted a form of anti-kickback law and/or Stark Law</td>
+    </tr>
+    <tr>
+      <td>The scope of these     laws  and the <font color="blue">interpretations</font> of <font color="blue">them vary from</font> state to state and are     enforced  by  state courts and <font color="blue">regulatory authorities</font>, each with broad     <font color="blue">discretion</font></td>
+    </tr>
+    <tr>
+      <td>A       25     ______________________________________________________________________       <font color="blue">determination</font> of <font color="blue">liability</font> under the <font color="blue">laws described</font> in this risk factor     could result in fines and penalties and <font color="blue"><font color="blue">restrictions</font> on</font> our ability to     operate in these <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Healthcare </font>reform legislation <font color="blue">could limit</font> the prices we can charge for our     services, <font color="blue">which would</font> reduce our revenues and harm our operating results</td>
+    </tr>
+    <tr>
+      <td>In addition to extensive existing government healthcare regulation, there     have been and continue to be numerous <font color="blue">initiatives</font> at the federal and state     levels for reforms <font color="blue">affecting</font> the payment for and <font color="blue">availability</font> of healthcare     services, including proposals that would <font color="blue">significant</font>ly limit <font color="blue">reimbursement</font>     under <font color="blue">the Medicare and Medicaid </font>Programs</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Limitations </font>on <font color="blue">reimbursement</font>     amounts and other <font color="blue">cost <font color="blue">containment</font> pressures</font> have in the past resulted in a     decrease in the revenue we receive for each scan we perform</td>
+    </tr>
+    <tr>
+      <td>For example,     the DRA, which was <font color="blue">signed into law on</font> <font color="blue">February </font>8, 2006, contains provisions     <font color="blue">affecting</font> Medicare payment for <font color="blue">imaging services</font> furnished in a number of     settings</td>
+    </tr>
+    <tr>
+      <td>It is not clear at this time what proposals, if any, will be made     or adopted and, if adopted, what effect these <font color="blue">proposals would</font> have on our     business</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Aspects  </font>of  certain of these healthcare proposals, such as     <font color="blue">reductions</font> in <font color="blue">the Medicare and Medicaid </font>Programs, <font color="blue">containment</font> of healthcare     costs on an <font color="blue">interim basis by</font> means that could include a short-term freeze on     prices  charged  by <font color="blue">health<font color="blue">care providers</font></font>, and <font color="blue">permitting greater</font> state     <font color="blue">flexibility</font> in the <font color="blue">administration</font> of Medicaid, <font color="blue">could limit</font> the demand for     our services or affect the <font color="blue">revenue per procedure</font> that we can <font color="blue">collect which</font>     would harm our business and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">application</font> or repeal of state <font color="blue">certificate</font> of need <font color="blue">regulations</font> could     harm our business and financial results</td>
+    </tr>
+    <tr>
+      <td>Some states require a <font color="blue">certificate</font> of need or similar <font color="blue">regulatory approval</font>     prior to the <font color="blue">acquisition</font> of high-cost capital items including <font color="blue">diagnostic</font>     <font color="blue">imaging systems</font> or provision of <font color="blue">diagnostic</font> <font color="blue">imaging services</font> by us or our     clients</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Seventeen  </font>of  the  44  states in which we operate require a     <font color="blue">certificate</font> of need and more states may adopt similar licensure <font color="blue">frameworks</font>     in the future</td>
+    </tr>
+    <tr>
+      <td>In many cases, a limited number of these <font color="blue">certificate</font>s are     available  in a given state</td>
+    </tr>
+    <tr>
+      <td>If we are unable to obtain the applicable     <font color="blue">certificate</font> or approval or <font color="blue">additional</font> <font color="blue">certificate</font>s or approvals <font color="blue">necessary</font> to     expand  our  <font color="blue">operations</font>,  these  <font color="blue">regulations</font> may limit or preclude our     <font color="blue">operations</font> in the relevant <font color="blue">jurisdictions</font></td>
+    </tr>
+    <tr>
+      <td>Conversely, states in which we have obtained a <font color="blue">certificate</font> of need may     repeal existing <font color="blue">certificate</font> of need <font color="blue">regulations</font> or <font color="blue">liberalize exemptions</font>     from the <font color="blue">regulations</font></td>
+    </tr>
+    <tr>
+      <td>For example, Pennsylvania, Nebraska, New York, Ohio     and Tennessee have liberalized exemptions from <font color="blue">certificate</font> of need programs</td>
+    </tr>
+    <tr>
+      <td>The repeal of <font color="blue">certificate</font> of need <font color="blue">regulations</font> in states in which we have     obtained a <font color="blue">certificate</font> of need or a <font color="blue">certificate</font> of need <font color="blue">exemption would</font>     <font color="blue">lower barriers</font> to entry for <font color="blue">competition</font> in those states and could <font color="blue">adversely</font>     affect our business</td>
+    </tr>
+    <tr>
+      <td>If we fail to <font color="blue">comply with</font> various licensure, certification and <font color="blue">accreditation</font>     standards  we  may  be  subject to loss of licensure, certification or     <font color="blue">accreditation</font> which <font color="blue">would <font color="blue">adversely</font></font> affect our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>All of the states in which we operate require that the imaging <font color="blue">technologists</font>     that  operate our computed tomography, single photon emission computed     tomography,  and  positron  <font color="blue">emission tomography systems</font> be licensed or     certified</td>
+    </tr>
+    <tr>
+      <td>Also, each of our <font color="blue"><font color="blue">retail sites</font> must continue</font> to <font color="blue">meet various</font>     <font color="blue">requirements</font> in order to receive <font color="blue">payments from</font> the <font color="blue">Medicare Program</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  we  are  currently  <font color="blue">accredited</font>  by  the <font color="blue">Joint Commission </font>on     Accreditation  of <font color="blue">Healthcare </font>Organizations, an <font color="blue">independent</font>, non-profit     <font color="blue">organization</font> that <font color="blue">accredits</font> various types of <font color="blue">health<font color="blue">care providers</font></font> such as     hospitals, nursing homes and providers of <font color="blue">diagnostic</font> <font color="blue">imaging services</font></td>
+    </tr>
+    <tr>
+      <td>In     the healthcare industry, various types of <font color="blue">organization</font>s are <font color="blue">accredited</font> to     meet certain Medicare certification <font color="blue">requirements</font>, expedite third-party     payment,  and  fulfill state licensure <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>Some <font color="blue">managed care</font>     <font color="blue">providers prefer</font> to contract with <font color="blue">accredited</font> <font color="blue">organization</font>s</td>
+    </tr>
+    <tr>
+      <td>Any lapse in our     licenses, certifications or <font color="blue">accreditation</font>s, or those of our <font color="blue">technologists</font>,     or  the  failure  of  any of our <font color="blue">retail sites</font> to satisfy the <font color="blue">necessary</font>     <font color="blue">requirements</font>  under Medicare could <font color="blue">adversely</font> affect our <font color="blue">operations</font> and     financial results</td>
+    </tr>
+    <tr>
+      <td>26     ______________________________________________________________________       Risks Related to Our Indebtedness       We  are  highly  leveraged  and our <font color="blue">liabilities exceed</font> our <font color="blue">assets by</font> a     substantial  amount</td>
+    </tr>
+    <tr>
+      <td>As of <font color="blue">December </font>31, 2005, we had dlra579dtta6 million of     outstanding debt, excluding letters of credit and <font color="blue">guarantees</font></td>
+    </tr>
+    <tr>
+      <td>Our substantial <font color="blue"><font color="blue"><font color="blue">indebtedness</font> could</font> restrict</font> our <font color="blue">operations</font> and make us more     vulnerable to adverse economic <font color="blue">conditions</font></td>
+    </tr>
+    <tr>
+      <td>Our substantial <font color="blue"><font color="blue">indebtedness</font> could</font> have <font color="blue">important consequences</font> for our     <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>For example, it could:       ·       require us to dedicate a substantial portion of our <font color="blue">cash flow</font> from     <font color="blue">operations</font>  to  payments  on  our  <font color="blue">indebtedness</font>,  <font color="blue">thereby reducing</font> the     <font color="blue">availability</font> of our <font color="blue">cash flow</font> to fund working capital, capital expenditures     and <font color="blue">acquisition</font>s and for other <font color="blue">general corporate purposes</font>;       ·       increase our <font color="blue">vulnerability</font> to <font color="blue">economic downturns</font> and <font color="blue">competitive</font>     pressures in our industry;       ·       place us at a <font color="blue">competitive</font> disadvantage compared to our <font color="blue">competitors</font>     that have less debt in relation to <font color="blue">cash flow</font>; and       ·       limit our <font color="blue">flexibility</font> in planning for, or reacting to, changes in     our business and our industry</td>
+    </tr>
+    <tr>
+      <td>If  there  is  a  default  under the <font color="blue">agreements</font> governing our material     <font color="blue">indebtedness</font>, the value of our <font color="blue">assets may</font> not be sufficient to repay our     <font color="blue">creditors</font></td>
+    </tr>
+    <tr>
+      <td>Our property and <font color="blue">equipment which</font> makes up a <font color="blue">significant</font> portion of our     <font color="blue">tangible assets</font>, had a <font color="blue">net book value as</font> of <font color="blue">December </font>31, 2005 of dlra358dtta9     million</td>
+    </tr>
+    <tr>
+      <td>The book value of these <font color="blue">assets should</font> not be <font color="blue">relied on as</font> a measure     of <font color="blue">realizable value</font> for <font color="blue">such assets</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">realizable value</font> may be greater or     <font color="blue">lower than such net book value</font></td>
+    </tr>
+    <tr>
+      <td>The value of our assets in the event of     <font color="blue">liquidation</font>  will  depend  upon  market  and  economic <font color="blue">conditions</font>, the     <font color="blue">availability</font> of buyers and similar factors</td>
+    </tr>
+    <tr>
+      <td>A sale of these assets in a     <font color="blue">bankruptcy</font> or similar <font color="blue">proceeding would likely</font> be made under duress, which     would reduce the amounts that could be recovered</td>
+    </tr>
+    <tr>
+      <td>Furthermore, such a sale     could occur when other companies in our <font color="blue">industry also</font> are distressed, which     <font color="blue">might increase</font> the supply of similar assets and <font color="blue">therefore reduce</font> the amounts     that could be recovered</td>
+    </tr>
+    <tr>
+      <td>Our in<font color="blue">tangible assets</font> had a <font color="blue">net book value as</font> of     <font color="blue">December </font>31, 2005 of dlra193dtta7 million</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">assets primarily consist</font> of the     excess of the <font color="blue">acquisition</font> cost over the <font color="blue">fair market value</font> of the net assets     acquired in purchase transactions, customer contracts, and costs to obtain     <font color="blue">certificate</font>s of need</td>
+    </tr>
+    <tr>
+      <td>The value of these in<font color="blue">tangible assets</font> will continue to     depend <font color="blue">significant</font>ly upon the success of our business as a going concern and     the growth in future <font color="blue">cash flow</font>s</td>
+    </tr>
+    <tr>
+      <td>As a result, in the event of a default     under the <font color="blue">agreements</font> governing our material <font color="blue">indebtedness</font> or any <font color="blue">bankruptcy</font>     or <font color="blue">dissolution</font> of our company, the <font color="blue">realizable value</font> of these <font color="blue">assets will</font>     likely be <font color="blue">substantially</font> lower and may be insufficient to satisfy the claims     of our <font color="blue">creditors</font></td>
+    </tr>
+    <tr>
+      <td>The condition of our <font color="blue">assets will</font> likely deteriorate during any period of     <font color="blue">financial distress preceding</font> a sale of our assets</td>
+    </tr>
+    <tr>
+      <td>In addition, much of our     <font color="blue">assets consist</font> of <font color="blue">illiquid assets</font> that may have to be sold at a substantial     discount in an <font color="blue">insolvency</font> situation</td>
+    </tr>
+    <tr>
+      <td>Accordingly, the proceeds of any such     sale  of  our  assets  may  not  be  sufficient to satisfy, and may be     <font color="blue">substantially</font> less than, amounts due to our <font color="blue">creditors</font></td>
+    </tr>
+    <tr>
+      <td>Despite current <font color="blue">indebtedness</font> levels, we and our <font color="blue"><font color="blue">subsidiaries</font> may still</font> be     able to incur <font color="blue">substantially</font> more <font color="blue">indebtedness</font> <font color="blue">which could</font> increase the risks     described above</td>
+    </tr>
+    <tr>
+      <td>We  and  our  <font color="blue">subsidiaries</font> may be able to incur substantial <font color="blue">additional</font>     <font color="blue">indebtedness</font> in the future</td>
+    </tr>
+    <tr>
+      <td>The terms of the <font color="blue">indentures</font> that govern our     103¤8prca senior subordinated notes due 2011 and 71¤4prca senior subordinated     notes  due  2012  (the “notes”) <font color="blue">permit us</font> or our <font color="blue">subsidiaries</font> to incur     <font color="blue">additional</font> <font color="blue">indebtedness</font>, subject to <font color="blue">certain <font color="blue">restrictions</font></font></td>
+    </tr>
+    <tr>
+      <td>Further, the     <font color="blue">indentures</font> allow for the incurrence of <font color="blue">indebtedness</font> by our <font color="blue">subsidiaries</font>, all     of <font color="blue">which would</font> be <font color="blue">structurally senior</font> to the notes</td>
+    </tr>
+    <tr>
+      <td>In addition, as of     <font color="blue">December </font>31, 2005,       27     ______________________________________________________________________       our revolving credit <font color="blue">facility</font> permitted <font color="blue">additional</font> borrowings of up to     approximately dlra34dtta9 million subject to the <font color="blue">covenants contained</font> in the credit     <font color="blue">facility</font>, and all of those <font color="blue">borrowings would</font> be senior to the notes</td>
+    </tr>
+    <tr>
+      <td>If new     debt is added to our and our <font color="blue">subsidiaries</font>’ current debt levels, the risks     discussed above <font color="blue">could intensify</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to generate or <font color="blue">borrow sufficient cash</font> to make <font color="blue">payments on</font>     our <font color="blue">indebtedness</font> or to refinance our <font color="blue">indebtedness</font> on acceptable terms, our     <font color="blue">financial condition</font> would be <font color="blue">materially harmed</font>, our business may fail and     you may lose all of your <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to make scheduled <font color="blue">payments on</font> or to refinance our <font color="blue">obligations</font>     with  respect  to  our <font color="blue">debt will depend on</font> our financial and operating     performance,  which  will  be affected by general economic, financial,     <font color="blue">competitive</font>, business and other <font color="blue">factors beyond</font> our control</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font>     you that our business will generate sufficient <font color="blue">cash flow</font> from <font color="blue">operations</font> or     that <font color="blue">future borrowings will</font> be available to us in an <font color="blue">amount sufficient</font> to     <font color="blue">enable us</font> to service our debt or to fund our other liquidity needs</td>
+    </tr>
+    <tr>
+      <td>If we     are unable to meet our debt <font color="blue">obligations</font> or fund our other liquidity needs,     we may need to <font color="blue">restructure</font> or refinance all or a portion of our debt on or     before maturity or <font color="blue">sell certain</font> of our assets</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that we     will be able to <font color="blue">restructure</font> or refinance any of our debt on commercially     <font color="blue">reasonable terms</font>, if at all, <font color="blue">which could</font> cause us to <font color="blue">default on</font> our debt     <font color="blue">obligations</font> and impair our liquidity</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">refinancing</font> of our <font color="blue">debt could</font> be     <font color="blue">at higher <font color="blue">interest rates</font></font> and may require us to <font color="blue">comply with</font> more onerous     covenants, <font color="blue">which could</font> further restrict our business <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to <font color="blue">finance future</font> needs or adapt our business plan to     changes because of <font color="blue"><font color="blue">restrictions</font> placed on us by</font> our credit <font color="blue">facility</font>, the     <font color="blue">indentures</font>  governing  our  notes  and <font color="blue">instruments governing</font> our other     <font color="blue">indebtedness</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">indentures</font> for our notes and our credit <font color="blue">facility</font> contain affirmative and     negative covenants which restrict, among other things, our ability to:       ·       incur <font color="blue">additional</font> debt;       ·       <font color="blue">sell assets</font>;       ·       create liens or other <font color="blue">encumbrances</font>;       ·       make <font color="blue">certain payments</font> and dividends; or       ·       merge or <font color="blue">consolidate</font></td>
+    </tr>
+    <tr>
+      <td>All of these <font color="blue">restrictions</font> could affect our ability to operate our business     and  may  limit  our  ability  to take advantage of potential business     <font color="blue">opportunities</font> as they arise</td>
+    </tr>
+    <tr>
+      <td>A failure to <font color="blue">comply with</font> these covenants and     <font color="blue">restrictions</font> would permit the relevant <font color="blue">creditors</font> to declare all amounts     <font color="blue">borrowed under</font> the relevant <font color="blue">facility</font>, together with accrued interest and     fees, to be <font color="blue">immediately</font> due and payable</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">indebtedness</font> under the     credit <font color="blue">facility</font> or our notes is <font color="blue">accelerated</font>, we may not have sufficient     assets to repay amounts due under the credit <font color="blue">facility</font>, the notes or on other     <font color="blue">indebtedness</font> then outstanding</td>
+    </tr>
+    <tr>
+      <td>If we are not able to refinance our debt, we     <font color="blue">could become</font> subject to <font color="blue">bankruptcy</font> proceedings, and you may lose all or a     portion of your <font color="blue">investment</font> because the claims of our <font color="blue">creditors</font> on our assets     are prior to the claims of our <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Rises in <font color="blue">interest rates</font> could <font color="blue">adversely</font> affect our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>An increase in <font color="blue">prevailing <font color="blue">interest rates</font> would</font> have an immediate effect on     the <font color="blue">interest rates</font> charged on our variable rate debt, which rise and fall     upon changes in <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>At <font color="blue">December </font>31, 2005, dlra262dtta3 million of our     debt was at variable <font color="blue">interest rates</font></td>
+    </tr>
+    <tr>
+      <td>However, during 2005, we <font color="blue">entered into</font>     multiple interest rate collar <font color="blue">agreements</font> which have a <font color="blue">total notional amount</font>     of dlra178dtta0 million, which reduces our <font color="blue">exposure on</font> our <font color="blue">total variable rate</font> to     the terms of these <font color="blue">agreements</font></td>
+    </tr>
+    <tr>
+      <td>Under the terms of these <font color="blue">agreements</font>,       28     ______________________________________________________________________       we have purchased a cap on the interest rate of 4dtta00prca and have sold a floor     of 2dtta25prca</td>
+    </tr>
+    <tr>
+      <td>The collar <font color="blue">agreements</font> mature at various dates between January 2007     and  January 2008</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases  </font>in <font color="blue">interest rates</font> would also impact the     <font color="blue">refinancing</font> of our fixed rate debt</td>
+    </tr>
+    <tr>
+      <td>If <font color="blue">interest rates</font> are higher when our     fixed <font color="blue">debt becomes due</font>, we may be forced to borrow at the <font color="blue">higher rates</font></td>
+    </tr>
+    <tr>
+      <td>If     prevailing <font color="blue">interest rates</font> or other factors result in higher <font color="blue">interest rates</font>,     the increased interest expense <font color="blue">would <font color="blue">adversely</font></font> affect our <font color="blue">cash flow</font> and our     ability to service our debt</td>
+    </tr>
+    <tr>
+      <td>As a protection against rising <font color="blue">interest rates</font>,     we may enter into <font color="blue">agreements</font> such as interest rate swaps, caps, floors and     other interest rate exchange contracts</td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">agreements</font>, however, increase     our risks as to the other parties to the <font color="blue">agreements</font> not performing or that     the <font color="blue">agreements</font> could be unenforceable</td>
+    </tr>
+  </tbody>
+</table>

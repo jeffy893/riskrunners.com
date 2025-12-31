@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "2: factors described", fill: "#673147"},
+{source: "2: factors described", target: "2: could materially harm", fill: "#673147"},
+{source: "2: could materially harm", target: "2: financial condition", fill: "#673147"},
+{source: "2: financial condition", target: "2: operations", fill: "#673147"},
+{source: "2: factors described", target: "7: economic downturn", fill: "#86608e"},
+{source: "7: economic downturn", target: "7: industries may", fill: "#86608e"},
+{source: "7: industries may", target: "7: existing tenants", fill: "#86608e"},
+{source: "7: existing tenants", target: "7: tenants may fail", fill: "#86608e"},
+{source: "7: tenants may fail", target: "7: rental payments decline", fill: "#86608e"},
+{source: "7: rental payments decline", target: "7: leases upon expiration delay lease commencements", fill: "#86608e"},
+{source: "7: leases upon expiration delay lease commencements", target: "7: bankruptcy", fill: "#86608e"},
+{source: "7: economic downturn", target: "9: tenant bankruptcies leasing delays", fill: "#a52a2a"},
+{source: "9: tenant bankruptcies leasing delays", target: "9: termination", fill: "#a52a2a"},
+{source: "9: termination", target: "9: tenants lease", fill: "#a52a2a"},
+{source: "9: tenants lease", target: "9: adversely impacting", fill: "#a52a2a"},
+{source: "9: tenant bankruptcies leasing delays", target: "17: may recover substantially less than", fill: "#ace1af"},
+{source: "17: may recover substantially less than", target: "17: adversely affect", fill: "#ace1af"},
+{source: "17: adversely affect", target: "17: financial condition", fill: "#ace1af"},
+{source: "17: may recover substantially less than", target: "33: distributions", fill: "#967117"},
+{source: "33: distributions", target: "33: shareholders", fill: "#967117"},
+{source: "33: shareholders", target: "33: comply with", fill: "#967117"},
+{source: "33: comply with", target: "33: requirements", fill: "#967117"},
+{source: "33: distributions", target: "37: suitable real estate properties", fill: "#cd853f"},
+{source: "37: suitable real estate properties", target: "37: acquisition criteria", fill: "#cd853f"},
+{source: "37: acquisition criteria", target: "37: compatible with", fill: "#cd853f"},
+{source: "37: compatible with", target: "37: growth strategy", fill: "#cd853f"},
+{source: "37: growth strategy", target: "37: consummating acquisitions", fill: "#cd853f"},
+{source: "37: consummating acquisitions", target: "37: investments on", fill: "#cd853f"},
+{source: "37: suitable real estate properties", target: "66: Accordingly ", fill: "#e2062c"},
+{source: "66: Accordingly ", target: "66: favorably resolve", fill: "#e2062c"},
+{source: "66: favorably resolve", target: "66: issues which", fill: "#e2062c"},
+{source: "66: issues which", target: "66: provide financial", fill: "#e2062c"},
+{source: "66: provide financial", target: "66: inducements", fill: "#e2062c"},
+{source: "66: inducements", target: "66: venture partners", fill: "#e2062c"},
+{source: "66: venture partners", target: "66: such resolution", fill: "#e2062c"},
+{source: "66: Accordingly ", target: "119: qualify as", fill: "#e6e8fa"},
+{source: "119: qualify as", target: "119: higher taxes", fill: "#e6e8fa"},
+{source: "119: higher taxes", target: "119: cash available", fill: "#e6e8fa"},
+{source: "119: cash available", target: "119: shareholders", fill: "#e6e8fa"},
+{source: "119: qualify as", target: "START_HERE", fill: "#e6e8fa"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Real Estate</td>
+    </tr>
+    <tr>
+      <td>Real Estate Services</td>
+    </tr>
+    <tr>
+      <td>General Merchandise Stores</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Health Care Distribution and Services</td>
+    </tr>
+    <tr>
+      <td>Health Care Facilities</td>
+    </tr>
+    <tr>
+      <td>Application Software</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Regime</td>
+    </tr>
+    <tr>
+      <td>Ease</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Pessimistic comment</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Human death</td>
+    </tr>
+    <tr>
+      <td>Offer peace proposal</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Seize</td>
+    </tr>
+    <tr>
+      <td>Threaten</td>
+    </tr>
+    <tr>
+      <td>Host meeting</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Request</td>
+    </tr>
+    <tr>
+      <td>Sanction</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Adjust</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Reject</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_condition_report">Financial condition report</a></td>
+      <td>In accounting, a financial condition report (FCR) is a report on the solvency condition of an insurance company that takes into account both the current financial status, as reflected in the balance sheet, and an assessment of the ability of the company to survive future risk scenarios. Risk assessment in an FCR involves dynamic solvency testing, a type of dynamic financial analysis that simulates management response to risk scenarios, to test whether a company could remain solvent in the face of deteriorating economic conditions or major disasters.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Balance_sheet">Balance sheet</a></td>
+      <td>In financial accounting, a balance sheet (also known as statement of financial position or statement of financial condition) is a summary of the financial balances of an individual or organization, whether it be a sole proprietorship, a business partnership, a corporation, private limited company or other organization such as government or not-for-profit entity. Assets, liabilities and ownership equity are listed as of a specific date, such as the end of its financial year.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_statement">Financial statement</a></td>
+      <td>Financial statements (or financial reports) are formal records of the financial activities and position of a business, person, or other entity.\nRelevant financial information is presented in a structured manner and in a form which is easy to understand.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Financial_ratio">Financial ratio</a></td>
+      <td>A financial ratio or accounting ratio is a relative magnitude of two selected numerical values taken from an enterprise's financial statements. Often used in accounting, there are many standard ratios used to try to evaluate the overall financial condition of a corporation or other organization.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Trustmark_(bank)">Trustmark (bank)</a></td>
+      <td>Trustmark is a commercial bank and financial services company headquartered in Jackson, Mississippi, United States, with subsidiaries Trustmark National Bank, Trustmark Investment Advisors, and Fisher Brown Bottrell Insurance. The bank's initial predecessor, The Jackson Bank, was chartered by the State of Mississippi in 1889.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Form_10-K">Form 10-K</a></td>
+      <td>A Form 10-K is an annual report required by the U.S. Securities and Exchange Commission (SEC), that gives a comprehensive summary of a company's financial performance. Although similarly named, the annual report on Form 10-K is distinct from the often glossy "annual report to shareholders," which a company must send to its shareholders when it holds an annual meeting to elect directors (though some companies combine the annual report and the 10-K into one document).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Federal_takeover_of_Fannie_Mae_and_Freddie_Mac">Federal takeover of Fannie Mae and Freddie Mac</a></td>
+      <td>In September 2008 the Federal Housing Finance Agency (FHFA) announced that it would take over the Federal National Mortgage Association (Fannie Mae) and the Federal Home Loan Mortgage Corporation (Freddie Mac). Both government-sponsored enterprises, which finance home mortgages in the United States by issuing bonds, had become illiquid as the market for those bonds collapsed in the subprime mortgage crisis.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Arithmetic">Arithmetic</a></td>
+      <td>Arithmetic (from Ancient Greek  ἀριθμός (arithmós) 'number', and  τική [τέχνη] (tikḗ [tékhnē]) 'art, craft') is an elementary part of mathematics that consists of the study of the properties of the traditional operations on numbers—addition, subtraction, multiplication, division, exponentiation, and extraction of roots. In the 19th century, Italian mathematician Giuseppe Peano formalized arithmetic with his Peano axioms, which are highly important to the field of mathematical logic today.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_Mincemeat">Operation Mincemeat</a></td>
+      <td>Operation Mincemeat was a successful British deception operation of the Second World War to disguise the 1943 Allied invasion of Sicily. Two members of British intelligence obtained the body of Glyndwr Michael, a tramp who died from eating rat poison, dressed him as an officer of the Royal Marines and placed personal items on him identifying him as the fictitious Captain (Acting Major) William Martin.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_management">Operations management</a></td>
+      <td>Operations management is an area of management concerned with designing and controlling the process of production and redesigning business operations in the production of goods or services. It involves the responsibility of ensuring that business operations are efficient in terms of using as few resources as needed and effective in meeting customer requirements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Surgery">Surgery</a></td>
+      <td>Surgery is a medical or dental specialty that uses operative manual and instrumental techniques on a person to investigate or treat a pathological condition such as a disease or injury, to help improve bodily function, appearance, or to repair unwanted ruptured areas.\nThe act of performing surgery may be called a surgical procedure, operation, or simply "surgery".</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bankruptcy">Bankruptcy</a></td>
+      <td>Bankruptcy is a legal process through which people or other entities who cannot repay debts to creditors may seek relief from some or all of their debts. In most jurisdictions, bankruptcy is imposed by a court order, often initiated by the debtor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Disparate_impact">Disparate impact</a></td>
+      <td>Disparate impact in United States labor law refers to practices in employment, housing, and other areas that adversely affect one group of people of a protected characteristic more than another, even though rules applied by employers or landlords are formally neutral. Although the protected classes vary by statute, most federal civil rights laws protect based on race, color, religion, national origin, and sex as protected traits, and some laws include disability status and other traits as well.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Comparison_of_DNS_blacklists">Comparison of DNS blacklists</a></td>
+      <td>The following table lists technical information for assumed reputable DNS blacklists used for blocking spam.\n\n\n== Notes ==\n"Collateral listings"—Deliberately listing non-offending IP addresses, in order to coerce ISPs to take action against spammers under their control.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Complication_(medicine)">Complication (medicine)</a></td>
+      <td>A complication in medicine, or medical complication, is an unfavorable result of a disease, health condition, or treatment. Complications may adversely affect the prognosis, or outcome, of a disease.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Anthropogenic_hazard">Anthropogenic hazard</a></td>
+      <td>Anthropogenic hazards are hazards caused by human action or inaction. They are contrasted with natural hazards.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Reproductive_toxicity">Reproductive toxicity</a></td>
+      <td>Reproductive toxicity refers to the potential risk from a given chemical, physical or biologic agent to adversely affect  both male and female fertility as well as offspring development. Reproductive toxicants may adversely affect sexual function, ovarian failure, fertility  as well as causing developmental toxicity in the offspring.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Terrorist_and_Disruptive_Activities_(Prevention)_Act">Terrorist and Disruptive Activities (Prevention) Act</a></td>
+      <td>Terrorist and Disruptive Activities (Prevention) Act, commonly known as TADA, was an Indian anti-terrorism law which was in force between 1985 and 1995 (modified in 1987) under the background of  the Punjab insurgency and was applied to whole of India. It was originally assented to by the President on 23 May 1985 and came into effect on 24 May 1985.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_global_issues">List of global issues</a></td>
+      <td>A global issue is a matter of public concern worldwide. This list of global issues presents problems or phenomena affecting people around the world, including but not limited to widespread social issues, economic issues, and environmental issues.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Equity_(finance)">Equity (finance)</a></td>
+      <td>In finance, equity is ownership of assets that may have debts or other liabilities attached to them. Equity is measured for accounting purposes by subtracting liabilities from the value of the assets.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholders'_agreement">Shareholders' agreement</a></td>
+      <td>A shareholders' agreement (sometimes referred to in the U.S. as a stockholders' agreement) (SHA) is an agreement amongst the shareholders or members of a company. In practical effect, it is analogous to a partnership agreement.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder_loan">Shareholder loan</a></td>
+      <td>Shareholder loan is a debt-like form of financing provided by shareholders. Usually, it is the most junior debt in the company's debt portfolio.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Berkshire_Hathaway">Berkshire Hathaway</a></td>
+      <td>Berkshire Hathaway Inc. () is an American multinational conglomerate holding company headquartered in Omaha, Nebraska, United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Activist_shareholder">Activist shareholder</a></td>
+      <td>An activist shareholder is a shareholder who uses an equity stake in a corporation to put pressure on its management. A fairly small stake (less than 10% of outstanding shares) may be enough to launch a successful campaign.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Desperate_Shareholders">Desperate Shareholders</a></td>
+      <td>Desperate Shareholders (Russian: Отчаянные дольщики, romanized: Otchayannye dolshchiki) is a 2022 Russian crime comedy film directed by Ilya Farfell. The film produced by Yellow, Black and White also starred Maksim Lagashkin, Mikhail Trukhin, Ekaterina Stulova, Nikita Kologrivyy, and Olga Venikova.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Shareholder_oppression">Shareholder oppression</a></td>
+      <td>Shareholder oppression occurs when the majority shareholders in a corporation take action that unfairly prejudices the minority.  It most commonly occurs in non-publicly traded companies, because the lack of a public market for shares leaves minority shareholders particularly vulnerable, since minority shareholders cannot escape mistreatment by selling their stock and exiting the corporation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Public_company">Public company</a></td>
+      <td>A public company, publicly traded company, publicly held company, publicly listed company, or public limited company is a company whose ownership is organized via shares of stock which are intended to be freely traded on a stock exchange or in over-the-counter markets. A public (publicly traded) company can be listed on a stock exchange (listed company), which facilitates the trade of shares, or not (unlisted public company).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mergers_and_acquisitions">Mergers and acquisitions</a></td>
+      <td>In corporate finance, mergers and acquisitions (M&amp;A) are transactions in which the ownership of companies, other business organizations, or their operating units are transferred or consolidated with other entities. As an aspect of strategic management, M&amp;A can allow enterprises to grow or downsize, and change the nature of their business or competitive position.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/UEFA_Champions_League">UEFA Champions League</a></td>
+      <td>The UEFA Champions League (abbreviated as UCL) is an annual club football competition organised by the Union of European Football Associations (UEFA) and contested by top-division European clubs, deciding the competition winners through a round robin group stage to qualify for a double-legged knockout format, and a single leg final. It is one of the most prestigious football tournaments in the world and the most prestigious club competition in European football, played by the national league champions (and, for some nations, one or more runners-up) of their national associations.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Europa_League">2022–23 UEFA Europa League</a></td>
+      <td>The 2022–23 UEFA Europa League will be the 52nd season of Europe's secondary club football tournament organised by UEFA, and the 14th season since it was renamed from the UEFA Cup to the UEFA Europa League.\nThe final will be played at the Puskás Aréna in Budapest, Hungary.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Europa_Conference_League">2022–23 UEFA Europa Conference League</a></td>
+      <td>The 2022–23 UEFA Europa Conference League will be the second season of the UEFA Europa Conference League, Europe's tertiary club football tournament organised by UEFA.\nThe final will be played at Sinobo Stadium in Prague, Czech Republic. The winners of the 2022–23 UEFA Europa Conference League will automatically qualify for the 2023–24 UEFA Europa League group stage, unless they manage to qualify for the 2023–24 UEFA Champions League group stage.As the title holders of the Europa Conference League, Roma qualified for the 2022–23 UEFA Europa League.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2022–23_UEFA_Champions_League">2022–23 UEFA Champions League</a></td>
+      <td>The 2022–23 UEFA Champions League will be the 68th season of Europe's premier club football tournament organised by UEFA, and the 31st season since it was renamed from the European Champion Clubs' Cup to the UEFA Champions League.\nThe final will be played at the Atatürk Olympic Stadium in Istanbul, Turkey.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/2021–22_UEFA_Champions_League">2021–22 UEFA Champions League</a></td>
+      <td>The 2021–22 UEFA Champions League was the 67th season of Europe's premier club football tournament organised by UEFA, and the 30th season since it was renamed from the European Champion Clubs' Cup to the UEFA Champions League.\nReal Madrid defeated Liverpool 1–0 in the final, which was played at the Stade de France in Saint-Denis, France, for a record-extending 14th title, and their fifth in nine years.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RAMCO GERSHENSON PROPERTIES TRUST      Item 1A     Risk Factors             Many factors that affect our business <font color="blue">involve risk</font> and <font color="blue">uncertainty</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">factors described</font> below are some of the risks that <font color="blue">could materially harm</font>     our business, <font color="blue">financial condition</font>, and results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Business Risks       Adverse <font color="blue">market <font color="blue">conditions</font></font> and <font color="blue">tenant bankruptcies could <font color="blue"><font color="blue">adversely</font> affect</font></font> our     revenues</td>
+    </tr>
+    <tr>
+      <td>The economic performance and value of our <font color="blue">real estate</font> assets are     subject to all the risks <font color="blue">associated with</font> owning and operating <font color="blue">real estate</font>,     including risks related to adverse changes in national, regional and local     economic  and <font color="blue">market <font color="blue">conditions</font></font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">current properties</font> are located in     13 states in the midwestern, southeastern and mid-Atlantic regions of the     United  States</td>
+    </tr>
+    <tr>
+      <td>The  <font color="blue">economic condition</font> of each of our <font color="blue">markets may</font> be     <font color="blue">dependent on one</font> or more <font color="blue">industries</font></td>
+    </tr>
+    <tr>
+      <td>An <font color="blue">economic downturn</font> in one of these     <font color="blue">industries</font> may result in a business downturn for <font color="blue">existing tenants</font>, and as a     result, these <font color="blue"><font color="blue">tenants may</font> fail</font> to make rental payments, decline to extend     leases upon expiration, delay lease commencements or declare <font color="blue">bankruptcy</font></td>
+    </tr>
+    <tr>
+      <td>In     addition,  we  may have <font color="blue"><font color="blue">difficulty</font> finding new tenants during economic</font>     downturns</td>
+    </tr>
+    <tr>
+      <td>Any tenant bankruptcies, leasing delays or failure to make rental     payments when due could result in the <font color="blue">termination</font> of the tenant’s lease,     causing material losses to us and <font color="blue"><font color="blue"><font color="blue">adversely</font> impact</font>ing</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>If our properties do not <font color="blue">generate sufficient income</font> to meet our operating     expenses,  including  future  debt  service, our income and results of     <font color="blue">operations</font> would be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>5       _________________________________________________________________    [60]Table of <font color="blue">Contents       </font>      The <font color="blue">retail industry</font> has experienced some <font color="blue">financial <font color="blue">difficulties</font> during</font>     the <font color="blue">past few years</font> and certain local, regional and <font color="blue">national retailers</font> have     filed for protection under <font color="blue">bankruptcy</font> laws</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">bankruptcy</font> filings by or     relating to one of our tenants or a <font color="blue">lease guarantor</font> would bar all <font color="blue">efforts by</font>     us to collect pre-<font color="blue">bankruptcy</font> debts from that tenant, the <font color="blue">lease guarantor</font> or     their property, unless we receive an order <font color="blue">permitting us</font> to do so from the     <font color="blue">bankruptcy</font> court</td>
+    </tr>
+    <tr>
+      <td>A tenant or <font color="blue">lease guarantor</font> <font color="blue">bankruptcy</font> could delay our     efforts to <font color="blue">collect past due balances under</font> the <font color="blue">relevant leases</font> and could     <font color="blue">ultimately preclude</font> full <font color="blue">collection</font> of these sums</td>
+    </tr>
+    <tr>
+      <td>If a lease is assumed by     the tenant in <font color="blue">bankruptcy</font>, all pre-<font color="blue">bankruptcy</font> balances due under the lease     must be paid to us in full</td>
+    </tr>
+    <tr>
+      <td>However, if a lease is <font color="blue">rejected by</font> a tenant in     <font color="blue">bankruptcy</font>, we would have only a <font color="blue">general unsecured</font> claim for damages</td>
+    </tr>
+    <tr>
+      <td>Any     unsecured  claim we hold may be paid only to the extent that funds are     available and only in the <font color="blue">same percentage as</font> is paid to all other holders of     unsecured claims</td>
+    </tr>
+    <tr>
+      <td>It is possible that we <font color="blue">may recover substantially less than</font>     the  full  value of any unsecured claims we hold, if at all, which may     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results and <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>If any of our <font color="blue">anchor tenant</font>s becomes insolvent, suffers a downturn in     business,  or decides not to renew its lease or vacates a property and     prevents us from re-letting that <font color="blue">property by continuing</font> to pay rent for the     balance of the term, it <font color="blue">may <font color="blue"><font color="blue">adversely</font> impact</font></font> our business</td>
+    </tr>
+    <tr>
+      <td>In addition, a     lease <font color="blue">termination</font> by an <font color="blue">anchor tenant</font> or a failure of an <font color="blue">anchor tenant</font> to     occupy the <font color="blue">premises could</font> result in lease <font color="blue">termination</font>s or <font color="blue">reductions</font> in rent     by some of our non-<font color="blue">anchor tenant</font>s in the <font color="blue">same shopping center pursuant</font> to     the terms of their leases</td>
+    </tr>
+    <tr>
+      <td>In that event, we may be unable to re-let the     <font color="blue">vacated space</font></td>
+    </tr>
+    <tr>
+      <td>Similarly, the leases of some <font color="blue">anchor tenant</font>s may permit them to     transfer their leases to other retailers</td>
+    </tr>
+    <tr>
+      <td>The transfer to a new anchor     <font color="blue">tenant could</font> cause <font color="blue">customer traffic</font> in the <font color="blue">retail center</font> to decrease, which     would reduce the <font color="blue">income generated by</font> that <font color="blue">retail center</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a     transfer of a lease to a new <font color="blue">anchor tenant</font> could also give other tenants the     right to make <font color="blue">reduced rental payments</font> or to terminate their <font color="blue">leases with us</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Concentration </font>of our credit risk could reduce our operating results</td>
+    </tr>
+    <tr>
+      <td>Several of our tenants represent a <font color="blue">significant</font> portion of our leasing     revenues</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of <font color="blue">December </font></font>31, 2005, we received 3dtta8prca of our <font color="blue">annualized base</font>     <font color="blue">rent from each</font> of Wal-Mart Stores, Inc</td>
+    </tr>
+    <tr>
+      <td>and <font color="blue">TJX Operating Companies </font>and 3dtta1prca     of our <font color="blue">annualized base</font> rent from Publix Super Markets, Inc</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">concentration</font> in our <font color="blue">leasing revenue from</font> a small number of tenants     creates  the  risk  that,  should  these  tenants experience financial     <font color="blue">difficulties</font>, our operating results could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font></td>
+    </tr>
+    <tr>
+      <td>REIT <font color="blue"><font color="blue">distribution</font> <font color="blue"><font color="blue">requirement</font>s</font> limit</font> our <font color="blue">available cash</font></td>
+    </tr>
+    <tr>
+      <td>As a REIT, we are subject to annual <font color="blue">distribution</font> <font color="blue"><font color="blue">requirement</font>s</font>, which     limit the amount of cash we retain for other business purposes, including     amounts to fund our growth</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue"><font color="blue">generally</font> must distribute annually at least</font>     90prca of our net REIT <font color="blue">taxable income</font>, excluding any <font color="blue">net capital gain</font>, in order     for our <font color="blue">distributed earnings</font> not to be subject to <font color="blue">corporate income tax</font></td>
+    </tr>
+    <tr>
+      <td>We     intend  to  make  <font color="blue"><font color="blue">distribution</font>s</font> to our <font color="blue">shareholders</font> to <font color="blue">comply with</font> the     <font color="blue"><font color="blue">requirement</font>s</font>  of  the Code</td>
+    </tr>
+    <tr>
+      <td>However, <font color="blue">differences</font> in <font color="blue">timing between</font> the     <font color="blue">recognition</font> of <font color="blue">taxable income</font> and the <font color="blue">actual receipt</font> of <font color="blue">cash could</font> require     us to <font color="blue">sell assets</font> or <font color="blue">borrow funds on</font> a short-term or long-term basis to meet     the 90prca <font color="blue">distribution</font> <font color="blue">requirement</font> of the Code</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">inability</font> to <font color="blue">successfully</font> identify or complete <font color="blue">suitable <font color="blue">acquisition</font>s</font> and     new <font color="blue"><font color="blue">development</font>s</font> would <font color="blue"><font color="blue">adversely</font> affect</font> our results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may not be successful in identifying     suitable <font color="blue">real estate</font> properties that meet our <font color="blue"><font color="blue">acquisition</font> criteria</font> and are     <font color="blue">compatible with</font> our <font color="blue">growth strategy</font> or in <font color="blue">consummating <font color="blue">acquisition</font>s</font> or     <font color="blue">investments on</font> satisfactory terms</td>
+    </tr>
+    <tr>
+      <td>We may not be successful in identifying     <font color="blue">suitable areas</font> for new <font color="blue">development</font>, negotiating for the <font color="blue">acquisition</font> of the     land,  obtaining  required  permits  and <font color="blue">authorizations</font>, or completing     <font color="blue"><font color="blue">development</font>s</font> in <font color="blue">accordance with</font> our budgets and on a <font color="blue">timely basis</font> or leasing     any newly-developed space</td>
+    </tr>
+    <tr>
+      <td>If we fail to identify or complete suitable     <font color="blue">acquisition</font>s or <font color="blue"><font color="blue">development</font>s</font> on a <font color="blue">timely basis</font> and within our budget, our     <font color="blue">financial condition</font> and results of                                         6       _________________________________________________________________    [61]Table of <font color="blue">Contents       </font><font color="blue">operations</font> could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> and our growth could slow, which in     turn <font color="blue">could <font color="blue"><font color="blue">adversely</font> impact</font></font> our share price</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">re<font color="blue">development</font></font> projects may not yield anticipated returns, which would     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>A key component of our business strategy is exploring <font color="blue">re<font color="blue">development</font></font>     <font color="blue">opportunities at existing properties within</font> our portfolio and in <font color="blue">connection</font>     with  property  <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>To  the  extent that we engage in these     <font color="blue">re<font color="blue">development</font></font>  <font color="blue">activities</font>,  they will be subject to the <font color="blue">risks normally</font>     <font color="blue">associated with</font> these projects, including, among others, cost overruns and     <font color="blue">timing delays as</font> a result of the lack of <font color="blue">availability</font> of materials and     labor, weather <font color="blue">conditions</font> and other <font color="blue">factors outside</font> of our control</td>
+    </tr>
+    <tr>
+      <td>Any     substantial <font color="blue">unanticipated delays</font> or expenses could <font color="blue"><font color="blue">adversely</font> affect</font> the     <font color="blue">investment returns from</font> these <font color="blue">re<font color="blue">development</font></font> projects and <font color="blue"><font color="blue">adversely</font> impact</font>     our operating results</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face <font color="blue">competition</font></font> for the <font color="blue">acquisition</font> and <font color="blue">development</font> of <font color="blue">real estate</font>     properties, which may impede our ability to grow our <font color="blue">operations</font> or may     increase the cost of these <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">compete with</font> many other entities for the <font color="blue">acquisition</font> of retail     shopping  centers  and  land that is <font color="blue">appropriate</font> for new <font color="blue"><font color="blue">development</font>s</font>,     including other REITs, <font color="blue">institutional pension funds</font> and other owner-operators     of <font color="blue">shopping centers</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue"><font color="blue">competitors</font> may increase</font> the price we pay to     acquire properties or may succeed in acquiring those <font color="blue">properties themselves</font></td>
+    </tr>
+    <tr>
+      <td>In addition, the sellers of properties we wish to acquire may find our     <font color="blue">competitors</font> to be more <font color="blue">attractive buyers</font> because they may have greater     resources,  may  be willing to pay more, or may have a more compatible     operating <font color="blue">philosophy</font></td>
+    </tr>
+    <tr>
+      <td>In particular, larger REITs may enjoy <font color="blue">significant</font>     <font color="blue"><font color="blue">competitive</font> advantages</font> that result from, among other things, a <font color="blue">lower cost</font> of     capital</td>
+    </tr>
+    <tr>
+      <td>In  addition, the number of entities and the amount of funds     competing for <font color="blue">suitable properties may increase</font></td>
+    </tr>
+    <tr>
+      <td>This <font color="blue">would increase demand</font>     for these properties and <font color="blue">therefore increase</font> the <font color="blue">prices paid</font> for them</td>
+    </tr>
+    <tr>
+      <td>If we     pay  higher  prices  for  properties or are unable to acquire suitable     properties  <font color="blue">at reasonable prices</font>, our ability to grow may be <font color="blue">adversely</font>     affected</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Competition  </font>may affect our ability to <font color="blue">renew leases</font> or re-let space on     favorable terms and may require us to make <font color="blue">unplanned capital <font color="blue">improvements</font></font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face <font color="blue">competition</font></font> from similar <font color="blue">retail center</font>s within the <font color="blue">trade areas</font>     in which our centers operate to <font color="blue">renew leases</font> or re-let space as leases     expire</td>
+    </tr>
+    <tr>
+      <td>Some of these competing properties may be newer and better located     or  have a better tenant mix than our properties, which would increase     <font color="blue">competition</font> for <font color="blue">customer traffic</font> and <font color="blue">creditworthy</font> tenants</td>
+    </tr>
+    <tr>
+      <td>We may not be     able to <font color="blue">renew leases</font> or obtain <font color="blue">replacement tenants as leases</font> expire, and the     terms of renewals or new leases, including the cost of required <font color="blue">renovations</font>     or <font color="blue">concessions</font> to tenants, may be less favorable to <font color="blue">us than current lease</font>     terms</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increased </font><font color="blue">competition</font> for <font color="blue">tenants may</font> also require us to make capital     <font color="blue">improvements</font> to <font color="blue">properties which</font> we would not have otherwise planned to     make</td>
+    </tr>
+    <tr>
+      <td>In addition, we <font color="blue">face <font color="blue">competition</font></font> from alternate forms of retailing,     including home shopping networks, mail order <font color="blue">catalogues</font> and on-line based     shopping services, which may limit the number of <font color="blue">retail tenants</font> that desire     to seek space in <font color="blue">shopping center properties <font color="blue">generally</font></font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to     re-let substantial amounts of <font color="blue"><font color="blue">vacant space</font> promptly</font>, if the <font color="blue">rental rates</font>     upon a renewal or new lease are <font color="blue">significant</font>ly lower than expected, or if     reserves for costs of re-letting prove inadequate, then our earnings and     <font color="blue"><font color="blue">cash flow</font> will decrease</font></td>
+    </tr>
+    <tr>
+      <td>We may be restricted from re-letting space based on existing exclusivity     <font color="blue">lease provisions with</font> some of our tenants</td>
+    </tr>
+    <tr>
+      <td>In a number of cases, our leases contain provisions giving the tenant     the exclusive right to sell clearly identified types of <font color="blue">merchandise</font> or     provide specific types of services within the particular <font color="blue">retail center</font> or     limit the ability of other tenants to sell that <font color="blue">merchandise</font> or provide those     services</td>
+    </tr>
+    <tr>
+      <td>When re-letting space after a vacancy, these <font color="blue">provisions may limit</font>     the number and types of <font color="blue">prospective tenants suitable</font> for the <font color="blue">vacant space</font></td>
+    </tr>
+    <tr>
+      <td>If  we are unable to re-let space on satisfactory terms, our operating     results would be <font color="blue"><font color="blue">adversely</font> impact</font>ed</td>
+    </tr>
+    <tr>
+      <td>7       _________________________________________________________________    [62]Table of <font color="blue">Contents       </font>We  hold  investments in <font color="blue">joint venture</font>s in which we do not control all     <font color="blue">decisions</font>, and we may have conflicts of <font color="blue">interest with</font> our <font color="blue">joint venture</font>     partners</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of <font color="blue">December </font></font>31, 2005, 16 of our <font color="blue">shopping centers</font> are partially     owned by non-affiliated partners through <font color="blue">joint venture</font> arrangements, none of     which we have a <font color="blue">controlling interest</font> in</td>
+    </tr>
+    <tr>
+      <td>We do not control all <font color="blue">decisions</font> in     our <font color="blue">joint venture</font>s and may be required to take actions that are in the     interest  of  the  joint  <font color="blue"><font color="blue">venture partners</font> but</font> not our <font color="blue">best interests</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, we may not be able to <font color="blue">favorably resolve</font> any <font color="blue">issues which</font> arise,     or  we may have to <font color="blue">provide financial</font> or other <font color="blue">inducements</font> to our joint     <font color="blue">venture partners</font> to obtain <font color="blue">such resolution</font></td>
+    </tr>
+    <tr>
+      <td>Various <font color="blue">restrictive provisions</font> and <font color="blue">rights govern sales</font> or transfers of     interests in our <font color="blue">joint venture</font>s</td>
+    </tr>
+    <tr>
+      <td>These may work to our <font color="blue">disadvantage</font> because,     among other things, we may be required to make <font color="blue">decisions</font> as to the purchase     or sale of interests in our <font color="blue">joint venture</font>s at a time that is <font color="blue">disadvantage</font>ous     to us</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Bankruptcy </font>of our <font color="blue">joint venture</font> partners could <font color="blue"><font color="blue">adversely</font> affect</font> us</td>
+    </tr>
+    <tr>
+      <td>We could be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> by the <font color="blue">bankruptcy</font> of one of our joint     <font color="blue">venture partners</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">profitability</font> of <font color="blue">shopping centers</font> held in a joint     <font color="blue">venture could also</font> be <font color="blue"><font color="blue"><font color="blue">adversely</font> affect</font>ed</font> by the <font color="blue">bankruptcy</font> of one of the     <font color="blue">joint venture</font> partners if, because of <font color="blue">certain provisions</font> of the <font color="blue">bankruptcy</font>     laws, we were unable to make important <font color="blue">decisions</font> in a <font color="blue">timely fashion</font> or     became subject to <font color="blue">additional liabilities</font></td>
+    </tr>
+    <tr>
+      <td>Rising operating expenses could <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>Our properties are subject to increases in <font color="blue">real estate</font> and other tax     rates,  utility  costs,  insurance  costs, repairs and maintenance and     <font color="blue">administrative</font>  expenses</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">current properties</font> and any properties we     acquire in the <font color="blue">future may</font> be subject to rising operating expenses, some or     all  of  which may be out of our control</td>
+    </tr>
+    <tr>
+      <td>In addition, while most of our leases require that <font color="blue">tenants pay</font> all or a     portion of the applicable <font color="blue">real estate</font> taxes, insurance and operating and     maintenance costs, renewals of leases or <font color="blue">future leases may</font> not be negotiated     on these terms, in <font color="blue">which event</font> we will have to pay those costs</td>
+    </tr>
+    <tr>
+      <td>If we are     unable to <font color="blue">lease properties on</font> a basis requiring the tenants to pay all or     some  of  these  costs, or if <font color="blue">tenants fail</font> to <font color="blue">pay such costs</font>, it could     <font color="blue"><font color="blue">adversely</font> affect</font> our operating results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">illiquidity</font> of our <font color="blue">real estate</font> investments could <font color="blue">significant</font>ly impede     our  ability  to  respond to adverse changes in the performance of our     properties, which <font color="blue">could <font color="blue"><font color="blue">adversely</font> impact</font></font> our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td>Because <font color="blue">real estate</font> investments are <font color="blue">relatively illiquid</font>, our ability     to <font color="blue">promptly sell one</font> or more properties in our portfolio in response to     changing economic, financial and <font color="blue">investment <font color="blue">conditions</font></font> is limited</td>
+    </tr>
+    <tr>
+      <td>The real     estate  market  is  <font color="blue">affected by</font> many factors, such as general economic     <font color="blue">conditions</font>, <font color="blue">availability</font> of financing, interest rates and other factors,     including supply and demand, that are beyond our control</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot predict</font>     whether we will be able to sell any property for the price and other terms     we  seek, or whether any price or other <font color="blue">terms offered by</font> a prospective     <font color="blue">purchaser would</font> be acceptable to us</td>
+    </tr>
+    <tr>
+      <td>We also <font color="blue">cannot predict</font> the length of     time  needed to find a <font color="blue">willing purchaser</font> and to complete the sale of a     property</td>
+    </tr>
+    <tr>
+      <td>We may be required to <font color="blue">expend funds</font> to correct defects or to make     <font color="blue">improvements</font> before a property can be sold, and we <font color="blue">cannot assure</font> you that we     will  have  funds  available to correct those defects or to make those     <font color="blue">improvements</font></td>
+    </tr>
+    <tr>
+      <td>These factors and any others that would impede our ability to     respond  to adverse changes in the performance of our <font color="blue">properties could</font>     <font color="blue">significant</font>ly  <font color="blue">adversely</font>  affect our <font color="blue">financial condition</font> and operating     results</td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">suffer losses</font> that are not <font color="blue">covered by insurance</font> or that are in excess     of  our  <font color="blue">insurance coverage limits</font>, we <font color="blue">could lose <font color="blue">invested capital</font></font> and     anticipated profits</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Catastrophic </font>losses, such as losses resulting from wars, acts of     terrorism, earthquakes, floods, hurricanes, tornadoes or other natural     <font color="blue">disasters</font>,  pollution  or  <font color="blue">environment</font>al matters, <font color="blue">generally</font> are either     uninsurable or not <font color="blue">economically insurable</font>, or may be subject to insurance     coverage limitations, such as large <font color="blue">deductibles</font> or co-payments</td>
+    </tr>
+    <tr>
+      <td>Although we     currently maintain “all risk” replacement cost insurance for our buildings,     rents and personal property, commercial general <font color="blue">liability</font> insurance and     pollution and <font color="blue"><font color="blue">environment</font>al <font color="blue">liability</font></font>                                         8       _________________________________________________________________    [63]Table of <font color="blue">Contents       </font>insurance, our <font color="blue">insurance coverage may</font> be inadequate if any of the events     described above occurred to, or caused the <font color="blue">destruction</font> of, one or more of     our properties</td>
+    </tr>
+    <tr>
+      <td>Under that scenario, we <font color="blue">could lose both</font> our <font color="blue">invested capital</font>     and anticipated <font color="blue">profits from</font> that property</td>
+    </tr>
+    <tr>
+      <td>Capitalization Risks       We have substantial <font color="blue">debt obligations</font>, including <font color="blue">variable rate</font> debt, which     may  impede  our  operating  performance  and  put us at a <font color="blue">competitive</font>     <font color="blue">disadvantage</font></td>
+    </tr>
+    <tr>
+      <td>Required <font color="blue">repayments</font> of debt and related interest can <font color="blue"><font color="blue">adversely</font> affect</font>     our operating performance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of <font color="blue">December </font></font>31, 2005, we had dlra724dtta8 million of     outstanding  <font color="blue">indebtedness</font>, of which dlra253dtta1 million bears interest at a     <font color="blue">variable rate</font>, and we have the ability to borrow an additional dlra12 million     under our existing <font color="blue">Credit Facility </font>and to increase the <font color="blue">availability</font> under     our <font color="blue">unsecured revolving</font> credit <font color="blue"><font color="blue">facility</font> by up</font> to dlra100 million under terms of     the  Credit  Facility</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Increases  </font>in  interest  rates on our existing     <font color="blue">indebtedness</font> would increase our interest expense, which could <font color="blue">adversely</font>     affect our <font color="blue">cash flow</font> and our ability to pay dividends</td>
+    </tr>
+    <tr>
+      <td>For example, if     market  rates  of interest on our <font color="blue">variable rate</font> debt outstanding as of     <font color="blue">December </font>31, 2005 increased by 1dtta00prca, the increase in <font color="blue">interest expense on</font>     our existing <font color="blue">variable rate</font> debt would decrease future earnings and cash     flows by approximately dlra2dtta3 million annually</td>
+    </tr>
+    <tr>
+      <td>The amount of our debt may <font color="blue"><font color="blue">adversely</font> affect</font> our business and operating     results by:         •  requiring us to use a substantial portion of our <font color="blue">funds from</font> <font color="blue">operations</font>     to pay interest, which reduces the <font color="blue">amount available</font> for dividends and     working capital;         •  <font color="blue">placing us at</font> a <font color="blue">competitive</font> <font color="blue">disadvantage</font> compared to our <font color="blue">competitors</font>     that have less debt;          •  making us more vulnerable to economic and <font color="blue">industry downturns</font> and     reducing  our <font color="blue">flexibility</font> to respond to changing business and economic     <font color="blue">conditions</font>;         •  limiting our ability to borrow more money for <font color="blue">operations</font>, capital or to     finance <font color="blue">acquisition</font>s in the future; and         •  limiting our ability to refinance or pay-off <font color="blue">debt obligations</font> when they     <font color="blue">become due</font></td>
+    </tr>
+    <tr>
+      <td>Subject to <font color="blue">compliance with</font> the financial covenants in our borrowing     <font color="blue">agreements</font>, our <font color="blue">management</font> and board of trustees have <font color="blue">discretion</font> to increase     the amount of our outstanding debt at any time</td>
+    </tr>
+    <tr>
+      <td>We could become more highly     leveraged,  resulting  in an increase in <font color="blue">debt service costs</font> that could     <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">cash flow</font> and the <font color="blue">amount available</font> for <font color="blue">distribution</font> to     our <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>If we increase our debt, we <font color="blue">may also increase</font> the risk of     <font color="blue">default on</font> our debt</td>
+    </tr>
+    <tr>
+      <td>Because we <font color="blue">must annually distribute</font> a substantial portion of our income to     maintain our REIT status, we <font color="blue">will continue</font> to need additional debt and/or     <font color="blue">equity capital</font> to grow</td>
+    </tr>
+    <tr>
+      <td>In general, we <font color="blue">must annually distribute</font> at least 90prca of our taxable     net income to our <font color="blue">shareholders</font> to maintain our REIT status</td>
+    </tr>
+    <tr>
+      <td>As a result,     those earnings will not be available to fund <font color="blue">acquisition</font>, <font color="blue">development</font> or     <font color="blue">re<font color="blue">development</font></font>  <font color="blue">activities</font></td>
+    </tr>
+    <tr>
+      <td>We  have  historically funded <font color="blue">acquisition</font>,     <font color="blue">development</font> and <font color="blue">re<font color="blue">development</font></font> <font color="blue">activities</font> by:         •  retaining <font color="blue">cash flow</font> that we are not required to distribute to maintain     our REIT status;         •  <font color="blue">borrowing from financial institutions</font>;          •   <font color="blue">selling assets</font> that we do not believe present the potential for     <font color="blue">significant</font> future growth or that are no longer <font color="blue">compatible with</font> our business     plan;         •  <font color="blue">selling <font color="blue">common shares</font></font> and <font color="blue">preferred shares</font>; and         •  entering into <font color="blue">joint venture</font> transactions with third parties</td>
+    </tr>
+    <tr>
+      <td>9       _________________________________________________________________    [64]Table of <font color="blue">Contents       </font>       We  expect to continue to fund our <font color="blue">acquisition</font>, <font color="blue">development</font> and     <font color="blue">re<font color="blue">development</font></font> <font color="blue">activities</font> in this way</td>
+    </tr>
+    <tr>
+      <td>Our failure to obtain <font color="blue">funds from</font> these     <font color="blue">sources could limit</font> our ability to grow, which could have a material adverse     effect on the value of our securities</td>
+    </tr>
+    <tr>
+      <td>Our  financial  covenants  may  restrict  our operating or <font color="blue">acquisition</font>     <font color="blue">activities</font>, which <font color="blue">may <font color="blue"><font color="blue">adversely</font> impact</font></font> our <font color="blue">financial condition</font> and operating     results</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">financial covenants contained</font> in our mortgages and debt <font color="blue">agreements</font>     reduce our <font color="blue">flexibility</font> in conducting our <font color="blue">operations</font> and create a risk of     <font color="blue">default on</font> our debt if we <font color="blue">cannot continue</font> to <font color="blue">satisfy them</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">mortgages on</font>     our properties contain customary negative covenants such as those that limit     our ability, without the <font color="blue">prior consent</font> of the lender, to <font color="blue">further mortgage</font>     the <font color="blue">applicable property</font> or to <font color="blue">discontinue insurance coverage</font></td>
+    </tr>
+    <tr>
+      <td>In addition,     if we <font color="blue">breach covenants</font> in our debt <font color="blue">agreements</font>, the lender can declare a     default and require us to repay the <font color="blue">debt immediately</font> and, if the debt is     secured, can ultimately take possession of the <font color="blue">property securing</font> the loan</td>
+    </tr>
+    <tr>
+      <td>In particular, our outstanding credit <font color="blue"><font color="blue">facilities</font> contain customary</font>     restrictions, <font color="blue"><font color="blue">requirement</font>s</font> and other <font color="blue">limitations on</font> our ability to incur     <font color="blue">indebtedness</font>, including <font color="blue">limitations on</font> total liabilities to assets and     minimum fixed <font color="blue">charge coverage</font> and <font color="blue">tangible net worth ratios</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to     <font color="blue">borrow under</font> our credit <font color="blue">facilities</font> is subject to <font color="blue">compliance with</font> these     financial and other covenants</td>
+    </tr>
+    <tr>
+      <td>We rely in part <font color="blue">on borrowings under</font> our     credit <font color="blue">facilities</font> to finance <font color="blue">acquisition</font>, <font color="blue">development</font> and <font color="blue">re<font color="blue">development</font></font>     <font color="blue">activities</font> and for working capital</td>
+    </tr>
+    <tr>
+      <td>If we are unable to <font color="blue">borrow under</font> our     credit <font color="blue">facilities</font> or to refinance existing <font color="blue">indebtedness</font>, our financial     condition and results of <font color="blue">operations</font> would likely be <font color="blue"><font color="blue">adversely</font> impact</font>ed</td>
+    </tr>
+    <tr>
+      <td>Mortgage <font color="blue">debt obligations</font> expose us to <font color="blue">increased risk</font> of loss of property,     which could <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">financial condition</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Incurring </font><font color="blue">mortgage debt increases</font> our risk of loss because <font color="blue">defaults on</font>     <font color="blue">indebtedness</font> <font color="blue">secured by</font> properties may result in <font color="blue">foreclosure actions by</font>     lenders and ultimately our loss of the related property</td>
+    </tr>
+    <tr>
+      <td>We have entered     <font color="blue">into mortgage loans which</font> are <font color="blue"><font color="blue">secured by</font> multiple properties</font> and contain     cross-collateralization       and       cross-default      provisions</td>
+    </tr>
+    <tr>
+      <td>Cross-collateralization <font color="blue">provisions allow</font> a lender to <font color="blue"><font color="blue">foreclose on</font> multiple</font>     properties  in the event that we <font color="blue">default under</font> the loan</td>
+    </tr>
+    <tr>
+      <td>Cross-default     <font color="blue">provisions allow</font> a lender to <font color="blue">foreclose on</font> the related property in the event     a default is declared under another loan</td>
+    </tr>
+    <tr>
+      <td>For <font color="blue"><font color="blue">federal income</font> tax purposes</font>, a     foreclosure of any of our <font color="blue">properties would</font> be <font color="blue">treated as</font> a sale of the     property for a <font color="blue">purchase price</font> equal to the <font color="blue">outstanding balance</font> of the debt     <font color="blue">secured by</font> the mortgage</td>
+    </tr>
+    <tr>
+      <td>If the <font color="blue">outstanding balance</font> of the debt <font color="blue">secured by</font>     the <font color="blue">mortgage exceeds</font> our tax basis in the property, we would recognize     <font color="blue">taxable income</font> on foreclosure but would not receive any <font color="blue">cash proceeds</font></td>
+    </tr>
+    <tr>
+      <td>Tax Risks       Our failure to <font color="blue">qualify as</font> a REIT would result in <font color="blue">higher taxes</font> and reduced     <font color="blue">cash available</font> for our <font color="blue">shareholders</font></td>
+    </tr>
+    <tr>
+      <td>We believe that we currently operate in a manner so as to <font color="blue">qualify as</font> a     REIT for <font color="blue"><font color="blue">federal income</font> tax purposes</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">continued qualification as</font> a REIT     will  <font color="blue">depend on</font> our <font color="blue">satisfaction</font> of certain asset, income, investment,     organizational, <font color="blue">distribution</font>, shareholder ownership and other <font color="blue"><font color="blue">requirement</font>s</font>     on a <font color="blue">continuing basis</font></td>
+    </tr>
+    <tr>
+      <td>Our ability to satisfy the <font color="blue">asset tests depends upon</font>     our analysis of the <font color="blue">fair market values</font> of our assets, some of which are not     susceptible to a precise de<font color="blue">termination</font>, and for which we will not obtain     <font color="blue">independent appraisals</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">compliance with</font> the REIT income and quarterly     asset <font color="blue"><font color="blue">requirement</font>s</font> also depends upon our ability to manage <font color="blue">successfully</font> the     <font color="blue">composition</font> of our income and <font color="blue">assets on</font> an <font color="blue">ongoing basis</font></td>
+    </tr>
+    <tr>
+      <td>Moreover, the     proper classification of an instrument as debt or equity for <font color="blue">federal income</font>     <font color="blue">tax purposes may</font> be uncertain in some circumstances, which could affect the     <font color="blue">application</font> of the REIT qualification <font color="blue"><font color="blue">requirement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, there can     be  no  assurance  that the IRS will not contend that our interests in     <font color="blue">subsidiaries</font>  or  other  issuers  <font color="blue">constitute</font>  a  violation of the REIT     <font color="blue"><font color="blue">requirement</font>s</font></td>
+    </tr>
+    <tr>
+      <td>Moreover,  future economic, market, legal, tax or other     <font color="blue">considerations may</font> cause us to fail to <font color="blue">qualify as</font> a REIT                                         10       _________________________________________________________________    [65]Table of <font color="blue">Contents       </font>      If we were to fail to <font color="blue">qualify as</font> a REIT in any <font color="blue">taxable year</font>, we would     be subject to <font color="blue">federal income</font> tax, including any <font color="blue">applicable alternative</font>     minimum  tax,  on  our  <font color="blue">taxable income</font> at regular corporate rates, and     <font color="blue"><font color="blue">distribution</font>s</font> to <font color="blue">shareholders</font> would not be <font color="blue">deductible by us</font> in computing our     <font color="blue">taxable income</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">such corporate tax <font color="blue">liability</font> could</font> be substantial and     would  reduce  the  amount  of  <font color="blue">cash available</font> for <font color="blue">distribution</font> to our     <font color="blue">shareholders</font>, which in turn could have an <font color="blue">adverse <font color="blue">impact on</font></font> the value of,     and <font color="blue">trading prices</font> for, our <font color="blue">common shares</font></td>
+    </tr>
+    <tr>
+      <td>Unless entitled to <font color="blue">relief under</font>     certain Code provisions, we also would be <font color="blue">disqualified from taxation as</font> a     REIT for the four <font color="blue">taxable year</font>s following the <font color="blue">year during which</font> we ceased to     <font color="blue">qualify as</font> a REIT             We have been and are <font color="blue">currently under</font> IRS <font color="blue">examinations</font> for <font color="blue">prior years</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">ultimate resolution</font> of any <font color="blue">tax liabilities</font> arising pursuant to the IRS     <font color="blue">examinations</font> may have a material adverse effect on our <font color="blue">financial position</font>,     results  of <font color="blue">operations</font> and <font color="blue">cash flow</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">See Footnote </font>20 to the Notes to     <font color="blue">Consolidated Financial Statements in Item </font>8</td>
+    </tr>
+    <tr>
+      <td>Even if we <font color="blue">qualify as</font> a REIT, we may be subject to various <font color="blue">federal income</font>     and <font color="blue">excise taxes</font>, as well as state and <font color="blue">local taxes</font></td>
+    </tr>
+    <tr>
+      <td>Even if we <font color="blue">qualify as</font> a REIT, we may be subject to <font color="blue">federal income</font> and     <font color="blue">excise taxes</font> in various situations, such as if we fail to distribute all of     our income</td>
+    </tr>
+    <tr>
+      <td>We also will be required to pay a 100prca tax on non-arm’s length     <font color="blue">transactions between us</font> and a TRS (described below) and on any net income     from sales of property that the IRS <font color="blue">successfully</font> asserts was property held     for  sale to customers in the <font color="blue">ordinary course</font></td>
+    </tr>
+    <tr>
+      <td>Additionally, we may be     subject to state or <font color="blue">local taxation</font> in various state or <font color="blue">local jurisdictions</font>,     including those in which we transact business</td>
+    </tr>
+    <tr>
+      <td>The state and <font color="blue">local tax laws</font>     may not conform to the <font color="blue">federal income</font> tax treatment</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">taxes imposed on us</font>     would reduce our operating <font color="blue">cash flow</font> and net income</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Legislative </font>or other <font color="blue">actions affecting</font> REITs could have a negative effect on     us</td>
+    </tr>
+    <tr>
+      <td>The rules dealing with <font color="blue">federal income</font> taxation are <font color="blue">constantly under</font>     <font color="blue">review by persons involved</font> in the <font color="blue">legislative process</font> and by the IRS, and     <font color="blue">the United States Treasury Department</font></td>
+    </tr>
+    <tr>
+      <td>Changes to tax laws, which may have     <font color="blue">retroactive</font> <font color="blue">application</font>, could <font color="blue"><font color="blue">adversely</font> affect</font> our <font color="blue">shareholders</font> or us</td>
+    </tr>
+    <tr>
+      <td>We     <font color="blue">cannot predict</font> how changes in <font color="blue">tax laws might affect</font> our <font color="blue">shareholders</font> or us</td>
+    </tr>
+    <tr>
+      <td>Environmental Matters              Under  various  Federal,  state  and local laws, ordinances and     <font color="blue">regulations</font> relating to the protection of the <font color="blue">environment</font> (“Environmental     Laws”), a current or previous owner or operator of <font color="blue">real estate</font> may be liable     for  the costs of removal or <font color="blue">remediation</font> of certain <font color="blue">hazardous</font> or toxic     substances disposed, stored, released, generated, <font color="blue">manufactured</font> or discharged     from, on, at, onto, under or in <font color="blue">such property</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Environmental Laws </font>often     impose such li<font color="blue">ability without</font> regard to whether the owner or operator knew     of, or was responsible for, the presence or release of such <font color="blue">hazardous</font> or     toxic substance</td>
+    </tr>
+    <tr>
+      <td>The presence of such substances, or the failure to properly     remediate  such  substances  when present, released or discharged, may     <font color="blue"><font color="blue">adversely</font> affect</font> the owner’s ability to sell or rent <font color="blue">such property</font> or to     borrow  using  such  property  <font color="blue">as collateral</font></td>
+    </tr>
+    <tr>
+      <td>The cost of any required     <font color="blue">remediation</font> and the <font color="blue">liability</font> of the owner or operator therefore as to any     property is <font color="blue">generally</font> not limited under such <font color="blue">Environmental Laws </font>and could     exceed the value of the property and/or the <font color="blue">aggregate assets</font> of the owner or     operator</td>
+    </tr>
+    <tr>
+      <td>Persons who arrange for the disposal or treatment of <font color="blue">hazardous</font> or     <font color="blue">toxic substances may also</font> be liable for the cost of removal or <font color="blue">remediation</font>     of such substances at a disposal or treatment <font color="blue">facility</font>, whether or not such     <font color="blue">facility</font> is owned or operated <font color="blue">by such persons</font></td>
+    </tr>
+    <tr>
+      <td>In addition to any action     required by Federal, state or <font color="blue">local authorities</font>, the presence or release of     <font color="blue">hazardous</font>  or <font color="blue">toxic substances on</font> or from any <font color="blue">property could</font> result in     <font color="blue">private plaintiffs bringing</font> claims for <font color="blue">personal injury</font> or other causes of     action</td>
+    </tr>
+    <tr>
+      <td>In  <font color="blue">connection</font>  with ownership (direct or indirect), operation,     <font color="blue">management</font> and <font color="blue">development</font> of <font color="blue">real properties</font>, we may be <font color="blue">potentially liable</font>     for <font color="blue">remediation</font>, releases or injury</td>
+    </tr>
+    <tr>
+      <td>In addition, <font color="blue">Environmental Laws </font>impose     on owners or operators the <font color="blue">requirement</font> of ongoing <font color="blue">compliance with</font> rules and     <font color="blue">regulations</font>  regarding business-related <font color="blue">activities</font> that may affect the     <font color="blue">environment</font></td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">activities</font> include, for example, the ownership or use of     <font color="blue">transformers</font> or <font color="blue"><font color="blue">underground</font> tanks</font>, the treatment or discharge of waste     waters or other materials, the removal or <font color="blue">abatement</font> of asbestos-containing     materials (“ACMs”) or lead-containing paint                                         11       _________________________________________________________________    [66]Table of <font color="blue">Contents       </font>during  <font color="blue">renovations</font>  or  otherwise, or <font color="blue">notification</font> to <font color="blue">various parties</font>     <font color="blue">concerning</font> the <font color="blue">potential presence</font> of <font color="blue">regulated matters</font>, including ACMs</td>
+    </tr>
+    <tr>
+      <td>Failure to <font color="blue">comply with</font> such <font color="blue"><font color="blue">requirement</font>s</font> could result in <font color="blue">difficulty</font> in the     lease or sale of any affected property and/or the imposition of monetary     penalties, fines or other sanctions in addition to the costs required to     <font color="blue">attain compliance</font></td>
+    </tr>
+    <tr>
+      <td>Several of our properties have or may contain ACMs or     <font color="blue">underground</font>  storage  tanks (“USTs”); however, we are not aware of any     potential <font color="blue"><font color="blue">environment</font>al <font color="blue">liability</font></font> which could reasonably be expected to have     a material <font color="blue">impact on</font> our <font color="blue">financial position</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>No     assurance can be given that future laws, ordinances or <font color="blue">regulations</font> will not     impose  any material <font color="blue">environment</font>al <font color="blue">requirement</font> or <font color="blue">liability</font>, or that a     material adverse <font color="blue">environment</font>al condition does not otherwise exist</td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+
+
+
+<html lang="en">
+
+
+
+	<meta charset="UTF-8">
+
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<style>
+
+
+    .node {
+
+        stroke: #fff;
+
+        stroke-width: 2px;
+
+    }
+
+    
+
+    .link {
+
+        stroke: #777;
+
+        stroke-width: 2px;
+
+    }
+
+
+
+</style>
+
+<body>
+
+<a href="https://riskrunners.com">Home</a><br>
+
+
+
+
+<a href="#risk_factors">Jump to Risk Factors</a><br>
+
+
+
+<a href="#industry">Jump to Industries</a><br>
+
+
+<a href="#exposure">Jump to Exposures</a><br>
+
+
+<a href="#event_code">Jump to Event Codes</a><br>
+
+
+<a href="#wiki">Jump to Wiki Summary</a><br><br>
+
+
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+
+    <script>
+
+
+// set a width and height for our SVG
+
+var width = 3000,
+
+
+    height = 3000;
+
+    
+// setup links
+
+var links =     [
+{source: "START_HERE", target: "4: controlled by", fill: "#860111"},
+{source: "4: controlled by", target: "4: First American ", fill: "#860111"},
+{source: "4: First American ", target: "4: stockholders", fill: "#860111"},
+{source: "4: stockholders", target: "4: no influence over stockholders decisions", fill: "#860111"},
+{source: "4: controlled by", target: "5: acquisition", fill: "#f93"},
+{source: "5: acquisition", target: "5: businesses", fill: "#f93"},
+{source: "5: businesses", target: "5: First American ", fill: "#f93"},
+{source: "5: First American ", target: "5: common stock", fill: "#f93"},
+{source: "5: common stock", target: "5: common stock which", fill: "#f93"},
+{source: "5: common stock which", target: "5: ten votes per", fill: "#f93"},
+{source: "5: ten votes per", target: "5: one vote per", fill: "#f93"},
+{source: "5: acquisition", target: "6: Consequently First American ", fill: "#9c2542"},
+{source: "6: Consequently First American ", target: "6: First Advantage ", fill: "#9c2542"},
+{source: "6: First Advantage ", target: "6: First Advantages ", fill: "#9c2542"},
+{source: "6: First Advantages ", target: "6: stockholders unless", fill: "#9c2542"},
+{source: "6: stockholders unless", target: "6: Delaware ", fill: "#9c2542"},
+{source: "6: Consequently First American ", target: "25: Accordingly ", fill: "#a81c07"},
+{source: "25: Accordingly ", target: "25: operations", fill: "#a81c07"},
+{source: "25: operations", target: "25: administrative functions", fill: "#a81c07"},
+{source: "25: Accordingly ", target: "65: Successful ", fill: "#ca1f7b"},
+{source: "65: Successful ", target: "65: integration", fill: "#ca1f7b"},
+{source: "65: integration", target: "65: Credit Information Group ", fill: "#ca1f7b"},
+{source: "65: Credit Information Group ", target: "65: First Advantage ", fill: "#ca1f7b"},
+{source: "65: First Advantage ", target: "65: dependent on several factors", fill: "#ca1f7b"},
+{source: "65: dependent on several factors", target: "65: acquisition", fill: "#ca1f7b"},
+{source: "65: acquisition", target: "65: operations", fill: "#ca1f7b"},
+{source: "65: Successful ", target: "START_HERE", fill: "#ca1f7b"}]; 
+    // create empty nodes array
+    var nodes = {};
+	var colorFill = [];
+	
+    // compute nodes from links data
+    links.forEach(function(link) {
+        link.source = nodes[link.source] ||
+            (nodes[link.source] = {name: link.source});
+        link.target = nodes[link.target] ||
+            (nodes[link.target] = {name: link.target});
+		colorFill.push({name: link.source.name, fill: link.fill });
+		colorFill.push({name: link.target.name, fill: link.fill });
+    });
+	
+	console.log(colorFill);
+
+
+    // add a SVG to the body for our viz
+    var svg=d3.select('body').append('svg')
+        .attr("viewBox", "0 0 " + width + " " + height );
+
+    // use the force
+    var force = d3.layout.force()
+		.charge(-5000)
+		.gravity(0.3)
+        .size([width, height])
+        .nodes(d3.values(nodes))
+        .links(links)
+        .on("tick", tick)
+        .linkDistance(200)
+        .start();
+
+    // add links
+    var link = svg.selectAll('.link')
+        .data(links)
+        .enter().append('line')
+        .attr('class', 'link'); 
+
+    // add nodes
+    var node = svg.selectAll('.node')
+        .data(force.nodes())
+        .enter().append('circle')
+        .attr('class', 'node')
+        .attr('r', width * 0.0035)
+		.style("fill", function(d) {
+									for (var i = 0; i < colorFill.length; i++) {
+										//console.log(d.name);
+										if(colorFill[i].name == d.name){
+											console.log(colorFill[i].fill);
+											return colorFill[i].fill;
+										}
+									} return "#555";
+									
+									});
+	var label = svg.selectAll(null)
+		.data(force.nodes())
+		.enter()
+		.append("text")
+		.text(function (d) { return d.name; })
+		.style("text-anchor", "middle")
+		.style("fill", "#555")
+		.style("font-family", "Arial")
+		.style("font-size", 34);
+
+
+    // what to do 
+    function tick(e) {
+        
+        node.attr('cx', function(d) { return d.x = Math.max(6, Math.min(width - 6, d.x)); })
+            .attr('cy', function(d) { return d.y = Math.max(6, Math.min(height - 6, d.y)); })
+            .call(force.drag);
+            
+        link.attr('x1', function(d) { return d.source.x; })
+            .attr('y1', function(d) { return d.source.y; })
+            .attr('x2', function(d) { return d.target.x; })
+            .attr('y2', function(d) { return d.target.y; });
+		
+		label.attr("x", function(d){ return d.x; })
+             .attr("y", function (d) {return d.y - 10; });
+        
+    }
+    
+</script><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='industry'>Industries</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Independent Power Producers and Energy Traders</td>
+    </tr>
+    <tr>
+      <td>Electronic Equipment and Instruments</td>
+    </tr>
+    <tr>
+      <td>Investment Banking and Brokerage</td>
+    </tr>
+    <tr>
+      <td>Asset Management and Custody Banks</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware Storage and Peripherals</td>
+    </tr>
+    <tr>
+      <td>Information Technology</td>
+    </tr>
+    <tr>
+      <td>Technology Hardware and Equipment</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='exposure'>Exposures</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Economic</td>
+    </tr>
+    <tr>
+      <td>Political reform</td>
+    </tr>
+    <tr>
+      <td>Rights</td>
+    </tr>
+    <tr>
+      <td>Express intent</td>
+    </tr>
+    <tr>
+      <td>Cooperate</td>
+    </tr>
+    <tr>
+      <td>Military</td>
+    </tr>
+    <tr>
+      <td>Judicial</td>
+    </tr>
+    <tr>
+      <td>Provide</td>
+    </tr>
+    <tr>
+      <td>Material Aid</td>
+    </tr>
+    <tr>
+      <td>Intelligence</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='event_code'>Event Codes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Yield to order</td>
+    </tr>
+    <tr>
+      <td>Demand</td>
+    </tr>
+    <tr>
+      <td>Agree</td>
+    </tr>
+    <tr>
+      <td>Promise policy support</td>
+    </tr>
+    <tr>
+      <td>Reward</td>
+    </tr>
+    <tr>
+      <td>Vote</td>
+    </tr>
+    <tr>
+      <td>Promise</td>
+    </tr>
+    <tr>
+      <td>Solicit support</td>
+    </tr>
+    <tr>
+      <td>Yield</td>
+    </tr>
+    <tr>
+      <td>Sports contest</td>
+    </tr>
+    <tr>
+      <td>Military blockade</td>
+    </tr>
+    <tr>
+      <td>Acknowledge responsibility</td>
+    </tr>
+    <tr>
+      <td>Grant</td>
+    </tr>
+    <tr>
+      <td>Release or return</td>
+    </tr>
+    <tr>
+      <td>Warn</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='wiki'>Wiki</th>
+      <th>Wiki Summary</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First_American_Corporation">First American Corporation</a></td>
+      <td>First American Financial Corporation is an American financial services company which provides title insurance and settlement services to the real estate and mortgage industries.\nThe First American Family of Companies’ core business lines include title insurance and closing/settlement services; title plant management services; title and other real property records and images; valuation products and services; home warranty products; property and casualty insurance; and banking, trust and investment advisory services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First_Roumanian-American_Congregation">First Roumanian-American Congregation</a></td>
+      <td>The First Roumanian-American Congregation, also known as Congregation Shaarey Shomayim (Hebrew: שַׁעֲרֵי שָׁמַיִם, "Gates of Heaven"), or the Roumanishe Shul (Yiddish for "Romanian synagogue"), was an Orthodox Jewish congregation that, for over 100 years, occupied a historic building at 89–93 Rivington Street on the Lower East Side of Manhattan, New York.\nThose who organized the congregation in 1885 were part of a substantial wave of Romanian-Jewish immigrants, most of whom settled in the Lower East Side.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First_American_Cave">First American Cave</a></td>
+      <td>The First American Cave is an archaeological and palentological site in downtown Nashville, Davidson County, Tennessee. The site was initially recognized in 1971 during construction of the foundations for the First American National Bank building at 315 Deaderick Street, when workers noticed a collection of bones being unearthed within a pocket of dirt approximately 30 feet below ground surface.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/List_of_African-American_firsts">List of African-American firsts</a></td>
+      <td>African-Americans are an ethnic group in the United States. The first achievements by African-Americans in diverse fields have historically marked footholds, often leading to more widespread cultural change.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Common_stock">Common stock</a></td>
+      <td>Common stock is a form of corporate equity ownership, a type of security. The terms voting share and ordinary share are also used frequently outside of the United States.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Preferred_stock">Preferred stock</a></td>
+      <td>Preferred stock (also called preferred shares, preference shares, or simply preferreds) is a component of share capital that may have any combination of features not possessed by common stock, including properties of both an equity and a debt instrument, and is generally considered a hybrid instrument. Preferred stocks are senior (i.e., higher ranking) to common stock but subordinate to bonds in terms of claim (or rights to their share of the assets of the company, given that such assets are payable to the returnee stock bond) and may have priority over common stock (ordinary shares) in the payment of dividends and upon liquidation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Matthiola_incana">Matthiola incana</a></td>
+      <td>Matthiola incana is a species of flowering plant in the cabbage family Brassicaceae. Common names include Brompton stock, common stock, hoary stock, ten-week stock, and gilly-flower.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Consolidation_(business)">Consolidation (business)</a></td>
+      <td>In business, consolidation or amalgamation is the merger and acquisition of many smaller companies into a few much larger ones. In the context of financial accounting, consolidation refers to the aggregation of financial statements of a group company as consolidated financial statements.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Stock_market">Stock market</a></td>
+      <td>A stock market, equity market, or share market is the aggregation of buyers and sellers of stocks (also called shares), which represent ownership claims on businesses; these may include securities listed on a public stock exchange, as well as stock that is only traded privately, such as shares of private companies which are sold to investors through equity crowdfunding platforms. Investment is usually made with an investment strategy in mind.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/New_York_Stock_Exchange">New York Stock Exchange</a></td>
+      <td>The New York Stock Exchange (NYSE, nicknamed "The Big Board") is an American stock exchange in the Financial District of Lower Manhattan in New York City. It is by far the world's largest stock exchange by market capitalization of its listed companies at US$30.1 trillion as of February 2018.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First-mover_advantage">First-mover advantage</a></td>
+      <td>In marketing strategy, first-mover advantage (FMA) is the competitive advantage gained by the initial ("first-moving") significant occupant of a market segment. First-mover advantage enables a company or firm to establish strong brand recognition, customer loyalty, and early purchase of resources before other competitors enter the market segment.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First-move_advantage_in_chess">First-move advantage in chess</a></td>
+      <td>In chess, there is a general consensus among players and theorists that the player who makes the first move (White) has an inherent advantage. Since 1851, compiled statistics support this view; White consistently wins slightly more often than Black, usually scoring between 52 and 56 percent.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/First-move_advantage">First-move advantage</a></td>
+      <td>In chess, there is a general consensus among players and theorists that the player who makes the first move (White) has an inherent advantage. Since 1851, compiled statistics support this view; White consistently wins slightly more often than Black, usually scoring between 52 and 56 percent.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Comparative_advantage">Comparative advantage</a></td>
+      <td>In an economic model, agents have a comparative advantage over others in producing a particular good if they can produce that good at a lower relative opportunity cost or autarky price, i.e. at a lower relative marginal cost prior to trade.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Absolute_advantage">Absolute advantage</a></td>
+      <td>In economics, the principle of absolute advantage is the ability of a party (an individual, or firm, or country) to produce a good or service more efficiently than its competitors. The Scottish economist Adam Smith first described the principle of absolute advantage in the context of international trade in 1776, using labor as the only input.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Incumbent">Incumbent</a></td>
+      <td>The incumbent is the current holder of an office or position, usually in relation to an election. For example, in an election for president, the incumbent is the person holding or acting in the office of president before the election, whether seeking re-election or not.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Medicare_Advantage">Medicare Advantage</a></td>
+      <td>Medicare Advantage (sometimes called Medicare Part C or MA) is a type of health insurance plan in the United States that provides Medicare benefits through a private-sector health insurer.In a Medicare Advantage plan, a Medicare beneficiary pays the Medicare monthly premium to the federal government, but receives coverage via a private insurance company for inpatient hospital ("Part A") and outpatient ("Part B") services. Typically, the plan also includes prescription drug ("Part D") coverage.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Mechanical_advantage">Mechanical advantage</a></td>
+      <td>Mechanical advantage is a measure of the force amplification achieved by using a tool, mechanical device or machine system. The device trades off input forces against movement to obtain a desired amplification in the output force.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Home_advantage">Home advantage</a></td>
+      <td>In team sports, the term home advantage – also called home ground, home field, home-field advantage, home court, home-court advantage, defender's advantage or home-ice advantage – describes the benefit that the home team is said to gain over the visiting team. This  benefit has been attributed to psychological effects supporting fans have on the competitors or referees; to psychological or physiological advantages of playing near home in familiar situations; to the disadvantages away teams suffer from changing time zones or climates, or from the rigors of travel; and in some sports, to specific rules that favor the home team directly or indirectly.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Bitwise_operation">Bitwise operation</a></td>
+      <td>In computer programming, a bitwise operation operates on a bit string, a bit array or a binary numeral (considered as a bit string) at the level of its individual bits. It is a fast and simple action, basic to the higher-level arithmetic operations and directly supported by the processor.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Special_Activities_Center">Special Activities Center</a></td>
+      <td>The Special Activities Center (SAC) is a division of the Central Intelligence Agency responsible for covert operations and paramilitary operations. The unit was named Special Activities Division (SAD) prior to 2015.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operations_research">Operations research</a></td>
+      <td>Operations research (British English: operational research), often shortened to the initialism OR, is a discipline that deals with the development and application of advanced analytical methods to improve decision-making. It is sometimes considered to be a subfield of mathematical sciences.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Emergency_operations_center">Emergency operations center</a></td>
+      <td>An emergency operations center (EOC) is a central command and control facility responsible for carrying out the principles of emergency preparedness and emergency management, or disaster management functions at a strategic level during an emergency, and ensuring the continuity of operation of a company, political subdivision or other organization.\nAn EOC is responsible for strategic direction and operational decisions and does not normally directly control field assets, instead leaving tactical decisions to lower commands.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Operation_(mathematics)">Operation (mathematics)</a></td>
+      <td>In mathematics, an operation is a function which takes zero or more input values (called operands) to a well-defined output value. The number of operands (also known as arguments) is the arity of the operation.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_bureau">Credit bureau</a></td>
+      <td>A credit bureau is a data collection agency that gathers account information from various creditors and provides that information to a consumer reporting agency in the United States, a credit reference agency in the United Kingdom, a credit reporting body in Australia, a credit information company (CIC) in India, Special Accessing Entity in the Philippines, and also to private lenders. It is not the same as a credit rating agency.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/TransUnion_CIBIL">TransUnion CIBIL</a></td>
+      <td>TransUnion CIBIL Limited is a credit information company operating in India. It maintains credit files on 600 million individuals and 32 million businesses.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_history">Credit history</a></td>
+      <td>This article deals with the general concept of the term credit history. For detailed information about the same topic in the United States, see Credit score in the United States.A credit history is a record of a borrower's responsible repayment of debts.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_rating">Credit rating</a></td>
+      <td>A credit rating is an evaluation of the credit risk of a prospective debtor (an individual, a business, company or a government), predicting their ability to pay back the debt, and  an implicit forecast of the likelihood of the debtor defaulting.\nThe credit rating represents an evaluation of a credit rating agency of the qualitative and quantitative information for the prospective debtor, including information provided by the prospective debtor and other non-public information obtained by the credit rating agency's analysts.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/National_Information_&amp;_Credit_Evaluation">National Information &amp; Credit Evaluation</a></td>
+      <td>National Information &amp; Credit Evaluation, or NICE Group, is a credit information group with operations in South Korea.\nFormerly known as National Information &amp; Credit Evaluation Inc., NICE GROUP was founded in 1986.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_Suisse">Credit Suisse</a></td>
+      <td>Credit Suisse Group AG is a  global investment bank  and financial services firm founded and based in Switzerland. Headquartered in Zürich, it maintains offices in all major financial centers around the world and is one of the nine global "Bulge Bracket" banks providing services in investment banking, private banking, asset management, and shared services.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Crédit_Agricole">Crédit Agricole</a></td>
+      <td>Crédit Agricole Group (French: [kʁedi aɡʁikɔl]), sometimes called La banque verte (English: The green bank) due to its historical ties to farming, is a French international banking group and the world's largest cooperative financial institution. It is France's second largest bank, after BNP Paribas, as well as the third largest in Europe and tenth largest in the world.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Fair_Credit_Reporting_Act">Fair Credit Reporting Act</a></td>
+      <td>The Fair Credit Reporting Act (FCRA), 15 U.S.C. § 1681 et seq, is U.S. Federal Government legislation enacted to promote the accuracy, fairness, and privacy of consumer information contained in the files of consumer reporting agencies. It was intended to shield consumers from the willful and/or negligent inclusion of erroneous data in their credit reports.</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_Corp_Group">Credit Corp Group</a></td>
+      <td>Credit Corp Group Limited (ASX: CCP) \nis an Australian debt buyer. The company purchases and collects debts in Australia, New Zealand and the United States (US).</td>
+    </tr>
+    <tr>
+      <td><a href="https://en.wikipedia.org/wiki/Credit_card">Credit card</a></td>
+      <td>A credit card is a payment card issued to users (cardholders) to enable the cardholder to pay a merchant for goods and services based on the cardholder's accrued debt (i.e., promise to the card issuer to pay them for the amounts plus the other agreed charges). The card issuer (usually a bank or credit union) creates a revolving account and grants a line of credit to the cardholder, from which the cardholder can borrow money for payment to a merchant or as a cash advance.</td>
+    </tr>
+  </tbody>
+</table><table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th id='risk_factors'>Risk Factors</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>FIRST ADVANTAGE CORP      Item 1A <font color="blue">Risk Factors</font></td>
+    </tr>
+    <tr>
+      <td>You should consider <font color="blue">carefully</font> the following risk factors, as well as the     other information <font color="blue">contained elsewhere</font> in this <font color="blue">Annual Report </font>on Form 10-K We     <font color="blue">face risks</font> other than those listed here, including those that are unknown to     us and others of which we may be aware but, at present, consider immaterial</td>
+    </tr>
+    <tr>
+      <td>Because of the following factors, as well as other <font color="blue">variables affecting</font> our     operating  results,  past  <font color="blue">financial performance may</font> not be a reliable     indicator of <font color="blue">future performance</font>, and <font color="blue">historical trends should</font> not be used to     anticipate results or trends in <font color="blue">future periods</font></td>
+    </tr>
+    <tr>
+      <td>We are <font color="blue">controlled by</font> <font color="blue"><font color="blue">First American</font> </font>and as a result other <font color="blue">stockholders</font> have     little or no influence over <font color="blue">stockholders</font>’ <font color="blue">decisions</font></td>
+    </tr>
+    <tr>
+      <td>As  a  result of the June 5, 2003 mergers and our <font color="blue">acquisition</font> of First     American’s CIG and related <font color="blue">businesses</font>, <font color="blue"><font color="blue">First American</font> </font>owns 100prca of our Class     B <font color="blue">common stock</font>, which have <font color="blue">ten votes per</font> share compared to <font color="blue">one vote per</font>     share of our Class A <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, <font color="blue"><font color="blue">First American</font> </font>controls     over 98prca of the total <font color="blue">voting power</font> of <font color="blue"><font color="blue">First Advantage</font> </font>and, therefore, First     American has the right to control the outcome of any matter submitted for     the vote or consent of <font color="blue">First Advantage</font>’s <font color="blue">stockholders</font>, unless a separate     class vote is required under <font color="blue">Delaware </font>law</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font>has the voting     power to control the election of our board of <font color="blue">directors</font> and is able to cause     an <font color="blue">amendment</font> of our <font color="blue">certificate</font> of <font color="blue">incorporation</font> or bylaws</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font>    also  may be able to cause changes in our business <font color="blue">without seeking</font> the     approval of any other party</td>
+    </tr>
+    <tr>
+      <td>These changes may not be <font color="blue">beneficial</font> to us or in     the <font color="blue">best interest</font> of our other <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>For example, <font color="blue"><font color="blue">First American</font> </font>has     the power to prevent, delay or cause a change in control and could take     other actions that might be favorable to <font color="blue">First American</font>, but not <font color="blue">necessarily</font>     to other <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Similarly, subject to <font color="blue"><font color="blue"><font color="blue">restriction</font>s</font> contained</font> in the     <font color="blue">standstill agreement <font color="blue">entered into</font> as</font> part of the June 5, 2003 mergers, First     American has the <font color="blue">voting power</font> to exercise a <font color="blue"><font color="blue">controlling</font> influence over</font> our     business and affairs and has the ability to make <font color="blue"><font color="blue">decisions</font> <font color="blue">concerning</font> such</font>     things as:           •   mergers or other business <font color="blue">combinations</font>;           •   purchases or sales of assets;           •   offerings of securities;           •   <font color="blue">indebtedness</font> that we may incur; and           •   payments of any dividends</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> you that <font color="blue">First American</font>’s ownership of our <font color="blue">common stock</font> or     its <font color="blue">relationship with us will</font> not have a material adverse effect on our     overall business strategy or on the <font color="blue">market price</font> of our Class A common     stock</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Under Nasdaq </font><font color="blue">corporate governance rules</font>, if a <font color="blue">single stockholder</font> holds more     than 50prca of the <font color="blue">voting power</font> of a company, that company is considered a     “<font color="blue">controlled company</font></td>
+    </tr>
+    <tr>
+      <td>” A <font color="blue">controlled company</font> is <font color="blue">exempt from</font> the Nasdaq rules     requiring that a majority of the company’s board of <font color="blue">directors</font> be <font color="blue">independent</font>     <font color="blue">directors</font> and that the <font color="blue">compensation</font> and <font color="blue">nomination committees</font> be comprised     solely of <font color="blue">independent</font> <font color="blue">directors</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font>owns more than 50prca of the     <font color="blue">voting power</font> of <font color="blue"><font color="blue">First Advantage</font> </font>and we may take advantage of such <font color="blue">exemptions</font>     afforded to controlled companies</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font><font color="blue">could sell</font> its <font color="blue"><font color="blue">controlling</font> interest</font> in us and therefore we     <font color="blue">could eventually</font> be <font color="blue">controlled by</font> an <font color="blue">unknown <font color="blue">third party</font></font></td>
+    </tr>
+    <tr>
+      <td>Subject to certain <font color="blue"><font color="blue">restriction</font>s</font>, <font color="blue"><font color="blue">First American</font> </font><font color="blue">could elect</font> to sell all or a     substantial or <font color="blue">controlling</font> portion of its <font color="blue">equity interest</font> in us to a third     party  without  offering  to our other <font color="blue">stockholders</font> the <font color="blue">opportunity</font> to     <font color="blue">participate</font> in the <font color="blue">transaction</font></td>
+    </tr>
+    <tr>
+      <td>If another party acquires <font color="blue">First American</font>’s     interest in us, that <font color="blue"><font color="blue">third party</font> may</font> be able to <font color="blue">control us</font> in the same     manner that <font color="blue"><font color="blue">First American</font> </font>is able to <font color="blue">control us</font></td>
+    </tr>
+    <tr>
+      <td>A sale to a <font color="blue">third party</font>     <font color="blue">also may <font color="blue">adversely affect</font></font> the                                           12     ______________________________________________________________________       <font color="blue">market price</font> of our Class A <font color="blue">common stock</font> because the change in <font color="blue">control may</font>     result  in  a  change in <font color="blue"><font color="blue">management</font> <font color="blue">decisions</font></font>, business policy and our     <font color="blue">attractiveness</font> to <font color="blue">future investors</font></td>
+    </tr>
+    <tr>
+      <td>We have very little operating <font color="blue">history as</font> an <font color="blue">independent</font> company</td>
+    </tr>
+    <tr>
+      <td>Before  June 5, 2003, we had no operating <font color="blue">history as</font> a <font color="blue">separate public</font>     company</td>
+    </tr>
+    <tr>
+      <td>Several members of our <font color="blue"><font color="blue">management</font> team</font> have never operated     a stand-alone public company</td>
+    </tr>
+    <tr>
+      <td>We may need <font color="blue">additional capital</font> in order to <font color="blue">finance <font color="blue">operations</font></font> or pursue     <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>Accordingly, we may have to obtain our own financing for     <font color="blue">operations</font> and perform most of our own <font color="blue">administrative functions</font></td>
+    </tr>
+    <tr>
+      <td>There can     be no assurance that we will be able to develop <font color="blue">successfully</font> the financial     and  managerial  resources  and  structure  <font color="blue">necessary</font> to operate as an     <font color="blue">independent</font> public company, or that our <font color="blue">available financing</font> and anticipated     cash  flow  from <font color="blue">operations</font> will be sufficient to meet all of our cash     <font color="blue">requirements</font></td>
+    </tr>
+    <tr>
+      <td>We  are <font color="blue">dependent on</font> information suppliers</td>
+    </tr>
+    <tr>
+      <td>If we are unable to manage     <font color="blue">successfully</font> our <font color="blue">relationships with</font> a number of these suppliers, the quality     and <font color="blue">availability</font> of our <font color="blue">services may</font> be harmed</td>
+    </tr>
+    <tr>
+      <td>We obtain some of the data used in our services from <font color="blue">third party</font> suppliers     and <font color="blue">government entities</font></td>
+    </tr>
+    <tr>
+      <td>If a number of suppliers are no longer able or are     unwilling to provide us with certain data, we may need to find <font color="blue">alternative</font>     sources</td>
+    </tr>
+    <tr>
+      <td>If we are unable to identify and contract with suitable <font color="blue">alternative</font>     <font color="blue">data suppliers</font> and integrate these <font color="blue">data sources into</font> our <font color="blue">service offerings</font>,     we could experience service disruptions, increased costs and <font color="blue">reduced quality</font>     of our services</td>
+    </tr>
+    <tr>
+      <td>Additionally, if one or more of our <font color="blue">suppliers terminates</font>     our existing agreements, there is no assurance that we will obtain new     agreements with <font color="blue">third party</font> suppliers on terms favorable to us, if at all</td>
+    </tr>
+    <tr>
+      <td>Loss  of  such access or the <font color="blue">availability</font> of data in the future due to     <font color="blue">increased governmental regulation</font> or <font color="blue">otherwise could</font> have a material adverse     effect on our business, <font color="blue">financial condition</font> or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may be subject to <font color="blue">increased regulation</font> regarding the use of personal     information</td>
+    </tr>
+    <tr>
+      <td>Certain data and services we provide are subject to <font color="blue">regulation by various</font>     federal, state and <font color="blue">local <font color="blue">regulatory</font> authorities</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Compliance </font><font color="blue">with existing</font>     federal, state and <font color="blue">local laws</font> and <font color="blue">regulations</font> has not had a material adverse     effect  on  our  results of <font color="blue">operations</font> or <font color="blue">financial condition</font> to date</td>
+    </tr>
+    <tr>
+      <td>Nonetheless, federal, state and <font color="blue">local laws</font> and <font color="blue">regulations</font> in the United     States  designed  to  protect  the  <font color="blue">public from</font> the misuse of personal     information in the marketplace and <font color="blue">adverse publicity</font> or <font color="blue">potential <font color="blue">litigation</font></font>     <font color="blue">concerning</font> the <font color="blue">commercial use</font> of such information <font color="blue">may increasingly affect</font>     our  <font color="blue">operations</font>  and could result in substantial <font color="blue"><font color="blue">regulatory</font> compliance</font>     expense, <font color="blue">litigation</font> expense and a loss of revenue</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">face <font color="blue">significant</font> security risks</font> related to our <font color="blue"><font color="blue">electronic</font> transmission</font> of     <font color="blue">confidential</font> information</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">rely on encryption</font> and other <font color="blue">technologies</font> to <font color="blue">provide system security</font> to     effect <font color="blue">secure transmission</font> of <font color="blue">confidential</font> or personal information</td>
+    </tr>
+    <tr>
+      <td>We may     license these <font color="blue">technologies</font> from third parties</td>
+    </tr>
+    <tr>
+      <td>There is no assurance that     our use of <font color="blue">applications designed</font> for <font color="blue">data security</font>, or that of third-party     contractors will effectively counter evolving security risks</td>
+    </tr>
+    <tr>
+      <td>A security or     <font color="blue">privacy breach could</font>:           •   expose us to <font color="blue">liability</font>;           •   increase our expenses relating to resolution of these breaches;           •   <font color="blue">deter customers from using</font> our services; and           •   <font color="blue">deter suppliers from</font> doing business with us</td>
+    </tr>
+    <tr>
+      <td>13     ______________________________________________________________________       Any  <font color="blue">inability</font>  to  protect the security and privacy of our <font color="blue">electronic</font>     <font color="blue">transaction</font>s could have a material adverse effect on our business, financial     condition or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First Advantage</font> </font>may be <font color="blue">adversely affect</font>ed by recent high-profile events     <font color="blue">involving data theft at</font> a number of information <font color="blue">services companies</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Several  </font>information  <font color="blue">services companies</font> that are <font color="blue">competitors</font> of First     Advantage have <font color="blue">recently been involved</font> in high-profile events involving data     theft</td>
+    </tr>
+    <tr>
+      <td>These incidents or similar <font color="blue">data theft incidents</font> in the <font color="blue">future could</font>     impact  First  Advantage</td>
+    </tr>
+    <tr>
+      <td>In particular, these <font color="blue">events could</font> result in     <font color="blue">increased legal</font> and <font color="blue"><font color="blue">regulatory</font> scrutiny</font> of the industry in general and     specific  information  <font color="blue">services companies</font> in particular and changes in     federal, state and <font color="blue">local laws</font> and <font color="blue">regulations</font> in the <font color="blue"><font color="blue">United States</font> </font>designed     to  protect  the <font color="blue">public from</font> the misuse of personal information in the     marketplace</td>
+    </tr>
+    <tr>
+      <td><font color="blue">Changes  </font>in  the laws and <font color="blue">adverse publicity</font> or potential     <font color="blue">litigation</font> <font color="blue">concerning</font> the <font color="blue">commercial use</font> of such information may affect     <font color="blue">First Advantage</font>’s <font color="blue">operations</font> and could result in substantial <font color="blue">regulatory</font>     compliance expense, <font color="blue">litigation</font> expense and a loss of revenue</td>
+    </tr>
+    <tr>
+      <td>We could face <font color="blue">liability</font> <font color="blue">based on</font> the nature of our services and the content     of the <font color="blue">materials provided which may</font> not be <font color="blue"><font color="blue">covered by</font> insurance</font></td>
+    </tr>
+    <tr>
+      <td>We may face potential <font color="blue">liability</font> from individuals, government agencies or     <font color="blue">businesses</font> for defamation, invasion of privacy, negligence, copyright,     patent or <font color="blue">trademark infringement</font> and other claims <font color="blue">based on</font> the nature and     content  of  the  materials that appear or are used in our products or     services</td>
+    </tr>
+    <tr>
+      <td>Any     imposition of <font color="blue">liability</font>, particularly <font color="blue">liability</font> that is not <font color="blue">covered by</font>     insurance or is in excess of our insurance coverage, could have a material     adverse  effect  on  our  business,  <font color="blue">financial condition</font> or results of     <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>We may not be able to pursue our <font color="blue">acquisition</font> strategy</td>
+    </tr>
+    <tr>
+      <td>Our strategy is to grow through <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>For example, since January 1,     2005, we completed fifteen <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>We may not be able to identify     suitable <font color="blue">acquisition</font> candidates, obtain the capital <font color="blue">necessary</font> to pursue our     <font color="blue">acquisition</font> strategy or complete <font color="blue">acquisition</font>s on satisfactory terms</td>
+    </tr>
+    <tr>
+      <td>A     number of our <font color="blue">competitors</font> also have adopted the strategy of expanding and     diversifying through <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">likely will</font> experience <font color="blue">competition</font> in     our effort to execute on our <font color="blue">acquisition</font> strategy, and we expect the level     of <font color="blue">competition</font> to increase</td>
+    </tr>
+    <tr>
+      <td>As a result, we may be unable to continue to     make <font color="blue">acquisition</font>s or may be forced to pay more for the companies we are able     to acquire</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">integration</font> of companies we acquire may be <font color="blue">difficult</font> and may result in a     failure  to  realize some of the anticipated <font color="blue">potential benefits</font> of our     <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>When we acquire companies or <font color="blue">businesses</font>, we may not be able to integrate or     manage  these  <font color="blue">businesses</font>  so  as  to produce returns that justify the     <font color="blue">investment</font></td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">difficult</font>y in <font color="blue">successfully</font> <font color="blue">integrating</font> or managing the     <font color="blue">operations</font> of the <font color="blue">businesses</font> could have a material adverse effect on our     business, <font color="blue">financial condition</font>, results of <font color="blue">operations</font> or liquidity, and could     lead to a failure to realize any anticipated synergies</td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue"><font color="blue">management</font> also</font>     will be required to dedicate substantial time and effort to the <font color="blue">integration</font>     of our <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>These efforts could divert <font color="blue">management</font>’s focus and     <font color="blue">resources from</font> other <font color="blue">strategic <font color="blue">opportunities</font></font> and <font color="blue">operational matters</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Successful </font><font color="blue">integration</font> of the <font color="blue"><font color="blue">Credit Information Group</font> </font>into <font color="blue"><font color="blue">First Advantage</font> </font>    is <font color="blue">dependent on</font> several factors, and the failure to realize the expected     benefits of the <font color="blue">acquisition</font> of the <font color="blue"><font color="blue">Credit Information Group</font> </font>could have an     adverse effect on our <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First Advantage</font> </font>acquired the <font color="blue"><font color="blue">Credit Information Group</font> </font>from <font color="blue"><font color="blue">First American</font> </font>in     <font color="blue">September </font>2005, and, as a result, <font color="blue"><font color="blue">First Advantage</font> </font><font color="blue"><font color="blue">significant</font>ly increased</font>     the size of its <font color="blue">operations</font> and business</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">integration</font> of the Credit     Information  Group  into  the  <font color="blue">operations</font>  of  <font color="blue"><font color="blue">First Advantage</font> </font>and its     <font color="blue">subsidiaries</font> involves the <font color="blue">integration</font> of                                           14     ______________________________________________________________________       several <font color="blue">businesses</font> that <font color="blue">previously</font> operated <font color="blue">independent</font>ly</td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font>     you that <font color="blue"><font color="blue">First Advantage</font> </font>will be able to integrate the <font color="blue">operations</font> of the     <font color="blue"><font color="blue">Credit Information Group</font> </font>without encountering <font color="blue">difficult</font>ies</td>
+    </tr>
+    <tr>
+      <td>Any <font color="blue">difficult</font>y     in <font color="blue">integrating</font> the <font color="blue">operations</font> of the <font color="blue"><font color="blue">Credit Information Group</font> </font><font color="blue">successfully</font>     could have a material adverse effect on the business, <font color="blue">financial condition</font>,     results of <font color="blue">operations</font> or prospects of <font color="blue">First Advantage</font>, and could lead to a     failure to realize the anticipated benefits of the <font color="blue">acquisition</font></td>
+    </tr>
+    <tr>
+      <td>Moreover,     <font color="blue">First Advantage</font>’s <font color="blue"><font color="blue">management</font> will</font> be required to dedicate substantial time     and effort to the <font color="blue">integration</font> of the <font color="blue">Credit Information Group</font></td>
+    </tr>
+    <tr>
+      <td>During the     <font color="blue">integration</font> process, these efforts could divert <font color="blue">management</font>’s focus and     <font color="blue">resources from</font> other <font color="blue">strategic <font color="blue">opportunities</font></font> and <font color="blue">operational matters</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">continued success</font> of the <font color="blue"><font color="blue">Credit Information Group</font> </font>is <font color="blue">dependent on</font> a     number of factors, some of which may be beyond <font color="blue">First Advantage</font>’s control</td>
+    </tr>
+    <tr>
+      <td>A substantial proportion of the revenue of the <font color="blue"><font color="blue">Credit Information Group</font> </font>is     <font color="blue">derived from</font> the resale to end users of credit reports <font color="blue">provided exclusively</font>     by the <font color="blue">three <font color="blue">repositories</font></font> of credit information in the <font color="blue">United States</font></td>
+    </tr>
+    <tr>
+      <td>In     certain <font color="blue">transaction</font>s, such as those involving the resale of residential     property, end users require the <font color="blue"><font color="blue">Credit Information Group</font> </font>to provide a credit     report <font color="blue">derived from</font> merged information supplied by all <font color="blue">three <font color="blue">repositories</font></font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">repositories</font> also sell credit reports directly to end users</td>
+    </tr>
+    <tr>
+      <td>There can     be  no  assurance  that a credit <font color="blue">repository will</font> not attempt to gain a     <font color="blue">competitive advantage over</font> the <font color="blue"><font color="blue">Credit Information Group</font> </font>by increasing the     price it charges the <font color="blue"><font color="blue">Credit Information Group</font> </font>for credit reports or by     selling  credit  reports to end users at a lower price than the Credit     Information Group can offer</td>
+    </tr>
+    <tr>
+      <td>Such <font color="blue">practices may</font> make the credit report     products of the <font color="blue"><font color="blue">Credit Information Group</font> </font><font color="blue">less profitable</font> or <font color="blue">less attractive</font>     to end-users and, thus, may have a material adverse effect on the results of     <font color="blue">operations</font> or <font color="blue">financial condition</font> of the <font color="blue">Credit Information Group</font></td>
+    </tr>
+    <tr>
+      <td>In addition, a portion of the <font color="blue">Credit Information Group</font>’s revenues that may     in the future be received under an <font color="blue"><font color="blue">outsourcing agreement</font> with</font> <font color="blue"><font color="blue">First American</font> </font>    are <font color="blue">dependent upon</font> the performance of RELS, LLC (“RELS”), an entity that is     managed and <font color="blue">controlled by</font> <font color="blue">First American</font>, and thus are beyond the control of     <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">commercial <font color="blue"><font color="blue">arrangement</font>s</font> under which</font> RELS provides     services and it <font color="blue">derives revenues</font> are <font color="blue">based on</font> agreements with RELS’ single     customer,  which  is  the other member of RELS, <font color="blue">whose interests may</font> be     <font color="blue">different</font>  from  and/or  adverse  to <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>These underlying     <font color="blue"><font color="blue">arrangement</font>s</font> are <font color="blue">terminable with</font> little or no notice</td>
+    </tr>
+    <tr>
+      <td>Accordingly, there can     be <font color="blue"><font color="blue">no assurances</font> as</font> to revenues, if any, that may in the future be received     by  First  Advantage under the <font color="blue">outsourcing agreement</font></td>
+    </tr>
+    <tr>
+      <td>The loss of such     <font color="blue">revenues could</font> be material to <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>In <font color="blue">connection with</font> its <font color="blue">acquisition</font> of the <font color="blue">Credit Information Group</font>, First     Advantage <font color="blue">entered into</font> a <font color="blue">new <font color="blue">services agreement</font> under which</font> <font color="blue"><font color="blue">First American</font> </font>    agrees to provide a number of <font color="blue">key services</font> to <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>Under this     agreement, <font color="blue"><font color="blue">First American</font> </font>and its <font color="blue">affiliates</font> agree to serve as the exclusive     resellers of credit reports and related services compiled by the Credit     Information Group to the <font color="blue">mortgage market</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font>has agreed to     provide these services for only a limited period of time, and there is no     guarantee that <font color="blue"><font color="blue">First American</font> </font><font color="blue">will continue</font> to provide these services to     <font color="blue"><font color="blue">First Advantage</font> </font>following the expiration of the term of the applicable     <font color="blue">service under</font> the amended and <font color="blue">restated <font color="blue">services agreement</font></font>, or continue the     price or other <font color="blue">terms on which</font> <font color="blue"><font color="blue">First American</font> </font>might be willing to do so</td>
+    </tr>
+    <tr>
+      <td>In     addition, since the sale of <font color="blue"><font color="blue">Credit Information Group</font> </font>reports and services in     the <font color="blue">mortgage industry will</font> be made <font color="blue">exclusively by</font> <font color="blue">First American</font>, the sale     of these reports and services will be in <font color="blue">accordance</font> with the terms of the     amended and <font color="blue">restated <font color="blue">services agreement</font></font>, and there can be <font color="blue"><font color="blue">no assurances</font> as</font>     to the <font color="blue">future amount</font> of such sales or level of <font color="blue">services beyond</font> the term or     in excess of the levels required under the <font color="blue">services agreement</font></td>
+    </tr>
+    <tr>
+      <td>Finally, demand for a substantial portion of the <font color="blue">Credit Information Group</font>’s     products generally <font color="blue">decreases</font> as the number of lending <font color="blue">transaction</font>s in which     the <font color="blue">Credit Information Group</font>’s products are <font color="blue">purchased <font color="blue">decreases</font></font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Management     </font>of  the  <font color="blue"><font color="blue">Credit Information Group</font> </font>has found that the number of lending     <font color="blue">transaction</font>s in which the <font color="blue">Credit Information Group</font>’s products are purchased     <font color="blue">decreases</font> when <font color="blue">interest rates</font> are high, the supply of funds for borrowing     are limited or the <font color="blue"><font color="blue">United States</font> </font>economy is weak</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First Advantage</font> </font>believes     that this <font color="blue">trend could continue</font> when these factors occur</td>
+    </tr>
+    <tr>
+      <td>15     ______________________________________________________________________       We  may  not be able to realize the <font color="blue">entire book value</font> of <font color="blue">goodwill from</font>     <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td><font color="blue">As of <font color="blue">December </font></font>31, 2005, we have <font color="blue">approximately</font> dlra606 million of goodwill</td>
+    </tr>
+    <tr>
+      <td>We     have  implemented  the provisions of Statement of Financial Accounting     Standards (“SFAS”) Nodtta 142, “Goodwill and Other Intangible Assets,” which     requires that <font color="blue">existing goodwill</font> not be amortized, but instead be assessed     annually for <font color="blue">impairment</font> or sooner if <font color="blue">circumstances indicate</font> a possible     <font color="blue">impairment</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">will monitor</font> for <font color="blue">impairment</font> of <font color="blue">goodwill on past</font> and future     <font color="blue">acquisition</font>s</td>
+    </tr>
+    <tr>
+      <td>In the event that the book value of goodwill is impaired, any     such <font color="blue">impairment</font> would be charged to earnings in the period of <font color="blue">impairment</font></td>
+    </tr>
+    <tr>
+      <td>There can be <font color="blue">no assurances</font> that future <font color="blue">impairment</font> of <font color="blue">goodwill under</font> SFAS Nodtta     142 will not have a material adverse effect on our business, financial     condition or results of <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">goodwill valuation</font> is performed by     <font color="blue">management</font></td>
+    </tr>
+    <tr>
+      <td>We currently do not plan to <font color="blue">pay dividends</font></td>
+    </tr>
+    <tr>
+      <td>We intend to retain <font color="blue">future earnings</font>, if any, which may be <font color="blue">generated from</font>     <font color="blue">operations</font> to <font color="blue">help finance</font> the growth and <font color="blue">development</font> of our business</td>
+    </tr>
+    <tr>
+      <td>As a     result,  we do not anticipate paying dividends to <font color="blue">stockholders</font> for the     <font color="blue">foreseeable future</font></td>
+    </tr>
+    <tr>
+      <td>Our business <font color="blue">depends on <font color="blue">technology</font></font> that <font color="blue">may become obsolete</font></td>
+    </tr>
+    <tr>
+      <td>We use the US SEARCH DARWIN^™ <font color="blue">technology</font> and other information <font color="blue">technology</font> to     <font color="blue">better serve</font> our clients and <font color="blue">reduce costs</font></td>
+    </tr>
+    <tr>
+      <td>These <font color="blue">technologies</font> <font color="blue">likely will</font>     change and <font color="blue">may become obsolete</font> as new <font color="blue">technologies</font> develop</td>
+    </tr>
+    <tr>
+      <td>Our future     success  <font color="blue">will depend upon</font> our ability to <font color="blue">remain current with</font> the rapid     changes in the <font color="blue">technologies</font> used in our business, to <font color="blue">learn quickly</font> to use     new  <font color="blue">technologies</font>  as  they emerge and to develop new <font color="blue">technology</font>-based     <font color="blue">solutions as appropriate</font></td>
+    </tr>
+    <tr>
+      <td>If we are unable to do this, we could be at a     <font color="blue">competitive disadvantage</font></td>
+    </tr>
+    <tr>
+      <td>Our <font color="blue">competitors</font> may gain exclusive access to     improved <font color="blue">technology</font>, which also could put us at a <font color="blue">competitive disadvantage</font></td>
+    </tr>
+    <tr>
+      <td>If we <font color="blue">cannot adapt</font> to these changes, our business, <font color="blue">financial condition</font> or     results of <font color="blue">operations</font> may be <font color="blue">materially effected</font> in an <font color="blue">adverse manner</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Our Class A </font><font color="blue">common stock</font> has <font color="blue">minimal liquidity due</font> to its small public     float</td>
+    </tr>
+    <tr>
+      <td>Although as of <font color="blue">December </font>31, 2005 there were <font color="blue">approximately</font> 56 million total     shares of <font color="blue"><font color="blue">First Advantage</font> </font><font color="blue">common stock</font> outstanding, <font color="blue">approximately</font> 77prca are     owned  by  First  American, <font color="blue">approximately</font> 6prca are owned by Experian and     <font color="blue">approximately</font> 4prca are held of record by Pequot Private Equity Fund II, LP     Currently only <font color="blue">approximately</font> 13prca of our issued and <font color="blue">outstanding shares</font> are     freely  transferable  without  <font color="blue">restriction</font>  under  the <font color="blue">Securities Act</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, only a small number of shares of <font color="blue"><font color="blue">First Advantage</font> </font>actually     trade—between  January 1, 2005 and <font color="blue">December </font>31, 2005 the <font color="blue">average daily</font>     <font color="blue">trading volume</font> of our Class A <font color="blue">common stock</font> was <font color="blue">approximately</font> 56cmam000 shares     <font color="blue">per trading day</font></td>
+    </tr>
+    <tr>
+      <td>Consequently, our <font color="blue">stockholders</font> may have <font color="blue">difficult</font>y selling     shares of our Class A <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td><font color="blue">Significant </font><font color="blue">stockholders</font> may sell shares of our <font color="blue">common stock</font> that may cause     our share price to fall</td>
+    </tr>
+    <tr>
+      <td>Subject to certain <font color="blue"><font color="blue">restriction</font>s</font>, <font color="blue"><font color="blue">First American</font> </font>may at any time <font color="blue">convert each</font>     of its shares of our Class B <font color="blue">common stock</font> into one share of Class A common     stock</td>
+    </tr>
+    <tr>
+      <td><font color="blue"><font color="blue">First American</font> </font>or Pequot <font color="blue">may transfer shares</font> of our <font color="blue">common stock</font> in a     privately-negotiated <font color="blue">transaction</font> or to <font color="blue">affiliates</font> or <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>Any     transfers,  sales  or  <font color="blue">distributions</font>  by <font color="blue"><font color="blue">First American</font> </font>or Pequot of a     substantial amount of our Class A <font color="blue">common stock</font> in the marketplace, or to     <font color="blue">stockholders</font>,  or the <font color="blue">market perception</font> that these transfers, sales or     <font color="blue">distributions</font>  could  occur, <font color="blue">could materially</font> and <font color="blue">adversely affect</font> the     prevailing <font color="blue">market price</font>s for our Class A <font color="blue">common stock</font></td>
+    </tr>
+    <tr>
+      <td>Conflict of interest may arise because certain of our <font color="blue">directors</font> and officers     are also <font color="blue">directors</font> and officers <font color="blue">of <font color="blue">First American</font></font></td>
+    </tr>
+    <tr>
+      <td>Certain <font color="blue">persons associated with</font> the Company have a <font color="blue">continuing relationship</font>     with  First  American</td>
+    </tr>
+    <tr>
+      <td>Parker Kennedy, Chairman of the Board of First     Advantage, <font color="blue">also serves as</font> <font color="blue">Chief Executive Officer and Chairman </font>of                                           16     ______________________________________________________________________       <font color="blue"><font color="blue">First American</font> </font>and as an <font color="blue">executive officer</font> and board member of certain of     its  <font color="blue">affiliates</font></td>
+    </tr>
+    <tr>
+      <td>As  such he may have great <font color="blue">influence on</font> our business     <font color="blue">decisions</font></td>
+    </tr>
+    <tr>
+      <td>Kennedy, <font color="blue">currently associated with</font> <font color="blue">First American</font>, was asked     to  serve  as a director and officer of <font color="blue"><font color="blue">First Advantage</font> </font>because of his     knowledge  of,  and  experience with, our business and its <font color="blue">operations</font></td>
+    </tr>
+    <tr>
+      <td>Kennedy owns stock, and options to acquire stock, <font color="blue">of <font color="blue">First American</font></font></td>
+    </tr>
+    <tr>
+      <td>Additionally, two of our <font color="blue">directors</font>, <font color="blue">David Chatham and D Van Skilling </font>serve     on the <font color="blue"><font color="blue">First American</font> </font>board</td>
+    </tr>
+    <tr>
+      <td>These  <font color="blue">affiliations with both</font> <font color="blue"><font color="blue">First American</font> </font>and <font color="blue"><font color="blue">First Advantage</font> </font>could     create, or appear to create, <font color="blue">potential conflicts</font> of interest when this     director and <font color="blue">executive officer</font> is faced with <font color="blue">decisions</font> that could have     <font color="blue">different</font> implications for <font color="blue"><font color="blue">First American</font> </font>and <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>We  are  a party to a <font color="blue">stockholders</font> agreement that <font color="blue">may impact corporate</font>     governance</td>
+    </tr>
+    <tr>
+      <td><font color="blue">First Advantage</font>, <font color="blue"><font color="blue">First American</font> </font>and Pequot have <font color="blue">entered into</font> a <font color="blue">stockholders</font>     <font color="blue">agreement pursuant</font> to which <font color="blue"><font color="blue">First American</font> </font>has agreed to vote as many of its     shares  in <font color="blue"><font color="blue">First Advantage</font> </font>as is <font color="blue">necessary</font> to ensure that our board of     <font color="blue">directors</font> has no more <font color="blue">than ten members</font> and that a <font color="blue">representative</font> of <font color="blue">Pequot     </font>who meets certain <font color="blue">requirements</font> is elected a director of <font color="blue"><font color="blue">First Advantage</font> </font>or,     at Pequot’s request, a <font color="blue">board observer</font> of <font color="blue">First Advantage</font></td>
+    </tr>
+    <tr>
+      <td>Pequot’s right to     designate a board member or observer <font color="blue">will continue</font> until such time as <font color="blue">Pequot     </font>and its <font color="blue">affiliates</font>’ <font color="blue">collective</font> ownership of <font color="blue"><font color="blue">First Advantage</font> </font>stock is less     than 75prca of the holdings Pequot received in the June 5, 2003 mergers</td>
+    </tr>
+    <tr>
+      <td>As a     result of this <font color="blue">arrangement</font> and <font color="blue">First American</font>’s <font color="blue">dominant ownership position</font>     in <font color="blue">First Advantage</font>, holders of <font color="blue"><font color="blue">First Advantage</font> </font>Class A <font color="blue">common stock</font> (other     than Pequot) will have little or no ability to cause a <font color="blue">director selected by</font>     <font color="blue">such holders</font> to be appointed to our board of <font color="blue">directors</font> and, <font color="blue">consequently</font>,     little or no ability to influence the direction or <font color="blue">management</font> of First     Advantage</td>
+    </tr>
+    <tr>
+      <td>Our  results  of  <font color="blue">operations</font> may be <font color="blue">affected by</font> the <font color="blue">seasonality</font> of our     business</td>
+    </tr>
+    <tr>
+      <td>Historically, we have seen a decrease in our volumes in <font color="blue">certain segments</font> of     our business, in particular our <font color="blue">enterprise screening</font> segment, due to the     <font color="blue">holiday season</font> and <font color="blue">inclement weather</font> that results in declines in hiring and     <font color="blue">apartment rental activity</font></td>
+    </tr>
+    <tr>
+      <td>Accordingly, there may be a decrease in earnings     in the first and <font color="blue">fourth quarter as compared</font> to the second and <font color="blue">third quarter</font></td>
+    </tr>
+    <tr>
+      <td>We <font color="blue">cannot assure</font> that our <font color="blue">stock price will</font> not fall</td>
+    </tr>
+    <tr>
+      <td>The <font color="blue">market price</font> of our Class A <font color="blue">common stock</font> could be subject to <font color="blue">significant</font>     <font color="blue">fluctuations</font></td>
+    </tr>
+    <tr>
+      <td>Among the factors that could affect our stock price are:           •   quarterly <font color="blue">variations</font> in our operating results;           •   changes in revenue or earnings estimates or <font color="blue">publication</font> of research     reports by analysts;           •   failure to meet analysts’ revenue or earnings estimates;           •   <font color="blue">speculation</font> in the press or <font color="blue">investment</font> community;           •   <font color="blue">strategic actions by us</font> or our <font color="blue">competitors</font>, such as <font color="blue">acquisition</font>s or     <font color="blue">restructurings</font>;           •   actions by institutional <font color="blue">stockholders</font>;           •   <font color="blue">general market conditions</font>;           •   domestic and <font color="blue">international economic factors unrelated</font> to our     performance; and           •   changes in <font color="blue">internal controls over financial</font> reporting</td>
+    </tr>
+    <tr>
+      <td>If we raise <font color="blue">additional capital</font> by issuing equity securities, the issuance     will result in <font color="blue">ownership dilution</font> to our existing <font color="blue">stockholders</font></td>
+    </tr>
+    <tr>
+      <td>The extent     of the <font color="blue">dilution will vary based upon</font> the amount of <font color="blue">capital raised</font></td>
+    </tr>
+  </tbody>
+</table>
