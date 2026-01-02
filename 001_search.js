@@ -4,6 +4,65 @@ document.addEventListener('DOMContentLoaded', () => {
     let fuse; // To hold our Fuse.js instance
     const MAX_DISPLAY_RESULTS = 50; // Limit the number of results shown
 
+    // Helper function to format company names
+    function formatCompanyName(filename) {
+        let name = filename.replace('.html', '');
+        
+        // Handle specific company name cases first
+        const specificCases = {
+            'AARCORP': 'AAR Corp',
+            'AAONINC': 'AAon Inc',
+            'AAON': 'AAon',
+            'AAR': 'AAR'
+        };
+        
+        if (specificCases[name]) {
+            return specificCases[name];
+        }
+        
+        // Handle common company suffixes first
+        name = name
+            .replace(/INC$/, ' Inc')
+            .replace(/CORP$/, ' Corp')
+            .replace(/CO$/, ' Co')
+            .replace(/LTD$/, ' Ltd')
+            .replace(/LLC$/, ' LLC');
+        
+        // For all-caps names, we need a different approach
+        // Split on common word boundaries and known patterns
+        name = name
+            .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')  // Handle cases like "ABCDef" -> "ABC Def"
+            .replace(/([a-z])([A-Z])/g, '$1 $2')       // Handle cases like "abcDef" -> "abc Def"
+            .trim();
+        
+        // If it's still all one word (all caps), try to split on known patterns
+        if (!name.includes(' ') && name.length > 6) {
+            // Try to identify common patterns
+            name = name
+                .replace(/LABORATORIES/g, ' Laboratories')
+                .replace(/SYSTEMS/g, ' Systems')
+                .replace(/TECHNOLOGIES/g, ' Technologies')
+                .replace(/SOLUTIONS/g, ' Solutions')
+                .replace(/SERVICES/g, ' Services')
+                .replace(/INTERNATIONAL/g, ' International')
+                .replace(/AMERICAN/g, 'American ')
+                .replace(/GENERAL/g, 'General ')
+                .replace(/NATIONAL/g, 'National ')
+                .replace(/GLOBAL/g, 'Global ')
+                .replace(/UNITED/g, 'United ')
+                .trim();
+        }
+        
+        const result = name.split(' ')
+            .map(word => {
+                if (word.length <= 2) return word.toUpperCase();
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            })
+            .join(' ');
+        
+        return result;
+    }
+
     // Fetch the search index
     fetch('/002_search-index.json')
         .then(response => {
@@ -56,13 +115,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // The URL links to the file where the node was found
                     a.href = item.url;
-                    // Display the node string (title)
-                    a.textContent = item.title;
+                    
+                    // Format the title if it looks like a company name (matches the source file pattern)
+                    let displayTitle = item.title;
+                    if (item.source_file && item.title === item.source_file.replace('.html', '')) {
+                        // This is a company name, format it
+                        displayTitle = formatCompanyName(item.source_file);
+                    }
+                    
+                    a.textContent = displayTitle;
                     li.appendChild(a);
 
-                    // Add context: Type and Source File
+                    // Add context: Type and Source File (formatted)
                     const p = document.createElement('p');
-                    p.textContent = `${item.type} | Source: ${item.source_file}`;
+                    const formattedSourceFile = formatCompanyName(item.source_file);
+                    p.textContent = `${item.type} | Source: ${formattedSourceFile}`;
                     p.style.fontSize = '12px';
                     p.style.color = '#666';
                     p.style.marginTop = '2px';

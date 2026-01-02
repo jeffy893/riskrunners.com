@@ -18,7 +18,17 @@ class CORSHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header('Access-Control-Allow-Origin', '*')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
-        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
+        
+        # Aggressive cache control for development
+        self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0')
+        self.send_header('Pragma', 'no-cache')
+        self.send_header('Expires', '0')
+        
+        # Extra cache busting for JavaScript and JSON files
+        if self.path.endswith(('.js', '.json')):
+            self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate, max-age=0, s-maxage=0')
+            self.send_header('ETag', f'"{hash(self.path + str(os.path.getmtime(self.translate_path(self.path)) if os.path.exists(self.translate_path(self.path)) else 0))}"')
+        
         super().end_headers()
     
     def do_OPTIONS(self):

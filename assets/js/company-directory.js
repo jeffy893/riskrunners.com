@@ -140,23 +140,61 @@ class CompanyDirectory {
     }
     
     formatCompanyName(filename) {
-        // Remove .html extension and format the company name
         let name = filename.replace('.html', '');
         
-        // Handle special cases and add spaces
+        // Handle specific company name cases first
+        const specificCases = {
+            'AARCORP': 'AAR Corp',
+            'AAONINC': 'AAon Inc',
+            'AAON': 'AAon',
+            'AAR': 'AAR'
+        };
+        
+        if (specificCases[name]) {
+            return specificCases[name];
+        }
+        
+        // Handle common company suffixes first
         name = name
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/INC$/, 'Inc')
-            .replace(/CORP$/, 'Corp')
-            .replace(/CO$/, 'Co')
-            .replace(/LTD$/, 'Ltd')
-            .replace(/LLC$/, 'LLC')
+            .replace(/INC$/, ' Inc')
+            .replace(/CORP$/, ' Corp')
+            .replace(/CO$/, ' Co')
+            .replace(/LTD$/, ' Ltd')
+            .replace(/LLC$/, ' LLC');
+        
+        // For all-caps names, we need a different approach
+        // Split on common word boundaries and known patterns
+        name = name
+            .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')  // Handle cases like "ABCDef" -> "ABC Def"
+            .replace(/([a-z])([A-Z])/g, '$1 $2')       // Handle cases like "abcDef" -> "abc Def"
             .trim();
         
-        // Capitalize first letter of each word
-        return name.split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        // If it's still all one word (all caps), try to split on known patterns
+        if (!name.includes(' ') && name.length > 6) {
+            // Try to identify common patterns
+            name = name
+                .replace(/LABORATORIES/g, ' Laboratories')
+                .replace(/SYSTEMS/g, ' Systems')
+                .replace(/TECHNOLOGIES/g, ' Technologies')
+                .replace(/SOLUTIONS/g, ' Solutions')
+                .replace(/SERVICES/g, ' Services')
+                .replace(/INTERNATIONAL/g, ' International')
+                .replace(/AMERICAN/g, 'American ')
+                .replace(/GENERAL/g, 'General ')
+                .replace(/NATIONAL/g, 'National ')
+                .replace(/GLOBAL/g, 'Global ')
+                .replace(/UNITED/g, 'United ')
+                .trim();
+        }
+        
+        const result = name.split(' ')
+            .map(word => {
+                if (word.length <= 2) return word.toUpperCase();
+                return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            })
             .join(' ');
+        
+        return result;
     }
     
     setupSearch() {

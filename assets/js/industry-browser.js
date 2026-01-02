@@ -93,54 +93,66 @@ class IndustryBrowser {
     }
     
     processIndustries() {
-        // Process search data to extract industries and companies
-        this.searchData.forEach(item => {
-            if (item.type === 'Industry' && item.source_file) {
-                const industryName = item.title;
-                const companyFile = item.source_file;
-                const companyName = this.formatCompanyName(companyFile);
-                
-                // Track industries
-                if (!this.industries.has(industryName)) {
-                    this.industries.set(industryName, {
-                        name: industryName,
-                        companies: new Set(),
-                        icon: this.getIndustryIcon(industryName)
-                    });
-                }
-                
-                this.industries.get(industryName).companies.add({
+        // Filter for industry entries only
+        const industryEntries = this.searchData.filter(item => item.type === 'Industry');
+        console.log(`Found ${industryEntries.length} industry entries`);
+        
+        // Group companies by industry
+        industryEntries.forEach(entry => {
+            const industryName = entry.title;
+            const companyFile = entry.source_file;
+            const companyName = this.formatCompanyName(companyFile);
+            
+            // Track industries
+            if (!this.industries.has(industryName)) {
+                this.industries.set(industryName, {
+                    name: industryName,
+                    companies: new Map(), // Use Map instead of Set
+                    icon: this.getIndustryIcon(industryName)
+                });
+            }
+            
+            // Add company to industry (Map will handle duplicates by filename)
+            this.industries.get(industryName).companies.set(companyFile, {
+                name: companyName,
+                filename: companyFile,
+                url: `../${companyFile}`
+            });
+            
+            // Track companies
+            if (!this.companies.has(companyFile)) {
+                this.companies.set(companyFile, {
                     name: companyName,
                     filename: companyFile,
-                    url: `../${companyFile}`
+                    url: `../${companyFile}`,
+                    industries: new Set()
                 });
-                
-                // Track companies
-                if (!this.companies.has(companyFile)) {
-                    this.companies.set(companyFile, {
-                        name: companyName,
-                        filename: companyFile,
-                        url: `../${companyFile}`,
-                        industries: new Set()
-                    });
-                }
-                
-                this.companies.get(companyFile).industries.add(industryName);
             }
+            
+            this.companies.get(companyFile).industries.add(industryName);
         });
         
         // Convert to arrays and sort
         this.filteredIndustries = Array.from(this.industries.values())
             .map(industry => ({
                 ...industry,
-                companies: Array.from(industry.companies),
+                companies: Array.from(industry.companies.values()), // Convert Map values to Array
                 companyCount: industry.companies.size
             }))
             .filter(industry => industry.companyCount > 0)
             .sort((a, b) => b.companyCount - a.companyCount);
+        
+        console.log('Top 5 industries by company count:', 
+            this.filteredIndustries.slice(0, 5).map(e => `${e.name}: ${e.companyCount} companies`)
+        );
     }
     
     displayIndustries() {
+        if (!this.industryGrid) {
+            console.error('Industry grid element not found');
+            return;
+        }
+        
         if (this.filteredIndustries.length === 0) {
             this.industryGrid.innerHTML = `
                 <div class="no-results">
@@ -159,6 +171,9 @@ class IndustryBrowser {
         this.industryGrid.innerHTML = this.filteredIndustries
             .map(industry => this.createIndustryCard(industry))
             .join('');
+        
+        // Store reference for global access
+        window.industryBrowser = this;
     }
     
     createIndustryCard(industry) {
@@ -197,32 +212,38 @@ class IndustryBrowser {
         const industry = this.industries.get(industryName);
         if (!industry) return;
         
-        const companies = Array.from(industry.companies)
+        const companies = Array.from(industry.companies.values())
             .sort((a, b) => a.name.localeCompare(b.name));
         
-        // Create a modal or new section to show all companies
+        const companyLinks = companies
+            .map(company => `<a href="${company.url}" class="company-link">${company.name}</a>`)
+            .join('');
+        
         const modal = document.createElement('div');
-        modal.className = 'industry-modal';
+        modal.className = 'modal-overlay';
         modal.innerHTML = `
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3>${industry.icon} ${industryName}</h3>
-                    <button class="close-btn" onclick="this.closest('.industry-modal').remove()">×</button>
+                    <h2>${industry.icon} ${industryName}</h2>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p>${companies.length} companies in this industry:</p>
-                    <div class="company-list">
-                        ${companies.map(company => `
-                            <a href="${company.url}" class="company-item">
-                                <span class="company-name">${company.name}</span>
-                            </a>
-                        `).join('')}
+                    <p><strong>${industry.companyCount} companies</strong> in this industry:</p>
+                    <div class="company-grid">
+                        ${companyLinks}
                     </div>
                 </div>
             </div>
         `;
         
         document.body.appendChild(modal);
+        
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
     }
     
     setupSearch() {
@@ -235,7 +256,7 @@ class IndustryBrowser {
                 this.filteredIndustries = Array.from(this.industries.values())
                     .map(industry => ({
                         ...industry,
-                        companies: Array.from(industry.companies),
+                        companies: Array.from(industry.companies.values()),
                         companyCount: industry.companies.size
                     }))
                     .filter(industry => industry.companyCount > 0)
@@ -243,11 +264,14 @@ class IndustryBrowser {
             } else {
                 this.filteredIndustries = Array.from(this.industries.values())
                     .filter(industry => 
-                        industry.name.toLowerCase().includes(query)
+                        industry.name.toLowerCase().includes(query) ||
+                        Array.from(industry.companies.values()).some(company => 
+                            company.name.toLowerCase().includes(query)
+                        )
                     )
                     .map(industry => ({
                         ...industry,
-                        companies: Array.from(industry.companies),
+                        companies: Array.from(industry.companies.values()),
                         companyCount: industry.companies.size
                     }))
                     .sort((a, b) => b.companyCount - a.companyCount);
@@ -277,21 +301,59 @@ class IndustryBrowser {
     formatCompanyName(filename) {
         let name = filename.replace('.html', '');
         
+        // Handle specific company name cases first
+        const specificCases = {
+            'AARCORP': 'AAR Corp',
+            'AAONINC': 'AAon Inc',
+            'AAON': 'AAon',
+            'AAR': 'AAR'
+        };
+        
+        if (specificCases[name]) {
+            return specificCases[name];
+        }
+        
+        // Handle common company suffixes first
         name = name
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/INC$/, 'Inc')
-            .replace(/CORP$/, 'Corp')
-            .replace(/CO$/, 'Co')
-            .replace(/LTD$/, 'Ltd')
-            .replace(/LLC$/, 'LLC')
+            .replace(/INC$/, ' Inc')
+            .replace(/CORP$/, ' Corp')
+            .replace(/CO$/, ' Co')
+            .replace(/LTD$/, ' Ltd')
+            .replace(/LLC$/, ' LLC');
+        
+        // For all-caps names, we need a different approach
+        // Split on common word boundaries and known patterns
+        name = name
+            .replace(/([A-Z])([A-Z][a-z])/g, '$1 $2')  // Handle cases like "ABCDef" -> "ABC Def"
+            .replace(/([a-z])([A-Z])/g, '$1 $2')       // Handle cases like "abcDef" -> "abc Def"
             .trim();
         
-        return name.split(' ')
+        // If it's still all one word (all caps), try to split on known patterns
+        if (!name.includes(' ') && name.length > 6) {
+            // Try to identify common patterns
+            name = name
+                .replace(/LABORATORIES/g, ' Laboratories')
+                .replace(/SYSTEMS/g, ' Systems')
+                .replace(/TECHNOLOGIES/g, ' Technologies')
+                .replace(/SOLUTIONS/g, ' Solutions')
+                .replace(/SERVICES/g, ' Services')
+                .replace(/INTERNATIONAL/g, ' International')
+                .replace(/AMERICAN/g, 'American ')
+                .replace(/GENERAL/g, 'General ')
+                .replace(/NATIONAL/g, 'National ')
+                .replace(/GLOBAL/g, 'Global ')
+                .replace(/UNITED/g, 'United ')
+                .trim();
+        }
+        
+        const result = name.split(' ')
             .map(word => {
                 if (word.length <= 2) return word.toUpperCase();
                 return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
             })
             .join(' ');
+        
+        return result;
     }
     
     getIndustryIcon(industryName) {
