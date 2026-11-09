@@ -174,13 +174,18 @@ def main():
         # measured numbers (never the LLM's stale, mismatched rationale).
         top_name = names[order[0]]
         top_frac = prev_frac[order[0]]
-        n_dom = int((prev_frac >= 0.60).sum())
+        n_dom = int((prev_frac > 0.50).sum())   # true majority: >50%
         if technique == "Risk-Theme Prevalence":
+            if n_dom >= 1:
+                lead = (f"{n_dom} risk theme{'s' if n_dom != 1 else ''} "
+                        f"{'are' if n_dom != 1 else 'is'} disclosed by a majority of them, "
+                        f"led by “{top_name}” at {top_frac:.0%}")
+            else:
+                lead = (f"the most widespread risk, “{top_name}”, is disclosed by "
+                        f"{top_frac:.0%} of them")
             rationale = (
-                f"Across the {N} companies, {n_dom} risk theme"
-                f"{'s' if n_dom != 1 else ''} are disclosed by a majority, led by "
-                f"“{top_name}” at {top_frac:.0%}. Prevalence ranking is the clearest lens: "
-                f"it shows which risks are near-universal in the portfolio and therefore "
+                f"Across the {N} companies, {lead}. Prevalence ranking is the clearest lens: "
+                f"it shows which risks are most widespread in the portfolio and therefore "
                 f"drive the companies together."
             )
         elif technique == "Cross Impact Analysis":
