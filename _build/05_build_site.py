@@ -21,6 +21,7 @@ ROOT = os.path.dirname(HERE)
 CLUSTERS = json.load(open(os.path.join(HERE, "clusters.json")))
 NARR = json.load(open(os.path.join(HERE, "narratives.json")))
 CHARTS = json.load(open(os.path.join(HERE, "charts.json")))
+METRICS = json.load(open(os.path.join(HERE, "metrics.json")))
 
 PORT_DIR = os.path.join(ROOT, "portfolios")
 ASSETS = os.path.join(ROOT, "assets")
@@ -55,6 +56,7 @@ PORTS = []
 for c in CLUSTERS:
     cid = str(c["id"])
     n = NARR[cid]
+    met = METRICS[cid]
     slug = slugify(n["name"])
     PORTS.append({
         "cid": cid,
@@ -65,8 +67,14 @@ for c in CLUSTERS:
         "shared": n.get("shared_risk_factors", []),
         "hedge": n.get("hedge_thesis", ""),
         "signals": n.get("news_signals", []),
-        "technique": n.get("iso_technique", ""),
-        "rationale": n.get("iso_rationale", ""),
+        # technique + rationale come from the DATA-DRIVEN selection (metrics.json),
+        # not the LLM's first guess, so the label always matches the real chart.
+        "technique": met.get("technique", ""),
+        "rationale": met.get("technique_rationale", ""),
+        "themes": met.get("themes", []),
+        "prevalence": met.get("prevalence", []),
+        "prevalence_frac": met.get("prevalence_frac", []),
+        "order": met.get("order", []),
         "size": c["size"],
         "members": c["members"],
         "top_terms": c["top_terms"],
@@ -240,6 +248,33 @@ def build_home():
         f.write(out)
 
 
+def prevalence_table(p):
+    """Real risk-theme prevalence, computed from the filings (metrics.json)."""
+    order = p.get("order") or list(range(len(p.get("themes", []))))
+    themes = p.get("themes", [])
+    prev = p.get("prevalence", [])
+    frac = p.get("prevalence_frac", [])
+    if not themes or not prev:
+        return ""
+    rows = []
+    for i in order:
+        if i >= len(themes):
+            continue
+        pct = frac[i] if i < len(frac) else 0
+        cnt = prev[i] if i < len(prev) else 0
+        barw = max(2, round(pct * 100))
+        rows.append(
+            f"<tr><td class='rt-name'>{e(themes[i])}</td>"
+            f"<td class='rt-bar'><span style='width:{barw}%'></span></td>"
+            f"<td class='rt-val'>{pct:.0%} <small>({cnt}/{p['size']})</small></td></tr>"
+        )
+    return (
+        "<table class='rt-table'><thead><tr>"
+        "<th>Risk theme</th><th>Prevalence across portfolio</th><th>Companies</th>"
+        "</tr></thead><tbody>" + "".join(rows) + "</tbody></table>"
+    )
+
+
 # ---------------- portfolio report page ----------------
 def build_portfolio(p):
     shared = "".join(f"<li>{e(s)}</li>" for s in p["shared"])
@@ -271,8 +306,9 @@ def build_portfolio(p):
 <section class="chart-section">
 <h2>{e(p['technique'])}</h2>
 <p class="muted">{e(p['rationale'])}</p>
-<img class="chart" src="{p['chart']}" alt="{e(p['technique'])} chart for {e(p['name'])}">
-<p class="chart-note">Illustrative model of the portfolio's shared-risk structure. Values are scenario parameters, not company financials.</p>
+<img class="chart" src="{p['chart']}" alt="{e(p['technique'])} analysis for {e(p['name'])}">
+<p class="chart-note">Every value is measured from the {p['size']} companies' 2019 Item 1A filings: each percentage is the share of the portfolio that discloses that risk theme, and co-occurrence is how often two themes appear in the same company. No figures are simulated.</p>
+{prevalence_table(p)}
 </section>
 
 <section class="hedge">
