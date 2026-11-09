@@ -73,9 +73,54 @@ def clean_artifacts(s):
     s = re.sub(r"(?<=\d)prca", "%", s)
     s = s.replace("dtta", ".")                # decimal or abbreviation period
     s = s.replace("apstas", "'s")
+    # remove page-break debris spliced into a sentence by the scraper:
+    #   "... income is lower 10 ______ [94]Table of Contents" etc.
+    s = re.sub(r"\s*\d{1,3}\s*_{6,}\s*(?:\[\d+\])?\s*"
+               r"(?:Table of Contents|Back to Contents)?", " ", s)
+    s = re.sub(r"\[\d+\]\s*(?:Table of Contents|Back to Contents)", " ", s)
+    s = re.sub(r"_{4,}", " ", s)
+    s = re.sub(r"[ \t]{2,}", " ", s).strip()
+    # Strip a leading ALL-CAPS risk-factor HEADING glued to the body sentence,
+    # e.g. "OUR FUTURE REVENUE ... DECLINE Our future revenues will depend ...".
+    # Keep the normal-case prose that follows.
+    m = re.match(r"^([A-Z][A-Z0-9 ,.;/()&'\u2018\u2019\u201c\u201d\"\-]{24,}?)(?=[A-Z][a-z])", s)
+    if m and len(s) - len(m.group(1)) >= 40:
+        s = s[len(m.group(1)):].strip()
     # tidy any doubled spaces introduced
     s = re.sub(r"[ \t]{2,}", " ", s).strip()
     return s
+
+
+def looks_like_cruft(s):
+    """True if a representative sentence is still unusable after cleaning:
+    too short, residual TOC/underscore debris, a bare page number, or an
+    ALL-CAPS heading line rather than prose."""
+    if len(s) < 40:
+        return True
+    if "Table of Contents" in s or "Back to Contents" in s or "____" in s:
+        return True
+    if re.match(r"^\s*-?\d+-?\s*$", s):
+        return True
+    letters = [ch for ch in s if ch.isalpha()]
+    if letters and sum(ch.isupper() for ch in letters) / len(letters) > 0.55:
+        return True
+    # starts with a long ALL-CAPS heading run (>= ~8 consecutive caps words)
+    if re.match(r"^(?:[A-Z][A-Z'\u2019]*[ ,/]+){8,}", s):
+        return True
+    return False
+
+
+def clean_factors(rep_factors, want=10):
+    """Clean each candidate, drop any that are still cruft, and return up to
+    `want` good sentences (so a skipped junk line is backfilled from the pool)."""
+    out = []
+    for f in rep_factors:
+        c = clean_artifacts(f)
+        if not looks_like_cruft(c):
+            out.append(c)
+        if len(out) >= want:
+            break
+    return out
 
 
 # Fillers that mark a parsed "company name" as actually being boilerplate risk
@@ -358,7 +403,7 @@ def build_portfolio(p):
         f'<a class="company" href="../archive/{e(m["slug"])}.html" target="_blank" rel="noopener noreferrer">{e(clean_company(m["company"], m["slug"]))}</a>'
         for m in p["members"]
     )
-    factors = "".join(f"<li>{e(clean_artifacts(f))}</li>" for f in p["rep_factors"][:10])
+    factors = "".join(f"<li>{e(f)}</li>" for f in clean_factors(p["rep_factors"], 10))
     body = f"""
 <article class="report">
 <div class="report-head">
