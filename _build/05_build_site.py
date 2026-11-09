@@ -51,6 +51,81 @@ def e(s):
     return html.escape(str(s), quote=True)
 
 
+def clean_artifacts(s):
+    """Undo the 2019 scraper's punctuation encodings in risk-factor text.
+
+    Verified against the full corpus (every pattern is unambiguous there):
+      dlra<digit>   -> $<digit>   (always precedes a number)
+      <digit>prca   -> <digit>%   (always follows a number)
+      <d>cmam<d>    -> <d>,<d>     (thousands separator, always between digits)
+      dtta          -> .          (decimal point AND abbreviation period, e.g. 'No.')
+      &quote        -> "
+      &apos         -> '           (possessive: 'lenders &apos' -> "lenders'")
+      apstas        -> 's          (older possessive artifact, belt-and-suspenders)
+    Patterns are anchored to digits/literals so real words (tampering,
+    windshield, Lincoln, quotations) are never touched."""
+    if not s:
+        return s
+    s = s.replace("&quote", '"')
+    s = re.sub(r"\s*&apos", "'", s)           # drop the space before the apostrophe
+    s = re.sub(r"dlra(?=\d)", "$", s)
+    s = re.sub(r"(?<=\d)cmam(?=\d)", ",", s)
+    s = re.sub(r"(?<=\d)prca", "%", s)
+    s = s.replace("dtta", ".")                # decimal or abbreviation period
+    s = s.replace("apstas", "'s")
+    # tidy any doubled spaces introduced
+    s = re.sub(r"[ \t]{2,}", " ", s).strip()
+    return s
+
+
+# Fillers that mark a parsed "company name" as actually being boilerplate risk
+# text the extractor grabbed by mistake.
+_BAD_NAME_RE = re.compile(
+    r"\b(risk factor|forward-looking|you should|carefully consider|the company cautions"
+    r"|additional risk|any of the risks|any or all|caption|item 1a|annual report"
+    r"|accumulated deficit|net loss|we derive|our revenues)\b", re.I)
+
+
+def deslug(slug):
+    """Best-effort readable company name from an UPPERCASE concatenated slug,
+    e.g. 'ACUITYBRANDSINC' -> 'ACUITYBRANDS INC'. Imperfect for fully-glued
+    multi-word names, but far better than leaking boilerplate text."""
+    s = slug
+    # Many bad slugs have the risk-factor text glued on after the real name,
+    # e.g. 'QUIGLEYCORPITEMARISKFACTORSWEHAVE...'. Cut at the ITEM/RISKFACTOR marker.
+    s = re.split(r"item\s*a?\s*risk\s*factors?|item\s*1a|riskfactors?",
+                 s, flags=re.I)[0]
+    # strip trailing scrape tokens
+    for suf in ["CODE"]:
+        if s.endswith(suf) and len(s) > len(suf) + 4:
+            s = s[: -len(suf)]
+    # split a trailing corporate suffix onto its own word for readability
+    for suf in ["INCORPORATED", "HOLDINGS", "INTERNATIONAL", "CORPORATION",
+                "COMPANIES", "COMPANY", "GROUP", "INC", "CORP", "CO", "LTD",
+                "LLC", "PLC", "LP"]:
+        m = re.search(suf + r"$", s)
+        if m and len(s) > len(suf) + 2:
+            s = s[: m.start()] + " " + suf
+            break
+    return re.sub(r"\s+", " ", s).strip() or slug
+
+
+def clean_company(name, slug):
+    name = clean_artifacts(name or "")
+    # bad parse: too long, still has artifacts, or is boilerplate risk text
+    if (len(name) > 44 or _BAD_NAME_RE.search(name)
+            or any(t in name for t in ("dlra", "cmam", "dtta", "prca", "apstas"))
+            or not name):
+        return deslug(slug)
+    # trailing boilerplate after a corporate suffix: keep through the suffix only
+    m = re.search(r"^(.*?\b(?:INCORPORATED|HOLDINGS|INTERNATIONAL|CORPORATION|"
+                  r"COMPANIES|COMPANY|GROUP|INC|CORP|CO|LTD|LLC|PLC|LP))\b", name)
+    if m and len(m.group(1)) < len(name) - 2:
+        # there is extra text after the suffix -> likely scraped junk; trim it
+        return m.group(1).strip()
+    return name
+
+
 # assemble portfolio objects
 PORTS = []
 for c in CLUSTERS:
@@ -280,10 +355,10 @@ def build_portfolio(p):
     shared = "".join(f"<li>{e(s)}</li>" for s in p["shared"])
     signals = "".join(f"<span class='signal'>{e(s)}</span>" for s in p["signals"])
     members = "".join(
-        f'<a class="company" href="../archive/{e(m["slug"])}.html" target="_blank" rel="noopener noreferrer">{e(m["company"])}</a>'
+        f'<a class="company" href="../archive/{e(m["slug"])}.html" target="_blank" rel="noopener noreferrer">{e(clean_company(m["company"], m["slug"]))}</a>'
         for m in p["members"]
     )
-    factors = "".join(f"<li>{e(f)}</li>" for f in p["rep_factors"][:10])
+    factors = "".join(f"<li>{e(clean_artifacts(f))}</li>" for f in p["rep_factors"][:10])
     body = f"""
 <article class="report">
 <div class="report-head">
@@ -385,10 +460,16 @@ def build_methodology():
 # ---------------- search index ----------------
 def build_search_index():
     idx = []
+    seen_co = set()
     for p in PORTS:
         idx.append({"t": p["name"], "k": "Portfolio", "u": f"portfolios/{p['slug']}.html", "d": p["tagline"]})
         for m in p["members"]:
-            idx.append({"t": m["company"], "k": "Company", "u": f"portfolios/{p['slug']}.html", "d": p["name"]})
+            co = clean_company(m["company"], m["slug"])
+            key = (co, p["slug"])
+            if key in seen_co:
+                continue
+            seen_co.add(key)
+            idx.append({"t": co, "k": "Company", "u": f"portfolios/{p['slug']}.html", "d": p["name"]})
     with open(os.path.join(ASSETS, "search-index.json"), "w", encoding="utf-8") as f:
         json.dump(idx, f, ensure_ascii=False)
     return len(idx)
