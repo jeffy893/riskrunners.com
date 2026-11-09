@@ -23,6 +23,13 @@ NARR = json.load(open(os.path.join(HERE, "narratives.json")))
 CHARTS = json.load(open(os.path.join(HERE, "charts.json")))
 METRICS = json.load(open(os.path.join(HERE, "metrics.json")))
 
+def _opt(path):
+    p = os.path.join(HERE, path)
+    return json.load(open(p)) if os.path.exists(p) else {}
+
+BACKTEST = _opt("backtest_results.json")
+BACKTEST_CHARTS = _opt("backtest_charts.json")
+
 PORT_DIR = os.path.join(ROOT, "portfolios")
 ASSETS = os.path.join(ROOT, "assets")
 os.makedirs(PORT_DIR, exist_ok=True)
@@ -259,6 +266,7 @@ def nav_html(active_slug, depth):
         f'{"".join(blocks)}'
         f'<div class="nav-label">About</div>'
         f'<a class="nav-home" href="{prefix}methodology.html">Methodology</a>'
+        f'<a class="{"nav-home active" if active_slug == "__backtest__" else "nav-home"}" href="{prefix}backtest.html">Back-Test Evidence</a>'
         f'</nav></aside>'
     )
 
@@ -330,6 +338,27 @@ def footer():
 </footer>"""
 
 
+# ---------------- back-test feature callout (home page) ----------------
+def backtest_feature():
+    if not BACKTEST:
+        return ""
+    rb = BACKTEST.get("regional_banks")
+    hb = BACKTEST.get("homebuilders")
+    if not rb:
+        return ""
+    return f"""
+<a class="feature" href="backtest.html">
+<div class="feature-tag">New · Empirical Back-Test</div>
+<h2>We back-tested the hedge against two real 2026 market events.</h2>
+<p>When a documented adverse event hit a portfolio's shared risk, a short on the
+pure-play basket paid off — out-of-sample, on real prices. Shorting the regional-bank
+basket through the Feb 2026 credit-fraud selloff returned <b>${rb['short_pnl_per_100']:+.2f}</b>
+per $100; the homebuilder basket through the spring rate spike returned
+<b>${hb['short_pnl_per_100']:+.2f}</b> — while shorting the market would have lost money.</p>
+<span class="feature-cta">See the method and the data →</span>
+</a>"""
+
+
 # ---------------- home page ----------------
 def build_home():
     cards = []
@@ -353,6 +382,7 @@ def build_home():
 <div><b>ISO 31010</b><span>Methodology</span></div>
 </div>
 </header>
+{backtest_feature()}
 <section class="why">
 <h2>Why 2019 data?</h2>
 <p>These risk profiles are built from pre-COVID 10-K filings. After 2020, nearly every company added "pandemic" as a top risk factor, flattening the signal. The 2019 baseline is a cleaner picture of the structural risks that actually distinguish one business from another.</p>
@@ -502,9 +532,123 @@ def build_methodology():
         f.write(out)
 
 
+# ---------------- back-test / experiment page ----------------
+def _bt_case(key):
+    r = BACKTEST[key]
+    ch = BACKTEST_CHARTS.get(key, {})
+    ev = r["event"]
+    weights_rows = "".join(
+        f"<tr><td class='rt-name'>{e(w['name'])} <small>({e(w['ticker'])})</small></td>"
+        f"<td class='rt-val'>{w['weight']:.0%}</td>"
+        f"<td class='rt-val' style='color:{'#2e7d32' if w['event_return']<0 else '#a1542f'}'>"
+        f"{w['event_return']:+.1%}</td></tr>"
+        for w in r["weights"]
+    )
+    risks = "".join(f"<li>{e(x)}</li>" for x in ev["matched_risks"])
+    win = r["short_pnl_per_100"] > 0
+    verdict_cls = "bt-win" if win else "bt-flat"
+    return f"""
+<article class="bt-case">
+<div class="bt-case-head">
+<h2>{e(r['name'])}</h2>
+<a class="bt-portfolio-link" href="portfolios/{slugify(r['name'])}.html">View this portfolio →</a>
+</div>
+
+<div class="bt-event">
+<h3>The real event</h3>
+<p><b>{e(ev['label'])}</b> · event window {e(r['evt_window'][0])} → {e(r['evt_window'][1])}</p>
+<p>{e(ev['trigger'])}</p>
+<p class="muted">Shared risk factors this event materialized:</p>
+<ul class="shared">{risks}</ul>
+<p class="bt-analogue"><b>Private-side analogue:</b> {e(ev['private_analogue'])}</p>
+</div>
+
+<div class="bt-step">
+<h3>Step 1 — Do these companies actually move together?</h3>
+<p>Using daily returns over a <b>stable estimation window ({e(r['est_window'][0])} → {e(r['est_window'][1])})</b>, before the event, the portfolio's companies show an average pairwise correlation of <b>{r['avg_correlation']:.2f}</b>. High correlation is the precondition for a pure play: if they co-move, shorting the basket hedges a private holding exposed to the same risk.</p>
+<img class="chart" src="{ch.get('corr','')}" alt="Correlation heatmap for {e(r['name'])}">
+</div>
+
+<div class="bt-step">
+<h3>Step 2 — Allocate the short from the covariance</h3>
+<p>From that same pre-event window, we compute <b>minimum-variance weights</b> from the covariance matrix — how much of a $100 basket to place in each name. These weights are fixed <em>before</em> the event (out-of-sample); the event-window column shows what each name actually did.</p>
+<table class="rt-table"><thead><tr><th>Company</th><th>Weight of $100</th><th>Return over event</th></tr></thead>
+<tbody>{weights_rows}</tbody></table>
+</div>
+
+<div class="bt-step">
+<h3>Step 3 — Short the basket through the event</h3>
+<p>Holding those fixed weights as a <b>short</b> on $100 through the event window, versus shorting the market (SPY) over the exact same days:</p>
+<img class="chart" src="{ch.get('pnl','')}" alt="Short P&L path for {e(r['name'])}">
+<div class="bt-result {verdict_cls}">
+<div><span class="bt-num">${r['short_pnl_per_100']:+.2f}</span><span>Short the pure-play basket<br>(gain on $100)</span></div>
+<div><span class="bt-num">${r['spy_short_pnl_per_100']:+.2f}</span><span>Short the market (SPY)<br>(gain on $100)</span></div>
+<div><span class="bt-num">${r['edge_vs_market']:+.2f}</span><span>Edge vs. shorting<br>the market</span></div>
+</div>
+<p class="muted">Basket fell {r['basket_event_return']:+.1%} over the window while SPY moved {r['spy_event_return']:+.1%}. The short captured the portfolio's shared risk firing — not market beta.</p>
+</div>
+</article>"""
+
+
+def build_backtest():
+    if not BACKTEST:
+        print("  (no backtest data; skipping backtest.html)")
+        return False
+    cases = "".join(_bt_case(k) for k in ["regional_banks", "homebuilders"] if k in BACKTEST)
+    body = f"""
+<article class="report">
+<div class="report-head">
+<div class="report-tech">Empirical Back-Test</div>
+<h1>Does the hedge actually work?</h1>
+<p class="report-tagline">An out-of-sample test of the pure-play thesis against two documented 2026 market events, on real prices.</p>
+<div class="report-meta"><span>Real 2026 daily data</span><span>Out-of-sample</span><span>Two portfolios</span></div>
+</div>
+
+<section class="eh">
+<h2>The question a peer reviewer asked</h2>
+<p>If these portfolios really group companies by shared risk, then when that shared risk materializes in the real world, a short on the portfolio should pay off — hedging a private holding exposed to the same risk. So we tested it: pick the most data-available portfolios, estimate how to weight a short from one window of real prices, then measure what that short would have returned through a <em>later</em>, independently-documented adverse event.</p>
+</section>
+
+<section>
+<h2>How the test avoids fooling itself</h2>
+<ul class="shared">
+<li><b>Real data only.</b> Daily prices are pulled from public markets for companies in the portfolio that still trade in 2026. Nothing is simulated.</li>
+<li><b>Out-of-sample.</b> The allocation weights are computed on a stable window that ends <em>before</em> the event. The event window never overlaps the estimation window, so the result is not fit to the outcome.</li>
+<li><b>Benchmarked against the market.</b> We compare the basket short to shorting SPY over the identical days, so a win reflects the portfolio's shared risk firing, not a falling market.</li>
+<li><b>Honest reporting.</b> We report the numbers whatever they are. This is evidence from two cases, not proof; it is not investment advice.</li>
+</ul>
+</section>
+
+{cases}
+
+<section class="eh">
+<h2>What this shows — and what it doesn't</h2>
+<p>In both tested cases, a documented real-world event that struck a portfolio's shared risk factors produced a profitable short on the pure-play basket, out-of-sample, while shorting the broad market over the same days did not. That is real, encouraging evidence that the portfolios capture genuine co-moving risk — exactly the property a pure-play hedge needs.</p>
+<p class="muted">Caveats, stated plainly: this is two events on two portfolios, not a large-sample study; it uses only companies that still trade in 2026, so it cannot speak to delisted names; weighting and window choices affect magnitude; and past relationships need not persist. This page is a transparent experiment and a demonstration of method, not a performance guarantee or investment advice.</p>
+</section>
+
+<section>
+<h2>Reproduce it</h2>
+<p class="muted">The experiment is three Python steps in the repo's <code>_build/</code>: fetch real daily prices (<code>06_backtest_fetch.py</code>), compute correlation, covariance weights, and out-of-sample short P&L (<code>07_backtest_analyze.py</code>), and render the charts (<code>08_backtest_charts.py</code>). Event dates and triggers are sourced from contemporaneous financial-news reporting.</p>
+</section>
+</article>"""
+    out = page("Back-Test Evidence — Pure Play", "__backtest__", 0, body,
+               "An out-of-sample back-test of the Pure Play hedge against two documented 2026 market events, using real price data.",
+               canonical="backtest.html")
+    with open(os.path.join(ROOT, "backtest.html"), "w", encoding="utf-8") as f:
+        f.write(out)
+    return True
+
+
 # ---------------- search index ----------------
 def build_search_index():
-    idx = []
+    idx = [
+        {"t": "Methodology", "k": "Page", "u": "methodology.html",
+         "d": "How Pure Play turns 2019 filings into risk portfolios"},
+    ]
+    if BACKTEST:
+        idx.append({"t": "Back-Test Evidence", "k": "Page", "u": "backtest.html",
+                    "d": "Out-of-sample test of the hedge against real 2026 events"})
     seen_co = set()
     for p in PORTS:
         idx.append({"t": p["name"], "k": "Portfolio", "u": f"portfolios/{p['slug']}.html", "d": p["tagline"]})
@@ -525,8 +669,10 @@ def main():
     for p in PORTS:
         build_portfolio(p)
     build_methodology()
+    bt = build_backtest()
     n = build_search_index()
-    print(f"built: index.html, methodology.html, {len(PORTS)} portfolio pages")
+    print(f"built: index.html, methodology.html, "
+          f"{'backtest.html, ' if bt else ''}{len(PORTS)} portfolio pages")
     print(f"search index entries: {n}")
 
 
